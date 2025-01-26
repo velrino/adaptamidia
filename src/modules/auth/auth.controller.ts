@@ -29,12 +29,12 @@ export class AuthController {
     private readonly authDeviceService: AuthDeviceService,
   ) {}
 
-  @Post('register')
-  async register(
-    @Body(new ValidationPipe({ transform: true })) data: AuthSignUpDto,
-  ) {
-    return await this.authService.register(data);
-  }
+  // @Post('register')
+  // async register(
+  //   @Body(new ValidationPipe({ transform: true })) data: AuthSignUpDto,
+  // ) {
+  //   return await this.authService.register(data);
+  // }
 
   @Post('login')
   @Throttle({ default: { limit: 5, ttl: 300000 } })
