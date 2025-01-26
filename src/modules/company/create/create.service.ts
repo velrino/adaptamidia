@@ -1,9 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AuthenticatedRequest } from 'src/shared/request';
 import { Company } from '../company.schema';
 import { CreateCompanyValidator } from './create.interface';
+import { CompanyHelper } from '../company.helper';
+import { RESULT } from 'src/shared/result.enum';
+import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 
 @Injectable()
 export class CreateCompanyService {
@@ -16,7 +19,52 @@ export class CreateCompanyService {
     return this.execute(parameters);
   }
 
-  execute(parameters: CreateCompanyValidator) {
-    return parameters;
+  validator(parameters: CreateCompanyValidator) {
+    const resultDocumentValidator = CompanyHelper.documentValidator(
+      parameters.document_type,
+      parameters.document,
+    );
+
+    if (resultDocumentValidator) {
+      throw new HttpException(
+        resultDocumentValidator,
+        HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+  }
+
+  async execute(parameters: CreateCompanyValidator) {
+    try {
+      parameters.document = CompanyHelper.removeFormatting(parameters.document);
+
+      this.validator(parameters);
+
+      const checkExist = await this.model.findOne({
+        document: parameters.document,
+      });
+
+      if (checkExist) {
+        throw new HttpException(
+          RESULT.COMPANY_DOCUMENT_ALREADY_EXISTS,
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+
+      const created = await this.model.create(parameters);
+
+      return created;
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        CreateCompanyService.name,
+        this.execute.name,
+        LogAction.FAILED,
+        { parameters, error },
+      );
+      throw new HttpException(
+        error?.message || RESULT.COMPANY_NOT_CREATED,
+        error?.status || HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
   }
 }
