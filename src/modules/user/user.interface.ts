@@ -1,6 +1,6 @@
 import { Document } from 'mongoose';
 
-import { User } from './users.schema';
+import { User } from './user.schema';
 
 export type IUser = Document & User;
 

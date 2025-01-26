@@ -6,7 +6,7 @@ import {
   IsString,
   MinLength,
 } from 'class-validator';
-import { IUser } from '../users/user.interface';
+import { IUser } from '../user/user.interface';
 
 export enum AuthenticationTypeEnum {
   DEFAULT = 'DEFAULT',

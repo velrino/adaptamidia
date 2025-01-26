@@ -4,7 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User } from '../users/users.schema';
+import { User } from '../user/user.schema';
 import { Authenticated, AuthTokenParameters } from './auth.interface';
 
 @Injectable()

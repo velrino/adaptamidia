@@ -18,7 +18,7 @@ import { hasPermission } from '../permissions/permissions.helper';
 
 // import { EmailService } from '../email/email.service';
 
-import { User } from '../users/users.schema';
+import { User } from '../user/user.schema';
 import {
   Authenticated,
   AuthenticationOTPFlow,
@@ -32,7 +32,7 @@ import {
   AuthTokenParameters,
   GenetateAuthCodeFlow,
 } from './auth.interface';
-import { UserOTPEnum } from '../users/user.interface';
+import { UserOTPEnum } from '../user/user.interface';
 import { AuthOtpService } from './otp/otp.service';
 
 @Injectable()
