@@ -8,6 +8,7 @@ import { HttpMiddleware } from './middleware/http.middleware';
 import { RedisModule } from './shared/redis/redis.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { PusherModule } from './shared/pusher/pusher.module';
+import { UserModule } from './modules/users/user.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { PusherModule } from './shared/pusher/pusher.module';
     RedisModule,
     PusherModule,
     AuthModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
