@@ -69,6 +69,28 @@ export class CreateCompanyUnitService {
       const coordinates = getCoordinates.results[0]?.geometry.location;
       const address = getCoordinates.results[0]?.formatted_address;
 
+      const countRecords = await this.companyUnitModel.countDocuments({
+        // company: record?._id,
+        address,
+      });
+
+      if (countRecords) {
+        const message = RESULT.COMPANY_UNIT_ADDRESS_ALREADY_EXISTS;
+
+        Log(
+          LogType.ERROR,
+          CreateCompanyUnitService.name,
+          this.execute.name,
+          LogAction.FAILED,
+          { message, parameters, address },
+        );
+
+        throw new HttpException(
+          RESULT.COMPANY_UNIT_ADDRESS_ALREADY_EXISTS,
+          HttpStatus.CONFLICT,
+        );
+      }
+
       const created = await this.companyUnitModel.create({
         average_visitors: parameters.average_visitors,
         max_capacity: parameters.max_capacity,
