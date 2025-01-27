@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { SchemaDefault } from 'src/shared/shema';
+import { CompanyUnitStatus, CompanyUnitType } from './company-unit.interface';
 
 @Schema({ ...SchemaDefault, collection: 'company_units' })
 export class CompanyUnit {
@@ -12,6 +13,30 @@ export class CompanyUnit {
 
   @Prop({ required: true })
   address: string;
+
+  @Prop({ required: true, index: true })
+  type: CompanyUnitType;
+
+  @Prop({ required: true, index: true })
+  status: CompanyUnitStatus;
+
+  @Prop({
+    type: {
+      daily: { type: Number, default: 0 }, // Média de pessoas por dia
+      weekly: { type: Number, default: 0 }, // Média de pessoas por semana
+      monthly: { type: Number, default: 0 }, // Média de pessoas por mês
+    },
+    required: true,
+    _id: false,
+  })
+  average_visitors: {
+    daily: number;
+    weekly: number;
+    monthly: number;
+  };
+
+  @Prop({ type: Number, required: true }) // Limite de pessoas permitido no local
+  max_capacity: number;
 
   @Prop({
     type: {

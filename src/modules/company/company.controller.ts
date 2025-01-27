@@ -1,6 +1,5 @@
 import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthJwtGuard } from '../auth/auth.guard';
-import { Throttle } from '@nestjs/throttler';
 import { AuthenticatedRequest } from 'src/shared/request';
 import { CreateCompanyService } from './create/create.service';
 import { CreateCompanyValidator } from './create/create.interface';
@@ -13,7 +12,6 @@ export class CompanyController {
 
   @Post('company')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
   @PermissionsAllowed()
   createCompany(
     @Req() req: AuthenticatedRequest,

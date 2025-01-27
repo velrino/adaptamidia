@@ -10,6 +10,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { PusherModule } from './shared/pusher/pusher.module';
 import { UserModule } from './modules/user/user.module';
 import { CompanyModule } from './modules/company/company.module';
+import { CompanyUnitModule } from './modules/company-unit/company-unit.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { CompanyModule } from './modules/company/company.module';
     PusherModule,
     AuthModule,
     CompanyModule,
+    CompanyUnitModule,
     UserModule,
   ],
   controllers: [AppController],

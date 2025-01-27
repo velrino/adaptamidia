@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { SchemaDefault } from 'src/shared/shema';
 import AuthHelper from '../auth/auth.helper';
 import { PermissionsEnum } from '../permissions/permissions.enum';
@@ -8,6 +8,9 @@ import { UserOTPEnum } from './user.interface';
 
 @Schema({ ...SchemaDefault, collection: 'users' })
 export class User {
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Company' }], index: true })
+  companies: Types.ObjectId[];
+
   @Prop({ required: true, index: true, lowercase: true })
   email: string;
 
