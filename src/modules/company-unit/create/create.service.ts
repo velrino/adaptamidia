@@ -95,6 +95,7 @@ export class CreateCompanyUnitService {
         average_visitors: parameters.average_visitors,
         max_capacity: parameters.max_capacity,
         name: parameters.name,
+        complement: parameters.complement,
         company: record?._id,
         type: parameters.type,
         status: CompanyUnitStatus.IN_REVIEW,

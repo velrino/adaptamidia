@@ -5,6 +5,7 @@ import {
   IsNumber,
   ValidateNested,
   IsEnum,
+  IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CompanyUnitType } from '../company-unit.interface';
@@ -35,6 +36,10 @@ export class CreateCompanyUnitValidator {
   @IsString()
   @IsNotEmpty()
   address: string;
+
+  @IsString()
+  @IsOptional()
+  complement: string;
 
   @IsString()
   @IsNotEmpty()
