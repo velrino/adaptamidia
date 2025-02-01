@@ -10,6 +10,7 @@ import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { RESULT } from 'src/shared/result.enum';
 import { PermissionsEnum } from 'src/modules/permissions/permissions.enum';
 import { CompanyUnitStatus } from '../company-unit.interface';
+import { VerifyUserCanProced } from 'src/modules/permissions/permissions.helper';
 
 @Injectable()
 export class CreateCompanyUnitService {
@@ -24,25 +25,12 @@ export class CreateCompanyUnitService {
     parameters: CreateCompanyUnitValidator,
   ) {
     try {
-      let canCreate = (currentRequest.user.user.permissions || []).includes(
-        PermissionsEnum.SUDO,
-      );
-
-      if (
-        currentRequest.user.user.companies?.includes(
-          new Types.ObjectId(parameters.company_id),
-        ) &&
-        !canCreate
-      ) {
-        canCreate = true;
-      }
-
-      if (!canCreate) {
-        throw new HttpException(
-          RESULT.COMPANY_UNIT_CREATION_NOT_AUTHORIZED,
-          HttpStatus.FORBIDDEN,
-        );
-      }
+      VerifyUserCanProced({
+        need_company: parameters.company_id,
+        user_permissions: currentRequest.user.user.permissions,
+        user_companies: currentRequest.user.user.companies,
+        need_permissions: [],
+      });
 
       return this.execute(parameters);
     } catch (error) {
