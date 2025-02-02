@@ -19,15 +19,15 @@ export class ListCompanyUnitService {
     // private readonly getCompanyService: GetCompanyService,
   ) {}
 
-  onApplicationBootstrap() {
-    const query: any = {
-      longitude: 1,
-      latitude: 1,
-      radius: 1,
-    };
+  // onApplicationBootstrap() {
+  //   const query: any = {
+  //     longitude: 1,
+  //     latitude: 1,
+  //     radius: 1,
+  //   };
 
-    console.log({ query: querystring.encode(query) });
-  }
+  //   console.log({ query: querystring.encode(query) });
+  // }
 
   executeFromRequest(
     currentRequest: AuthenticatedRequest,
