@@ -10,3 +10,5 @@ export const MongoCollection = {
   company_units: { name: CompanyUnit.name, schema: CompanyUnitSchema },
   users: { name: User.name, schema: UserSchema },
 };
+
+export type MongoDbDateQuery = Partial<Record<'$gte' | '$lte', Date>>;
