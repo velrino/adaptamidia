@@ -12,6 +12,7 @@ import { UserModule } from './modules/user/user.module';
 import { CompanyModule } from './modules/company/company.module';
 import { CompanyUnitModule } from './modules/company-unit/company-unit.module';
 import { AdvertisementModule } from './modules/advertisement/advertisement.module';
+import { AdvertisementCampaignModule } from './modules/advertisement-campaign/advertisement-campaign.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { AdvertisementModule } from './modules/advertisement/advertisement.modul
     PusherModule,
     AuthModule,
     AdvertisementModule,
+    AdvertisementCampaignModule,
     CompanyModule,
     CompanyUnitModule,
     UserModule,

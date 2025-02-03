@@ -1,4 +1,8 @@
 import {
+  AdvertisementCampaign,
+  AdvertisementCampaignSchema,
+} from 'src/modules/advertisement-campaign/advertisement-campaign.schema';
+import {
   Advertisement,
   AdvertisementSchema,
 } from 'src/modules/advertisement/advertisement.schema';
@@ -11,6 +15,10 @@ import { User, UserSchema } from 'src/modules/user/user.schema';
 
 export const MongoCollection = {
   advertisement: { name: Advertisement.name, schema: AdvertisementSchema },
+  advertisement_campaign: {
+    name: AdvertisementCampaign.name,
+    schema: AdvertisementCampaignSchema,
+  },
   companies: { name: Company.name, schema: CompanySchema },
   company_units: { name: CompanyUnit.name, schema: CompanyUnitSchema },
   users: { name: User.name, schema: UserSchema },
