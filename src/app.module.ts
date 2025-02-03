@@ -11,6 +11,7 @@ import { PusherModule } from './shared/pusher/pusher.module';
 import { UserModule } from './modules/user/user.module';
 import { CompanyModule } from './modules/company/company.module';
 import { CompanyUnitModule } from './modules/company-unit/company-unit.module';
+import { AdvertisementModule } from './modules/advertisement/advertisement.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { CompanyUnitModule } from './modules/company-unit/company-unit.module';
     RedisModule,
     PusherModule,
     AuthModule,
+    AdvertisementModule,
     CompanyModule,
     CompanyUnitModule,
     UserModule,
