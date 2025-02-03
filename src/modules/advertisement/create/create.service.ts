@@ -12,10 +12,15 @@ export class CreateAdvertisementService {
   ) {}
 
   executeFromRequest(currentRequest: AuthenticatedRequest, parameters: any) {
+    console.log({ parameters });
     return this.execute(parameters);
   }
 
   execute(parameters: any) {
+    // await this.model.create({
+    //   company: currentRequest.user.company,
+    //   ...parameters,
+    // })
     return parameters;
   }
 }

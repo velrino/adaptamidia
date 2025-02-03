@@ -25,7 +25,12 @@ export class AdvertisementItem {
 
 @Schema({ ...SchemaDefault, collection: 'advertisements' })
 export class Advertisement {
-  @Prop({ type: Types.ObjectId, ref: 'Company', required: true, index: true })
+  @Prop({
+    required: true,
+    type: Types.ObjectId,
+    ref: 'Company',
+    index: true,
+  })
   company: Types.ObjectId;
 
   @Prop({ required: true })
@@ -34,7 +39,7 @@ export class Advertisement {
   @Prop({ required: true, enum: AdvertisementType, uppercase: true })
   type: AdvertisementType;
 
-  @Prop({ type: [AdvertisementItem] })
+  @Prop({ required: true, type: [AdvertisementItem] })
   items: AdvertisementItem[];
 
   @Prop({
@@ -45,10 +50,10 @@ export class Advertisement {
   })
   status: AdvertisementStatus;
 
-  @Prop({ type: Date })
+  @Prop({ required: true, type: Date })
   start_date: Date;
 
-  @Prop({ type: Date })
+  @Prop({ required: true, type: Date })
   end_date: Date;
 }
 

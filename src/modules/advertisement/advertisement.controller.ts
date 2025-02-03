@@ -4,6 +4,7 @@ import { PermissionsGuard } from '../permissions/permissions.guard';
 import { PermissionsAllowed } from '../permissions/permissions.decorator';
 import { AuthenticatedRequest } from 'src/shared/request';
 import { CreateAdvertisementService } from './create/create.service';
+import { CreateAdvertisementDto } from './create/create.interface';
 
 @Controller()
 export class AdvertisementController {
@@ -14,7 +15,10 @@ export class AdvertisementController {
   @Post('advertisement')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
   @PermissionsAllowed()
-  create(@Req() req: AuthenticatedRequest, @Body() query: any) {
+  create(
+    @Req() req: AuthenticatedRequest,
+    @Body() query: CreateAdvertisementDto,
+  ) {
     return this.createAdvertisementService.executeFromRequest(req, query);
   }
 }
