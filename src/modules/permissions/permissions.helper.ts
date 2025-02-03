@@ -40,14 +40,14 @@ export function hasPermission(
   return true;
 }
 
-export interface IVerifyUserCanProced {
+export interface IVerifyUserCanProceed {
   user_permissions: PermissionsEnum[];
   user_companies: Types.ObjectId[];
   need_permissions: PermissionsEnum[];
   need_company: string;
 }
 
-export function VerifyUserCanProced(parameters: IVerifyUserCanProced) {
+export function VerifyUserCanProceed(parameters: IVerifyUserCanProceed) {
   try {
     let can = (parameters.user_permissions || []).includes(
       PermissionsEnum.SUDO,

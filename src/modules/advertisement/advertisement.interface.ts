@@ -1,3 +1,7 @@
+import { Advertisement } from './advertisement.schema';
+
+export type IAdvertisement = Document & Advertisement;
+
 export enum AdvertisementType {
   IMAGE = 'IMAGE',
   VIDEO = 'VIDEO',

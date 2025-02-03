@@ -10,7 +10,7 @@ import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { RESULT } from 'src/shared/result.enum';
 import { PermissionsEnum } from 'src/modules/permissions/permissions.enum';
 import { CompanyUnitStatus } from '../company-unit.interface';
-import { VerifyUserCanProced } from 'src/modules/permissions/permissions.helper';
+import { VerifyUserCanProceed } from 'src/modules/permissions/permissions.helper';
 
 @Injectable()
 export class CreateCompanyUnitService {
@@ -25,7 +25,7 @@ export class CreateCompanyUnitService {
     parameters: CreateCompanyUnitValidator,
   ) {
     try {
-      VerifyUserCanProced({
+      VerifyUserCanProceed({
         need_company: parameters.company_id,
         user_permissions: currentRequest.user.user.permissions,
         user_companies: currentRequest.user.user.companies,
