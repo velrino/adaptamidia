@@ -3,15 +3,20 @@ import Credentials from "next-auth/providers/credentials";
 import { DefaultSession, NextAuthOptions, getServerSession } from "next-auth";
 // import { IApiAuthLogin } from "./services/api/interfaces";
 
+export type User = {
+  id: string;
+  access_token: string;
+  expires_in: string;
+  session: string;
+  iat: number;
+  exp: number;
+} & DefaultSession["user"];
+
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: User;
   }
 }
-
-export type User = {
-  id: string;
-} & DefaultSession["user"];
 
 export const nextAuthOptions: NextAuthOptions = {
   session: {
@@ -26,7 +31,11 @@ export const nextAuthOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      return { ...session, user: { ...session.user, id: token.sub } };
+      if (session.user) {
+        session.user = token.user as User;
+      }
+
+      return session;
     },
   },
   pages: {
