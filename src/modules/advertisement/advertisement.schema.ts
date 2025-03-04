@@ -63,5 +63,3 @@ export class Advertisement {
 export type AdvertisementDocument = Advertisement & Document;
 
 export const AdvertisementSchema = SchemaFactory.createForClass(Advertisement);
-
-AdvertisementSchema.index({ company: 1 });

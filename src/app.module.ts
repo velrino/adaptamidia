@@ -13,6 +13,7 @@ import { CompanyModule } from './modules/company/company.module';
 import { CompanyUnitModule } from './modules/company-unit/company-unit.module';
 import { AdvertisementModule } from './modules/advertisement/advertisement.module';
 import { AdvertisementCampaignModule } from './modules/advertisement-campaign/advertisement-campaign.module';
+import { NewsModule } from './modules/news/news.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { AdvertisementCampaignModule } from './modules/advertisement-campaign/ad
       },
       inject: [ConfigService],
     }),
+    NewsModule,
     RedisModule,
     PusherModule,
     AuthModule,

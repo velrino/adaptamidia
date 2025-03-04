@@ -7,6 +7,8 @@ export enum LogType {
 export enum LogAction {
   SUCCESS = 'success',
   STARTED = 'started',
+  EMPTY = 'empty',
+  SKIP = 'skip',
   FAILED = 'failed',
   PROGRESS = 'progress',
 }

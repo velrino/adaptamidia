@@ -11,6 +11,7 @@ import {
   CompanyUnitSchema,
 } from 'src/modules/company-unit/company-unit.schema';
 import { Company, CompanySchema } from 'src/modules/company/company.schema';
+import { News, NewsSchema } from 'src/modules/news/news.schema';
 import { User, UserSchema } from 'src/modules/user/user.schema';
 
 export const MongoCollection = {
@@ -21,6 +22,7 @@ export const MongoCollection = {
   },
   companies: { name: Company.name, schema: CompanySchema },
   company_units: { name: CompanyUnit.name, schema: CompanyUnitSchema },
+  news: { name: News.name, schema: NewsSchema },
   users: { name: User.name, schema: UserSchema },
 };
 
