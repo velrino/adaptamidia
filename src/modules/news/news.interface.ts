@@ -14,6 +14,7 @@ export enum NewsKeywordEnum {
   TECNOLOGIA = 'TECNOLOGIA',
   BITCOIN = 'BITCOIN',
   CINEMA = 'CINEMA',
+  NEGOCIOS = 'NEGÓCIOS',
 }
 
 export interface INewsApiArticle {

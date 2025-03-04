@@ -38,7 +38,7 @@ export class SyncNewsService {
         language: 'pt', // Português
         // country: 'br', // Brasil
         sortBy: 'popularity',
-        pageSize: 50, // Limita a 10 notícias
+        pageSize: 100, // Limita a 10 notícias
         q,
       });
     } catch (error) {
