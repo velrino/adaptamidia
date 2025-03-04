@@ -1,12 +1,17 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
+import { UserMock } from "@/interfaces/user.interface";
+import { IApiUserResponse } from "@/backend/api/api.interface";
+import { signOut } from "next-auth/react";
+import { useRouter, usePathname } from "next/navigation";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
 
   function toggleDropdown() {
     setIsOpen(!isOpen);
@@ -15,6 +20,18 @@ export default function UserDropdown() {
   function closeDropdown() {
     setIsOpen(false);
   }
+
+  const [authenticated, setAuthenticated] = useState<IApiUserResponse>();
+
+  useEffect(() => {
+    setAuthenticated(UserMock);
+  }, []);
+
+  const logoutUser = useCallback(async () => {
+    await signOut({ redirect: false });
+    router.replace("/login");
+  }, [router]);
+
   return (
     <div className="relative">
       <button
@@ -30,7 +47,9 @@ export default function UserDropdown() {
           />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">Musharof</span>
+        <span className="block mr-1 font-medium text-theme-sm">
+          {authenticated?.user.name}
+        </span>
 
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
@@ -59,7 +78,7 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            Musharof Chowdhury
+            Natiely Magalhães
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
             randomuser@pimjo.com
@@ -143,9 +162,9 @@ export default function UserDropdown() {
             </DropdownItem>
           </li>
         </ul>
-        <Link
-          href="/login"
-          className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+        <div
+          onClick={() => logoutUser()}
+          className="flex items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300 cursor-pointer"
         >
           <svg
             className="fill-gray-500 group-hover:fill-gray-700 dark:group-hover:fill-gray-300"
@@ -163,7 +182,7 @@ export default function UserDropdown() {
             />
           </svg>
           Sign out
-        </Link>
+        </div>
       </Dropdown>
     </div>
   );
