@@ -35,7 +35,7 @@ const navItems: NavItem[] = [
     icon: <GridIcon />,
     name: "Dashboard",
     subItems: [
-      { name: "Ecommerce", path: "/", pro: false },
+      { name: "Home", path: "/", pro: false },
       { name: "Analytics", path: "/analytics", pro: true },
       { name: "Marketing", path: "/marketing", pro: true },
       { name: "CRM", path: "/crm", pro: true },
@@ -265,7 +265,7 @@ const AppSidebar: React.FC = () => {
                     >
                       {subItem.name}
                       <span className="flex items-center gap-1 ml-auto">
-                        {subItem.new && (
+                        {/* {subItem.new && (
                           <span
                             className={`ml-auto ${
                               isActive(subItem.path)
@@ -275,8 +275,8 @@ const AppSidebar: React.FC = () => {
                           >
                             new
                           </span>
-                        )}
-                        {subItem.pro && (
+                        )} */}
+                        {/* {subItem.pro && (
                           <span
                             className={`ml-auto ${
                               isActive(subItem.path)
@@ -286,7 +286,7 @@ const AppSidebar: React.FC = () => {
                           >
                             pro
                           </span>
-                        )}
+                        )} */}
                       </span>
                     </Link>
                   </li>

@@ -133,7 +133,7 @@ export default function ActiveUsersChart() {
     <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
       <div className="flex items-start justify-between">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-          Active Users
+          Dispositivos transmitindo
         </h3>
 
         <div className="relative h-fit">
@@ -170,11 +170,11 @@ export default function ActiveUsersChart() {
           </span>
 
           <span className="font-semibold text-gray-800 activeUsers text-title-sm dark:text-white/90">
-            364
+            888
           </span>
         </div>
         <span className="block mb-1 text-gray-500 text-theme-sm dark:text-gray-400">
-          Live visitors
+          Ao vivo
         </span>
       </div>
 
@@ -192,7 +192,7 @@ export default function ActiveUsersChart() {
       <div className="flex items-center justify-center gap-6">
         <div>
           <p className="text-lg font-semibold text-center text-gray-800 dark:text-white/90">
-            224
+            3456
           </p>
           <p className="mt-0.5 text-center text-theme-xs text-gray-500 dark:text-gray-400">
             Avg, Daily
@@ -203,7 +203,7 @@ export default function ActiveUsersChart() {
 
         <div>
           <p className="text-lg font-semibold text-center text-gray-800 dark:text-white/90">
-            1.4K
+            10.4K
           </p>
           <p className="mt-0.5 text-center text-theme-xs text-gray-500 dark:text-gray-400">
             Avg, Weekly
@@ -214,7 +214,7 @@ export default function ActiveUsersChart() {
 
         <div>
           <p className="text-lg font-semibold text-center text-gray-800 dark:text-white/90">
-            22.1K
+            220.1K
           </p>
           <p className="mt-0.5 text-center text-theme-xs text-gray-500 dark:text-gray-400">
             Avg, Monthly
