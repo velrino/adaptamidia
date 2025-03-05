@@ -15,12 +15,14 @@ import { IApiAdvertisementItem } from "@/backend/api/api.interface";
 import { AdSortKey } from "@/interfaces/ads";
 import { SortOrder } from "@/interfaces/sort";
 import { AdvertisementsMock } from "@/backend/mock/advertisements";
+import { faker } from "@faker-js/faker";
+import { DateHelper } from "@/utils/date";
 
 export default function AdvertisementsTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [sortKey, setSortKey] = useState<AdSortKey>(AdSortKey.title);
-  const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.ASC);
+  const [sortKey, setSortKey] = useState<AdSortKey>(AdSortKey.start_date);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.DESC);
   const [searchTerm, setSearchTerm] = useState("");
   const [list, setList] = useState<IApiAdvertisementItem[]>([]);
 
@@ -218,29 +220,39 @@ export default function AdvertisementsTable() {
                 <TableRow key={i + 1}>
                   <TableCell className="px-4 py-3 border border-gray-100 dark:border-white/[0.05] whitespace-nowrap">
                     <div className="flex items-center gap-3">
+                      {/* Imagem */}
                       <div className="w-10 h-10 overflow-hidden rounded-full">
                         <Image
-                          width={40}
-                          height={40}
-                          src={item.items[0].source || "/placeholder.svg"}
+                          width={100} // Ajustado para manter proporção com o container
+                          height={100}
+                          src={
+                            item.items[
+                              faker.number.int({
+                                min: 0,
+                                max: Math.max(item.items.length - 1, 0), // Garante índice válido
+                              })
+                            ]?.source || "/placeholder.svg"
+                          }
                           alt="title"
+                          className="w-full h-full object-cover"
+                          style={{ objectPosition: "center" }}
                         />
                       </div>
-                      <div>
-                        <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                          {item.title}
-                        </span>
-                      </div>
+
+                      {/* Texto */}
+                      <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
+                        {item.title}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
                     {item.type}
                   </TableCell>
                   <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
-                    {item.start_date}
+                    {DateHelper.format(item?.start_date)}
                   </TableCell>
                   <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
-                    {item.end_date}
+                    {DateHelper.format(item?.end_date)}
                   </TableCell>
                   <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
                     {item.status}
