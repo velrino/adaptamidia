@@ -1,13 +1,13 @@
 "use client";
+
 import Image from "next/image";
-import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { UserMock } from "@/interfaces/user.interface";
 import { IApiUserResponse } from "@/backend/api/api.interface";
 import { signOut } from "next-auth/react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function UserDropdown() {
   const [isOpen, setIsOpen] = useState(false);
