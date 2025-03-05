@@ -6,13 +6,13 @@ import { Modal } from "../ui/modal";
 import { IApiAdvertisementItem } from "@/backend/api/api.interface";
 
 interface AdvertisementModalProps {
-  advertisement?: IApiAdvertisementItem;
+  data?: IApiAdvertisementItem;
   setOpen?: (open: boolean) => void;
   onCloseCallback?: () => void;
 }
 
 export default function AdvertisementModal({
-  advertisement,
+  data,
   onCloseCallback,
 }: AdvertisementModalProps) {
   const handleClose = () => {
@@ -21,11 +21,12 @@ export default function AdvertisementModal({
     }
   };
 
-  const [data, setData] = useState<IApiAdvertisementItem>();
+  const [record, setRecord] = useState<IApiAdvertisementItem>();
 
   useEffect(() => {
-    setData(() => advertisement);
-  }, [advertisement]);
+    console.log({ data });
+    setRecord(() => data);
+  }, [data]);
 
   return (
     <Modal
@@ -39,7 +40,7 @@ export default function AdvertisementModal({
           Modal
         </h4>
         <p className="text-sm leading-6 text-gray-500 dark:text-gray-400">
-          {data?.title}
+          {record?.title}
         </p>
 
         <div className="flex items-center justify-center w-full gap-3 mt-8">

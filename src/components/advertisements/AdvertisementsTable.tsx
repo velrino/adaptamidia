@@ -307,7 +307,7 @@ export default function AdvertisementsTable() {
       </div>
       {currentAdvertisement && (
         <AdvertisementModal
-          advertisement={currentAdvertisement}
+          data={currentAdvertisement}
           onCloseCallback={() => {
             setCurrentAdvertisement(null);
             console.log("Modal closed!");
