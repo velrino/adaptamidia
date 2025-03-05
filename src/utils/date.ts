@@ -60,7 +60,7 @@ export const DateHelper = {
     const minutes = time.minutes();
     const seconds = time.seconds();
 
-    let result = [];
+    const result = [];
     if (days > 0) result.push(`${days}d`);
     if (hours > 0 || days > 0) result.push(`${hours}h`);
     if (minutes > 0 || hours > 0 || days > 0) result.push(`${minutes}m`);

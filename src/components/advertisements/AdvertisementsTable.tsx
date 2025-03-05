@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -33,35 +33,39 @@ export default function AdvertisementsTable() {
   const [list, setList] = useState<IApiAdvertisementItem[]>([]);
   const [response, setResponse] = useState<IApiAdvertisementResponse>();
 
-  const handleResponse = async () => {
+  const handleResponse = useCallback(async (): Promise<
+    IApiAdvertisementItem[]
+  > => {
     return new Promise<IApiAdvertisementItem[]>((resolve) => {
       setTimeout(() => {
         resolve(response?.data || []);
       }, 1);
     });
-  };
-
-  useEffect(() => {
-    handleResponse().then((data) => {
-      setCurrentAdvertisement(() => data[0]);
-      setList(data);
-    });
   }, [response]);
 
-  const getResponse = async () => {
+  useEffect(() => {
+    if (!response) return;
+
+    handleResponse().then((data) => {
+      setCurrentAdvertisement(data[0] || null);
+      setList(data);
+    });
+  }, [response, handleResponse]);
+
+  const getResponse = useCallback(async () => {
     const currentResponse = AdvertisementsMock({ page: currentPage });
-    setResponse(() => currentResponse);
+    setResponse(currentResponse);
 
     return new Promise<IApiAdvertisementItem[]>((resolve) => {
       setTimeout(() => {
         resolve(currentResponse.data);
       }, 1);
     });
-  };
+  }, [currentPage]);
 
   useEffect(() => {
     getResponse();
-  }, []);
+  }, [getResponse]);
 
   const filteredAndSortedData = useMemo(() => {
     return list
