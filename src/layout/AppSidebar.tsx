@@ -21,6 +21,7 @@ import {
   TaskIcon,
   UserCircleIcon,
 } from "../icons/index";
+import { BsWindowStack } from "react-icons/bs";
 import SidebarWidget from "./SidebarWidget";
 
 type NavItem = {
@@ -40,6 +41,14 @@ const navItems: NavItem[] = [
       { name: "Marketing", path: "/marketing", pro: true },
       { name: "CRM", path: "/crm", pro: true },
       { name: "Stocks", path: "/stocks", new: true, pro: true },
+    ],
+  },
+  {
+    icon: <BsWindowStack size={25} />,
+    name: "Publicidade",
+    subItems: [
+      { name: "Anúncios", path: "/advertisements", pro: false },
+      { name: "Métricas", path: "/analytics", pro: true },
     ],
   },
   {
