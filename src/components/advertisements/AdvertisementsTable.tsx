@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -11,142 +11,37 @@ import {
 import { AngleDownIcon, AngleUpIcon } from "@/icons";
 import Image from "next/image";
 import AdvertisementsTablePaginationWithIcon from "./AdvertisementsTablePaginationWithIcon";
-
-const tableRowData = [
-  {
-    id: 1,
-    user: {
-      image: "/images/user/user-20.jpg",
-      name: "Abram Schleifer",
-    },
-    position: "Sales Assistant",
-    location: "Edinburgh",
-    age: 57,
-    date: "25 Apr, 2027",
-    salary: "$89,500",
-  },
-  {
-    id: 2,
-    user: {
-      image: "/images/user/user-21.jpg",
-      name: "Charlotte Anderson",
-    },
-    position: "Marketing Manager",
-    location: "London",
-    age: 42,
-    date: "12 Mar, 2025",
-    salary: "$105,000",
-  },
-  {
-    id: 3,
-    user: {
-      image: "/images/user/user-22.jpg",
-      name: "Ethan Brown",
-    },
-    position: "Software Engineer",
-    location: "San Francisco",
-    age: 30,
-    date: "01 Jan, 2024",
-    salary: "$120,000",
-  },
-  {
-    id: 4,
-    user: {
-      image: "/images/user/user-23.jpg",
-      name: "Sophia Martinez",
-    },
-    position: "Product Manager",
-    location: "New York",
-    age: 35,
-    date: "15 Jun, 2026",
-    salary: "$95,000",
-  },
-  {
-    id: 5,
-    user: {
-      image: "/images/user/user-24.jpg",
-      name: "James Wilson",
-    },
-    position: "Data Analyst",
-    location: "Chicago",
-    age: 28,
-    date: "20 Sep, 2025",
-    salary: "$80,000",
-  },
-  {
-    id: 6,
-    user: {
-      image: "/images/user/user-25.jpg",
-      name: "Olivia Johnson",
-    },
-    position: "HR Specialist",
-    location: "Los Angeles",
-    age: 40,
-    date: "08 Nov, 2026",
-    salary: "$75,000",
-  },
-  {
-    id: 7,
-    user: {
-      image: "/images/user/user-26.jpg",
-      name: "William Smith",
-    },
-    position: "Financial Analyst",
-    location: "Seattle",
-    age: 38,
-    date: "03 Feb, 2026",
-    salary: "$88,000",
-  },
-  {
-    id: 8,
-    user: {
-      image: "/images/user/user-27.jpg",
-      name: "Isabella Davis",
-    },
-    position: "UI/UX Designer",
-    location: "Austin",
-    age: 29,
-    date: "18 Jul, 2025",
-    salary: "$92,000",
-  },
-  {
-    id: 9,
-    user: {
-      image: "/images/user/user-28.jpg",
-      name: "Liam Moore",
-    },
-    position: "DevOps Engineer",
-    location: "Boston",
-    age: 33,
-    date: "30 Oct, 2024",
-    salary: "$115,000",
-  },
-  {
-    id: 10,
-    user: {
-      image: "/images/user/user-29.jpg",
-      name: "Mia Garcia",
-    },
-    position: "Content Strategist",
-    location: "Denver",
-    age: 27,
-    date: "12 Dec, 2027",
-    salary: "$70,000",
-  },
-];
-
-type SortKey = "name" | "position" | "location" | "age" | "date" | "salary";
-type SortOrder = "asc" | "desc";
+import { IApiAdvertisementItem } from "@/backend/api/api.interface";
+import { AdSortKey } from "@/interfaces/ads";
+import { SortOrder } from "@/interfaces/sort";
+import { AdvertisementsMock } from "@/backend/mock/advertisements";
 
 export default function AdvertisementsTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [sortKey, setSortKey] = useState<SortKey>("name");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [sortKey, setSortKey] = useState<AdSortKey>(AdSortKey.title);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.ASC);
   const [searchTerm, setSearchTerm] = useState("");
+  const [list, setList] = useState<IApiAdvertisementItem[]>([]);
+
+  const getData = async () => {
+    const response = AdvertisementsMock({ page: currentPage });
+
+    return new Promise<IApiAdvertisementItem[]>((resolve) => {
+      setTimeout(() => {
+        resolve(response.data);
+      }, 1);
+    });
+  };
+
+  useEffect(() => {
+    getData().then((data) => {
+      setList(data);
+    });
+  }, []);
 
   const filteredAndSortedData = useMemo(() => {
-    return tableRowData
+    return list
       .filter((item) =>
         Object.values(item).some(
           (value) =>
@@ -155,21 +50,28 @@ export default function AdvertisementsTable() {
         )
       )
       .sort((a, b) => {
-        if (sortKey === "name") {
-          return sortOrder === "asc"
-            ? a.user.name.localeCompare(b.user.name)
-            : b.user.name.localeCompare(a.user.name);
+        if (!a[sortKey] || !b[sortKey]) return 0;
+
+        if (sortKey === AdSortKey.title) {
+          return sortOrder === SortOrder.ASC
+            ? a.title.localeCompare(b.title)
+            : b.title.localeCompare(a.title);
         }
-        if (sortKey === "salary") {
-          const salaryA = Number.parseInt(a[sortKey].replace(/\$|,/g, ""));
-          const salaryB = Number.parseInt(b[sortKey].replace(/\$|,/g, ""));
-          return sortOrder === "asc" ? salaryA - salaryB : salaryB - salaryA;
+
+        if (
+          sortKey === AdSortKey.start_date ||
+          sortKey === AdSortKey.end_date
+        ) {
+          const dateA = new Date(a[sortKey]).getTime();
+          const dateB = new Date(b[sortKey]).getTime();
+          return sortOrder === SortOrder.ASC ? dateA - dateB : dateB - dateA;
         }
-        return sortOrder === "asc"
+
+        return sortOrder === SortOrder.ASC
           ? String(a[sortKey]).localeCompare(String(b[sortKey]))
           : String(b[sortKey]).localeCompare(String(a[sortKey]));
       });
-  }, [sortKey, sortOrder, searchTerm]);
+  }, [list, sortKey, sortOrder, searchTerm]);
 
   const totalItems = filteredAndSortedData.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -178,18 +80,20 @@ export default function AdvertisementsTable() {
     setCurrentPage(page);
   };
 
-  const handleSort = (key: SortKey) => {
+  const handleSort = (key: AdSortKey) => {
     if (sortKey === key) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+      setSortOrder(
+        sortOrder === SortOrder.ASC ? SortOrder.DESC : SortOrder.ASC
+      );
     } else {
       setSortKey(key);
-      setSortOrder("asc");
+      setSortOrder(SortOrder.ASC);
     }
   };
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-  const currentData = filteredAndSortedData.slice(startIndex, endIndex);
+  //   const currentData = filteredAndSortedData.slice(startIndex, endIndex);
 
   return (
     <div className="overflow-hidden bg-white dark:bg-white/[0.03] rounded-xl">
@@ -269,12 +173,12 @@ export default function AdvertisementsTable() {
             <TableHeader className="border-t border-gray-100 dark:border-white/[0.05]">
               <TableRow>
                 {[
-                  { key: "name", label: "User" },
-                  { key: "position", label: "Position" },
-                  { key: "location", label: "Office" },
-                  { key: "age", label: "Age" },
-                  { key: "date", label: "Start Date" },
-                  { key: "salary", label: "Salary" },
+                  { key: AdSortKey.title, label: "Titulo" },
+                  { key: AdSortKey.type, label: "Tipo" },
+                  { key: AdSortKey.start_date, label: "Data inicial" },
+                  { key: AdSortKey.end_date, label: "Data final" },
+                  { key: AdSortKey.status, label: "Status" },
+                  { key: AdSortKey.seconds, label: "Segundos" },
                 ].map(({ key, label }) => (
                   <TableCell
                     key={key}
@@ -283,7 +187,7 @@ export default function AdvertisementsTable() {
                   >
                     <div
                       className="flex items-center justify-between cursor-pointer"
-                      onClick={() => handleSort(key as SortKey)}
+                      onClick={() => handleSort(key as AdSortKey)}
                     >
                       <p className="font-medium text-gray-700 text-theme-xs dark:text-gray-400">
                         {label}
@@ -310,7 +214,7 @@ export default function AdvertisementsTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {currentData.map((item, i) => (
+              {[...filteredAndSortedData].map((item, i) => (
                 <TableRow key={i + 1}>
                   <TableCell className="px-4 py-3 border border-gray-100 dark:border-white/[0.05] whitespace-nowrap">
                     <div className="flex items-center gap-3">
@@ -318,31 +222,31 @@ export default function AdvertisementsTable() {
                         <Image
                           width={40}
                           height={40}
-                          src={item.user.image || "/placeholder.svg"}
-                          alt="user"
+                          src={item.items[0].source || "/placeholder.svg"}
+                          alt="title"
                         />
                       </div>
                       <div>
                         <span className="block font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                          {item.user.name}
+                          {item.title}
                         </span>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
-                    {item.position}
+                    {item.type}
                   </TableCell>
                   <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
-                    {item.location}
+                    {item.start_date}
                   </TableCell>
                   <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
-                    {item.age}
+                    {item.end_date}
                   </TableCell>
                   <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
-                    {item.date}
+                    {item.status}
                   </TableCell>
                   <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
-                    {item.salary}
+                    {item.seconds}
                   </TableCell>
                 </TableRow>
               ))}

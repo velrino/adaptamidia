@@ -25,6 +25,7 @@ export interface IApiUserResponse {
 
 export interface IApiAdvertisementResponse {
   total: number;
+  limit: number;
   pages: number;
   page: number;
   data: IApiAdvertisementItem[];

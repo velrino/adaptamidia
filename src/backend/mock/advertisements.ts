@@ -1,10 +1,72 @@
+import { faker } from "@faker-js/faker";
 import { AdStatus, AdType } from "@/interfaces/ads";
 import { IApiAdvertisementResponse } from "../api/api.interface";
 
-export const Advertisements: IApiAdvertisementResponse = {
+export const AdvertisementsMock = ({
+  page,
+}: {
+  page: number;
+}): IApiAdvertisementResponse => {
+  const advertisementsMockRandom = Array.from(
+    { length: faker.number.int({ min: 20, max: 30 }) },
+    () => {
+      const items = Array.from({ length: 3 }, () => ({
+        title: faker.commerce.productName(),
+        description: faker.commerce.productDescription(),
+        seconds: faker.number.int({ min: 5, max: 10 }),
+        source: `/images/ads/${faker.number.int({ min: 1, max: 9 })}.jpg`,
+        type: AdType.IMAGE,
+      }));
+
+      const totalSeconds = items.reduce((sum, item) => sum + item.seconds, 0);
+
+      return {
+        company: faker.company.name(),
+        title: faker.company.catchPhrase(), //faker.word.words({ count: { min: 5, max: 10 } })
+        type: AdType.IMAGE,
+        items: Array.from({ length: 2 }, () => ({
+          title: faker.commerce.productName(),
+          description: faker.commerce.productDescription(),
+          seconds: faker.number.int({ min: 20, max: 50 }),
+          source: `/images/ads/${faker.number.int({ min: 1, max: 9 })}.jpg`,
+          type: AdType.IMAGE,
+        })),
+        seconds: totalSeconds,
+        status: faker.helpers.arrayElement([
+          AdStatus.ACTIVE,
+          AdStatus.INACTIVE,
+          AdStatus.REVIEW,
+        ]),
+        start_date: faker.date.past().toISOString(),
+        end_date: faker.date.future().toISOString(),
+        _id: faker.string.uuid(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    }
+  );
+
+  const limit = 10;
+  const total = advertisementsMockRandom.length;
+  const pages = Math.ceil(total / limit);
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+  const paginatedData = advertisementsMockRandom.slice(startIndex, endIndex);
+
+  return {
+    total,
+    page,
+    pages,
+    limit,
+    data: paginatedData,
+  };
+};
+
+export const AdvertisementsMockData: IApiAdvertisementResponse = {
   total: 30,
   page: 10,
   pages: 10,
+  limit: 10,
   data: [
     {
       company: "5f7932c1a123456789012345",
@@ -15,14 +77,14 @@ export const Advertisements: IApiAdvertisementResponse = {
           title: "Item 1",
           description: "Description for Item 1",
           seconds: 5,
-          source: "/ads/1.jpg",
+          source: "/images/ads/1.jpg",
           type: AdType.IMAGE,
         },
         {
           title: "Item 2",
           description: "Description for Item 2",
           seconds: 10,
-          source: "/ads/1.jpg",
+          source: "/images/ads/2.jpg",
           type: AdType.IMAGE,
         },
       ],

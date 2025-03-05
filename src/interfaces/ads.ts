@@ -10,6 +10,16 @@ export enum AdStatus {
   ARCHIVED = "ARCHIVED",
 }
 
+export enum AdSortKey {
+  company = "company",
+  title = "title",
+  type = "type",
+  status = "status",
+  seconds = "seconds",
+  start_date = "start_date",
+  end_date = "end_date",
+}
+
 export interface IAdvertisementFormItem {
   id: string;
   title: string;
