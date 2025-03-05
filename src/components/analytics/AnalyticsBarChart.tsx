@@ -122,7 +122,7 @@ export default function AnalyticsBarChart() {
             Analytics
           </h3>
           <span className="block text-gray-500 text-theme-sm dark:text-gray-400">
-            Exibições nos últimos 30 days
+            Exibições nos últimos 30 dias
           </span>
         </div>
         <ChartTab />

@@ -51,7 +51,8 @@ export default function HomeComponent() {
         <MonthlyTarget />
       </div>
 
-      <div className="col-span-12">
+      <div className="col-span-12 grid grid-cols-2 gap-4">
+        <StatisticsChart />
         <StatisticsChart />
       </div>
 
