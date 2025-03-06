@@ -211,7 +211,7 @@ export default function AdvertisementModalAbout(
 
           <div className="relative">
             <MultiSelect
-              label="Multiple Select Options"
+              label="Audiências"
               options={audienceOptions}
               defaultSelected={formData.audience}
               onChange={(values) => {
