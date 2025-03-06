@@ -4,55 +4,22 @@ import {
   IApiAdvertisementItem,
   IApiAdvertisementResponse,
 } from "@/backend/api/api.interface";
-import { AdvertisementsMock } from "@/backend/mock/advertisements";
+import {
+  AdvertisementsMock,
+  AdvertisementsMockData,
+} from "@/backend/mock/advertisements";
 import { AdType } from "@/interfaces/ads";
-import { useSearchParams } from "next/navigation";
+// import { useSearchParams } from "next/navigation";
 import React, { useState, useEffect, useCallback } from "react";
-
-// interface Ad {
-//   url: string;
-//   title: string;
-//   description: string;
-//   seconds: number;
-//   advertisement: boolean;
-//   type: AdType;
-// }
+import { AdsSidebar } from "./AdsSidebar";
+import { DateHelper, DateHelperFormat } from "@/utils/date";
+import { faker } from "@faker-js/faker";
 
 interface AdStat {
   index: number;
-  //   views: number;
   count: number;
   timestamps: string[];
 }
-
-// const fetchedAds: Ad[] = [
-//   {
-//     url: "/images/ads/1.jpg",
-//     title: "Example",
-//     description:
-//       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla facilisi. Sed at felis sit amet justo sodales malesuada vitae at erat. Curabitur dignissim, urna et sollicitudin venenatis, felis ligula varius nisl, vel facilisis lacus nunc a justo. Ut ultricies, magna ut laoreet fermentum, nulla sapien iaculis elit, sit amet facilisis nisi erat quis elit. Suspendisse potenti. Phasellus nec metus non elit luctus vehicula vel at orci.",
-//     seconds: 3,
-//     advertisement: true,
-//     type: AdType.IMAGE,
-//   },
-//   {
-//     url: "/images/ads/3.mp4",
-//     title: "Second Example",
-//     description:
-//       "Ad 1 Lorem Ipsum ad 1 test for title example remeber another test for title example remeber another test for title example remeber",
-//     seconds: 3,
-//     advertisement: false,
-//     type: AdType.VIDEO,
-//   },
-//   {
-//     url: "/images/ads/2.jpg",
-//     title: "Another Example",
-//     description: "Ad 3 teste short text for example how display",
-//     seconds: 3,
-//     advertisement: false,
-//     type: AdType.IMAGE,
-//   },
-// ];
 
 const sendAPI = () => {
   const storedData = JSON.parse(localStorage.getItem("adStats") || "[]");
@@ -84,13 +51,15 @@ const AdDisplay: React.FC<{
   ad: IApiAdvertisementItem;
   advertisement: boolean;
 }> = ({ ad, advertisement }) => {
+  const dolar = faker.number.float({ min: 5, max: 6, fractionDigits: 2 });
+
   return (
     <div
       className={`relative h-full ${
         advertisement ? "w-9/12" : "w-full"
       } bg-black flex items-center justify-center overflow-hidden`}
     >
-      <div className="absolute top-20 text-white text-2xl bg-orange-500 px-4 py-2 z-50 rounded-r-sm left-0">
+      <div className="absolute top-20 text-white text-2xl bg-brand-500 px-4 py-2 z-50 rounded-r-sm left-0">
         {ad.title}
       </div>
       {ad.type === AdType.VIDEO ? (
@@ -111,25 +80,33 @@ const AdDisplay: React.FC<{
       <div className="absolute bottom-52 text-white text-2xl bg-black bg-opacity-75 px-4 py-2 rounded-sm mx-10">
         {ad.description}
       </div>
-      <footer className="absolute bottom-0 left-0 right-0 h-16 flex items-center justify-between bg-black bg-opacity-75 text-white text-xl">
-        <div className="bg-blue-500 px-4 py-2">Dolar Aqui</div>
-        <div className="bg-orange-500 px-4 py-2">Tempo Aqui</div>
-        <div className="bg-red-500 px-4 py-2">Horas Aqui</div>
+      <footer className="absolute bottom-0 left-0 right-0 h-16 flex items-center justify-between bg-brand-500 bg-opacity-75 text-white text-xl">
+        <div className=" px-4 py-2">
+          {new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+            currencyDisplay: "narrowSymbol",
+          }).format(dolar)}
+        </div>
+        <div className=" px-4 py-2">Info Aqui</div>
+        <div className=" px-4 py-2">
+          {DateHelper.format(new Date(), DateHelperFormat.TIME)}
+        </div>
       </footer>
     </div>
   );
 };
 
 export default function AdsComponent() {
-  const searchParams = useSearchParams();
-  const accessToken = searchParams.get("access_token") || null;
-  const preview = searchParams.get("preview") || null;
+  //   const searchParams = useSearchParams();
+  //   const accessToken = searchParams.get("access_token") || null;
+  //   const preview = searchParams.get("preview") || null;
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [advertisement, setAdvertisement] = useState(true);
 
-  useEffect(() => {
-    console.log({ accessToken, preview });
-  }, [accessToken, preview]);
+  //   useEffect(() => {
+  //     console.log({ accessToken, preview });
+  //   }, [accessToken, preview]);
 
   const [list, setList] = useState<IApiAdvertisementItem[]>([]);
   const [response, setResponse] = useState<IApiAdvertisementResponse>();
@@ -148,7 +125,7 @@ export default function AdsComponent() {
     if (!response) return;
 
     handleResponse().then((data) => {
-      setList(data);
+      setList([...AdvertisementsMockData.data, ...data]);
     });
   }, [response, handleResponse]);
 
@@ -170,13 +147,14 @@ export default function AdsComponent() {
   useEffect(() => {
     if (list.length) {
       const currentAd = list[currentAdIndex];
-      const seconds = 3; //currentAd.seconds
+      const seconds = 5; //currentAd.seconds
       updateAdStats(currentAdIndex);
       console.log({ currentAd: currentAd.seconds });
 
       const timer = setTimeout(() => {
         const nextIndex = (currentAdIndex + 1) % list.length;
-        setAdvertisement(() => list[nextIndex].spotlight);
+        // setAdvertisement(() => list[nextIndex].spotlight);
+        setAdvertisement(() => true);
         sendAPI();
         setCurrentAdIndex(nextIndex);
       }, seconds * 1000);
@@ -188,9 +166,10 @@ export default function AdsComponent() {
   return (
     <div className="h-screen w-screen flex">
       {advertisement && (
-        <div className="relative h-full w-3/12 z-50 bg-red-600 flex items-center justify-center text-white text-3xl">
-          Anuncio Aqui
-        </div>
+        // <div className="relative h-full w-3/12 z-50 bg-red-600 flex items-center justify-center text-white text-3xl">
+        //   Anuncio Aqui
+        // </div>
+        <AdsSidebar />
       )}
       {list.length >= 1 && (
         <AdDisplay ad={list[currentAdIndex]} advertisement={advertisement} />
