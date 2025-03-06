@@ -1,5 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect } from "react";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { AdvertisementModalCommonProps } from "./interface";
