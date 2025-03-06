@@ -52,6 +52,16 @@ const AdDisplay: React.FC<{
   advertisement: boolean;
 }> = ({ ad, advertisement }) => {
   const dolar = faker.number.float({ min: 5, max: 6, fractionDigits: 2 });
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Update the exchange rate and time every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date()); // Update the time
+    }, 1000);
+
+    return () => clearInterval(interval); // Clear the interval when the component unmounts
+  }, []);
 
   return (
     <div
@@ -90,7 +100,7 @@ const AdDisplay: React.FC<{
         </div>
         <div className=" px-4 py-2">Info Aqui</div>
         <div className=" px-4 py-2">
-          {DateHelper.format(new Date(), DateHelperFormat.TIME)}
+          {DateHelper.format(currentTime, DateHelperFormat.TIME)}
         </div>
       </footer>
     </div>
