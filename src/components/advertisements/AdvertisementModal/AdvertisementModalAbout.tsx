@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { AdvertisementModalCommonProps } from "./interface";
@@ -9,7 +9,9 @@ import { useDynamicForm } from "@/utils/form";
 import { DateHelper, DateHelperFormat, DateInputStyle } from "@/utils/date";
 import { CalenderIcon } from "@/icons";
 import Flatpickr from "react-flatpickr";
-import MultiSelect from "@/components/form/MultiSelect";
+import MultiSelect, { Option } from "@/components/form/MultiSelect";
+import { AudienceOptionsMock } from "@/backend/mock/advertisements";
+import { AdsAudience } from "@/interfaces/ads";
 
 interface IDefaultFormReport {
   start_date: string;
@@ -21,14 +23,6 @@ const defaultFormReport: IDefaultFormReport = {
   end_date: String(),
 };
 
-const multiOptions = [
-  { value: "1", text: "Option 1", selected: false },
-  { value: "2", text: "Option 2", selected: false },
-  { value: "3", text: "Option 3", selected: false },
-  { value: "4", text: "Option 4", selected: false },
-  { value: "5", text: "Option 5", selected: false },
-];
-
 export default function AdvertisementModalAbout(
   params: AdvertisementModalCommonProps
 ) {
@@ -37,6 +31,8 @@ export default function AdvertisementModalAbout(
 
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
+  const [audienceOptions, setAudienceOptions] = useState<Option[]>([]);
+  const [audienceSelected, setAudienceSelected] = useState<AdsAudience[]>([]);
   const [formReport, setFormReport] = useState<IDefaultFormReport>({
     ...defaultFormReport,
   });
@@ -131,6 +127,20 @@ export default function AdvertisementModalAbout(
     }
   };
 
+  const handleApiAudience = useCallback(async (): Promise<Option[]> => {
+    return new Promise<Option[]>((resolve) => {
+      setTimeout(() => {
+        resolve(AudienceOptionsMock);
+      }, 1);
+    });
+  }, []);
+
+  useEffect(() => {
+    handleApiAudience().then((data) => {
+      setAudienceOptions(data);
+    });
+  }, [handleApiAudience]);
+
   return (
     <>
       {formData && (
@@ -199,17 +209,20 @@ export default function AdvertisementModalAbout(
             </div>
           )}
 
-          {/* <div className="relative">
+          <div className="relative">
             <MultiSelect
               label="Multiple Select Options"
-              options={multiOptions}
-              defaultSelected={["1", "3"]}
-              onChange={(values) => setSelectedValues(values)}
+              options={audienceOptions}
+              defaultSelected={formData.audience}
+              onChange={(values) => {
+                setAudienceSelected(values as AdsAudience[]);
+                handleChange("audience", values);
+              }}
             />
             <p className="sr-only">
-              Selected Values: {selectedValues.join(", ")}
+              Selected Values: {audienceOptions.join(", ")}
             </p>
-          </div> */}
+          </div>
         </div>
       )}
     </>

@@ -20,6 +20,19 @@ export enum AdSortKey {
   end_date = "end_date",
 }
 
+export enum AdsAudience {
+  EXECUTIVES = "executives",
+  TOURISTS = "tourists",
+  PASSENGERS = "passengers",
+  DRIVERS = "drivers",
+  STUDENTS = "students",
+  CONSUMERS = "consumers",
+  FANS = "fans",
+  PARTYGOERS = "partygoers",
+  SHOPPERS = "shoppers",
+  ATHLETES = "athletes",
+}
+
 export interface IAdvertisementFormItem {
   id: string;
   title: string;

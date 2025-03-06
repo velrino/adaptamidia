@@ -1,6 +1,12 @@
 import { faker } from "@faker-js/faker";
-import { AdStatus, AdType } from "@/interfaces/ads";
+import { AdsAudience, AdStatus, AdType } from "@/interfaces/ads";
 import { IApiAdvertisementResponse } from "../api/api.interface";
+
+const getRandomAudiences = (min = 1, max = 9): AdsAudience[] => {
+  return Array.from({ length: faker.number.int({ min, max }) }, () =>
+    faker.helpers.arrayElement(Object.values(AdsAudience))
+  );
+};
 
 export const AdvertisementsMock = ({
   page,
@@ -42,6 +48,7 @@ export const AdvertisementsMock = ({
         _id: faker.string.uuid(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        audience: getRandomAudiences(),
       };
     }
   );
@@ -95,6 +102,20 @@ export const AdvertisementsMockData: IApiAdvertisementResponse = {
       _id: "67a1150e9f1be9d226e7cae0",
       created_at: "2025-02-03T19:12:14.377Z",
       updated_at: "2025-02-03T19:12:14.377Z",
+      audience: getRandomAudiences(),
     },
   ],
 };
+
+export const AudienceOptionsMock = [
+  { value: AdsAudience.EXECUTIVES, text: "Executivos", selected: false },
+  { value: AdsAudience.TOURISTS, text: "Turistas", selected: false },
+  { value: AdsAudience.PASSENGERS, text: "Passageiros", selected: false },
+  { value: AdsAudience.DRIVERS, text: "Motoristas", selected: false },
+  { value: AdsAudience.STUDENTS, text: "Estudantes", selected: false },
+  { value: AdsAudience.CONSUMERS, text: "Consumidores", selected: false },
+  { value: AdsAudience.FANS, text: "Torcedores", selected: false },
+  { value: AdsAudience.PARTYGOERS, text: "Festeiros", selected: false },
+  { value: AdsAudience.SHOPPERS, text: "Compradores", selected: false },
+  { value: AdsAudience.ATHLETES, text: "Atletas", selected: false },
+];

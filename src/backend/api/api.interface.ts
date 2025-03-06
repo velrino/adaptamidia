@@ -1,4 +1,4 @@
-import { AdStatus, AdType } from "@/interfaces/ads";
+import { AdsAudience, AdStatus, AdType } from "@/interfaces/ads";
 
 export interface IApiToken {
   id: string;
@@ -49,6 +49,7 @@ export interface IApiAdvertisementItem {
   end_date: string;
   created_at: string;
   updated_at: string;
+  audience: AdsAudience[];
 }
 
 export interface IApiUnitItemResponse {
