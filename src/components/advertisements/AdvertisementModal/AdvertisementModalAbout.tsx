@@ -32,8 +32,8 @@ export default function AdvertisementModalAbout(
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [audienceOptions, setAudienceOptions] = useState<Option[]>([]);
-  const [setAudienceSelected] = useState<AdsAudience[]>([]);
-
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [audienceSelected, setAudienceSelected] = useState<AdsAudience[]>([]);
   const [formReport, setFormReport] = useState<IDefaultFormReport>({
     ...defaultFormReport,
   });
