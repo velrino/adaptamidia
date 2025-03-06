@@ -9,6 +9,7 @@ import { useDynamicForm } from "@/utils/form";
 import { DateHelper, DateHelperFormat, DateInputStyle } from "@/utils/date";
 import { CalenderIcon } from "@/icons";
 import Flatpickr from "react-flatpickr";
+import MultiSelect from "@/components/form/MultiSelect";
 
 interface IDefaultFormReport {
   start_date: string;
@@ -19,6 +20,14 @@ const defaultFormReport: IDefaultFormReport = {
   start_date: String(),
   end_date: String(),
 };
+
+const multiOptions = [
+  { value: "1", text: "Option 1", selected: false },
+  { value: "2", text: "Option 2", selected: false },
+  { value: "3", text: "Option 3", selected: false },
+  { value: "4", text: "Option 4", selected: false },
+  { value: "5", text: "Option 5", selected: false },
+];
 
 export default function AdvertisementModalAbout(
   params: AdvertisementModalCommonProps
@@ -86,6 +95,7 @@ export default function AdvertisementModalAbout(
       setStartDate(newStartDate);
       setEndDate(DateHelper.dayjs(newStartDate).add(7, "day").toDate());
       updateFormReport("start_date");
+      handleChange("start_date", newStartDate.toISOString());
     } else {
       updateFormReport(
         "start_date",
@@ -109,6 +119,7 @@ export default function AdvertisementModalAbout(
     if (DateHelper.dayjs(currentDate).isAfter(startDate, "day")) {
       setEndDate(currentDate);
       updateFormReport("end_date");
+      handleChange("end_date", currentDate.toISOString());
     } else {
       updateFormReport(
         "end_date",
@@ -141,9 +152,7 @@ export default function AdvertisementModalAbout(
               <div className="grid gap-6 sm:grid-cols-2">
                 {/* Start Date Picker */}
                 <div>
-                  <Label htmlFor="startDate">
-                    Data inicial {formData.start_date}
-                  </Label>
+                  <Label htmlFor="startDate">Data inicial</Label>
                   <div className="relative w-full flatpickr-wrapper">
                     <Flatpickr
                       options={{
@@ -166,9 +175,7 @@ export default function AdvertisementModalAbout(
 
                 {/* End Date Picker */}
                 <div>
-                  <Label htmlFor="endDate">
-                    Data final {formData.end_date}
-                  </Label>
+                  <Label htmlFor="endDate">Data final</Label>
                   <div className="relative w-full flatpickr-wrapper">
                     <Flatpickr
                       options={{
@@ -191,6 +198,18 @@ export default function AdvertisementModalAbout(
               </div>
             </div>
           )}
+
+          {/* <div className="relative">
+            <MultiSelect
+              label="Multiple Select Options"
+              options={multiOptions}
+              defaultSelected={["1", "3"]}
+              onChange={(values) => setSelectedValues(values)}
+            />
+            <p className="sr-only">
+              Selected Values: {selectedValues.join(", ")}
+            </p>
+          </div> */}
         </div>
       )}
     </>

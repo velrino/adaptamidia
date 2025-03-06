@@ -33,8 +33,7 @@ export default function AdvertisementModal({
   }, [data]);
 
   const callback = (result: IApiAdvertisementItem) => {
-    // console.clear();
-
+    console.clear();
     console.log({ principal: result });
   };
 
