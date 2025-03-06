@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import { AdsAudience, AdStatus, AdType } from "@/interfaces/ads";
 import { IApiAdvertisementResponse } from "../api/api.interface";
 
-const getRandomAudiences = (min = 1, max = 9): AdsAudience[] => {
+const getRandomAudiences = (min = 2, max = 5): AdsAudience[] => {
   return Array.from({ length: faker.number.int({ min, max }) }, () =>
     faker.helpers.arrayElement(Object.values(AdsAudience))
   );

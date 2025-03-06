@@ -243,7 +243,11 @@ export default function AdvertisementsTable() {
               </TableHeader>
               <TableBody>
                 {[...filteredAndSortedData].map((item, i) => (
-                  <TableRow key={i + 1} className="cursor-pointer">
+                  <TableRow
+                    key={i + 1}
+                    className="cursor-pointer"
+                    onClick={() => setCurrentAdvertisement(item)}
+                  >
                     <TableCell className="px-4 py-3 border border-gray-100 dark:border-white/[0.05] whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         {/* Imagem */}

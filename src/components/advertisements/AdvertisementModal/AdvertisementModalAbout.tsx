@@ -32,7 +32,8 @@ export default function AdvertisementModalAbout(
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [audienceOptions, setAudienceOptions] = useState<Option[]>([]);
-  const [audienceSelected, setAudienceSelected] = useState<AdsAudience[]>([]);
+  const [setAudienceSelected] = useState<AdsAudience[]>([]);
+
   const [formReport, setFormReport] = useState<IDefaultFormReport>({
     ...defaultFormReport,
   });
