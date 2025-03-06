@@ -28,8 +28,10 @@ export const AdvertisementsMock = ({
 
       return {
         company: faker.company.name(),
-        title: faker.company.catchPhrase(), //faker.word.words({ count: { min: 5, max: 10 } })
+        title: faker.company.catchPhrase(),
+        description: faker.word.words({ count: { min: 10, max: 30 } }),
         type: AdType.IMAGE,
+        spotlight: Boolean(Math.random() < 0.5),
         items: Array.from({ length: 2 }, () => ({
           title: faker.commerce.productName(),
           description: faker.commerce.productDescription(),

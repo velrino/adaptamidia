@@ -1,17 +1,22 @@
 "use client";
 
+import {
+  IApiAdvertisementItem,
+  IApiAdvertisementResponse,
+} from "@/backend/api/api.interface";
+import { AdvertisementsMock } from "@/backend/mock/advertisements";
 import { AdType } from "@/interfaces/ads";
 import { useSearchParams } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
-interface Ad {
-  url: string;
-  title: string;
-  description: string;
-  seconds: number;
-  advertisement: boolean;
-  type: AdType;
-}
+// interface Ad {
+//   url: string;
+//   title: string;
+//   description: string;
+//   seconds: number;
+//   advertisement: boolean;
+//   type: AdType;
+// }
 
 interface AdStat {
   index: number;
@@ -20,34 +25,34 @@ interface AdStat {
   timestamps: string[];
 }
 
-const fetchedAds: Ad[] = [
-  {
-    url: "/images/ads/1.jpg",
-    title: "Example",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla facilisi. Sed at felis sit amet justo sodales malesuada vitae at erat. Curabitur dignissim, urna et sollicitudin venenatis, felis ligula varius nisl, vel facilisis lacus nunc a justo. Ut ultricies, magna ut laoreet fermentum, nulla sapien iaculis elit, sit amet facilisis nisi erat quis elit. Suspendisse potenti. Phasellus nec metus non elit luctus vehicula vel at orci.",
-    seconds: 3,
-    advertisement: true,
-    type: AdType.IMAGE,
-  },
-  {
-    url: "/images/ads/3.mp4",
-    title: "Second Example",
-    description:
-      "Ad 1 Lorem Ipsum ad 1 test for title example remeber another test for title example remeber another test for title example remeber",
-    seconds: 3,
-    advertisement: false,
-    type: AdType.VIDEO,
-  },
-  {
-    url: "/images/ads/2.jpg",
-    title: "Another Example",
-    description: "Ad 3 teste short text for example how display",
-    seconds: 3,
-    advertisement: false,
-    type: AdType.IMAGE,
-  },
-];
+// const fetchedAds: Ad[] = [
+//   {
+//     url: "/images/ads/1.jpg",
+//     title: "Example",
+//     description:
+//       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla facilisi. Sed at felis sit amet justo sodales malesuada vitae at erat. Curabitur dignissim, urna et sollicitudin venenatis, felis ligula varius nisl, vel facilisis lacus nunc a justo. Ut ultricies, magna ut laoreet fermentum, nulla sapien iaculis elit, sit amet facilisis nisi erat quis elit. Suspendisse potenti. Phasellus nec metus non elit luctus vehicula vel at orci.",
+//     seconds: 3,
+//     advertisement: true,
+//     type: AdType.IMAGE,
+//   },
+//   {
+//     url: "/images/ads/3.mp4",
+//     title: "Second Example",
+//     description:
+//       "Ad 1 Lorem Ipsum ad 1 test for title example remeber another test for title example remeber another test for title example remeber",
+//     seconds: 3,
+//     advertisement: false,
+//     type: AdType.VIDEO,
+//   },
+//   {
+//     url: "/images/ads/2.jpg",
+//     title: "Another Example",
+//     description: "Ad 3 teste short text for example how display",
+//     seconds: 3,
+//     advertisement: false,
+//     type: AdType.IMAGE,
+//   },
+// ];
 
 const sendAPI = () => {
   const storedData = JSON.parse(localStorage.getItem("adStats") || "[]");
@@ -75,10 +80,10 @@ const updateAdStats = (adIndex: number) => {
   localStorage.setItem("adStats", JSON.stringify(stats));
 };
 
-const AdDisplay: React.FC<{ ad: Ad; advertisement: boolean }> = ({
-  ad,
-  advertisement,
-}) => {
+const AdDisplay: React.FC<{
+  ad: IApiAdvertisementItem;
+  advertisement: boolean;
+}> = ({ ad, advertisement }) => {
   return (
     <div
       className={`relative h-full ${
@@ -90,7 +95,7 @@ const AdDisplay: React.FC<{ ad: Ad; advertisement: boolean }> = ({
       </div>
       {ad.type === AdType.VIDEO ? (
         <video
-          src={ad.url}
+          src={ad.items[0].source}
           autoPlay
           loop
           muted
@@ -98,7 +103,7 @@ const AdDisplay: React.FC<{ ad: Ad; advertisement: boolean }> = ({
         ></video>
       ) : (
         <img
-          src={ad.url}
+          src={ad.items[0].source}
           alt={ad.title}
           className="h-full w-full object-cover"
         />
@@ -126,19 +131,59 @@ export default function AdsComponent() {
     console.log({ accessToken, preview });
   }, [accessToken, preview]);
 
+  const [list, setList] = useState<IApiAdvertisementItem[]>([]);
+  const [response, setResponse] = useState<IApiAdvertisementResponse>();
+
+  const handleResponse = useCallback(async (): Promise<
+    IApiAdvertisementItem[]
+  > => {
+    return new Promise<IApiAdvertisementItem[]>((resolve) => {
+      setTimeout(() => {
+        resolve(response?.data || []);
+      }, 1);
+    });
+  }, [response]);
+
   useEffect(() => {
-    const currentAd = fetchedAds[currentAdIndex];
-    updateAdStats(currentAdIndex);
+    if (!response) return;
 
-    const timer = setTimeout(() => {
-      const nextIndex = (currentAdIndex + 1) % fetchedAds.length;
-      setAdvertisement(() => fetchedAds[nextIndex].advertisement);
-      sendAPI();
-      setCurrentAdIndex(nextIndex);
-    }, currentAd.seconds * 1000);
+    handleResponse().then((data) => {
+      setList(data);
+    });
+  }, [response, handleResponse]);
 
-    return () => clearTimeout(timer);
-  }, [currentAdIndex]);
+  const getResponse = useCallback(async () => {
+    const currentResponse = AdvertisementsMock({ page: 1 });
+    setResponse(currentResponse);
+
+    return new Promise<IApiAdvertisementItem[]>((resolve) => {
+      setTimeout(() => {
+        resolve(currentResponse.data);
+      }, 1);
+    });
+  }, []);
+
+  useEffect(() => {
+    getResponse();
+  }, [getResponse]);
+
+  useEffect(() => {
+    if (list.length) {
+      const currentAd = list[currentAdIndex];
+      const seconds = 3; //currentAd.seconds
+      updateAdStats(currentAdIndex);
+      console.log({ currentAd: currentAd.seconds });
+
+      const timer = setTimeout(() => {
+        const nextIndex = (currentAdIndex + 1) % list.length;
+        setAdvertisement(() => list[nextIndex].spotlight);
+        sendAPI();
+        setCurrentAdIndex(nextIndex);
+      }, seconds * 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [list, currentAdIndex]);
 
   return (
     <div className="h-screen w-screen flex">
@@ -147,10 +192,9 @@ export default function AdsComponent() {
           Anuncio Aqui
         </div>
       )}
-      <AdDisplay
-        ad={fetchedAds[currentAdIndex]}
-        advertisement={advertisement}
-      />
+      {list.length >= 1 && (
+        <AdDisplay ad={list[currentAdIndex]} advertisement={advertisement} />
+      )}
     </div>
   );
 }

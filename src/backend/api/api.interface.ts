@@ -35,7 +35,9 @@ export interface IApiAdvertisementItem {
   _id: string;
   company: string;
   title: string;
+  description: string;
   type: AdType;
+  spotlight: boolean;
   items: {
     title: string;
     description: string;
