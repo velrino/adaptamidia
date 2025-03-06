@@ -16,7 +16,7 @@ import {
   IApiAdvertisementResponse,
 } from "@/backend/api/api.interface";
 import { AdSortKey } from "@/interfaces/ads";
-import { SortOrder } from "@/interfaces/sort";
+import { ContentAction, SortOrder } from "@/interfaces/general";
 import { AdvertisementsMock } from "@/backend/mock/advertisements";
 import { faker } from "@faker-js/faker";
 import { DateHelper } from "@/utils/date";
@@ -311,6 +311,7 @@ export default function AdvertisementsTable() {
       </div>
       {currentAdvertisement && (
         <AdvertisementModal
+          action={ContentAction.CREATE}
           data={currentAdvertisement}
           onCloseCallback={() => {
             setCurrentAdvertisement(null);
