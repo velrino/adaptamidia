@@ -32,6 +32,7 @@ export default function AdvertisementModalAbout(
               id="title"
               value={formData?.title}
               onChange={(e) => handleChange("title", e.target.value)}
+              maxLength={100}
             />
           </div>
         </div>
