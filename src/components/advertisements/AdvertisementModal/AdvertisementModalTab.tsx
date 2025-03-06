@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import AdvertisementModalAbout from "./AdvertisementModalAbout";
+import { AdvertisementModalCommonProps } from "./interface";
+import { IApiAdvertisementItem } from "@/backend/api/api.interface";
 
 interface TabButtonProps {
   id: string;
@@ -41,8 +43,14 @@ const tabs = [
   { id: TabsIds.CAMPAIGN, label: "Campanha" },
 ];
 
-const AdvertisementModalTab: React.FC = () => {
+const AdvertisementModalTab = (params: AdvertisementModalCommonProps) => {
   const [currentTab, setCurrentTab] = useState<TabsIds>(TabsIds.ABOUT);
+
+  const callback = (result: IApiAdvertisementItem) => {
+    if (params.onCallback) {
+      params.onCallback(result);
+    }
+  };
 
   return (
     <div>
@@ -59,7 +67,13 @@ const AdvertisementModalTab: React.FC = () => {
       </nav>
 
       <div className="pt-4 dark:border-gray-800">
-        {currentTab === TabsIds.ABOUT && <AdvertisementModalAbout />}
+        {currentTab === TabsIds.ABOUT && (
+          <AdvertisementModalAbout
+            action={params.action}
+            data={params.data}
+            onCallback={callback}
+          />
+        )}
         {/* {tabs.map((tab) => (
           <TabContent
             key={tab.id}

@@ -32,6 +32,13 @@ export default function AdvertisementModal({
     setRecord(() => data);
   }, [data]);
 
+  const callback = (result: IApiAdvertisementItem) => {
+    console.clear();
+    console.log({ data: JSON.stringify(result) });
+
+    console.log({ principal: result });
+  };
+
   return (
     <Modal
       isOpen={true}
@@ -47,7 +54,13 @@ export default function AdvertisementModal({
       {/* END CONTENT */}
       {/* START CONTENT */}
       <div className="flex-grow overflow-y-auto overflow-x-hidden min-h-[50vh] max-h-[75vh]">
-        <AdvertisementModalTab />
+        {record && (
+          <AdvertisementModalTab
+            action={action}
+            data={record}
+            onCallback={callback}
+          />
+        )}
       </div>
       {/* END CONTENT */}
       {/* START FOOTER */}
