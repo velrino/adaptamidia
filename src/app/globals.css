@@ -637,3 +637,9 @@ layer(base);
 .flatpickr-current-month {
   @apply text-lg font-semibold;
 }
+
+.flatpickr-disabled {
+  opacity: 0.25 !important; /* Mantém a visibilidade */
+  pointer-events: none !important; /* Desativa cliques */
+  cursor: not-allowed !important; /* Mantém o cursor normal */
+}

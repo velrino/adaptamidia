@@ -33,8 +33,7 @@ export default function AdvertisementModal({
   }, [data]);
 
   const callback = (result: IApiAdvertisementItem) => {
-    console.clear();
-    console.log({ data: JSON.stringify(result) });
+    // console.clear();
 
     console.log({ principal: result });
   };
@@ -44,7 +43,7 @@ export default function AdvertisementModal({
       isOpen={true}
       onClose={handleClose}
       showCloseButton={false}
-      className="min-w-[95vw] max-w-[95vw] min-h-[95vh] p-6 lg:p-10"
+      className="min-w-[95vw] max-w-[95vw] min-h-[95vh] p-6 lg:p-10 flex flex-col"
     >
       {/* HEADER CONTENT */}
       <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90 sm:text-title-sm">
@@ -52,8 +51,9 @@ export default function AdvertisementModal({
         {action === ContentAction.UPDATE && "Editar Anúncio"}
       </h4>
       {/* END CONTENT */}
+
       {/* START CONTENT */}
-      <div className="flex-grow overflow-y-auto overflow-x-hidden min-h-[50vh] max-h-[75vh]">
+      <div className="flex-grow overflow-y-auto overflow-x-hidden min-h-[75vh] max-h-[75vh]">
         {record && (
           <AdvertisementModalTab
             action={action}
@@ -63,6 +63,7 @@ export default function AdvertisementModal({
         )}
       </div>
       {/* END CONTENT */}
+
       {/* START FOOTER */}
       <div>
         <div className="flex items-center justify-center w-full gap-3 mt-8">
@@ -70,7 +71,7 @@ export default function AdvertisementModal({
             Cancelar
           </Button>
           <Button size="sm" onClick={handleClose}>
-            Save Changes
+            Salvar
           </Button>
         </div>
       </div>
