@@ -13,6 +13,13 @@ interface Ad {
   type: AdType;
 }
 
+interface AdStat {
+  index: number;
+  //   views: number;
+  count: number;
+  timestamps: string[];
+}
+
 const fetchedAds: Ad[] = [
   {
     url: "/images/ads/1.jpg",
@@ -48,8 +55,13 @@ const sendAPI = () => {
 };
 
 const updateAdStats = (adIndex: number) => {
-  const stats = JSON.parse(localStorage.getItem("adStats") || "[]");
-  const adStatIndex = stats.findIndex((stat: any) => stat.index === adIndex);
+  const stats: AdStat[] = JSON.parse(
+    localStorage.getItem("adStats") || "[]"
+  ) as AdStat[];
+  const adStatIndex = (stats || []).findIndex(
+    (stat: AdStat) => stat.index === adIndex
+  );
+
   if (adStatIndex > -1) {
     stats[adStatIndex].count += 1;
     stats[adStatIndex].timestamps.push(new Date().toISOString());
