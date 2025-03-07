@@ -3,17 +3,14 @@
 import {
   IApiAdvertisementItem,
   IApiAdvertisementResponse,
-  IApiNewsResponseItem,
 } from "@/backend/api/api.interface";
 import {
   AdvertisementsMock,
   AdvertisementsMockData,
 } from "@/backend/mock/advertisements";
 import React, { useState, useEffect, useCallback } from "react";
-import { AdsSidebar } from "./AdsSidebar";
 import { newsMockData } from "@/backend/mock/news";
 import { ShuffleArray } from "@/utils/generic";
-import { DisplayContent } from "./DisplayContent";
 import {
   AdsCurrentType,
   DisplayThemes,
@@ -21,42 +18,9 @@ import {
   IDisplayTheme,
 } from "@/interfaces/ads";
 import { useSearchParams } from "next/navigation";
-
-interface AdStat {
-  index: number;
-  count: number;
-  timestamps: string[];
-}
-
-const sendAPI = () => {
-  const storedData = JSON.parse(localStorage.getItem("adStats") || "[]");
-  console.log("Sending data to API:", storedData);
-};
-
-const updateAdStats = (adIndex: number) => {
-  const stats: AdStat[] = JSON.parse(
-    localStorage.getItem("adStats") || "[]"
-  ) as AdStat[];
-  const adStatIndex = (stats || []).findIndex(
-    (stat: AdStat) => stat.index === adIndex
-  );
-
-  if (adStatIndex > -1) {
-    stats[adStatIndex].count += 1;
-    stats[adStatIndex].timestamps.push(new Date().toISOString());
-  } else {
-    stats.push({
-      index: adIndex,
-      count: 1,
-      timestamps: [new Date().toISOString()],
-    });
-  }
-  localStorage.setItem("adStats", JSON.stringify(stats));
-};
+import { Display } from "./Display";
 
 export default function AdsComponent() {
-  const [currentAdIndex, setCurrentAdIndex] = useState(0);
-  const [advertisement, setAdvertisement] = useState(true);
   const [theme, setTheme] = useState<IDisplayTheme>(DisplayThemes.green);
 
   const searchParams = useSearchParams();
@@ -73,7 +37,6 @@ export default function AdsComponent() {
   }, [accessToken, preview, themeInformed]);
 
   const [list, setList] = useState<IAdsCurrentItem[]>([]);
-  const [currentDisplay, setCurrentDisplay] = useState<IAdsCurrentItem>();
   const [response, setResponse] = useState<IApiAdvertisementResponse>();
 
   const handleResponse = useCallback(async (): Promise<
@@ -126,47 +89,5 @@ export default function AdsComponent() {
     getResponse();
   }, [getResponse]);
 
-  useEffect(() => {
-    if (list.length) {
-      const currentItem = list[currentAdIndex];
-      setCurrentDisplay(() => currentItem);
-
-      let seconds = 3; //currentAd.seconds
-      if (currentItem.type === AdsCurrentType.ADVERTISEMENT) {
-        currentItem.data = currentItem.data as IApiAdvertisementItem;
-        seconds = 3; //currentItem?.data?.seconds || 5;
-      }
-
-      if (currentItem.type === AdsCurrentType.NEWS) {
-        currentItem.data = currentItem.data as IApiNewsResponseItem;
-      }
-
-      updateAdStats(currentAdIndex);
-
-      console.log({ type: currentItem.type, currentAd: seconds });
-
-      const timer = setTimeout(() => {
-        const nextIndex = (currentAdIndex + 1) % list.length;
-        // setAdvertisement(() => list[nextIndex].spotlight);
-        setAdvertisement(() => true);
-        sendAPI();
-        setCurrentAdIndex(nextIndex);
-      }, seconds * 1000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [list, currentAdIndex]);
-
-  return (
-    <div className="h-screen w-screen flex">
-      {advertisement && <AdsSidebar theme={theme} />}
-      {currentDisplay && (
-        <DisplayContent
-          item={currentDisplay}
-          advertisement={advertisement}
-          theme={theme}
-        />
-      )}
-    </div>
-  );
+  return <Display list={list} theme={theme} preview={false} />;
 }

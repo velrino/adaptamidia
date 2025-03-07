@@ -8,18 +8,28 @@ import {
 } from "@/interfaces/ads";
 import React, { useState, useEffect } from "react";
 import { DateHelper, DateHelperFormat } from "@/utils/date";
-import { faker } from "@faker-js/faker";
 import {
   IApiAdvertisementItem,
   IApiNewsResponseItem,
 } from "@/backend/api/api.interface";
 
-export const DisplayContent: React.FC<{
-  item: IAdsCurrentItem;
+export interface IDisplayResources {
+  dolar: number;
   theme: IDisplayTheme;
+}
+
+export interface IDisplayContent {
+  item: IAdsCurrentItem;
   advertisement: boolean;
-}> = ({ item, theme, advertisement }) => {
-  const dolar = faker.number.float({ min: 5, max: 6, fractionDigits: 2 });
+  resources: IDisplayResources;
+}
+
+export const DisplayContent: React.FC<IDisplayContent> = ({
+  item,
+  resources,
+  advertisement,
+}) => {
+  const { theme, dolar } = resources;
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Update the exchange rate and time every second
