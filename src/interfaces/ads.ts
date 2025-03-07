@@ -35,6 +35,66 @@ export interface IAdsCurrentItem {
   data: IApiAdvertisementItem | IApiNewsResponseItem;
 }
 
+export interface IDisplayTheme {
+  primary: string;
+  text: string;
+  secondary: string;
+  description: string;
+  description_text: string;
+}
+
+export const DisplayThemes: { [key: string]: IDisplayTheme } = {
+  brand: {
+    primary: "bg-brand-500",
+    secondary: "bg-brand-600",
+    text: "text-white",
+    description: "bg-black",
+    description_text: "text-white",
+  },
+  green: {
+    primary: "bg-green-500",
+    secondary: "bg-green-600",
+    text: "text-white",
+    description: "bg-green-950",
+    description_text: "text-white",
+  },
+  violet: {
+    primary: "bg-violet-500",
+    secondary: "bg-violet-600",
+    text: "text-white",
+    description: "bg-violet-950",
+    description_text: "text-white",
+  },
+  cyan: {
+    primary: "bg-cyan-500",
+    secondary: "bg-cyan-600",
+    text: "text-white",
+    description: "bg-cyan-950",
+    description_text: "text-white",
+  },
+  red: {
+    primary: "bg-red-500",
+    secondary: "bg-red-600",
+    text: "text-white",
+    description: "bg-red-950",
+    description_text: "text-white",
+  },
+  pink: {
+    primary: "bg-pink-500",
+    secondary: "bg-pink-600",
+    text: "text-white",
+    description: "bg-pink-950",
+    description_text: "text-white",
+  },
+  orange: {
+    primary: "bg-orange-500",
+    secondary: "bg-orange-600",
+    text: "text-white",
+    description: "bg-orange-950",
+    description_text: "text-white",
+  },
+};
+
 export enum AdsAudience {
   EXECUTIVES = "executives",
   TOURISTS = "tourists",

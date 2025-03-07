@@ -1,6 +1,9 @@
+import { IDisplayTheme } from "@/interfaces/ads";
 import React, { useState, useEffect } from "react";
 
-export const AdsSidebar = () => {
+export const AdsSidebar: React.FC<{
+  theme: IDisplayTheme;
+}> = ({ theme }) => {
   const [dateInfo, setDateInfo] = useState({ day: "", date: "" });
   const [location, setLocation] = useState("Localizando...");
   const [temperature, setTemperature] = useState<number>(0);
@@ -52,10 +55,14 @@ export const AdsSidebar = () => {
   }, []);
 
   return (
-    <div className="relative h-full w-2/12 z-50 flex items-center justify-center text-white text-3xl bg-brand-500">
-      <div className=" h-screen text-white flex flex-col items-center p-6 w-full">
+    <div
+      className={`relative h-full w-2/12 z-50 flex items-center justify-center text-white text-3xl bg-brand-500 ${theme.primary} ${theme.text}`}
+    >
+      <div className="h-screen text-white flex flex-col items-center p-6 w-full">
         <div className="my-auto  w-full">
-          <div className="w-full bg-brand-600 p-4 rounded-lg mb-10">
+          <div
+            className={`w-full bg-brand-600 p-4 rounded-lg mb-10 ${theme.secondary} ${theme.text}`}
+          >
             <div className="text-center">
               <p className="text-lg capitalize">
                 {dateInfo.day} | {dateInfo.date}
@@ -97,7 +104,9 @@ export const AdsSidebar = () => {
               </div>
             </div>
           </div>
-          <div className="w-full bg-brand-600 p-4 rounded-lg">
+          <div
+            className={`w-full bg-brand-600 p-4 rounded-lg ${theme.secondary} ${theme.text}`}
+          >
             <h3 className="text-lg font-semibold">SEA FORECAST REPORT</h3>
             <ul className="text-sm mt-2 space-y-1">
               <li>

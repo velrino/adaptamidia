@@ -1,6 +1,11 @@
 "use client";
 
-import { AdsCurrentType, AdType, IAdsCurrentItem } from "@/interfaces/ads";
+import {
+  AdsCurrentType,
+  AdType,
+  IAdsCurrentItem,
+  IDisplayTheme,
+} from "@/interfaces/ads";
 import React, { useState, useEffect } from "react";
 import { DateHelper, DateHelperFormat } from "@/utils/date";
 import { faker } from "@faker-js/faker";
@@ -11,8 +16,9 @@ import {
 
 export const DisplayContent: React.FC<{
   item: IAdsCurrentItem;
+  theme: IDisplayTheme;
   advertisement: boolean;
-}> = ({ item, advertisement }) => {
+}> = ({ item, theme, advertisement }) => {
   const dolar = faker.number.float({ min: 5, max: 6, fractionDigits: 2 });
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -41,11 +47,15 @@ export const DisplayContent: React.FC<{
         advertisement ? "w-10/12" : "w-full"
       } bg-black flex items-center justify-center overflow-hidden`}
     >
-      <div className="absolute top-20 text-white text-2xl bg-brand-500 px-4 py-2 z-50 rounded-r-sm left-0">
+      <div
+        className={`absolute top-20 text-white text-2xl bg-brand-500 px-4 py-2 z-50 rounded-r-sm left-0 ${theme.primary} ${theme.text}`}
+      >
         {item.data.title}
       </div>
       {"source_name" in item.data && (
-        <div className="absolute top-35 text-white text-2xl bg-brand-600 px-4 py-2 z-50 rounded-r-sm left-0">
+        <div
+          className={`absolute top-35 text-white text-2xl bg-brand-600 px-4 py-2 z-50 rounded-r-sm left-0 ${theme.secondary} ${theme.text}`}
+        >
           {item.data.source_name.toLowerCase()}
         </div>
       )}
@@ -69,10 +79,14 @@ export const DisplayContent: React.FC<{
           className="h-full w-full object-cover"
         />
       )}
-      <div className="absolute bottom-30 text-white text-2xl bg-black bg-opacity-75 px-4 py-2 rounded-sm mx-10">
+      <div
+        className={`absolute bottom-30 text-white text-2xl bg-black bg-opacity-75 px-4 py-2 rounded-sm mx-10 ${theme.description} ${theme.description_text}`}
+      >
         {item.data.description}
       </div>
-      <footer className="absolute bottom-0 left-0 right-0 h-16 flex items-center justify-between bg-brand-500 bg-opacity-75 text-white text-xl">
+      <footer
+        className={`absolute bottom-0 left-0 right-0 h-16 flex items-center justify-between bg-brand-500 bg-opacity-75 text-white text-xl ${theme.primary} ${theme.text}`}
+      >
         <div className=" px-4 py-2">
           {new Intl.NumberFormat("en-US", {
             style: "currency",

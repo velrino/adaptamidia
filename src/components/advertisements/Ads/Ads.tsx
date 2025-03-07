@@ -14,7 +14,13 @@ import { AdsSidebar } from "./AdsSidebar";
 import { newsMockData } from "@/backend/mock/news";
 import { ShuffleArray } from "@/utils/generic";
 import { DisplayContent } from "./DisplayContent";
-import { AdsCurrentType, IAdsCurrentItem } from "@/interfaces/ads";
+import {
+  AdsCurrentType,
+  DisplayThemes,
+  IAdsCurrentItem,
+  IDisplayTheme,
+} from "@/interfaces/ads";
+import { useSearchParams } from "next/navigation";
 
 interface AdStat {
   index: number;
@@ -49,15 +55,22 @@ const updateAdStats = (adIndex: number) => {
 };
 
 export default function AdsComponent() {
-  //   const searchParams = useSearchParams();
-  //   const accessToken = searchParams.get("access_token") || null;
-  //   const preview = searchParams.get("preview") || null;
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [advertisement, setAdvertisement] = useState(true);
+  const [theme, setTheme] = useState<IDisplayTheme>(DisplayThemes.green);
 
-  //   useEffect(() => {
-  //     console.log({ accessToken, preview });
-  //   }, [accessToken, preview]);
+  const searchParams = useSearchParams();
+  const accessToken = searchParams.get("access_token") || null;
+  const preview = searchParams.get("preview") || null;
+  const themeInformed = searchParams.get("theme") || "green";
+
+  useEffect(() => {
+    if (DisplayThemes[themeInformed]) {
+      setTheme(DisplayThemes[themeInformed]);
+    } else {
+      setTheme(DisplayThemes.green);
+    }
+  }, [accessToken, preview, themeInformed]);
 
   const [list, setList] = useState<IAdsCurrentItem[]>([]);
   const [currentDisplay, setCurrentDisplay] = useState<IAdsCurrentItem>();
@@ -146,9 +159,13 @@ export default function AdsComponent() {
 
   return (
     <div className="h-screen w-screen flex">
-      {advertisement && <AdsSidebar />}
+      {advertisement && <AdsSidebar theme={theme} />}
       {currentDisplay && (
-        <DisplayContent item={currentDisplay} advertisement={advertisement} />
+        <DisplayContent
+          item={currentDisplay}
+          advertisement={advertisement}
+          theme={theme}
+        />
       )}
     </div>
   );
