@@ -1,5 +1,11 @@
 import { AdsAudience, AdStatus, AdType } from "@/interfaces/ads";
 
+export interface IApiPaginateParameters {
+  page: number;
+  limit: number;
+  cache: boolean;
+}
+
 export interface IApiToken {
   id: string;
   iat: number;
@@ -80,4 +86,31 @@ export interface IApiUnitsResponse {
   pages: number;
   page: number;
   data: IApiUnitItemResponse[];
+}
+
+export interface IApiNewsResponseItem {
+  _id: string;
+  provider: string;
+  language: string;
+  keyword: string;
+  source_id: string | null;
+  source_name: string;
+  author: string;
+  title: string;
+  description: string;
+  url: string;
+  image: string;
+  published_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IApiNewsResponse {
+  from: string;
+  total: number;
+  pages: number;
+  page: number;
+  provider: string | null;
+  parameters: IApiPaginateParameters;
+  data: IApiNewsResponseItem[];
 }

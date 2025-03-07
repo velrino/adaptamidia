@@ -3,17 +3,17 @@
 import {
   IApiAdvertisementItem,
   IApiAdvertisementResponse,
+  IApiNewsResponseItem,
 } from "@/backend/api/api.interface";
 import {
   AdvertisementsMock,
   AdvertisementsMockData,
 } from "@/backend/mock/advertisements";
-import { AdType } from "@/interfaces/ads";
-// import { useSearchParams } from "next/navigation";
 import React, { useState, useEffect, useCallback } from "react";
 import { AdsSidebar } from "./AdsSidebar";
-import { DateHelper, DateHelperFormat } from "@/utils/date";
-import { faker } from "@faker-js/faker";
+import { AdDisplay } from "./AdsDisplay";
+import { newsMockData } from "@/backend/mock/news";
+import { DisplayNews } from "./DisplayNews";
 
 interface AdStat {
   index: number;
@@ -47,65 +47,17 @@ const updateAdStats = (adIndex: number) => {
   localStorage.setItem("adStats", JSON.stringify(stats));
 };
 
-const AdDisplay: React.FC<{
-  ad: IApiAdvertisementItem;
-  advertisement: boolean;
-}> = ({ ad, advertisement }) => {
-  const dolar = faker.number.float({ min: 5, max: 6, fractionDigits: 2 });
-  const [currentTime, setCurrentTime] = useState(new Date());
+enum CurrentType {
+  ADVERTISEMENT = "ADVERTISEMENT",
+  NEWS = "NEWS",
+}
 
-  // Update the exchange rate and time every second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date()); // Update the time
-    }, 1000);
-
-    return () => clearInterval(interval); // Clear the interval when the component unmounts
-  }, []);
-
-  return (
-    <div
-      className={`relative h-full ${
-        advertisement ? "w-9/12" : "w-full"
-      } bg-black flex items-center justify-center overflow-hidden`}
-    >
-      <div className="absolute top-20 text-white text-2xl bg-brand-500 px-4 py-2 z-50 rounded-r-sm left-0">
-        {ad.title}
-      </div>
-      {ad.type === AdType.VIDEO ? (
-        <video
-          src={ad.items[0].source}
-          autoPlay
-          loop
-          muted
-          className="h-full w-full object-cover"
-        ></video>
-      ) : (
-        <img
-          src={ad.items[0].source}
-          alt={ad.title}
-          className="h-full w-full object-cover"
-        />
-      )}
-      <div className="absolute bottom-52 text-white text-2xl bg-black bg-opacity-75 px-4 py-2 rounded-sm mx-10">
-        {ad.description}
-      </div>
-      <footer className="absolute bottom-0 left-0 right-0 h-16 flex items-center justify-between bg-brand-500 bg-opacity-75 text-white text-xl">
-        <div className=" px-4 py-2">
-          {new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-            currencyDisplay: "narrowSymbol",
-          }).format(dolar)}
-        </div>
-        <div className=" px-4 py-2">Info Aqui</div>
-        <div className=" px-4 py-2">
-          {DateHelper.format(currentTime, DateHelperFormat.TIME)}
-        </div>
-      </footer>
-    </div>
-  );
-};
+interface ICurrentItem {
+  type: CurrentType;
+  data: IApiAdvertisementItem | IApiNewsResponseItem;
+}
+//   | { type: CurrentType.ADVERTISEMENT; data: IApiAdvertisementItem }
+//   | { type: CurrentType.NEWS; data: IApiNewsResponseItem };
 
 export default function AdsComponent() {
   //   const searchParams = useSearchParams();
@@ -118,7 +70,8 @@ export default function AdsComponent() {
   //     console.log({ accessToken, preview });
   //   }, [accessToken, preview]);
 
-  const [list, setList] = useState<IApiAdvertisementItem[]>([]);
+  const [list, setList] = useState<ICurrentItem[]>([]);
+  const [currentDisplay, setCurrentDisplay] = useState<ICurrentItem>();
   const [response, setResponse] = useState<IApiAdvertisementResponse>();
 
   const handleResponse = useCallback(async (): Promise<
@@ -135,7 +88,15 @@ export default function AdsComponent() {
     if (!response) return;
 
     handleResponse().then((data) => {
-      setList([...AdvertisementsMockData.data, ...data]);
+      const ads = [...AdvertisementsMockData.data, ...data].map((item) => ({
+        data: item,
+        type: CurrentType.ADVERTISEMENT,
+      }));
+      const news = [...newsMockData.data].map((item) => ({
+        data: item,
+        type: CurrentType.NEWS,
+      }));
+      setList([...news, ...ads]);
     });
   }, [response, handleResponse]);
 
@@ -156,10 +117,22 @@ export default function AdsComponent() {
 
   useEffect(() => {
     if (list.length) {
-      const currentAd = list[currentAdIndex];
-      const seconds = 5; //currentAd.seconds
+      const currentItem = list[currentAdIndex];
+      setCurrentDisplay(() => currentItem);
+
+      let seconds = 5; //currentAd.seconds
+      if (currentItem.type === CurrentType.ADVERTISEMENT) {
+        currentItem.data = currentItem.data as IApiAdvertisementItem;
+        seconds = currentItem?.data?.seconds || 5;
+      }
+
+      if (currentItem.type === CurrentType.NEWS) {
+        currentItem.data = currentItem.data as IApiNewsResponseItem;
+      }
+
       updateAdStats(currentAdIndex);
-      console.log({ currentAd: currentAd.seconds });
+
+      console.log({ type: currentItem.type, currentAd: seconds });
 
       const timer = setTimeout(() => {
         const nextIndex = (currentAdIndex + 1) % list.length;
@@ -175,14 +148,22 @@ export default function AdsComponent() {
 
   return (
     <div className="h-screen w-screen flex">
-      {advertisement && (
-        // <div className="relative h-full w-3/12 z-50 bg-red-600 flex items-center justify-center text-white text-3xl">
-        //   Anuncio Aqui
-        // </div>
-        <AdsSidebar />
-      )}
-      {list.length >= 1 && (
-        <AdDisplay ad={list[currentAdIndex]} advertisement={advertisement} />
+      {advertisement && <AdsSidebar />}
+      {currentDisplay && (
+        <>
+          {currentDisplay.type === CurrentType.ADVERTISEMENT && (
+            <AdDisplay
+              ad={currentDisplay.data as IApiAdvertisementItem}
+              advertisement={advertisement}
+            />
+          )}
+          {currentDisplay.type === CurrentType.NEWS && (
+            <DisplayNews
+              item={currentDisplay.data as IApiNewsResponseItem}
+              advertisement={advertisement}
+            />
+          )}
+        </>
       )}
     </div>
   );
