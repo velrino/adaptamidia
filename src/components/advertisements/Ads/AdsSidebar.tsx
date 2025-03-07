@@ -52,7 +52,7 @@ export const AdsSidebar = () => {
   }, []);
 
   return (
-    <div className="relative h-full w-3/12 z-50 flex items-center justify-center text-white text-3xl bg-brand-500">
+    <div className="relative h-full w-2/12 z-50 flex items-center justify-center text-white text-3xl bg-brand-500">
       <div className=" h-screen text-white flex flex-col items-center p-6 w-full">
         <div className="my-auto  w-full">
           <div className="w-full bg-brand-600 p-4 rounded-lg mb-10">

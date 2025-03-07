@@ -1,3 +1,8 @@
+import {
+  IApiAdvertisementItem,
+  IApiNewsResponseItem,
+} from "@/backend/api/api.interface";
+
 export enum AdType {
   IMAGE = "IMAGE",
   VIDEO = "VIDEO",
@@ -18,6 +23,16 @@ export enum AdSortKey {
   seconds = "seconds",
   start_date = "start_date",
   end_date = "end_date",
+}
+
+export enum AdsCurrentType {
+  ADVERTISEMENT = "ADVERTISEMENT",
+  NEWS = "NEWS",
+}
+
+export interface IAdsCurrentItem {
+  type: AdsCurrentType;
+  data: IApiAdvertisementItem | IApiNewsResponseItem;
 }
 
 export enum AdsAudience {

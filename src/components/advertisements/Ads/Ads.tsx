@@ -11,9 +11,10 @@ import {
 } from "@/backend/mock/advertisements";
 import React, { useState, useEffect, useCallback } from "react";
 import { AdsSidebar } from "./AdsSidebar";
-import { AdDisplay } from "./AdsDisplay";
 import { newsMockData } from "@/backend/mock/news";
-import { DisplayNews } from "./DisplayNews";
+import { ShuffleArray } from "@/utils/generic";
+import { DisplayContent } from "./DisplayContent";
+import { AdsCurrentType, IAdsCurrentItem } from "@/interfaces/ads";
 
 interface AdStat {
   index: number;
@@ -47,18 +48,6 @@ const updateAdStats = (adIndex: number) => {
   localStorage.setItem("adStats", JSON.stringify(stats));
 };
 
-enum CurrentType {
-  ADVERTISEMENT = "ADVERTISEMENT",
-  NEWS = "NEWS",
-}
-
-interface ICurrentItem {
-  type: CurrentType;
-  data: IApiAdvertisementItem | IApiNewsResponseItem;
-}
-//   | { type: CurrentType.ADVERTISEMENT; data: IApiAdvertisementItem }
-//   | { type: CurrentType.NEWS; data: IApiNewsResponseItem };
-
 export default function AdsComponent() {
   //   const searchParams = useSearchParams();
   //   const accessToken = searchParams.get("access_token") || null;
@@ -70,8 +59,8 @@ export default function AdsComponent() {
   //     console.log({ accessToken, preview });
   //   }, [accessToken, preview]);
 
-  const [list, setList] = useState<ICurrentItem[]>([]);
-  const [currentDisplay, setCurrentDisplay] = useState<ICurrentItem>();
+  const [list, setList] = useState<IAdsCurrentItem[]>([]);
+  const [currentDisplay, setCurrentDisplay] = useState<IAdsCurrentItem>();
   const [response, setResponse] = useState<IApiAdvertisementResponse>();
 
   const handleResponse = useCallback(async (): Promise<
@@ -88,15 +77,24 @@ export default function AdsComponent() {
     if (!response) return;
 
     handleResponse().then((data) => {
-      const ads = [...AdvertisementsMockData.data, ...data].map((item) => ({
+      const example = [...AdvertisementsMockData.data].map((item) => ({
         data: item,
-        type: CurrentType.ADVERTISEMENT,
+        type: AdsCurrentType.ADVERTISEMENT,
+      }));
+      const ads = [...data].map((item) => ({
+        data: item,
+        type: AdsCurrentType.ADVERTISEMENT,
       }));
       const news = [...newsMockData.data].map((item) => ({
         data: item,
-        type: CurrentType.NEWS,
+        type: AdsCurrentType.NEWS,
       }));
-      setList([...news, ...ads]);
+
+      const combinedList = [...news, ...ads];
+
+      const shuffledList = ShuffleArray(combinedList);
+
+      setList(() => [...example, ...shuffledList]);
     });
   }, [response, handleResponse]);
 
@@ -120,13 +118,13 @@ export default function AdsComponent() {
       const currentItem = list[currentAdIndex];
       setCurrentDisplay(() => currentItem);
 
-      let seconds = 5; //currentAd.seconds
-      if (currentItem.type === CurrentType.ADVERTISEMENT) {
+      let seconds = 3; //currentAd.seconds
+      if (currentItem.type === AdsCurrentType.ADVERTISEMENT) {
         currentItem.data = currentItem.data as IApiAdvertisementItem;
-        seconds = currentItem?.data?.seconds || 5;
+        seconds = 3; //currentItem?.data?.seconds || 5;
       }
 
-      if (currentItem.type === CurrentType.NEWS) {
+      if (currentItem.type === AdsCurrentType.NEWS) {
         currentItem.data = currentItem.data as IApiNewsResponseItem;
       }
 
@@ -150,20 +148,7 @@ export default function AdsComponent() {
     <div className="h-screen w-screen flex">
       {advertisement && <AdsSidebar />}
       {currentDisplay && (
-        <>
-          {currentDisplay.type === CurrentType.ADVERTISEMENT && (
-            <AdDisplay
-              ad={currentDisplay.data as IApiAdvertisementItem}
-              advertisement={advertisement}
-            />
-          )}
-          {currentDisplay.type === CurrentType.NEWS && (
-            <DisplayNews
-              item={currentDisplay.data as IApiNewsResponseItem}
-              advertisement={advertisement}
-            />
-          )}
-        </>
+        <DisplayContent item={currentDisplay} advertisement={advertisement} />
       )}
     </div>
   );

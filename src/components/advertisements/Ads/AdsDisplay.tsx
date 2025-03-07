@@ -26,7 +26,7 @@ export const AdDisplay: React.FC<{
   return (
     <div
       className={`relative h-full ${
-        advertisement ? "w-9/12" : "w-full"
+        advertisement ? "w-10/12" : "w-full"
       } bg-black flex items-center justify-center overflow-hidden`}
     >
       <div className="absolute top-20 text-white text-2xl bg-brand-500 px-4 py-2 z-50 rounded-r-sm left-0">
@@ -47,7 +47,7 @@ export const AdDisplay: React.FC<{
           className="h-full w-full object-cover"
         />
       )}
-      <div className="absolute bottom-52 text-white text-2xl bg-black bg-opacity-75 px-4 py-2 rounded-sm mx-10">
+      <div className="absolute bottom-30 text-white text-2xl bg-black bg-opacity-75 px-4 py-2 rounded-sm mx-10">
         {ad.description}
       </div>
       <footer className="absolute bottom-0 left-0 right-0 h-16 flex items-center justify-between bg-brand-500 bg-opacity-75 text-white text-xl">
