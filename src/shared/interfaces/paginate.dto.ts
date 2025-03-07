@@ -8,6 +8,11 @@ import {
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
+export enum FromEnum {
+  DB = 'DB',
+  CACHE = 'CACHE',
+}
+
 export enum SortEnum {
   ASC = 'asc',
   DESC = 'desc',
