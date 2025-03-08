@@ -37,6 +37,15 @@ export interface IApiAdvertisementResponse {
   data: IApiAdvertisementItem[];
 }
 
+export interface IApiAdvertisementItemItem {
+  id?: string;
+  title: string;
+  description: string;
+  seconds: number;
+  source: string;
+  type: AdType;
+}
+
 export interface IApiAdvertisementItem {
   _id: string;
   company: string;
@@ -44,13 +53,7 @@ export interface IApiAdvertisementItem {
   description: string;
   type: AdType;
   spotlight: boolean;
-  items: {
-    title: string;
-    description: string;
-    seconds: number;
-    source: string;
-    type: AdType;
-  }[];
+  items: IApiAdvertisementItemItem[];
   seconds: number;
   status: AdStatus;
   start_date: string;

@@ -42,7 +42,7 @@ export default function AdvertisementModal({
       isOpen={true}
       onClose={handleClose}
       showCloseButton={false}
-      className="min-w-[95vw] max-w-[95vw] min-h-[95vh] p-6 lg:p-10 flex flex-col"
+      className="min-w-[100vw] max-w-[100vw] min-h-[100vh] p-6 lg:p-10 flex flex-col rounded-none"
     >
       {/* HEADER CONTENT */}
       <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90 sm:text-title-sm">
@@ -52,7 +52,7 @@ export default function AdvertisementModal({
       {/* END CONTENT */}
 
       {/* START CONTENT */}
-      <div className="flex-grow overflow-y-auto overflow-x-hidden min-h-[75vh] max-h-[75vh]">
+      <div className="flex-grow overflow-y-auto overflow-x-hidden min-h-[80vh] max-h-[80vh]">
         {record && (
           <AdvertisementModalTab
             action={action}

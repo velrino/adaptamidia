@@ -55,7 +55,7 @@ export interface IDisplay {
 
 export function Display({ list, theme, preview }: IDisplay) {
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
-  const [advertisement, setAdvertisement] = useState(true);
+  const [advertisement, setAdvertisement] = useState(false);
   const [dolar, setDolar] = useState<number>(0);
 
   const [currentDisplay, setCurrentDisplay] = useState<IAdsCurrentItem>();
@@ -91,7 +91,7 @@ export function Display({ list, theme, preview }: IDisplay) {
 
       const timer = setTimeout(() => {
         const nextIndex = (currentAdIndex + 1) % list.length;
-        setAdvertisement(() => true);
+        setAdvertisement(() => false);
 
         setCurrentAdIndex(nextIndex);
 

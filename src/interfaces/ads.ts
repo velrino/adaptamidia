@@ -109,7 +109,7 @@ export enum AdsAudience {
 }
 
 export interface IAdvertisementFormItem {
-  id: string;
+  id?: string;
   title: string;
   description: string;
   seconds: number;

@@ -4,6 +4,9 @@ import React, { useState } from "react";
 import AdvertisementModalAbout from "./AdvertisementModalAbout";
 import { AdvertisementModalCommonProps } from "./interface";
 import { IApiAdvertisementItem } from "@/backend/api/api.interface";
+import { AdvertisementComponent } from "./AdvertisementModalItems";
+import { Display } from "../Ads/Display";
+import { AdsCurrentType, DisplayThemes } from "@/interfaces/ads";
 
 interface TabButtonProps {
   id: string;
@@ -44,7 +47,7 @@ const tabs = [
 ];
 
 const AdvertisementModalTab = (params: AdvertisementModalCommonProps) => {
-  const [currentTab, setCurrentTab] = useState<TabsIds>(TabsIds.ABOUT);
+  const [currentTab, setCurrentTab] = useState<TabsIds>(TabsIds.ADS);
 
   const callback = (result: IApiAdvertisementItem) => {
     if (params.onCallback) {
@@ -73,6 +76,29 @@ const AdvertisementModalTab = (params: AdvertisementModalCommonProps) => {
             data={params.data}
             onCallback={callback}
           />
+        )}
+        {currentTab === TabsIds.ADS && (
+          <>
+            <div className="grid grid-cols-2 gap-4 p-4">
+              <div className=" text-white text-center">
+                <AdvertisementComponent
+                  items={[...params.data.items, ...params.data.items]}
+                />
+              </div>
+              <div className=" text-white flex justify-center text-center max-h-0">
+                <div className="scale-47">
+                  <Display
+                    list={[params.data].map((item) => ({
+                      data: item,
+                      type: AdsCurrentType.ADVERTISEMENT,
+                    }))}
+                    theme={DisplayThemes.brand}
+                    preview={false}
+                  />
+                </div>
+              </div>
+            </div>
+          </>
         )}
         {/* {tabs.map((tab) => (
           <TabContent

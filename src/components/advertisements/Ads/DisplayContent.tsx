@@ -12,6 +12,7 @@ import {
   IApiAdvertisementItem,
   IApiNewsResponseItem,
 } from "@/backend/api/api.interface";
+import { CiCloud } from "react-icons/ci";
 
 export interface IDisplayResources {
   dolar: number;
@@ -58,18 +59,23 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
       } bg-black flex items-center justify-center overflow-hidden`}
     >
       <div
-        className={`absolute top-20 text-white text-2xl bg-brand-500 px-4 py-2 z-50 rounded-r-sm left-0 ${theme.primary} ${theme.text}`}
+        className={`absolute bottom-50 text-white text-4xl bg-black/75 px-4 py-2 z-50 rounded-r-sm left-0 w-[75vw]`}
       >
-        {item.data.title}
+        {item.data.title.toUpperCase()}
       </div>
-      {"source_name" in item.data && (
+
+      {/* {"source_name" in item.data && (
         <div
-          className={`absolute top-35 text-white text-2xl bg-brand-600 px-4 py-2 z-50 rounded-r-sm left-0 ${theme.secondary} ${theme.text}`}
+          className={`absolute bottom-15 text-white text-2xl bg-brand-600 px-4 py-2 z-50 rounded-r-sm right-0 ${theme.secondary} ${theme.text}`}
         >
           {item.data.source_name.toLowerCase()}
         </div>
-      )}
-
+      )} */}
+      <div
+        className={`absolute bottom-20 text-white text-2xl bg-black bg-opacity-75 px-4 py-2 rounded-sm ${theme.description} ${theme.description_text} left-0 w-[75vw]`}
+      >
+        {item.data.description}
+      </div>
       {isAdvertisement && getAdvertisement().type === AdType.VIDEO ? (
         <video
           src={getAdvertisement().items[0].source}
@@ -89,23 +95,24 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
           className="h-full w-full object-cover"
         />
       )}
-      <div
-        className={`absolute bottom-30 text-white text-2xl bg-black bg-opacity-75 px-4 py-2 rounded-sm mx-10 ${theme.description} ${theme.description_text}`}
-      >
-        {item.data.description}
-      </div>
+
       <footer
-        className={`absolute bottom-0 left-0 right-0 h-16 flex items-center justify-between bg-brand-500 bg-opacity-75 text-white text-xl ${theme.primary} ${theme.text}`}
+        className={`absolute bottom-0 left-0 right-0 h-16 flex items-center justify-between bg-black/50 text-white text-xl ${theme.text}`}
       >
-        <div className=" px-4 py-2">
+        <div className="px-4 py-2">
           {new Intl.NumberFormat("en-US", {
             style: "currency",
             currency: "USD",
             currencyDisplay: "narrowSymbol",
           }).format(dolar)}
         </div>
-        <div className=" px-4 py-2">Info Aqui</div>
-        <div className=" px-4 py-2">
+        <div className="px-4 py-2 flex gap-2 align-middle items-center">
+          <div>
+            <CiCloud size={30} />
+          </div>
+          <div>Hoje 31º / 19º</div>
+        </div>
+        <div className="px-4 py-2">
           {DateHelper.format(currentTime, DateHelperFormat.TIME)}
         </div>
       </footer>
