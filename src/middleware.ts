@@ -7,7 +7,7 @@ export const config = {
   ],
 };
 
-const publicRoutes = ["/ads", "/login"];
+const publicRoutes = ["/display", "/login"];
 
 export default async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
