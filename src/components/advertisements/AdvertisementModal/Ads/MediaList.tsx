@@ -20,30 +20,29 @@ import Input from "@/components/form/input/InputField";
 import TextArea from "@/components/form/input/TextArea";
 import { Modal } from "@/components/ui/modal";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 interface ScrollableListProps {
   items: IAdvertisementFormItem[];
   onUpdate: (updatedItems: IAdvertisementFormItem[]) => void;
   onCropComplete: (croppedImage: Blob) => void;
 }
 
-interface AdItemProps extends React.HTMLAttributes<HTMLDivElement> {
-  id: string;
-}
+// interface AdItemProps extends React.HTMLAttributes<HTMLDivElement> {
+//   id: string;
+// }
 
 export const SortableAdItem = forwardRef<HTMLDivElement, any>(
-  (
-    {
-      id,
-      item,
-      index,
-      handleTitleChange,
-      handleSecondsChange,
-      // handleDescriptionChange,
-      onDelete,
-      ...props
-    },
-    ref
-  ) => {
+  ({
+    id,
+    item,
+    index,
+    handleTitleChange,
+    handleSecondsChange,
+    // handleDescriptionChange,
+    onDelete,
+    ...props
+  }) => {
     const { attributes, listeners, setNodeRef, transform, transition } =
       useSortable({ id });
 
@@ -256,7 +255,10 @@ export const AdvertisementItems: React.FC<ScrollableListProps> = ({
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <SortableContext items={items} strategy={horizontalListSortingStrategy}>
+        <SortableContext
+          items={items as any}
+          strategy={horizontalListSortingStrategy}
+        >
           <div
             ref={scrollContainerRef}
             onMouseDown={handleMouseDown}

@@ -13,6 +13,7 @@ import {
   IApiNewsResponseItem,
 } from "@/backend/api/api.interface";
 import { CiCloud } from "react-icons/ci";
+// import Image from "next/image";
 
 export interface IDisplayResources {
   dolar: number;
@@ -30,7 +31,7 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
   resources,
   advertisement,
 }) => {
-  const { theme, dolar } = resources;
+  const { dolar } = resources;
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Update the exchange rate and time every second
@@ -59,9 +60,25 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
       } bg-black flex items-center justify-center overflow-hidden`}
     >
       <div
-        className={`absolute bottom-50 text-white text-4xl bg-black/75 px-4 py-2 z-50 rounded-r-sm left-0 w-[75vw]`}
+        className={`absolute bottom-20 text-white text-4xl py-2 z-50 left-0 w-[85vw] rounded-t-lg`}
       >
-        {item.data.title.toUpperCase()}
+        {/* <div className="bg-neutral-900/[.5] p-5 rounded-t-lg ">
+          {item.data.title.toUpperCase()}
+        </div> */}
+        {!isAdvertisement && (
+          <>
+            {item.data.title && (
+              <div className="bg-neutral-900/[.5] p-5 rounded-t-lg ">
+                {item.data.title.toUpperCase()}
+              </div>
+            )}
+            {item.data.description && (
+              <div className="bg-neutral-900/[.95] p-5 rounded-b-lg">
+                {item.data.description}
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* {"source_name" in item.data && (
@@ -71,10 +88,15 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
           {item.data.source_name.toLowerCase()}
         </div>
       )} */}
-      <div
-        className={`absolute bottom-20 text-white text-2xl bg-black bg-opacity-75 px-4 py-2 rounded-sm ${theme.description} ${theme.description_text} left-0 w-[75vw]`}
+      {/* <div
+        className={`absolute bottom-40 text-white text-3xl bg-neutral-900/[.95] px-4 py-2 rounded-sm  left-0 w-[75vw]`}
       >
         {item.data.description}
+      </div> */}
+      <div className="absolute top-5 left-0 z-[99999] w-50">
+        <div className="bg-neutral-900/[.5] p-5 rounded-t-lg">
+          <img src="/images/logo/logo-dark.png" alt="Logo" />
+        </div>
       </div>
       {isAdvertisement && getAdvertisement().type === AdType.VIDEO ? (
         <video
@@ -96,26 +118,36 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
         />
       )}
 
-      <footer
-        className={`absolute bottom-0 left-0 right-0 h-16 flex items-center justify-between bg-black/50 text-white text-xl ${theme.text}`}
-      >
-        <div className="px-4 py-2">
-          {new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: "USD",
-            currencyDisplay: "narrowSymbol",
-          }).format(dolar)}
+      {/* <div className="absolute bottom-15 right-0 z-[99999] w-50">
+        <div className="bg-neutral-900/[.5] p-5 rounded-t-lg">
+          <img
+            src="/images/logo/logo-dark.png"
+            alt="Logo"
+          />
         </div>
-        <div className="px-4 py-2 flex gap-2 align-middle items-center">
-          <div>
-            <CiCloud size={30} />
+      </div> */}
+      {!isAdvertisement && (
+        <footer
+          className={`absolute bottom-0 left-0 right-0 h-16 flex items-center justify-between bg-neutral-900/[.95] text-white text-xl`}
+        >
+          <div className="px-4 py-2">
+            {new Intl.NumberFormat("en-US", {
+              style: "currency",
+              currency: "USD",
+              currencyDisplay: "narrowSymbol",
+            }).format(dolar)}
           </div>
-          <div>Hoje 31º / 19º</div>
-        </div>
-        <div className="px-4 py-2">
-          {DateHelper.format(currentTime, DateHelperFormat.TIME)}
-        </div>
-      </footer>
+          <div className="px-4 py-2 flex gap-2 align-middle items-center">
+            <div>
+              <CiCloud size={30} />
+            </div>
+            <div>Hoje 31º / 19º</div>
+          </div>
+          <div className="px-4 py-2">
+            {DateHelper.format(currentTime, DateHelperFormat.TIME)}
+          </div>
+        </footer>
+      )}
     </div>
   );
 };

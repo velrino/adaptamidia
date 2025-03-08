@@ -1,6 +1,8 @@
 import type { PointerEvent } from "react";
 import { PointerSensor } from "@dnd-kit/core";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 /**
  * An extended "PointerSensor" that prevent some
  * interactive html element(button, input, textarea, select, option...) from dragging

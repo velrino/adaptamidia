@@ -50,6 +50,7 @@ export interface IApiAdvertisementItem {
   _id: string;
   company: string;
   title: string;
+  // show: boolean;
   description: string;
   type: AdType;
   spotlight: boolean;

@@ -86,7 +86,7 @@ export const AdvertisementsMockData: IApiAdvertisementResponse = {
           title: "Item 1",
           description: "Description for Item 1",
           seconds: 5,
-          source: "/images/ads/1.mp4",
+          source: "/images/ads/4.mp4",
           type: AdType.VIDEO,
         },
         {
