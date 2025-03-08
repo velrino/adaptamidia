@@ -13,6 +13,7 @@ import {
   IApiNewsResponseItem,
 } from "@/backend/api/api.interface";
 import { CiCloud } from "react-icons/ci";
+import Image from "next/image";
 // import Image from "next/image";
 
 export interface IDisplayResources {
@@ -55,57 +56,54 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
 
   return (
     <div
-      className={`relative h-full ${
-        advertisement ? "w-10/12" : "w-full"
-      } bg-black flex items-center justify-center overflow-hidden`}
+      className={`
+        relative h-full 
+        ${advertisement ? "w-10/12" : "w-full"} 
+        bg-black flex items-center justify-center overflow-hidden
+      `}
     >
-      <div
-        className={`absolute bottom-20 text-white text-4xl py-2 z-50 left-0 w-[85vw] rounded-t-lg`}
-      >
-        {/* <div className="bg-neutral-900/[.5] p-5 rounded-t-lg ">
-          {item.data.title.toUpperCase()}
-        </div> */}
-        {!isAdvertisement && (
-          <>
-            {item.data.title && (
-              <div className="bg-neutral-900/[.5] p-5 rounded-t-lg ">
-                {item.data.title.toUpperCase()}
-              </div>
-            )}
-            {item.data.description && (
-              <div className="bg-neutral-900/[.95] p-5 rounded-b-lg">
-                {item.data.description}
-              </div>
-            )}
-          </>
-        )}
+      {/* Logo no topo */}
+      <div className="absolute top-5 left-0 z-[99999]">
+        <div className="bg-neutral-900/50 p-5 rounded-t-lg">
+          <Image
+            src="/images/logo/logo-dark.png"
+            alt="Logo"
+            width={120} // Defina a largura esperada
+            height={40} // Defina a altura esperada
+            className="object-cover"
+          />
+        </div>
       </div>
 
-      {/* {"source_name" in item.data && (
-        <div
-          className={`absolute bottom-15 text-white text-2xl bg-brand-600 px-4 py-2 z-50 rounded-r-sm right-0 ${theme.secondary} ${theme.text}`}
-        >
-          {item.data.source_name.toLowerCase()}
+      {/* Título e descrição (se não for anúncio) */}
+      {!isAdvertisement && (
+        <div className="absolute bottom-20 text-white text-4xl py-2 z-50 left-0 w-[85vw]">
+          {item.data.title && (
+            <div className="bg-neutral-900/50 p-5 rounded-t-lg">
+              {item.data.title.toUpperCase()}
+            </div>
+          )}
+          {item.data.description && (
+            <div className="bg-neutral-900/95 p-5 rounded-b-lg">
+              {item.data.description}
+            </div>
+          )}
         </div>
-      )} */}
-      {/* <div
-        className={`absolute bottom-40 text-white text-3xl bg-neutral-900/[.95] px-4 py-2 rounded-sm  left-0 w-[75vw]`}
-      >
-        {item.data.description}
-      </div> */}
-      <div className="absolute top-5 left-0 z-[99999] w-50">
-        <div className="bg-neutral-900/[.5] p-5 rounded-t-lg">
-          <img src="/images/logo/logo-dark.png" alt="Logo" />
-        </div>
-      </div>
+      )}
+
+      {/* Mídia (vídeo ou imagem) */}
       {isAdvertisement && getAdvertisement().type === AdType.VIDEO ? (
         <video
-          src={getAdvertisement().items[0].source}
+          src={
+            isAdvertisement
+              ? getAdvertisement().items[0].source
+              : getNews().image
+          }
           autoPlay
           loop
           muted
           className="h-full w-full object-cover"
-        ></video>
+        />
       ) : (
         <img
           src={
@@ -118,18 +116,9 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
         />
       )}
 
-      {/* <div className="absolute bottom-15 right-0 z-[99999] w-50">
-        <div className="bg-neutral-900/[.5] p-5 rounded-t-lg">
-          <img
-            src="/images/logo/logo-dark.png"
-            alt="Logo"
-          />
-        </div>
-      </div> */}
+      {/* Rodapé (se não for anúncio) */}
       {!isAdvertisement && (
-        <footer
-          className={`absolute bottom-0 left-0 right-0 h-16 flex items-center justify-between bg-neutral-900/[.95] text-white text-xl`}
-        >
+        <footer className="absolute bottom-0 left-0 right-0 h-16 flex items-center justify-between bg-neutral-900/95 text-white text-xl">
           <div className="px-4 py-2">
             {new Intl.NumberFormat("en-US", {
               style: "currency",
@@ -137,11 +126,9 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
               currencyDisplay: "narrowSymbol",
             }).format(dolar)}
           </div>
-          <div className="px-4 py-2 flex gap-2 align-middle items-center">
-            <div>
-              <CiCloud size={30} />
-            </div>
-            <div>Hoje 31º / 19º</div>
+          <div className="px-4 py-2 flex gap-2 items-center">
+            <CiCloud size={30} />
+            <span>Hoje 31º / 19º</span>
           </div>
           <div className="px-4 py-2">
             {DateHelper.format(currentTime, DateHelperFormat.TIME)}
