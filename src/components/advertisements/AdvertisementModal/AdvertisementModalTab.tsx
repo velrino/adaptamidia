@@ -47,7 +47,7 @@ const tabs = [
 ];
 
 const AdvertisementModalTab = (params: AdvertisementModalCommonProps) => {
-  const [currentTab, setCurrentTab] = useState<TabsIds>(TabsIds.ADS);
+  const [currentTab, setCurrentTab] = useState<TabsIds>(TabsIds.ABOUT);
 
   const callback = (result: IApiAdvertisementItem) => {
     if (params.onCallback) {

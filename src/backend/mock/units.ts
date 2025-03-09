@@ -1,0 +1,50 @@
+export const CompanyUnitsMock = {
+  pages: 1,
+  total: 3,
+  data: [
+    {
+      _id: "6796de3524c1872330f3fdf8",
+      company: "6796ac7d663a1463b163c562",
+      name: "Adelino Cardana",
+      address:
+        "R. Adelino Cardana, 431 - Bethaville I, Barueri - SP, 06401-147, Brazil",
+      type: "RESTAURANT",
+      status: "IN_REVIEW",
+      average_visitors: { daily: 100, weekly: 700, monthly: 3000 },
+      max_capacity: 500,
+      location: { type: "Point", coordinates: [-46.867832, -23.5065677] },
+      created_at: "2025-01-27T01:15:33.369Z",
+      updated_at: "2025-01-27T01:15:33.369Z",
+    },
+    {
+      _id: "679d5dfca8552b7809454997",
+      company: "6796ac7d663a1463b163c562",
+      name: "Lorem Ipsum",
+      address:
+        "Alameda Madeira, 258 - Alphaville Industrial, Barueri - SP, 06454-010, Brazil",
+      type: "RESTAURANT",
+      status: "IN_REVIEW",
+      average_visitors: { daily: 100, weekly: 700, monthly: 3000 },
+      max_capacity: 500,
+      location: { type: "Point", coordinates: [-46.8513616, -23.4952052] },
+      created_at: "2025-01-31T23:34:20.133Z",
+      updated_at: "2025-01-31T23:34:20.133Z",
+    },
+    {
+      _id: "679d5e93ec9df5cc0056f9ec",
+      company: "6796ac7d663a1463b163c562",
+      name: "La Ville",
+      address:
+        "Al. Rio Negro, 1286 - Alphaville Industrial, Barueri - SP, 06454-000, Brazil",
+      type: "RESTAURANT",
+      status: "IN_REVIEW",
+      average_visitors: { daily: 100, weekly: 700, monthly: 3000 },
+      max_capacity: 500,
+      location: { type: "Point", coordinates: [-46.8482573, -23.4940666] },
+      created_at: "2025-01-31T23:36:51.812Z",
+      updated_at: "2025-01-31T23:36:51.812Z",
+    },
+  ],
+  limit: 20,
+  page: 0,
+};
