@@ -4,12 +4,13 @@ import { MongoCollection } from 'src/shared/mongo.schema';
 import { CompanyController } from './company.controller';
 import { CreateCompanyService } from './create/create.service';
 import { GetCompanyService } from './get/get.service';
+import { ListCompanyService } from './list/list.service';
 
 @Global()
 @Module({
   imports: [MongooseModule.forFeature([MongoCollection.companies])],
   controllers: [CompanyController],
-  providers: [CreateCompanyService, GetCompanyService],
+  providers: [CreateCompanyService, GetCompanyService, ListCompanyService],
   exports: [GetCompanyService],
 })
 export class CompanyModule {}
