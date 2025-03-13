@@ -7,3 +7,8 @@ export enum ContentAction {
   CREATE = "CREATE",
   UPDATE = "UPDATE",
 }
+
+export interface IReactSelectOption {
+  value: string;
+  label: string;
+}

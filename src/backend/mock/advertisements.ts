@@ -27,7 +27,7 @@ export const AdvertisementsMock = ({
       const totalSeconds = items.reduce((sum, item) => sum + item.seconds, 0);
 
       return {
-        company: faker.company.name(),
+        company: "67d226d9b502526b43e5d1ed",
         title: faker.company.catchPhrase(),
         description: faker.word.words({ count: { min: 10, max: 30 } }),
         type: AdType.IMAGE,
@@ -78,7 +78,7 @@ export const AdvertisementsMockData: IApiAdvertisementResponse = {
   limit: 10,
   data: [
     {
-      company: "5f7932c1a123456789012345",
+      company: "67d226d9b502526b43e5d1ed",
       title: "Example Advertisement video 1",
       type: AdType.VIDEO,
       items: [
@@ -109,7 +109,7 @@ export const AdvertisementsMockData: IApiAdvertisementResponse = {
       audience: getRandomAudiences(),
     },
     {
-      company: "5f7932c1a123456789012345",
+      company: "67d226d9b502526b43e5d1ed",
       title: "Example Advertisement video 2",
       type: AdType.VIDEO,
       items: [

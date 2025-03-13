@@ -22,10 +22,13 @@ import {
   CompanyUnitsMockData,
 } from "@/backend/mock/units";
 import dynamic from "next/dynamic";
-import Select from "react-select";
+import Select, { PropsValue } from "react-select";
 import { CompanyMock, CompanyMockData } from "@/backend/mock/client";
 import { EnumApiCompanyType } from "@/backend/api/api.enum";
 import AdvertisementModalUnits from "./AdvertisementModalUnits";
+import Accordion from "@/components/ui/accordion/Accordion";
+import { IReactSelectOption } from "@/interfaces/general";
+import Spinner from "@/components/ui/spinner/spinner";
 
 const LazyMap = dynamic(() => import("./Ads/Map"), {
   ssr: false,
@@ -99,6 +102,13 @@ export default function AdvertisementModalAbout(
 
     setUnits(() => currentUnits);
   };
+
+  useEffect(() => {
+    const neighborhoods = CompanyUnitsGroupdMock.data.map(
+      (item) => item.neighborhood
+    );
+    updateForm("neighborhood", neighborhoods);
+  }, []);
 
   useEffect(() => {
     filterUnitsByNeighborhood();
@@ -184,6 +194,56 @@ export default function AdvertisementModalAbout(
     handleChange(column, value);
   };
 
+  const [advertiserOptions, setAdvertiserOptions] = useState<
+    IReactSelectOption[]
+  >([]);
+  const [unitsOptions, setUnitsOptions] = useState<IReactSelectOption[]>([]);
+  const [isAdvertiserLoading, setIsAdvertiserLoading] = useState(false);
+  const [isUnitsLoading, setIsUnitsLoading] = useState(false);
+
+  // Fetch and set advertiser options
+  const fetchAdvertiserOptions = useCallback(async () => {
+    setIsAdvertiserLoading(true); // Start loading
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate 500ms delay
+      const companyList = CompanyMockData.filter(
+        (item) => item.type === EnumApiCompanyType.ADVERTISER
+      ).map((item) => ({
+        value: item._id,
+        label: `${item.name} (${item.document})`,
+      }));
+      setAdvertiserOptions(companyList);
+    } catch (error) {
+      console.error("Error fetching advertiser options:", error);
+    } finally {
+      setIsAdvertiserLoading(false); // End loading
+    }
+  }, []);
+
+  // Fetch and set units options
+  const fetchUnitsOptions = useCallback(async () => {
+    setIsUnitsLoading(true); // Start loading
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate 500ms delay
+      const companyUnitList = CompanyUnitsGroupdMock.data
+        .map((item) => ({
+          value: item.neighborhood,
+          label: `${item.city} - ${item.neighborhood}`,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+      setUnitsOptions(companyUnitList);
+    } catch (error) {
+      console.error("Error fetching units options:", error);
+    } finally {
+      setIsUnitsLoading(false); // End loading
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAdvertiserOptions(); // Fetch advertiser options on mount
+    fetchUnitsOptions(); // Fetch units options on mount
+  }, [fetchAdvertiserOptions, fetchUnitsOptions]);
+
   return (
     <>
       <div className="grid gap-6 sm:grid-cols-2">
@@ -193,16 +253,20 @@ export default function AdvertisementModalAbout(
               <div className="col-span-2">
                 <Label htmlFor="title">Anunciante</Label>
                 <Select
-                  options={CompanyMockData.filter(
-                    (item) => item.type === EnumApiCompanyType.ADVERTISER
-                  ).map((item) => ({
-                    value: item._id,
-                    label: `${item.name} (${item.document})`,
-                  }))}
+                  placeholder={`Selecione o Anunciante`}
+                  isDisabled={isAdvertiserLoading}
+                  isLoading={isAdvertiserLoading}
+                  value={
+                    advertiserOptions.find(
+                      (option) => option.value === formData.company
+                    ) || null
+                  }
+                  options={advertiserOptions}
                   onChange={(currentOption) =>
-                    currentOption?.value
-                      ? updateForm("company", currentOption?.value)
-                      : null
+                    updateForm(
+                      "company",
+                      currentOption ? currentOption.value : null
+                    )
                   }
                 />
               </div>
@@ -210,12 +274,15 @@ export default function AdvertisementModalAbout(
                 <Label htmlFor="title">Regiões</Label>
                 <Select
                   isMulti
-                  options={CompanyUnitsGroupdMock.data
-                    .map((item) => ({
-                      value: item.neighborhood,
-                      label: `${item.city} - ${item.neighborhood}`,
-                    }))
-                    .sort((a, b) => a.label.localeCompare(b.label))}
+                  placeholder={`Selecione as regiões`}
+                  isDisabled={isUnitsLoading}
+                  isLoading={isUnitsLoading}
+                  value={
+                    unitsOptions.filter((option) =>
+                      formData.neighborhood?.includes(option.value)
+                    ) || []
+                  }
+                  options={unitsOptions}
                   onChange={(newValue) => {
                     const neighborhoods = newValue.map(
                       (neighborhood) => neighborhood.value
@@ -226,20 +293,11 @@ export default function AdvertisementModalAbout(
               </div>
               <div className="col-span-2">
                 <AdvertisementModalUnits
-                  key={"Estabelecimentos"}
-                  title={"Estabelecimentos"}
+                  title={`Estabelecimentos (${units.length})`}
                   content={units}
                   isOpen={showUnits}
                   toggleAccordion={handleToggleShowUnits}
                 />
-                {/* <Select
-                  options={CompanyMockData.filter(
-                    (item) => item.type === EnumApiCompanyType.ADVERTISER
-                  ).map((item) => ({
-                    value: item._id,
-                    label: `${item.name} (${item.document})`,
-                  }))}
-                />  */}
               </div>
               <div className="col-span-2">
                 <Label htmlFor="title">Título</Label>
