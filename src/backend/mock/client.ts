@@ -1,0 +1,66 @@
+export const CompanyMockData = [
+  {
+    _id: "67d226d9b502526b43e5d1fd",
+    document: "79867048000151",
+    name: "Example",
+    type: "ADVERTISER",
+    created_at: "2025-03-13T00:29:13.659Z",
+    updated_at: "2025-03-13T00:29:13.659Z",
+  },
+  {
+    _id: "67d226d9b502526b43e5d1ed",
+    document: "55661931000122",
+    name: "Velrino",
+    type: "ADVERTISER",
+    created_at: "2025-03-13T00:29:13.659Z",
+    updated_at: "2025-03-13T00:29:13.659Z",
+  },
+  {
+    _id: "67d228068e13c91d607fb6ed",
+    document: "21206201000110",
+    name: "Quinta do Conde",
+    type: "LOCAL",
+    created_at: "2025-03-13T00:34:15.002Z",
+    updated_at: "2025-03-13T00:34:15.002Z",
+  },
+  {
+    _id: "67d22be98e13c91d607fb704",
+    document: "26193150000152",
+    name: "Oliveira Restaurante e Emporio LTDA",
+    type: "LOCAL",
+    created_at: "2025-03-13T00:50:49.357Z",
+    updated_at: "2025-03-13T00:50:49.357Z",
+  },
+  {
+    _id: "67d22695b502526b43e5d1e9",
+    document: "53735288000109",
+    name: "Le Ville Paes e Doces LTDA",
+    type: "LOCAL",
+    created_at: "2025-03-13T00:28:05.129Z",
+    updated_at: "2025-03-13T00:28:05.129Z",
+  },
+  {
+    _id: "67d22b588e13c91d607fb6fb",
+    document: "20992958000113",
+    name: "LANCHONETE E RESTAURANTE PORTO CAIRES LTDA",
+    type: "LOCAL",
+    created_at: "2025-03-13T00:48:24.263Z",
+    updated_at: "2025-03-13T00:48:24.263Z",
+  },
+  {
+    _id: "67d22c748e13c91d607fb70d",
+    document: "32291672000190",
+    name: "EMBAIXADA MINEIRA BAR E RESTAURANTE LTDA",
+    type: "LOCAL",
+    created_at: "2025-03-13T00:53:08.713Z",
+    updated_at: "2025-03-13T00:53:08.713Z",
+  },
+];
+
+export const CompanyMock = {
+  pages: 1,
+  total: 6,
+  data: CompanyMockData,
+  limit: 20,
+  page: 0,
+};

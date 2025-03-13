@@ -4,7 +4,10 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { AdvertisementModalCommonProps } from "./interface";
-import { IApiAdvertisementItem } from "@/backend/api/api.interface";
+import {
+  IApiAdvertisementItem,
+  IApiUnitItemResponse,
+} from "@/backend/api/api.interface";
 import { useDynamicForm } from "@/utils/form";
 import { DateHelper, DateHelperFormat, DateInputStyle } from "@/utils/date";
 import { CalenderIcon } from "@/icons";
@@ -13,8 +16,16 @@ import MultiSelect, { Option } from "@/components/form/MultiSelect";
 import { AudienceOptionsMock } from "@/backend/mock/advertisements";
 import { AdsAudience } from "@/interfaces/ads";
 // import { AdvertisementMap } from "./Ads/Map";
-import { CompanyUnitsMock } from "@/backend/mock/units";
+import {
+  CompanyUnitsGroupdMock,
+  CompanyUnitsMock,
+  CompanyUnitsMockData,
+} from "@/backend/mock/units";
 import dynamic from "next/dynamic";
+import Select from "react-select";
+import { CompanyMock, CompanyMockData } from "@/backend/mock/client";
+import { EnumApiCompanyType } from "@/backend/api/api.enum";
+import AdvertisementModalUnits from "./AdvertisementModalUnits";
 
 const LazyMap = dynamic(() => import("./Ads/Map"), {
   ssr: false,
@@ -46,6 +57,12 @@ export default function AdvertisementModalAbout(
     ...defaultFormReport,
   });
 
+  const [showUnits, setShowUnits] = useState<boolean>(true); // Initially open the first accordion
+
+  const handleToggleShowUnits = () => {
+    setShowUnits((prev) => !prev);
+  };
+
   const tomorrow = useMemo(() => DateHelper.dayjs().add(1, "day").toDate(), []);
   const initialFormData = useMemo(() => {
     const start_date = DateHelper.dayjs(params.data.start_date);
@@ -73,6 +90,19 @@ export default function AdvertisementModalAbout(
       params.onCallback(formData);
     }
   }, [params, formData]);
+
+  const [units, setUnits] = useState<IApiUnitItemResponse[]>([]);
+  const filterUnitsByNeighborhood = () => {
+    const currentUnits = CompanyUnitsMockData.filter((unit) =>
+      formData.neighborhood?.includes(unit.neighborhood)
+    );
+
+    setUnits(() => currentUnits);
+  };
+
+  useEffect(() => {
+    filterUnitsByNeighborhood();
+  }, [formData.neighborhood]);
 
   useEffect(() => {
     console.log({ example: startDate });
@@ -150,13 +180,68 @@ export default function AdvertisementModalAbout(
     });
   }, [handleApiAudience]);
 
+  const updateForm = (column: keyof IApiAdvertisementItem, value: unknown) => {
+    handleChange(column, value);
+  };
+
   return (
     <>
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="overflow-y-auto max-h-[75vh] pb-28">
           {formData && (
             <div className="grid gap-6 sm:grid-cols-2">
-              <div>
+              <div className="col-span-2">
+                <Label htmlFor="title">Anunciante</Label>
+                <Select
+                  options={CompanyMockData.filter(
+                    (item) => item.type === EnumApiCompanyType.ADVERTISER
+                  ).map((item) => ({
+                    value: item._id,
+                    label: `${item.name} (${item.document})`,
+                  }))}
+                  onChange={(currentOption) =>
+                    currentOption?.value
+                      ? updateForm("company", currentOption?.value)
+                      : null
+                  }
+                />
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="title">Regiões</Label>
+                <Select
+                  isMulti
+                  options={CompanyUnitsGroupdMock.data
+                    .map((item) => ({
+                      value: item.neighborhood,
+                      label: `${item.city} - ${item.neighborhood}`,
+                    }))
+                    .sort((a, b) => a.label.localeCompare(b.label))}
+                  onChange={(newValue) => {
+                    const neighborhoods = newValue.map(
+                      (neighborhood) => neighborhood.value
+                    );
+                    updateForm("neighborhood", neighborhoods);
+                  }}
+                />
+              </div>
+              <div className="col-span-2">
+                <AdvertisementModalUnits
+                  key={"Estabelecimentos"}
+                  title={"Estabelecimentos"}
+                  content={units}
+                  isOpen={showUnits}
+                  toggleAccordion={handleToggleShowUnits}
+                />
+                {/* <Select
+                  options={CompanyMockData.filter(
+                    (item) => item.type === EnumApiCompanyType.ADVERTISER
+                  ).map((item) => ({
+                    value: item._id,
+                    label: `${item.name} (${item.document})`,
+                  }))}
+                />  */}
+              </div>
+              <div className="col-span-2">
                 <Label htmlFor="title">Título</Label>
                 <Input
                   type="text"
@@ -287,7 +372,7 @@ export default function AdvertisementModalAbout(
         </div>
         <div className="sticky h-screen">
           <LazyMap
-            list={CompanyUnitsMock.data}
+            list={units}
             key={`map-units-${
               CompanyUnitsMock.data.length
             }-${new Date().toISOString()}`}

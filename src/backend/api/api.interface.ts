@@ -62,15 +62,25 @@ export interface IApiAdvertisementItem {
   created_at: string;
   updated_at: string;
   audience: AdsAudience[];
+  neighborhood?: string[];
 }
 
 export interface IApiUnitItemResponse {
   _id: string;
   company: string;
   name: string;
+  full_address: string;
+  neighborhood: string;
   address: string;
+  city: string;
+  state: string;
+  country: string;
+  street_number: string;
   type: string;
   status: string;
+  devices: {
+    smart_tv: number;
+  };
   average_visitors: {
     daily: number;
     weekly: number;
