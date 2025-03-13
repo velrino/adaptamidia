@@ -114,7 +114,7 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
                 {units.map((unit: IApiUnitItemResponse) => (
                   <div
                     key={unit._id}
-                    className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl border border-gray-200 dark:border-gray-700"
+                    className="rounded-2xl border border-gray-200 dark:border-gray-700"
                   >
                     <div className="grid md:grid-cols-2 lg:grid-cols-12">
                       <div className="col-span-3 relative h-full w-full p-0">

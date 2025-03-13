@@ -43,18 +43,18 @@ export default function AdvertisementModal({
       onClose={handleClose}
       showCloseButton={false}
       isFullscreen={true}
-      className="min-w-[100vw] max-w-[100vw] min-h-[100vh] p-6 lg:p-10 flex flex-col rounded-none"
+      className="min-w-[100vw] max-w-[100vw] min-h-[100vh] p-6 lg:p-10 rounded-none"
     >
-      <div className="fixed top-0 left-0 flex flex-col justify-between w-full h-screen p-6 overflow-x-hidden overflow-y-hidden bg-white dark:bg-gray-900 lg:p-10">
+      <div className="fixed top-0 left-0  justify-between w-full h-screen overflow-x-hidden overflow-y-hidden bg-white dark:bg-gray-900">
         {/* HEADER CONTENT */}
-        <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90 sm:text-title-sm">
+        <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90 sm:text-title-sm px-5 pt-5">
           {action === ContentAction.CREATE && "Criar Anúncio"}
           {action === ContentAction.UPDATE && "Editar Anúncio"}
         </h4>
         {/* END CONTENT */}
 
         {/* START CONTENT */}
-        <div className="flex-grow overflow-y-hidden overflow-x-hidden min-h-[70vh] max-h-[70vh]">
+        <div>
           {record && (
             <AdvertisementModalTab
               action={action}
@@ -66,17 +66,18 @@ export default function AdvertisementModal({
         {/* END CONTENT */}
 
         {/* START FOOTER */}
-        <div>
-          <div className="flex items-center justify-center w-full gap-3 mt-8">
-            <Button size="sm" variant="outline" onClick={handleClose}>
-              Cancelar
-            </Button>
-            <Button size="sm" onClick={handleClose}>
-              Salvar
-            </Button>
-          </div>
-        </div>
+        <div></div>
         {/* END FOOTER */}
+      </div>
+      <div className="fixed w-full gap-3 mt-8 bg-white dark:bg-gray-900 bottom-0 flex justify-center py-5 left-0 border-t-1 dark:border-white/[0.03]">
+        <div className="flex gap-3">
+          <Button size="sm" variant="outline" onClick={handleClose}>
+            Cancelar
+          </Button>
+          <Button size="sm" onClick={handleClose}>
+            Salvar
+          </Button>
+        </div>
       </div>
     </Modal>
   );

@@ -26,10 +26,15 @@ import {
   EnumAdvertisementModalUnit,
   IAdvertisementModalUnitCallback,
 } from "./AdvertisementModalUnits/interface";
+import Spinner from "@/components/ui/spinner/Spinner";
 
 const LazyMap = dynamic(() => import("./Ads/Map"), {
   ssr: false,
-  loading: () => <p>Loading...</p>,
+  loading: () => (
+    <div className="flex items-center justify-center h-full w-full">
+      <Spinner />
+    </div>
+  ),
 });
 
 interface IDefaultFormReport {
@@ -195,7 +200,7 @@ export default function AdvertisementModalLocal(
   return (
     <>
       <div className="grid gap-6 sm:grid-cols-2">
-        <div className="sticky h-screen">
+        <div className="">
           <LazyMap
             list={units}
             key={`map-units-${
@@ -203,7 +208,7 @@ export default function AdvertisementModalLocal(
             }-${new Date().toISOString()}`}
           />
         </div>
-        <div className="overflow-y-auto max-h-[75vh] pb-28">
+        <div className="overflow-y-auto max-h-[75vh] pb-28 pr-6">
           {formData && (
             <div className="grid gap-6 sm:grid-cols-2">
               <div className="col-span-2">

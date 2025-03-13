@@ -75,8 +75,14 @@ const AdvertisementModalTab = (params: AdvertisementModalCommonProps) => {
 
   return (
     <div>
-      {/* Use o componente Tabs passando as abas */}
-      <Tabs tabs={tabs} defaultTabId="LOCAL" />
+      <Tabs
+        tabs={tabs}
+        defaultTabId="LOCAL"
+        styles={{
+          nav: "-6",
+          navMenu: "mx-auto",
+        }}
+      />
     </div>
   );
 };

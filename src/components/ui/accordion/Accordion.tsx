@@ -22,18 +22,16 @@ const Accordion: React.FC<IAccordion> = ({
 }) => {
   return (
     <div
-      className={`overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] ${style?.principal}`}
+      className={`overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.01] ${style?.principal}`}
     >
       {/* Accordion Header */}
       <div
         onClick={toggleAccordion} // Use the passed toggle function
-        className={`flex cursor-pointer items-center justify-between py-1 pl-6 pr-3 ${
-          isOpen ? "bg-gray-50 dark:bg-white/[0.03]" : ""
+        className={`flex cursor-pointer items-center justify-between py-1 pl-6 pr-3 dark:bg-white/[0.0] ${
+          isOpen ? "bg-gray-50 dark:bg-white/[0.05]" : ""
         }`}
       >
-        <h4 className="text-lg font-medium text-gray-800 dark:text-white/90">
-          {title}
-        </h4>
+        <p className="font-medium text-gray-800 dark:text-white/90">{title}</p>
         <button
           className={`flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 duration-200 transition-transform ease-linear dark:bg-white/[0.03] ${
             isOpen
