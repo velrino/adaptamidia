@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
-import { CompanyDocumentType } from '../company.interface';
+import { CompanyDocumentType, CompanyType } from '../company.interface';
 
 export class CreateCompanyValidator {
   @IsString()
@@ -9,6 +9,10 @@ export class CreateCompanyValidator {
   @IsEnum(CompanyDocumentType)
   @IsNotEmpty()
   document_type: CompanyDocumentType;
+
+  @IsEnum(CompanyType)
+  @IsNotEmpty()
+  type: CompanyType;
 
   @IsString()
   @IsNotEmpty()

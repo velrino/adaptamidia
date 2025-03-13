@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 import { SchemaDefault } from 'src/shared/shema';
+import { CompanyType } from './company.interface';
 
 @Schema({ ...SchemaDefault, collection: 'companies' })
 export class Company {
@@ -9,6 +10,9 @@ export class Company {
 
   @Prop({ required: true })
   name: string;
+
+  @Prop({ required: true, enum: CompanyType })
+  type: CompanyType;
 }
 
 export type CompanyDocument = Company & Document;
