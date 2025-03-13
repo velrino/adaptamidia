@@ -34,7 +34,7 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = [
   {
     _id: "67d22bfa8e13c91d607fb709",
     company: "67d22be98e13c91d607fb704",
-    name: "Restaurante Porto Caires",
+    name: "Restaurante e Lanchonete Oliveira",
     full_address:
       "R. Manuel da Nóbrega, 151 - Paraíso, São Paulo - SP, 04001-080, Brazil",
     neighborhood: "Paraíso",

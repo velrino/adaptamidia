@@ -22,14 +22,16 @@ import {
   CompanyUnitsMockData,
 } from "@/backend/mock/units";
 import dynamic from "next/dynamic";
-import Select, { PropsValue } from "react-select";
-import { CompanyMock, CompanyMockData } from "@/backend/mock/client";
+import Select from "react-select";
+import { CompanyMockData } from "@/backend/mock/client";
 import { EnumApiCompanyType } from "@/backend/api/api.enum";
 import AdvertisementModalUnits from "./AdvertisementModalUnits";
-import Accordion from "@/components/ui/accordion/Accordion";
 import { IReactSelectOption } from "@/interfaces/general";
-import Spinner from "@/components/ui/spinner/spinner";
 import { SumAllDevices } from "./helper";
+import {
+  EnumAdvertisementModalUnit,
+  IAdvertisementModalUnitCallback,
+} from "./AdvertisementModalUnits/interface";
 
 const LazyMap = dynamic(() => import("./Ads/Map"), {
   ssr: false,
@@ -245,6 +247,23 @@ export default function AdvertisementModalAbout(
     fetchUnitsOptions(); // Fetch units options on mount
   }, [fetchAdvertiserOptions, fetchUnitsOptions]);
 
+  const advertisementModalUnitsCallback = (
+    current: IAdvertisementModalUnitCallback
+  ) => {
+    if (current.type === EnumAdvertisementModalUnit.REMOVE_UNIT) {
+      const currentData: IApiUnitItemResponse =
+        current.data as IApiUnitItemResponse;
+
+      const newUnits = units.filter((item) => item._id !== currentData._id);
+      const newNeighborhoods = [
+        ...new Set(newUnits.map((item) => item.neighborhood)),
+      ];
+
+      setUnits(() => newUnits);
+      updateForm("neighborhood", newNeighborhoods);
+    }
+  };
+
   return (
     <>
       <div className="grid gap-6 sm:grid-cols-2">
@@ -300,6 +319,7 @@ export default function AdvertisementModalAbout(
                   content={units}
                   isOpen={showUnits}
                   toggleAccordion={handleToggleShowUnits}
+                  callback={advertisementModalUnitsCallback}
                 />
               </div>
               <div className="col-span-2">
