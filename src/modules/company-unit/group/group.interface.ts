@@ -21,6 +21,7 @@ export class GroupCompanyUnitPaginateDto extends PaginateDto {
 
 export interface IGroupedCompanyUnitResult {
   _id: {
+    neighborhood: string;
     city: string;
     state: string;
     country: string;
