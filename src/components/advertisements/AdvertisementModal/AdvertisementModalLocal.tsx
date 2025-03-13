@@ -32,7 +32,7 @@ const LazyMap = dynamic(() => import("./Ads/Map"), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-full w-full">
-      <Spinner />
+      <Spinner color="#465fff" />
     </div>
   ),
 });
