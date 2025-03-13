@@ -4,11 +4,16 @@ import { MongoCollection } from 'src/shared/mongo.schema';
 import { CompanyUnitController } from './company-unit.controller';
 import { CreateCompanyUnitService } from './create/create.service';
 import { ListCompanyUnitService } from './list/list.service';
+import { GroupCompanyUnitService } from './group/group.service';
 
 @Global()
 @Module({
   imports: [MongooseModule.forFeature([MongoCollection.company_units])],
   controllers: [CompanyUnitController],
-  providers: [CreateCompanyUnitService, ListCompanyUnitService],
+  providers: [
+    CreateCompanyUnitService,
+    ListCompanyUnitService,
+    GroupCompanyUnitService,
+  ],
 })
 export class CompanyUnitModule {}

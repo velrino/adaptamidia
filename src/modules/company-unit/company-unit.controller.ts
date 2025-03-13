@@ -15,13 +15,26 @@ import { CreateCompanyUnitService } from './create/create.service';
 import { CreateCompanyUnitValidator } from './create/create.interface';
 import { ListCompanyUnitService } from './list/list.service';
 import { ListCompanyUnitPaginateDto } from './list/list.interface';
+import { GroupCompanyUnitPaginateDto } from './group/group.interface';
+import { GroupCompanyUnitService } from './group/group.service';
 
 @Controller()
 export class CompanyUnitController {
   constructor(
     private readonly createCompanyUnitService: CreateCompanyUnitService,
     private readonly listCompanyUnitService: ListCompanyUnitService,
+    private readonly groupCompanyUnitService: GroupCompanyUnitService,
   ) {}
+
+  @Get('company/unit/group')
+  @UseGuards(AuthJwtGuard, PermissionsGuard)
+  @PermissionsAllowed()
+  group(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: GroupCompanyUnitPaginateDto,
+  ) {
+    return this.groupCompanyUnitService.executeFromRequest(req, query);
+  }
 
   @Get('company/unit')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
