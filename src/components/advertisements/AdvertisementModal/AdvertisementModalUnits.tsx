@@ -1,6 +1,7 @@
 import { IApiUnitItemResponse } from "@/backend/api/api.interface";
 import Accordion from "@/components/ui/accordion/Accordion";
 import React, { useState, useMemo } from "react";
+import { SumAllDevices } from "./helper";
 
 interface IAdvertisementModalUnits {
   title: string;
@@ -41,14 +42,27 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
   }, [content]);
 
   return (
-    <Accordion title={title} isOpen={isOpen} toggleAccordion={toggleAccordion}>
-      <div className="p-0">
+    <Accordion
+      title={title}
+      isOpen={isOpen}
+      toggleAccordion={toggleAccordion}
+      style={{
+        content: "p-0",
+      }}
+    >
+      <div className="p-0 m-0">
         {Object.entries(groupedUnits).map(([neighborhood, units]) => (
           <Accordion
             key={neighborhood}
-            title={`${neighborhood} (${units.length})`}
+            title={`| ${neighborhood} (${units.length}) - ${SumAllDevices(
+              units
+            )} Telas`}
             isOpen={openNeighborhoods[neighborhood] || false} // Controls the open/close state
             toggleAccordion={() => toggleNeighborhood(neighborhood)} // Toggles the state
+            style={{
+              principal: "rounded-none",
+              content: "px-1 py-2",
+            }}
           >
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
               {units.map((unit) => (

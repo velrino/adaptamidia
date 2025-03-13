@@ -29,6 +29,7 @@ import AdvertisementModalUnits from "./AdvertisementModalUnits";
 import Accordion from "@/components/ui/accordion/Accordion";
 import { IReactSelectOption } from "@/interfaces/general";
 import Spinner from "@/components/ui/spinner/spinner";
+import { SumAllDevices } from "./helper";
 
 const LazyMap = dynamic(() => import("./Ads/Map"), {
   ssr: false,
@@ -293,7 +294,9 @@ export default function AdvertisementModalAbout(
               </div>
               <div className="col-span-2">
                 <AdvertisementModalUnits
-                  title={`Estabelecimentos (${units.length})`}
+                  title={`Estabelecimentos (${units.length}) - ${SumAllDevices(
+                    units
+                  )} Telas`}
                   content={units}
                   isOpen={showUnits}
                   toggleAccordion={handleToggleShowUnits}
@@ -376,52 +379,6 @@ export default function AdvertisementModalAbout(
                 <p className="sr-only">
                   Selected Values: {audienceOptions.join(", ")}
                 </p>
-              </div>
-
-              <div className="col-span-2">
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2 p-4">
-                  {CompanyUnitsMock.data.map((unit) => (
-                    <div
-                      key={unit._id}
-                      className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-4 border border-gray-200 dark:border-gray-700"
-                    >
-                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {unit.name}
-                      </h2>
-                      <p className="text-gray-600 dark:text-gray-300 text-sm">
-                        📍 {unit.address}
-                      </p>
-
-                      <div className="mt-3 flex flex-col gap-1 text-sm">
-                        <span className="text-gray-500 dark:text-gray-400">
-                          Tipo: <span className="font-medium">{unit.type}</span>
-                        </span>
-                        <span className="text-gray-500 dark:text-gray-400">
-                          Capacidade Máx.:{" "}
-                          <span className="font-medium">
-                            {unit.max_capacity}
-                          </span>
-                        </span>
-                      </div>
-
-                      <div className="mt-3 flex justify-between items-center">
-                        <span
-                          className={`px-3 py-1 text-xs font-semibold rounded-lg ${
-                            unit.status === "IN_REVIEW"
-                              ? "bg-yellow-200 text-yellow-800"
-                              : "bg-green-200 text-green-800"
-                          }`}
-                        >
-                          {unit.status.replace("_", " ")}
-                        </span>
-
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          🏢 Empresa ID: {unit.company}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
 
               {/* <div>{faker.number.int({ min: 2000, max: 30000 })}</div> */}

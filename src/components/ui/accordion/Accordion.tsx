@@ -6,6 +6,11 @@ interface IAccordion {
   title: string; // Title of the accordion
   children: React.ReactNode; // Content to be displayed when the accordion is open
   toggleAccordion: () => void; // Function to toggle the accordion state
+  style?: {
+    principal?: string;
+    header?: string;
+    content?: string;
+  };
 }
 
 const Accordion: React.FC<IAccordion> = ({
@@ -13,9 +18,12 @@ const Accordion: React.FC<IAccordion> = ({
   children,
   isOpen,
   toggleAccordion,
+  style,
 }) => {
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+    <div
+      className={`overflow-hidden rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03] ${style?.principal}`}
+    >
       {/* Accordion Header */}
       <div
         onClick={toggleAccordion} // Use the passed toggle function
@@ -38,7 +46,7 @@ const Accordion: React.FC<IAccordion> = ({
       </div>
 
       {/* Accordion Content */}
-      {isOpen && <div className="p-2">{children}</div>}
+      {isOpen && <div className={`${style?.content}`}>{children}</div>}
     </div>
   );
 };
