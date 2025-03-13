@@ -8,6 +8,7 @@ import { AdvertisementComponent } from "./AdvertisementModalItems";
 import { Display } from "../Ads/Display";
 import { AdsCurrentType, DisplayThemes } from "@/interfaces/ads";
 import { Tabs } from "@/components/ui/tabs/Principal";
+import AdvertisementModalLocal from "./AdvertisementModalLocal";
 
 const AdvertisementModalTab = (params: AdvertisementModalCommonProps) => {
   const callback = (result: IApiAdvertisementItem) => {
@@ -18,6 +19,17 @@ const AdvertisementModalTab = (params: AdvertisementModalCommonProps) => {
 
   // Defina as abas e seus conteúdos
   const tabs = [
+    {
+      id: "LOCAL",
+      label: "Locais",
+      content: (
+        <AdvertisementModalLocal
+          action={params.action}
+          data={params.data}
+          onCallback={callback}
+        />
+      ),
+    },
     {
       id: "ABOUT",
       label: "Sobre",
@@ -64,7 +76,7 @@ const AdvertisementModalTab = (params: AdvertisementModalCommonProps) => {
   return (
     <div>
       {/* Use o componente Tabs passando as abas */}
-      <Tabs tabs={tabs} defaultTabId="ABOUT" />
+      <Tabs tabs={tabs} defaultTabId="LOCAL" />
     </div>
   );
 };

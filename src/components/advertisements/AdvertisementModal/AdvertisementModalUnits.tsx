@@ -9,6 +9,9 @@ import {
   EnumAdvertisementModalUnit,
   IAdvertisementModalUnitCallback,
 } from "./AdvertisementModalUnits/interface";
+import Image from "next/image";
+import { PiUsersLight, PiEye, PiDesktop } from "react-icons/pi";
+import { IoLocationOutline } from "react-icons/io5";
 
 interface IAdvertisementModalUnits {
   title: string;
@@ -68,6 +71,20 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
   //   modalRemoteUnit.openModal();
   // }, [content]);
 
+  function MetricItem({ label, value, icon }) {
+    return (
+      <div className="flex flex-col w-full items-s text-gray-600 dark:text-gray-300 border-l first:border-l-0 pl-3 first:pl-0">
+        <div className="flex items-center gap-1">
+          <span className="text-sm">{label}</span>
+          {icon}
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-md font-bold">{value}</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Accordion
@@ -93,57 +110,89 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
                 content: "px-1 py-2",
               }}
             >
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
-                {units.map((unit) => (
+              <div className="grid gap-2">
+                {units.map((unit: IApiUnitItemResponse) => (
                   <div
                     key={unit._id}
-                    className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl p-4 border border-gray-200 dark:border-gray-700"
+                    className="bg-white dark:bg-gray-800 shadow-lg rounded-2xl border border-gray-200 dark:border-gray-700"
                   >
-                    <div className="flex justify-between items-center">
-                      <div className="text-md font-semibold text-gray-900 dark:text-white truncate">
-                        {unit.name}
-                      </div>
-                      <div
-                        className="cursor-pointer flex-shrink-0"
-                        onClick={() => {
-                          setSelected(unit);
-                          modalRemoteUnit.openModal();
-                        }}
-                      >
-                        <IoMdCloseCircleOutline
-                          size={25}
-                          className="text-brand-500"
+                    <div className="grid md:grid-cols-2 lg:grid-cols-12">
+                      <div className="col-span-3 relative h-full w-full p-0">
+                        <Image
+                          src="/images/local/1.jpg"
+                          alt="Imagem do local"
+                          layout="fill" // Faz a imagem ocupar todo o espaço disponível
+                          objectFit="cover" // Faz o corte para preencher o espaço mantendo a proporção
+                          objectPosition="center" // Centraliza a imagem
+                          className="rounded-l-lg"
                         />
                       </div>
-                    </div>
+                      <div className="col-span-9 p-4">
+                        <div className="flex justify-between items-center">
+                          <div className="text-md font-semibold text-gray-900 dark:text-white truncate">
+                            {unit.name}
+                          </div>
+                          <div
+                            className="cursor-pointer flex-shrink-0"
+                            onClick={() => {
+                              setSelected(unit);
+                              modalRemoteUnit.openModal();
+                            }}
+                          >
+                            <IoMdCloseCircleOutline
+                              size={25}
+                              className="text-brand-500"
+                            />
+                          </div>
+                        </div>
 
-                    <p className="text-gray-600 dark:text-gray-300 text-sm">
-                      📍 {unit.full_address}
-                    </p>
+                        <p className="text-gray-600 dark:text-gray-300 text-sm">
+                          {unit.full_address}
+                        </p>
 
-                    <div className="mt-3 flex flex-col gap-1 text-sm">
-                      <span className="text-gray-500 dark:text-gray-400">
-                        Devices:
-                        <span className="font-medium">
-                          {Object.values(unit.devices).reduce(
-                            (total, num) => total + num,
-                            0
-                          )}
-                        </span>
-                      </span>
-                      <span className="text-gray-500 dark:text-gray-400">
-                        Type: <span className="font-medium">{unit.type}</span>
-                      </span>
-                      <span className="text-gray-500 dark:text-gray-400">
-                        Max Capacity:
-                        <span className="font-medium">{unit.max_capacity}</span>
-                      </span>
-                    </div>
+                        <div className="rounded-2xl w-full max-w-md mt-3">
+                          <div className="flex gap-3">
+                            <MetricItem
+                              label="Alcance diário"
+                              value={unit.average_visitors.daily * 7}
+                              icon={<PiUsersLight size={15} />}
+                            />
+                            <MetricItem
+                              label="Alcance semanal"
+                              value={unit.average_visitors.weekly * 7}
+                              icon={<PiUsersLight size={15} />}
+                            />
+                            <MetricItem
+                              label="Alcance Mensal"
+                              value={unit.average_visitors.monthly * 7}
+                              icon={<PiUsersLight size={15} />}
+                            />
+                          </div>
+                        </div>
 
-                    <div className="mt-3 flex justify-between items-center">
-                      <span className="text-xs text-gray-500 dark:text-gray-400">
-                        🏢 {unit.company}
-                      </span>
+                        <div className="rounded-2xl w-full max-w-md mt-3">
+                          <div className="flex gap-3">
+                            <MetricItem
+                              label="Exibições"
+                              value={unit.average_visitors.monthly * 27}
+                              icon={<PiEye size={15} />}
+                            />
+                            <MetricItem
+                              label="Telas"
+                              value={Object.values(unit.devices).reduce(
+                                (total, num) => total + num,
+                                0
+                              )}
+                              icon={<PiDesktop size={15} />}
+                            />
+                            <MetricItem
+                              label="Distância"
+                              value="17 m"
+                              icon={<IoLocationOutline size={15} />}
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
