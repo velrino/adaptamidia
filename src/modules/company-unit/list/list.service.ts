@@ -16,18 +16,17 @@ export class ListCompanyUnitService {
   constructor(
     @InjectModel(CompanyUnit.name)
     private readonly companyUnitModel: Model<CompanyUnitDocument>,
-    // private readonly getCompanyService: GetCompanyService,
   ) {}
 
-  // onApplicationBootstrap() {
-  //   const query: any = {
-  //     longitude: 1,
-  //     latitude: 1,
-  //     radius: 1,
-  //   };
+  onApplicationBootstrap() {
+    const query: any = {
+      city: ['Barueri', 'São Paulo'],
+      state: ['São Paulo'],
+      country: ['Brazil'],
+    };
 
-  //   console.log({ query: querystring.encode(query) });
-  // }
+    console.log({ query: querystring.encode(query) });
+  }
 
   executeFromRequest(
     currentRequest: AuthenticatedRequest,
@@ -74,6 +73,22 @@ export class ListCompanyUnitService {
     // Add date filter to match conditions if any date is provided
     if (Object.keys(dateFilter).length) {
       query.created_at = dateFilter;
+    }
+
+    if (parameters.city) {
+      query.city = Array.isArray(parameters.city)
+        ? { $in: parameters.city }
+        : parameters.city;
+    }
+    if (parameters.state) {
+      query.state = Array.isArray(parameters.state)
+        ? { $in: parameters.state }
+        : parameters.state;
+    }
+    if (parameters.country) {
+      query.country = Array.isArray(parameters.country)
+        ? { $in: parameters.country }
+        : parameters.country;
     }
 
     if (parameters.latitude && parameters.longitude && parameters.radius) {

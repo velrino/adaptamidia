@@ -3,16 +3,16 @@ import { PaginateDto } from 'src/shared/interfaces/paginate.dto';
 
 export class GroupCompanyUnitPaginateDto extends PaginateDto {
   @IsOptional()
-  @IsString()
-  city: string;
+  @IsString({ each: true })
+  city?: string[];
 
   @IsOptional()
-  @IsString()
-  state: string;
+  @IsString({ each: true })
+  state?: string[];
 
   @IsOptional()
-  @IsString()
-  country: string;
+  @IsString({ each: true })
+  country?: string[];
 }
 
 export interface IGroupedCompanyUnitResult {

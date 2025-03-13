@@ -44,13 +44,19 @@ export class GroupCompanyUnitService {
     const $match: FilterQuery<CompanyUnit> = {};
 
     if (parameters.city) {
-      $match.city = parameters.city;
+      $match.city = Array.isArray(parameters.city)
+        ? { $in: parameters.city }
+        : parameters.city;
     }
     if (parameters.state) {
-      $match.state = parameters.state;
+      $match.state = Array.isArray(parameters.state)
+        ? { $in: parameters.state }
+        : parameters.state;
     }
     if (parameters.country) {
-      $match.country = parameters.country;
+      $match.country = Array.isArray(parameters.country)
+        ? { $in: parameters.country }
+        : parameters.country;
     }
 
     const query = [
@@ -76,7 +82,9 @@ export class GroupCompanyUnitService {
     try {
       const records = await this.getData(parameters);
 
-      return records;
+      return {
+        data: records.map((item) => ({ ...item._id, count: item.count })),
+      };
     } catch (error) {
       Log(
         LogType.ERROR,
