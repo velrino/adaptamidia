@@ -43,21 +43,27 @@ export class GroupCompanyUnitService {
   ): Promise<IGroupedCompanyUnitResult[]> {
     const $match: FilterQuery<CompanyUnit> = {};
 
-    if (parameters.city) {
-      $match.city = Array.isArray(parameters.city)
-        ? { $in: parameters.city }
-        : parameters.city;
-    }
-    if (parameters.state) {
-      $match.state = Array.isArray(parameters.state)
-        ? { $in: parameters.state }
-        : parameters.state;
-    }
-    if (parameters.country) {
-      $match.country = Array.isArray(parameters.country)
-        ? { $in: parameters.country }
-        : parameters.country;
-    }
+    const fields: (keyof GroupCompanyUnitPaginateDto)[] = [
+      'neighborhood',
+      'city',
+      'state',
+      'country',
+    ];
+
+    fields.forEach((field) => {
+      if (parameters[field]) {
+        if (Array.isArray(parameters[field])) {
+          // Se for um array, cria uma lista de expressões regulares e usa $in
+          const regexArray = parameters[field].map(
+            (value: string) => new RegExp(value, 'i'),
+          );
+          $match[field] = { $in: regexArray };
+        } else {
+          // Se for uma string única, usa regex diretamente
+          $match[field] = { $regex: new RegExp(parameters[field] as any, 'i') };
+        }
+      }
+    });
 
     const query = [
       {
@@ -66,6 +72,7 @@ export class GroupCompanyUnitService {
       {
         $group: {
           _id: {
+            neighborhood: '$neighborhood',
             city: '$city',
             state: '$state',
             country: '$country',

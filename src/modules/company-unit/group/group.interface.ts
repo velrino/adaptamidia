@@ -13,6 +13,10 @@ export class GroupCompanyUnitPaginateDto extends PaginateDto {
   @IsOptional()
   @IsString({ each: true })
   country?: string[];
+
+  @IsOptional()
+  @IsString({ each: true })
+  neighborhood?: string[];
 }
 
 export interface IGroupedCompanyUnitResult {

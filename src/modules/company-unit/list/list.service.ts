@@ -18,15 +18,15 @@ export class ListCompanyUnitService {
     private readonly companyUnitModel: Model<CompanyUnitDocument>,
   ) {}
 
-  onApplicationBootstrap() {
-    const query: any = {
-      city: ['Barueri', 'São Paulo'],
-      state: ['São Paulo'],
-      country: ['Brazil'],
-    };
+  // onApplicationBootstrap() {
+  //   const query: any = {
+  //     city: ['Barueri', 'São Paulo'],
+  //     state: ['São Paulo'],
+  //     country: ['Brazil'],
+  //   };
 
-    console.log({ query: querystring.encode(query) });
-  }
+  //   console.log({ query: querystring.encode(query) });
+  // }
 
   executeFromRequest(
     currentRequest: AuthenticatedRequest,
@@ -75,21 +75,27 @@ export class ListCompanyUnitService {
       query.created_at = dateFilter;
     }
 
-    if (parameters.city) {
-      query.city = Array.isArray(parameters.city)
-        ? { $in: parameters.city }
-        : parameters.city;
-    }
-    if (parameters.state) {
-      query.state = Array.isArray(parameters.state)
-        ? { $in: parameters.state }
-        : parameters.state;
-    }
-    if (parameters.country) {
-      query.country = Array.isArray(parameters.country)
-        ? { $in: parameters.country }
-        : parameters.country;
-    }
+    const fields: (keyof ListCompanyUnitPaginateDto)[] = [
+      'neighborhood',
+      'city',
+      'state',
+      'country',
+    ];
+
+    fields.forEach((field) => {
+      if (parameters[field]) {
+        if (Array.isArray(parameters[field])) {
+          // Se for um array, cria uma lista de expressões regulares e usa $in
+          const regexArray = parameters[field].map(
+            (value: string) => new RegExp(value, 'i'),
+          );
+          query[field] = { $in: regexArray };
+        } else {
+          // Se for uma string única, usa regex diretamente
+          query[field] = { $regex: new RegExp(parameters[field] as any, 'i') };
+        }
+      }
+    });
 
     if (parameters.latitude && parameters.longitude && parameters.radius) {
       query.location = {
@@ -101,8 +107,6 @@ export class ListCompanyUnitService {
         },
       };
     }
-
-    console.log({ query });
 
     const total = await this.companyUnitModel.countDocuments(query);
 

@@ -70,8 +70,20 @@ export class CreateCompanyUnitService {
         return component ? component.long_name : null;
       };
 
+      const handleNeighborhood = (informed: string | null) => {
+        if (typeof informed !== 'string') return informed;
+
+        if (informed.toLowerCase().includes('alphaville')) {
+          return 'Alphaville';
+        }
+
+        return informed;
+      };
+
       const fullAddressData = {
-        neighborhood: getComponent(PlaceType2.sublocality_level_1), // Bairro
+        neighborhood: handleNeighborhood(
+          getComponent(PlaceType2.sublocality_level_1),
+        ), // Bairro
         city: getComponent(PlaceType2.administrative_area_level_2), // Cidade
         state: getComponent(PlaceType2.administrative_area_level_1), // Estado
         country: getComponent(PlaceType2.country), // País
