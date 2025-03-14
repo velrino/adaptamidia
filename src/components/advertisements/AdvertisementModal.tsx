@@ -6,17 +6,18 @@ import { Modal } from "../ui/modal";
 import { IApiAdvertisementItem } from "@/backend/api/api.interface";
 import AdvertisementModalTab from "./AdvertisementModal/AdvertisementModalTab";
 import { ContentAction } from "@/interfaces/general";
+import { useAdvertisement } from "./AdvertisementModal/context";
+import ParentComponent from "./AdvertisementModal/example";
 
 interface AdvertisementModalProps {
   action: ContentAction;
-  data?: IApiAdvertisementItem;
+  advertisementData?: IApiAdvertisementItem;
   setOpen?: (open: boolean) => void;
-  onCloseCallback?: () => void;
+  onCloseCallback: () => void;
 }
 
 export default function AdvertisementModal({
   action,
-  data,
   onCloseCallback,
 }: AdvertisementModalProps) {
   const handleClose = () => {
@@ -25,18 +26,19 @@ export default function AdvertisementModal({
     }
   };
 
-  const [record, setRecord] = useState<IApiAdvertisementItem>();
+  // const [record, setRecord] = useState<IApiAdvertisementItem>();
 
-  useEffect(() => {
-    console.log({ data });
-    setRecord(() => data);
-  }, [data]);
+  // useEffect(() => {
+  //   console.log({ data });
+  //   setRecord(() => advertisementData);
+  // }, [advertisementData]);
 
-  const callback = (result: IApiAdvertisementItem) => {
-    // console.clear();
-    console.log({ principal: result });
+  const { data } = useAdvertisement();
+
+  const save = () => {
+    console.clear();
+    console.log({ action, data });
   };
-
   return (
     <Modal
       isOpen={true}
@@ -55,20 +57,15 @@ export default function AdvertisementModal({
 
         {/* START CONTENT */}
         <div>
-          {record && (
-            <AdvertisementModalTab
-              action={action}
-              data={record}
-              onCallback={callback}
-            />
-          )}
+          {/* <ParentComponent /> */}
+          <AdvertisementModalTab action={action} />
         </div>
         <div className="w-full flex justify-center">
           <div className="flex gap-3 pt-2">
             <Button size="sm" variant="outline" onClick={handleClose}>
               Cancelar
             </Button>
-            <Button size="sm" onClick={handleClose}>
+            <Button size="sm" onClick={save}>
               Salvar
             </Button>
           </div>

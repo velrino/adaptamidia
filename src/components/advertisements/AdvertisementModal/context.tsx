@@ -4,18 +4,20 @@ import {
   useMemo,
   useContext,
   createContext,
+  useEffect,
 } from "react";
 import { IApiAdvertisementItem } from "@/backend/api/api.interface";
 
 interface IAdvertisementContext {
-  data: IApiAdvertisementItem | null;
+  data: IApiAdvertisementItem; // data sempre será IApiAdvertisementItem
   onCallback: (result: IApiAdvertisementItem) => void;
 }
 
-// Criando o contexto sem `undefined`, mas com `null` como valor inicial
-export const AdvertisementContext = createContext<IAdvertisementContext | null>(
-  null
-);
+// Criando o contexto com um valor padrão
+export const AdvertisementContext = createContext<IAdvertisementContext>({
+  data: {} as IApiAdvertisementItem, // Valor padrão vazio (ou você pode definir um objeto padrão)
+  onCallback: () => {},
+});
 
 // Hook para acessar o contexto
 export const useAdvertisement = () => {
@@ -30,26 +32,33 @@ export const useAdvertisement = () => {
 
 interface AdvertisementProviderProps {
   children: React.ReactNode;
-  initialData: IApiAdvertisementItem | null; // 🔥 Adicionando initialData como prop
+  initialData: IApiAdvertisementItem; // initialData agora é obrigatório
 }
 
 export const AdvertisementProvider = ({
   children,
-  initialData,
+  initialData, // initialData sempre existe
 }: AdvertisementProviderProps) => {
   const [originalRecord, setOriginalRecord] =
-    useState<IApiAdvertisementItem | null>(initialData); // 🔥 Iniciando com initialData
+    useState<IApiAdvertisementItem>(initialData);
 
+  // Atualiza o estado quando initialData mudar
+  useEffect(() => {
+    setOriginalRecord(initialData);
+  }, [initialData]);
+
+  // Memoriza originalRecord para evitar re-renderizações desnecessárias
   const memoizedOriginalRecord = useMemo(
     () => originalRecord,
     [originalRecord]
   );
 
+  // Callback otimizado para atualizar o estado apenas quando necessário
   const callback = useCallback((result: IApiAdvertisementItem) => {
-    console.log("CALLBACK");
+    // console.log("Callback chamado com:", result);
 
     setOriginalRecord((prev) => {
-      if (!prev || JSON.stringify(prev) !== JSON.stringify(result)) {
+      if (JSON.stringify(prev) !== JSON.stringify(result)) {
         return { ...result };
       }
       return prev;

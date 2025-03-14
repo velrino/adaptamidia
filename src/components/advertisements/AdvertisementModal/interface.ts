@@ -3,6 +3,6 @@ import { ContentAction } from "@/interfaces/general";
 
 export interface AdvertisementModalCommonProps {
   action: ContentAction;
-  data: IApiAdvertisementItem;
+  // data: IApiAdvertisementItem;
   onCallback?: (callback: IApiAdvertisementItem) => void;
 }

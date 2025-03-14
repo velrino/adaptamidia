@@ -1,193 +1,212 @@
-"use client";
-
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import Select from "react-select";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
-import { AdvertisementModalCommonProps } from "./interface";
 import { IApiAdvertisementItem } from "@/backend/api/api.interface";
 import { useDynamicForm } from "@/utils/form";
-import {
-  AudienceOptionsMock,
-  SegmentOptionsMock,
-} from "@/backend/mock/advertisements";
+import { SegmentOptionsMock } from "@/backend/mock/advertisements";
 import { AdsAudience } from "@/interfaces/ads";
 import { IReactSelectOption } from "@/interfaces/general";
 import { CompanyMockData } from "@/backend/mock/client";
 import { EnumApiCompanyType } from "@/backend/api/api.enum";
+import { useAdvertisement } from "./context";
+import { AdvertisementModalCommonProps } from "./interface";
 
-export default function AdvertisementModalAbout(
-  params: AdvertisementModalCommonProps
-) {
-  const initialFormData = useMemo(() => {
-    console.log({ AdvertisementModalAbout: "start" });
-    return params.data;
-  }, [params.data]);
+const AdvertisementModalAbout = memo(
+  (params: AdvertisementModalCommonProps) => {
+    const { data, onCallback } = useAdvertisement();
+    const prevFormDataRef = useRef<IApiAdvertisementItem | undefined>(
+      undefined
+    );
 
-  const { formData, handleChange } =
-    useDynamicForm<IApiAdvertisementItem>(initialFormData);
+    // Memoiza o initialFormData para evitar recálculos desnecessários
+    const initialFormData = useMemo(() => {
+      console.log({ AdvertisementModalAbout: "initialFormData recalculated" });
+      return data;
+    }, [data]);
 
-  useEffect(() => {
-    if (params.onCallback && formData) {
-      params.onCallback(formData);
-    }
-  }, [params, formData]);
+    const { formData, handleChange } =
+      useDynamicForm<IApiAdvertisementItem>(initialFormData);
 
-  const updateForm = (column: keyof IApiAdvertisementItem, value: unknown) => {
-    handleChange(column, value);
-  };
+    // Evita chamar onCallback desnecessariamente
+    useEffect(() => {
+      if (formData && formData !== prevFormDataRef.current) {
+        console.log("formData changed, calling onCallback");
+        onCallback(formData);
+        prevFormDataRef.current = formData;
+      }
+    }, [formData, onCallback]);
 
-  // Start Audience
-  const [audienceOptions, setAudienceOptions] = useState<IReactSelectOption[]>(
-    []
-  );
-  const handleApiAudience = useCallback(async (): Promise<
-    IReactSelectOption[]
-  > => {
-    return new Promise<IReactSelectOption[]>((resolve) => {
-      setTimeout(() => {
-        resolve(SegmentOptionsMock);
-      }, 1);
-    });
-  }, []);
+    const updateForm = (
+      column: keyof IApiAdvertisementItem,
+      value: unknown
+    ) => {
+      handleChange(column, value);
+    };
 
-  useEffect(() => {
-    handleApiAudience().then((data) => {
-      setAudienceOptions(data);
-    });
-  }, [handleApiAudience]);
-  // End Audience
+    // Start Audience
+    const [audienceOptions, setAudienceOptions] = useState<
+      IReactSelectOption[]
+    >([]);
+    const handleApiAudience = useCallback(async (): Promise<
+      IReactSelectOption[]
+    > => {
+      return new Promise<IReactSelectOption[]>((resolve) => {
+        setTimeout(() => {
+          resolve(SegmentOptionsMock);
+        }, 1);
+      });
+    }, []);
 
-  // Start Segment
-  const [segmentOptions, setSegmentOptions] = useState<IReactSelectOption[]>(
-    []
-  );
-  const handleApiSegment = useCallback(async (): Promise<
-    IReactSelectOption[]
-  > => {
-    return new Promise<IReactSelectOption[]>((resolve) => {
-      setTimeout(() => {
-        resolve(SegmentOptionsMock);
-      }, 1);
-    });
-  }, []);
+    useEffect(() => {
+      handleApiAudience().then((data) => {
+        setAudienceOptions(data);
+      });
+    }, [handleApiAudience]);
+    // End Audience
 
-  useEffect(() => {
-    handleApiSegment().then((data) => {
-      setSegmentOptions(data);
-    });
-  }, [handleApiSegment]);
-  // End Segment
+    // Start Segment
+    const [segmentOptions, setSegmentOptions] = useState<IReactSelectOption[]>(
+      []
+    );
+    const handleApiSegment = useCallback(async (): Promise<
+      IReactSelectOption[]
+    > => {
+      return new Promise<IReactSelectOption[]>((resolve) => {
+        setTimeout(() => {
+          resolve(SegmentOptionsMock);
+        }, 1);
+      });
+    }, []);
 
-  // Start Advertiser
-  const [advertiserOptions, setAdvertiserOptions] = useState<
-    IReactSelectOption[]
-  >([]);
-  const [isAdvertiserLoading, setIsAdvertiserLoading] = useState(false);
+    useEffect(() => {
+      handleApiSegment().then((data) => {
+        setSegmentOptions(data);
+      });
+    }, [handleApiSegment]);
+    // End Segment
 
-  const fetchAdvertiserOptions = useCallback(async () => {
-    setIsAdvertiserLoading(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      const companyList = CompanyMockData.filter(
-        (item) => item.type === EnumApiCompanyType.ADVERTISER
-      ).map((item) => ({
-        value: item._id,
-        label: `${item.name} (${item.document})`,
-      }));
-      setAdvertiserOptions(companyList);
-    } catch (error) {
-      console.error("Error fetching advertiser options:", error);
-    } finally {
-      setIsAdvertiserLoading(false);
-    }
-  }, []);
+    // Start Advertiser
+    const [advertiserOptions, setAdvertiserOptions] = useState<
+      IReactSelectOption[]
+    >([]);
+    const [isAdvertiserLoading, setIsAdvertiserLoading] = useState(false);
 
-  useEffect(() => {
-    fetchAdvertiserOptions();
-  }, [fetchAdvertiserOptions]);
-  // End Advertiser
+    const fetchAdvertiserOptions = useCallback(async () => {
+      setIsAdvertiserLoading(true);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        const companyList = CompanyMockData.filter(
+          (item) => item.type === EnumApiCompanyType.ADVERTISER
+        ).map((item) => ({
+          value: item._id,
+          label: `${item.name} (${item.document})`,
+        }));
+        setAdvertiserOptions(companyList);
+      } catch (error) {
+        console.error("Error fetching advertiser options:", error);
+      } finally {
+        setIsAdvertiserLoading(false);
+      }
+    }, []);
 
-  return (
-    <div className="overflow-y-auto min-h-[75vh] max-h-[75vh] px-6">
-      <div className="grid gap-6 sm:grid-cols-2">
-        {formData && (
-          <>
-            <div>
-              <Label htmlFor="title">Título {formData.end_date}</Label>
-              <Input
-                type="text"
-                placeholder="Informe o título"
-                id="title"
-                value={formData?.title}
-                onChange={(e) => updateForm("title", e.target.value)}
-                maxLength={100}
-              />
-            </div>
+    useEffect(() => {
+      fetchAdvertiserOptions();
+    }, [fetchAdvertiserOptions]);
+    // End Advertiser
 
-            <div>
-              <Label htmlFor="title">Anunciante</Label>
-              <Select
-                placeholder={`Selecione o Anunciante`}
-                isDisabled={isAdvertiserLoading}
-                isLoading={isAdvertiserLoading}
-                value={
-                  advertiserOptions.find(
-                    (option) => option.value === formData.company
-                  ) || null
-                }
-                options={advertiserOptions}
-                onChange={(currentOption) =>
-                  updateForm(
-                    "company",
-                    currentOption ? currentOption.value : null
-                  )
-                }
-              />
-            </div>
+    return (
+      <div className="overflow-y-auto min-h-[75vh] max-h-[75vh] px-6">
+        <div className="grid gap-6 sm:grid-cols-2">
+          {formData && (
+            <>
+              <div>
+                <Label htmlFor="title">Título {data.end_date}</Label>
+                <Input
+                  type="text"
+                  placeholder="Informe o título"
+                  id="title"
+                  value={formData?.title}
+                  onChange={(e) => updateForm("title", e.target.value)}
+                  maxLength={100}
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="title">Segmento</Label>
-              <Select
-                isMulti
-                placeholder={`Selecione os Segmentos`}
-                value={
-                  segmentOptions.filter((option: IReactSelectOption) =>
-                    formData.segments?.includes(option.value as string)
-                  ) || []
-                }
-                options={segmentOptions}
-                onChange={(newValue) => {
-                  const selectedOptions = newValue.map(
-                    (currentOption) => currentOption.value
-                  );
-                  updateForm("segments", selectedOptions);
-                }}
-              />
-            </div>
+              <div>
+                <Label htmlFor="title">Anunciante</Label>
+                <Select
+                  placeholder={`Selecione o Anunciante`}
+                  isDisabled={isAdvertiserLoading}
+                  isLoading={isAdvertiserLoading}
+                  value={
+                    advertiserOptions.find(
+                      (option) => option.value === formData.company
+                    ) || null
+                  }
+                  options={advertiserOptions}
+                  onChange={(currentOption) =>
+                    updateForm(
+                      "company",
+                      currentOption ? currentOption.value : null
+                    )
+                  }
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="title">Audiência</Label>
-              <Select
-                isMulti
-                placeholder={`Selecione as Audiências`}
-                value={
-                  audienceOptions.filter((option: IReactSelectOption) =>
-                    formData.audience?.includes(option.value as AdsAudience)
-                  ) || []
-                }
-                options={audienceOptions}
-                onChange={(newValue) => {
-                  const selectedOptions = newValue.map(
-                    (currentOption) => currentOption.value
-                  );
-                  updateForm("audience", selectedOptions);
-                }}
-              />
-            </div>
-          </>
-        )}
+              <div>
+                <Label htmlFor="title">Segmento</Label>
+                <Select
+                  isMulti
+                  placeholder={`Selecione os Segmentos`}
+                  value={
+                    segmentOptions.filter((option: IReactSelectOption) =>
+                      formData.segments?.includes(option.value as string)
+                    ) || []
+                  }
+                  options={segmentOptions}
+                  onChange={(newValue) => {
+                    const selectedOptions = newValue.map(
+                      (currentOption) => currentOption.value
+                    );
+                    updateForm("segments", selectedOptions);
+                  }}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="title">Audiência</Label>
+                <Select
+                  isMulti
+                  placeholder={`Selecione as Audiências`}
+                  value={
+                    audienceOptions.filter((option: IReactSelectOption) =>
+                      formData.audience?.includes(option.value as AdsAudience)
+                    ) || []
+                  }
+                  options={audienceOptions}
+                  onChange={(newValue) => {
+                    const selectedOptions = newValue.map(
+                      (currentOption) => currentOption.value
+                    );
+                    updateForm("audience", selectedOptions);
+                  }}
+                />
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+);
+
+AdvertisementModalAbout.displayName = "AdvertisementModalAbout";
+
+export default AdvertisementModalAbout;

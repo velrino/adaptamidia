@@ -25,5 +25,5 @@ export function useDynamicForm<T>(initialState: T) {
     });
   };
 
-  return { formData, handleChange };
+  return { formData, handleChange, setFormData };
 }

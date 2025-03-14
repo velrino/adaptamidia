@@ -1,14 +1,15 @@
 "use client";
 
 import React, {
+  memo,
   ReactNode,
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import Label from "@/components/form/Label";
-import { AdvertisementModalCommonProps } from "./interface";
 import {
   IApiAdvertisementItem,
   IApiUnitItemResponse,
@@ -40,6 +41,8 @@ import {
 } from "@/utils/generic";
 import { AdPeriod, AdPeriodText } from "@/interfaces/ads";
 import { BsCashCoin } from "react-icons/bs";
+import { useAdvertisement } from "./context";
+import { AdvertisementModalCommonProps } from "./interface";
 
 const LazyMap = dynamic(() => import("./Ads/Map"), {
   ssr: false,
@@ -60,408 +63,416 @@ const defaultFormReport: IDefaultFormReport = {
   end_date: String(),
 };
 
-export default function AdvertisementModalLocal(
-  params: AdvertisementModalCommonProps
-) {
-  const [diffBetweenDates, setDiffBetweenDates] = useState<number>(0);
-  const [metricItemMessage, setMetricItemMessage] = useState<{
-    label: string;
-    value: string;
-  }>({
-    label: "",
-    value: "",
-  });
-  const [currentPeriod, setCurrentPeriod] = useState<AdPeriod>(AdPeriod.DAILY);
-  const [currentPeriodText, setCurrentPeriodText] = useState<string>(
-    AdPeriodText[currentPeriod]
-  );
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
-  const maxStartDate = DateHelper.dayjs().add(2, "months").toDate();
-  const maxEndDate = DateHelper.dayjs().add(2, "year").toDate();
-
-  const [formReport, setFormReport] = useState<IDefaultFormReport>({
-    ...defaultFormReport,
-  });
-
-  const [showUnits, setShowUnits] = useState<boolean>(true); // Initially open the first accordion
-
-  const handleToggleShowUnits = () => {
-    setShowUnits((prev) => !prev);
-  };
-
-  const tomorrow = useMemo(() => DateHelper.dayjs().add(1, "day").toDate(), []);
-  const initialFormData = useMemo(() => {
-    const start_date = DateHelper.dayjs(params.data.start_date);
-    setStartDate(() =>
-      start_date.isValid()
-        ? start_date.toDate()
-        : DateHelper.dayjs(tomorrow).add(7, "day").toDate()
+const AdvertisementModalLocal = memo(
+  (params: AdvertisementModalCommonProps) => {
+    const { data, onCallback } = useAdvertisement();
+    const prevFormDataRef = useRef<IApiAdvertisementItem | undefined>(
+      undefined
     );
 
-    const end_date = DateHelper.dayjs(params.data.end_date);
-    setEndDate(() =>
-      end_date.isValid()
-        ? end_date.toDate()
-        : DateHelper.dayjs(tomorrow).add(7, "day").toDate()
+    const [startDate, setStartDate] = useState<Date>();
+    const [endDate, setEndDate] = useState<Date>();
+    const maxStartDate = useMemo(
+      () => DateHelper.dayjs().add(2, "months").toDate(),
+      []
+    );
+    const maxEndDate = useMemo(
+      () => DateHelper.dayjs().add(2, "year").toDate(),
+      []
     );
 
-    return params.data;
-  }, [params.data, tomorrow]);
-
-  const { formData, handleChange } =
-    useDynamicForm<IApiAdvertisementItem>(initialFormData);
-
-  useEffect(() => {
-    if (params.onCallback && formData) {
-      params.onCallback(formData);
-    }
-  }, [params, formData]);
-
-  const [units, setUnits] = useState<IApiUnitItemResponse[]>([]);
-  const filterUnitsByNeighborhood = () => {
-    const currentUnits = CompanyUnitsMockData.filter((unit) =>
-      formData.neighborhood?.includes(unit.neighborhood)
+    const tomorrow = useMemo(
+      () => DateHelper.dayjs().add(1, "day").toDate(),
+      []
     );
 
-    setUnits(() => currentUnits);
-  };
+    // Inicializa as datas apenas uma vez, quando o componente é montado ou quando `data` muda
+    useEffect(() => {
+      const start_date = DateHelper.dayjs(data.start_date);
+      const end_date = DateHelper.dayjs(data.end_date);
 
-  useEffect(() => {
-    const neighborhoods = CompanyUnitsGroupdMock.data.map(
-      (item) => item.neighborhood
+      if (start_date.isValid() && end_date.isValid()) {
+        setStartDate(start_date.toDate());
+        setEndDate(end_date.toDate());
+      } else {
+        setStartDate(DateHelper.dayjs(tomorrow).add(7, "day").toDate());
+        setEndDate(DateHelper.dayjs(tomorrow).add(14, "day").toDate());
+      }
+    }, [data, tomorrow]);
+
+    // Inicializa o formData apenas uma vez, quando o componente é montado ou quando o ID do anúncio muda
+    const initialFormData = useMemo(() => {
+      console.log("Initializing formData with data:", data);
+      return data;
+    }, [data._id]); // Dependência apenas no ID do anúncio
+
+    const { formData, handleChange } =
+      useDynamicForm<IApiAdvertisementItem>(initialFormData);
+
+    // Evita chamar onCallback desnecessariamente
+    useEffect(() => {
+      if (formData && formData !== prevFormDataRef.current) {
+        onCallback(formData);
+        prevFormDataRef.current = formData;
+      }
+    }, [formData, onCallback]);
+
+    const [formReport, setFormReport] =
+      useState<IDefaultFormReport>(defaultFormReport);
+    const [diffBetweenDates, setDiffBetweenDates] = useState<number>(0);
+    const [metricItemMessage, setMetricItemMessage] = useState<{
+      label: string;
+      value: string;
+    }>({
+      label: "",
+      value: "",
+    });
+    const [currentPeriod, setCurrentPeriod] = useState<AdPeriod>(
+      AdPeriod.DAILY
     );
-    updateForm("neighborhood", neighborhoods);
-  }, []);
+    const [currentPeriodText, setCurrentPeriodText] = useState<string>(
+      AdPeriodText[currentPeriod]
+    );
 
-  useEffect(() => {
-    filterUnitsByNeighborhood();
-  }, [formData.neighborhood]);
+    const [showUnits, setShowUnits] = useState<boolean>(true);
 
-  function classifyPeriod(diff: number): AdPeriod {
-    if (diff <= 1) return AdPeriod.DAILY;
-    if (diff < 29) return AdPeriod.WEEKLY;
-    if (diff <= 30) return AdPeriod.MONTHLY;
-    if (diff >= 365) return AdPeriod.YEARLY;
-    return AdPeriod.MONTHLY;
-  }
+    const handleToggleShowUnits = useCallback(() => {
+      setShowUnits((prev) => !prev);
+    }, []);
 
-  useEffect(() => {
-    const currentStartDate = DateHelper.dayjs(startDate);
-    const currentEndDate = DateHelper.dayjs(endDate);
-    if (currentStartDate.isValid() && currentEndDate.isValid()) {
-      const diff = Math.abs(
-        DateHelper.diff(currentEndDate.toDate(), currentStartDate.toDate()) || 0
+    const [units, setUnits] = useState<IApiUnitItemResponse[]>([]);
+
+    const filterUnitsByNeighborhood = useCallback(() => {
+      const currentUnits = CompanyUnitsMockData.filter((unit) =>
+        formData.neighborhood?.includes(unit.neighborhood)
       );
+      setUnits(currentUnits);
+    }, [formData.neighborhood]);
 
-      setDiffBetweenDates(diff);
-      const periodClassified = classifyPeriod(diff);
+    useEffect(() => {
+      const neighborhoods = CompanyUnitsGroupdMock.data.map(
+        (item) => item.neighborhood
+      );
+      updateForm("neighborhood", neighborhoods);
+    }, []);
 
-      const { years, months, days } = DateHelper.diffDateToObject(diff);
+    useEffect(() => {
+      filterUnitsByNeighborhood();
+    }, [formData.neighborhood, filterUnitsByNeighborhood]);
 
-      const currentMessage = [
-        years ? `${years} ano${years > 1 ? "s" : ""}` : "",
-        months ? `${months} meses` : months === 1 ? "1 mês" : "",
-        days ? `${days} dia${days > 1 ? "s" : ""}` : "",
-      ]
-        .filter(Boolean)
-        .join(", ");
+    const classifyPeriod = useCallback((diff: number): AdPeriod => {
+      if (diff <= 1) return AdPeriod.DAILY;
+      if (diff < 29) return AdPeriod.WEEKLY;
+      if (diff <= 30) return AdPeriod.MONTHLY;
+      if (diff >= 365) return AdPeriod.YEARLY;
+      return AdPeriod.MONTHLY;
+    }, []);
 
-      setCurrentPeriod(() => periodClassified);
-      setMetricItemMessage({ label: periodClassified, value: currentMessage });
-    }
-  }, [startDate, endDate]);
+    useEffect(() => {
+      if (startDate && endDate) {
+        const diff = Math.abs(DateHelper.diff(endDate, startDate) || 0);
+        setDiffBetweenDates(diff);
 
-  const [investmentText, setInvestmentText] = useState<string>("");
+        const periodClassified = classifyPeriod(diff);
+        const { years, months, days } = DateHelper.diffDateToObject(diff);
 
-  useEffect(() => {
-    setCurrentPeriodText(() => AdPeriodText[currentPeriod]);
-    const calculatePeriodPriceTotal = () => {
+        const currentMessage = [
+          years ? `${years} ano${years > 1 ? "s" : ""}` : "",
+          months ? `${months} meses` : "",
+          days ? `${days} dia${days > 1 ? "s" : ""}` : "",
+        ]
+          .filter(Boolean)
+          .join(", ");
+
+        setCurrentPeriod(periodClassified);
+        setMetricItemMessage({
+          label: periodClassified,
+          value: currentMessage,
+        });
+      }
+    }, [startDate, endDate, classifyPeriod]);
+
+    const [investmentText, setInvestmentText] = useState<string>("");
+
+    useEffect(() => {
+      setCurrentPeriodText(AdPeriodText[currentPeriod]);
       const result = FormatCurrency(
         SumUnitPeriodNative(units, currentPeriod, "price_total")
       );
+      setInvestmentText(result);
+    }, [units, currentPeriod]);
 
-      setInvestmentText(() => result);
-    };
+    const updateFormReport = useCallback(
+      (key: keyof IDefaultFormReport, message: string = "") => {
+        setFormReport((prev) => ({ ...prev, [key]: message }));
+      },
+      []
+    );
 
-    calculatePeriodPriceTotal();
-  }, [units, currentPeriod]);
+    const updateForm = useCallback(
+      (column: keyof IApiAdvertisementItem, value: unknown) => {
+        handleChange(column, value);
+      },
+      [handleChange]
+    );
 
-  const updateFormReport = (
-    key: keyof IDefaultFormReport,
-    message: string = ""
-  ) => {
-    setFormReport((prev) => ({
-      ...prev,
-      [key]: message,
-    }));
-  };
+    const [unitsOptions, setUnitsOptions] = useState<IReactSelectOption[]>([]);
+    const [isUnitsLoading, setIsUnitsLoading] = useState(false);
 
-  const updateForm = (column: keyof IApiAdvertisementItem, value: unknown) => {
-    handleChange(column, value);
-  };
+    const fetchUnitsOptions = useCallback(async () => {
+      setIsUnitsLoading(true);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        const companyUnitList = CompanyUnitsGroupdMock.data
+          .map((item) => ({
+            value: item.neighborhood,
+            label: `${item.city} - ${item.neighborhood}`,
+          }))
+          .sort((a, b) => a.label.localeCompare(b.label));
+        setUnitsOptions(companyUnitList);
+      } catch (error) {
+        console.error("Error fetching units options:", error);
+      } finally {
+        setIsUnitsLoading(false);
+      }
+    }, []);
 
-  const [unitsOptions, setUnitsOptions] = useState<IReactSelectOption[]>([]);
-  const [isUnitsLoading, setIsUnitsLoading] = useState(false);
+    useEffect(() => {
+      fetchUnitsOptions();
+    }, [fetchUnitsOptions]);
 
-  // Fetch and set units options
-  const fetchUnitsOptions = useCallback(async () => {
-    setIsUnitsLoading(true); // Start loading
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate 500ms delay
-      const companyUnitList = CompanyUnitsGroupdMock.data
-        .map((item) => ({
-          value: item.neighborhood,
-          label: `${item.city} - ${item.neighborhood}`,
-        }))
-        .sort((a, b) => a.label.localeCompare(b.label));
-      setUnitsOptions(companyUnitList);
-    } catch (error) {
-      console.error("Error fetching units options:", error);
-    } finally {
-      setIsUnitsLoading(false); // End loading
-    }
-  }, []);
+    const advertisementModalUnitsCallback = useCallback(
+      (current: IAdvertisementModalUnitCallback) => {
+        if (current.type === EnumAdvertisementModalUnit.REMOVE_UNIT) {
+          const currentData = current.data as IApiUnitItemResponse;
+          const newUnits = units.filter((item) => item._id !== currentData._id);
+          setUnits(newUnits);
+        }
+      },
+      [units]
+    );
 
-  useEffect(() => {
-    fetchUnitsOptions(); // Fetch units options on mount
-  }, [fetchUnitsOptions]);
+    const handleStartDateChange = useCallback(
+      (selectedDates: Date[]) => {
+        if (selectedDates.length === 0) return;
+        const newStartDate = selectedDates[0];
 
-  const advertisementModalUnitsCallback = (
-    current: IAdvertisementModalUnitCallback
-  ) => {
-    if (current.type === EnumAdvertisementModalUnit.REMOVE_UNIT) {
-      const currentData: IApiUnitItemResponse =
-        current.data as IApiUnitItemResponse;
+        if (
+          DateHelper.dayjs(newStartDate).isSameOrAfter(tomorrow, "day") &&
+          DateHelper.dayjs(newStartDate).isBefore(endDate, "day")
+        ) {
+          setStartDate(newStartDate);
+          setEndDate(DateHelper.dayjs(newStartDate).add(7, "day").toDate());
+          updateFormReport("start_date");
+          updateForm("start_date", newStartDate.toISOString());
+        } else {
+          updateFormReport(
+            "start_date",
+            `A data deve ser maior ou igual a ${DateHelper.format(
+              tomorrow,
+              DateHelperFormat.SHORT
+            )} e menor que ${DateHelper.format(
+              endDate as Date,
+              DateHelperFormat.SHORT
+            )}.`
+          );
+        }
+      },
+      [endDate, tomorrow, updateForm, updateFormReport]
+    );
 
-      console.log({ currentData });
-      const newUnits = units.filter((item) => item._id !== currentData._id);
-      // const newNeighborhoods = [
-      //   ...new Set(newUnits.map((item) => item.neighborhood)),
-      // ];
+    const handleEndDateChange = useCallback(
+      (selectedDates: Date[]) => {
+        if (selectedDates.length === 0) return;
+        const currentDate = selectedDates[0];
 
-      // updateForm("neighborhood", newNeighborhoods);
-      setUnits(() => newUnits);
-    }
-  };
+        if (DateHelper.dayjs(currentDate).isAfter(startDate, "day")) {
+          setEndDate(currentDate);
+          updateFormReport("end_date");
+          updateForm("end_date", currentDate.toISOString());
+        } else {
+          updateFormReport(
+            "end_date",
+            `A data deve ser maior que ${DateHelper.format(
+              startDate as Date,
+              DateHelperFormat.SHORT
+            )}`
+          );
+        }
+      },
+      [startDate, updateForm, updateFormReport]
+    );
 
-  const handleStartDateChange = (selectedDates: Date[]) => {
-    if (selectedDates.length === 0) return;
-
-    const newStartDate = selectedDates[0];
-
-    if (
-      DateHelper.dayjs(newStartDate).isSameOrAfter(tomorrow, "day") &&
-      DateHelper.dayjs(newStartDate).isBefore(endDate, "day")
-    ) {
-      setStartDate(newStartDate);
-      setEndDate(DateHelper.dayjs(newStartDate).add(7, "day").toDate());
-      updateFormReport("start_date");
-      updateForm("start_date", newStartDate.toISOString());
-    } else {
-      updateFormReport(
-        "start_date",
-        `A data deve ser maior ou igual a ${DateHelper.format(
-          tomorrow,
-          DateHelperFormat.SHORT
-        )} 
-          e menor que ${DateHelper.format(
-            endDate as Date,
-            DateHelperFormat.SHORT
-          )}.`
-      );
-    }
-  };
-
-  const handleEndDateChange = (selectedDates: Date[]) => {
-    if (selectedDates.length === 0) return;
-
-    const currentDate = selectedDates[0];
-
-    if (DateHelper.dayjs(currentDate).isAfter(startDate, "day")) {
-      setEndDate(currentDate);
-      updateFormReport("end_date");
-      updateForm("end_date", currentDate.toISOString());
-    } else {
-      updateFormReport(
-        "end_date",
-        `A data deve ser maior que ${DateHelper.format(
-          startDate as Date,
-          DateHelperFormat.SHORT
-        )}`
-      );
-    }
-  };
-
-  function MetricItem({
-    label,
-    value,
-    icon,
-  }: {
-    label: string;
-    value: string;
-    icon: ReactNode;
-  }) {
-    return (
-      <div className="flex flex-col flex-1 min-w-0 items-start text-gray-600 dark:text-gray-300 border-l first:border-l-0 pl-3 first:pl-0">
-        <div className="flex items-center gap-2">
-          {icon}
-          <span className="text-sm">{label}</span>
+    const MetricItem = useCallback(
+      ({
+        label,
+        value,
+        icon,
+      }: {
+        label: string;
+        value: string;
+        icon: ReactNode;
+      }) => (
+        <div className="flex flex-col flex-1 min-w-0 items-start text-gray-600 dark:text-gray-300 border-l first:border-l-0 pl-3 first:pl-0">
+          <div className="flex items-center gap-2">
+            {icon}
+            <span className="text-sm">{label}</span>
+          </div>
+          <div className="text-lg font-bold">{value}</div>
         </div>
-        <div className="text-lg font-bold">{value}</div>
-      </div>
+      ),
+      []
+    );
+
+    return (
+      <>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div>
+            <LazyMap
+              list={units}
+              key={`map-units-${
+                CompanyUnitsMock.data.length
+              }-${new Date().toISOString()}`}
+            />
+          </div>
+          <div className="overflow-y-auto max-h-[75vh] pb-28 pr-6 col-span-2">
+            {formData && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {startDate && endDate && (
+                  <div className="col-span-2">
+                    <div className="grid gap-6 sm:grid-cols-2">
+                      {/* Start Date Picker */}
+                      <div>
+                        <Label htmlFor="startDate">Data inicial</Label>
+                        <div className="relative w-full flatpickr-wrapper">
+                          <Flatpickr
+                            options={{
+                              dateFormat: "d/m/Y",
+                              maxDate: maxStartDate,
+                            }}
+                            className={DateInputStyle.tradicional}
+                            value={startDate}
+                            onChange={handleStartDateChange}
+                          />
+                          <span className={DateInputStyle.calendar}>
+                            <CalenderIcon />
+                          </span>
+                        </div>
+                        <div className="text-sm text-red-500">
+                          {formReport.start_date}
+                        </div>
+                      </div>
+
+                      {/* End Date Picker */}
+                      <div>
+                        <Label htmlFor="endDate">Data final {data.title}</Label>
+                        <div className="relative w-full flatpickr-wrapper">
+                          <Flatpickr
+                            options={{
+                              dateFormat: "d/m/Y",
+                              maxDate: maxEndDate,
+                            }}
+                            className={DateInputStyle.tradicional}
+                            value={endDate}
+                            onChange={handleEndDateChange}
+                          />
+                          <span className={DateInputStyle.calendar}>
+                            <CalenderIcon />
+                          </span>
+                        </div>
+                        <div className="text-sm text-red-500">
+                          {formReport.end_date}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {!formReport.start_date && !formReport.end_date && (
+                  <>
+                    <div className="col-span-2">
+                      <div className="w-full">
+                        <div className="flex flex-row w-full gap-3">
+                          <MetricItem
+                            label={`Período (${currentPeriodText})`}
+                            value={metricItemMessage.value}
+                            icon={<PiUsersLight size={15} />}
+                          />
+                          <MetricItem
+                            label={`Alcance (${currentPeriodText})`}
+                            value={FormatThousand(
+                              SumUnitPeriodNative(
+                                units,
+                                AdPeriod.MONTHLY,
+                                "price_total"
+                              )
+                            )}
+                            icon={<PiUsersLight size={15} />}
+                          />
+                          <MetricItem
+                            label={`Exibições (${currentPeriodText})`}
+                            value={FormatThousand(
+                              SumUnitPeriodNative(
+                                units,
+                                AdPeriod.MONTHLY,
+                                "display_times"
+                              )
+                            )}
+                            icon={<PiEye size={15} />}
+                          />
+                          <MetricItem
+                            label={`Investimento (${currentPeriodText})`}
+                            value={investmentText}
+                            icon={<BsCashCoin size={15} />}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="col-span-2">
+                      <Label htmlFor="title">Regiões</Label>
+                      <Select
+                        isMulti
+                        placeholder="Selecione as regiões"
+                        isDisabled={isUnitsLoading}
+                        isLoading={isUnitsLoading}
+                        value={
+                          unitsOptions.filter((option) =>
+                            formData.neighborhood?.includes(option.value)
+                          ) || []
+                        }
+                        options={unitsOptions}
+                        onChange={(newValue) => {
+                          const neighborhoods = newValue.map(
+                            (neighborhood) => neighborhood.value
+                          );
+                          updateForm("neighborhood", neighborhoods);
+                        }}
+                      />
+                    </div>
+
+                    <div className="col-span-2">
+                      <AdvertisementModalUnits
+                        title={`Estabelecimentos (${
+                          units.length
+                        }) - ${SumAllDevices(units)} Telas`}
+                        content={units}
+                        isOpen={showUnits}
+                        toggleAccordion={handleToggleShowUnits}
+                        callback={advertisementModalUnitsCallback}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </>
     );
   }
+);
 
-  return (
-    <>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <div>
-          <LazyMap
-            list={units}
-            key={`map-units-${
-              CompanyUnitsMock.data.length
-            }-${new Date().toISOString()}`}
-          />
-        </div>
-        <div className="overflow-y-auto max-h-[75vh] pb-28 pr-6 col-span-2">
-          {formData && (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {startDate && endDate && (
-                <div className="col-span-2">
-                  <div className="grid gap-6 sm:grid-cols-2">
-                    {/* Start Date Picker */}
-                    <div>
-                      <Label htmlFor="startDate">Data inicial</Label>
-                      <div className="relative w-full flatpickr-wrapper">
-                        <Flatpickr
-                          options={{
-                            dateFormat: "d/m/Y",
-                            maxDate: maxStartDate,
-                          }}
-                          className={DateInputStyle.tradicional}
-                          defaultValue={startDate.toString()}
-                          value={startDate}
-                          onChange={handleStartDateChange}
-                        />
-                        <span className={DateInputStyle.calendar}>
-                          <CalenderIcon />
-                        </span>
-                      </div>
-                      <div className="text-sm text-red-500">
-                        {formReport.start_date}
-                      </div>
-                    </div>
+AdvertisementModalLocal.displayName = "AdvertisementModalLocal";
 
-                    {/* End Date Picker */}
-                    <div>
-                      <Label htmlFor="endDate">Data final</Label>
-                      <div className="relative w-full flatpickr-wrapper">
-                        <Flatpickr
-                          options={{
-                            dateFormat: "d/m/Y",
-                            maxDate: maxEndDate,
-                          }}
-                          className={DateInputStyle.tradicional}
-                          defaultValue={endDate.toString()}
-                          value={endDate}
-                          onChange={handleEndDateChange}
-                        />
-                        <span className={DateInputStyle.calendar}>
-                          <CalenderIcon />
-                        </span>
-                      </div>
-                      <div className="text-sm text-red-500">
-                        {formReport.end_date}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {!formReport.start_date && !formReport.end_date && (
-                <>
-                  <div className="col-span-2">
-                    <div className="w-full ">
-                      <div className="flex flex-row w-full gap-3">
-                        <MetricItem
-                          label={`Período (${currentPeriodText})`}
-                          // label={currentPeriod}
-                          value={metricItemMessage.value}
-                          icon={<PiUsersLight size={15} />}
-                        />
-                        <MetricItem
-                          label={`Alcance (${currentPeriodText})`}
-                          value={FormatThousand(
-                            SumUnitPeriodNative(
-                              units,
-                              AdPeriod.MONTHLY,
-                              "price_total"
-                            )
-                          )}
-                          icon={<PiUsersLight size={15} />}
-                        />
-                        <MetricItem
-                          label={`Exibições (${currentPeriodText})`}
-                          value={FormatThousand(
-                            SumUnitPeriodNative(
-                              units,
-                              AdPeriod.MONTHLY,
-                              "display_times"
-                            )
-                          )}
-                          icon={<PiEye size={15} />}
-                        />
-                        <MetricItem
-                          label={`Investimento (${currentPeriodText})`}
-                          value={investmentText}
-                          icon={<BsCashCoin size={15} />}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="col-span-2">
-                    <Label htmlFor="title">Regiões</Label>
-                    <Select
-                      isMulti
-                      placeholder={`Selecione as regiões`}
-                      isDisabled={isUnitsLoading}
-                      isLoading={isUnitsLoading}
-                      value={
-                        unitsOptions.filter((option) =>
-                          formData.neighborhood?.includes(option.value)
-                        ) || []
-                      }
-                      options={unitsOptions}
-                      onChange={(newValue) => {
-                        const neighborhoods = newValue.map(
-                          (neighborhood) => neighborhood.value
-                        );
-                        updateForm("neighborhood", neighborhoods);
-                      }}
-                    />
-                  </div>
-
-                  <div className="col-span-2">
-                    <AdvertisementModalUnits
-                      title={`Estabelecimentos (${
-                        units.length
-                      }) - ${SumAllDevices(units)} Telas`}
-                      content={units}
-                      isOpen={showUnits}
-                      toggleAccordion={handleToggleShowUnits}
-                      callback={advertisementModalUnitsCallback}
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* <div>{faker.number.int({ min: 2000, max: 30000 })}</div> */}
-            </div>
-          )}
-        </div>
-      </div>
-    </>
-  );
-}
+export default AdvertisementModalLocal;
