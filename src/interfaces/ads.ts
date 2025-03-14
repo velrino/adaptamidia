@@ -15,6 +15,13 @@ export enum AdStatus {
   ARCHIVED = "ARCHIVED",
 }
 
+export enum AdPeriod {
+  DAILY = "DAILY",
+  WEEKLY = "WEEKLY",
+  MONTHLY = "MONTHLY",
+  YEARLY = "YEARLY",
+}
+
 export enum AdSortKey {
   company = "company",
   title = "title",

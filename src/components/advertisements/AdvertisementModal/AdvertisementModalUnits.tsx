@@ -12,6 +12,9 @@ import {
 import Image from "next/image";
 import { PiUsersLight, PiEye, PiDesktop } from "react-icons/pi";
 import { IoLocationOutline } from "react-icons/io5";
+import { AdPeriod } from "@/interfaces/ads";
+import { BsCashCoin } from "react-icons/bs";
+import { FormatCurrency, FormatThousand } from "@/utils/generic";
 
 interface IAdvertisementModalUnits {
   title: string;
@@ -111,91 +114,134 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
               }}
             >
               <div className="grid gap-2">
-                {units.map((unit: IApiUnitItemResponse) => (
-                  <div
-                    key={unit._id}
-                    className="rounded-2xl border border-gray-200 dark:border-gray-700"
-                  >
-                    <div className="grid md:grid-cols-2 lg:grid-cols-12">
-                      <div className="col-span-3 relative h-full w-full p-0">
-                        <Image
-                          src="/images/local/1.jpg"
-                          alt="Imagem do local"
-                          layout="fill" // Faz a imagem ocupar todo o espaço disponível
-                          objectFit="cover" // Faz o corte para preencher o espaço mantendo a proporção
-                          objectPosition="center" // Centraliza a imagem
-                          className="rounded-l-lg"
-                        />
-                      </div>
-                      <div className="col-span-9 p-4">
-                        <div className="flex justify-between items-center">
-                          <div className="text-md font-semibold text-gray-900 dark:text-white truncate">
-                            {unit.name}
-                          </div>
-                          <div
-                            className="cursor-pointer flex-shrink-0"
-                            onClick={() => {
-                              setSelected(unit);
-                              modalRemoteUnit.openModal();
-                            }}
-                          >
-                            <IoMdCloseCircleOutline
-                              size={25}
-                              className="text-brand-500"
-                            />
-                          </div>
+                {units.map((unit: IApiUnitItemResponse) => {
+                  const currentMetrics = {
+                    [AdPeriod.DAILY]: unit.prices.find(
+                      (price) => price.period === AdPeriod.MONTHLY
+                    ),
+                    [AdPeriod.WEEKLY]: unit.prices.find(
+                      (price) => price.period === AdPeriod.WEEKLY
+                    ),
+                    [AdPeriod.MONTHLY]: unit.prices.find(
+                      (price) => price.period === AdPeriod.MONTHLY
+                    ),
+                  };
+
+                  return (
+                    <div
+                      key={unit._id}
+                      className="rounded-2xl border border-gray-200 dark:border-gray-700"
+                    >
+                      <div className="grid md:grid-cols-2 lg:grid-cols-12">
+                        <div className="col-span-3 relative h-full w-full p-0">
+                          <Image
+                            src="/images/local/1.jpg"
+                            alt="Imagem do local"
+                            layout="fill" // Faz a imagem ocupar todo o espaço disponível
+                            objectFit="cover" // Faz o corte para preencher o espaço mantendo a proporção
+                            objectPosition="center" // Centraliza a imagem
+                            className="rounded-l-lg"
+                          />
                         </div>
-
-                        <p className="text-gray-600 dark:text-gray-300 text-sm">
-                          {unit.full_address}
-                        </p>
-
-                        <div className="rounded-2xl w-full max-w-md mt-3">
-                          <div className="flex gap-3">
-                            <MetricItem
-                              label="Alcance diário"
-                              value={unit.average_visitors.daily * 7}
-                              icon={<PiUsersLight size={15} />}
-                            />
-                            <MetricItem
-                              label="Alcance semanal"
-                              value={unit.average_visitors.weekly * 7}
-                              icon={<PiUsersLight size={15} />}
-                            />
-                            <MetricItem
-                              label="Alcance Mensal"
-                              value={unit.average_visitors.monthly * 7}
-                              icon={<PiUsersLight size={15} />}
-                            />
+                        <div className="col-span-9 p-4">
+                          <div className="flex justify-between items-center">
+                            <div className="text-md font-semibold text-gray-900 dark:text-white truncate">
+                              {unit.name}
+                            </div>
+                            <div
+                              className="cursor-pointer flex-shrink-0"
+                              onClick={() => {
+                                setSelected(unit);
+                                modalRemoteUnit.openModal();
+                              }}
+                            >
+                              <IoMdCloseCircleOutline
+                                size={25}
+                                className="text-brand-500"
+                              />
+                            </div>
                           </div>
-                        </div>
 
-                        <div className="rounded-2xl w-full max-w-md mt-3">
-                          <div className="flex gap-3">
-                            <MetricItem
-                              label="Exibições"
-                              value={unit.average_visitors.monthly * 27}
-                              icon={<PiEye size={15} />}
-                            />
-                            <MetricItem
-                              label="Telas"
-                              value={Object.values(unit.devices).reduce(
-                                (total, num) => total + num,
-                                0
+                          <p className="text-gray-600 dark:text-gray-300 text-sm">
+                            {unit.full_address}
+                          </p>
+
+                          <div className="rounded-2xl w-full max-w-md mt-3">
+                            <div className="flex gap-3">
+                              {currentMetrics[AdPeriod.DAILY] && (
+                                <MetricItem
+                                  label={"Alcance diário"}
+                                  value={FormatThousand(
+                                    currentMetrics[AdPeriod.DAILY]
+                                      ?.average_visitors
+                                  )}
+                                  icon={<PiUsersLight size={15} />}
+                                />
                               )}
-                              icon={<PiDesktop size={15} />}
-                            />
-                            <MetricItem
-                              label="Distância"
-                              value="17 m"
-                              icon={<IoLocationOutline size={15} />}
-                            />
+
+                              {currentMetrics[AdPeriod.WEEKLY] && (
+                                <MetricItem
+                                  label="Alcance semanal"
+                                  value={FormatThousand(
+                                    currentMetrics[AdPeriod.WEEKLY]
+                                      ?.average_visitors
+                                  )}
+                                  icon={<PiUsersLight size={15} />}
+                                />
+                              )}
+
+                              {currentMetrics[AdPeriod.MONTHLY] && (
+                                <MetricItem
+                                  label="Alcance mensal"
+                                  value={FormatThousand(
+                                    currentMetrics[AdPeriod.MONTHLY]
+                                      ?.average_visitors
+                                  )}
+                                  icon={<PiUsersLight size={15} />}
+                                />
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="rounded-2xl w-full max-w-md mt-3">
+                            <div className="flex gap-3">
+                              {currentMetrics[AdPeriod.MONTHLY] && (
+                                <MetricItem
+                                  label="Exibições"
+                                  value={FormatThousand(
+                                    currentMetrics[AdPeriod.MONTHLY]
+                                      ?.average_visitors
+                                  )}
+                                  icon={<PiEye size={15} />}
+                                />
+                              )}
+
+                              <MetricItem
+                                label="Telas"
+                                value={Object.values(unit.devices).reduce(
+                                  (total, num) => total + num,
+                                  0
+                                )}
+                                icon={<PiDesktop size={15} />}
+                              />
+
+                              {currentMetrics[AdPeriod.MONTHLY] && (
+                                <MetricItem
+                                  label="Investimento"
+                                  value={FormatCurrency(
+                                    currentMetrics[AdPeriod.MONTHLY]
+                                      ?.price_total
+                                  )}
+                                  icon={<BsCashCoin size={15} />}
+                                />
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </Accordion>
           ))}

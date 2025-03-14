@@ -1,4 +1,6 @@
+import { faker } from "@faker-js/faker";
 import { IApiUnitItemResponse } from "../api/api.interface";
+import { AdPeriod } from "@/interfaces/ads";
 
 export const CompanyUnitsMockData: IApiUnitItemResponse[] = [
   {
@@ -15,11 +17,6 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = [
     street_number: "19",
     type: "RESTAURANT",
     status: "IN_REVIEW",
-    average_visitors: {
-      daily: 100,
-      weekly: 700,
-      monthly: 3000,
-    },
     max_capacity: 500,
     location: {
       type: "Point",
@@ -45,11 +42,6 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = [
     street_number: "151",
     type: "RESTAURANT",
     status: "IN_REVIEW",
-    average_visitors: {
-      daily: 100,
-      weekly: 700,
-      monthly: 3000,
-    },
     max_capacity: 500,
     location: {
       type: "Point",
@@ -75,11 +67,6 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = [
     street_number: "540",
     type: "RESTAURANT",
     status: "IN_REVIEW",
-    average_visitors: {
-      daily: 100,
-      weekly: 700,
-      monthly: 3000,
-    },
     max_capacity: 500,
     location: {
       type: "Point",
@@ -105,11 +92,6 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = [
     street_number: "555",
     type: "RESTAURANT",
     status: "IN_REVIEW",
-    average_visitors: {
-      daily: 100,
-      weekly: 700,
-      monthly: 3000,
-    },
     max_capacity: 500,
     location: {
       type: "Point",
@@ -135,11 +117,6 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = [
     street_number: "1286",
     type: "RESTAURANT",
     status: "IN_REVIEW",
-    average_visitors: {
-      daily: 100,
-      weekly: 700,
-      monthly: 3000,
-    },
     max_capacity: 500,
     location: {
       type: "Point",
@@ -151,7 +128,29 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = [
       smart_tv: 7,
     },
   },
-];
+].map((item) => ({
+  ...item,
+  prices: [
+    {
+      period: AdPeriod.DAILY,
+      display_times: faker.number.int({ min: 100, max: 500 }),
+      price_total: faker.number.int({ min: 50, max: 100 }),
+      average_visitors: faker.number.int({ min: 300, max: 1000 }),
+    },
+    {
+      period: AdPeriod.WEEKLY,
+      display_times: faker.number.int({ min: 1000, max: 5000 }),
+      price_total: faker.number.int({ min: 100, max: 500 }),
+      average_visitors: faker.number.int({ min: 3000, max: 10000 }),
+    },
+    {
+      period: AdPeriod.MONTHLY,
+      display_times: faker.number.int({ min: 10000, max: 50000 }),
+      price_total: faker.number.int({ min: 1000, max: 5000 }),
+      average_visitors: faker.number.int({ min: 10000, max: 100000 }),
+    },
+  ],
+})) as IApiUnitItemResponse[];
 
 export const CompanyUnitsMock = {
   pages: 1,

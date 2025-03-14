@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import Select from "react-select";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { AdvertisementModalCommonProps } from "./interface";
@@ -12,6 +13,9 @@ import Flatpickr from "react-flatpickr";
 import MultiSelect, { Option } from "@/components/form/MultiSelect";
 import { AudienceOptionsMock } from "@/backend/mock/advertisements";
 import { AdsAudience } from "@/interfaces/ads";
+import { IReactSelectOption } from "@/interfaces/general";
+import { CompanyMockData } from "@/backend/mock/client";
+import { EnumApiCompanyType } from "@/backend/api/api.enum";
 
 interface IDefaultFormReport {
   start_date: string;
@@ -146,12 +150,61 @@ export default function AdvertisementModalAbout(
     handleChange(column, value);
   };
 
+  const [advertiserOptions, setAdvertiserOptions] = useState<
+    IReactSelectOption[]
+  >([]);
+  const [isAdvertiserLoading, setIsAdvertiserLoading] = useState(false);
+
+  // Fetch and set advertiser options
+  const fetchAdvertiserOptions = useCallback(async () => {
+    setIsAdvertiserLoading(true); // Start loading
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate 500ms delay
+      const companyList = CompanyMockData.filter(
+        (item) => item.type === EnumApiCompanyType.ADVERTISER
+      ).map((item) => ({
+        value: item._id,
+        label: `${item.name} (${item.document})`,
+      }));
+      setAdvertiserOptions(companyList);
+    } catch (error) {
+      console.error("Error fetching advertiser options:", error);
+    } finally {
+      setIsAdvertiserLoading(false); // End loading
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAdvertiserOptions(); // Fetch advertiser options on mount
+  }, [fetchAdvertiserOptions]);
+
   return (
     <>
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="overflow-y-auto max-h-[75vh] pb-28">
           {formData && (
             <div className="grid gap-6 sm:grid-cols-2">
+              <div className="col-span-2">
+                <Label htmlFor="title">Anunciante</Label>
+                <Select
+                  placeholder={`Selecione o Anunciante`}
+                  isDisabled={isAdvertiserLoading}
+                  isLoading={isAdvertiserLoading}
+                  value={
+                    advertiserOptions.find(
+                      (option) => option.value === formData.company
+                    ) || null
+                  }
+                  options={advertiserOptions}
+                  onChange={(currentOption) =>
+                    updateForm(
+                      "company",
+                      currentOption ? currentOption.value : null
+                    )
+                  }
+                />
+              </div>
+
               <div className="col-span-2">
                 <Label htmlFor="title">Título</Label>
                 <Input

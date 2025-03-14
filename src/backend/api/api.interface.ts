@@ -1,4 +1,4 @@
-import { AdsAudience, AdStatus, AdType } from "@/interfaces/ads";
+import { AdPeriod, AdsAudience, AdStatus, AdType } from "@/interfaces/ads";
 
 export interface IApiPaginateParameters {
   page: number;
@@ -81,11 +81,12 @@ export interface IApiUnitItemResponse {
   devices: {
     smart_tv: number;
   };
-  average_visitors: {
-    daily: number;
-    weekly: number;
-    monthly: number;
-  };
+  prices: {
+    period: AdPeriod;
+    display_times: number;
+    price_total: number;
+    average_visitors: number;
+  }[];
   max_capacity: number;
   location: {
     type: string;
