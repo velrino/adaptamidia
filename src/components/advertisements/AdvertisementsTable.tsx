@@ -21,7 +21,6 @@ import { AdvertisementsMock } from "@/backend/mock/advertisements";
 import { faker } from "@faker-js/faker";
 import { DateHelper } from "@/utils/date";
 import AdvertisementModal from "./AdvertisementModal";
-import { AdvertisementProvider } from "./AdvertisementModal/context";
 
 export default function AdvertisementsTable() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -48,7 +47,7 @@ export default function AdvertisementsTable() {
     if (!response) return;
 
     handleResponse().then((data) => {
-      setCurrentAdvertisement(data[0] || null);
+      // setCurrentAdvertisement(data[0] || null);
       setList(data);
     });
   }, [response, handleResponse]);
@@ -315,16 +314,14 @@ export default function AdvertisementsTable() {
         </div>
       </div>
       {currentAdvertisement && (
-        <AdvertisementProvider initialData={currentAdvertisement}>
-          <AdvertisementModal
-            action={ContentAction.CREATE}
-            // advertisementData={currentAdvertisement}
-            onCloseCallback={() => {
-              setCurrentAdvertisement(null);
-              console.log("Modal closed!");
-            }}
-          />
-        </AdvertisementProvider>
+        <AdvertisementModal
+          action={ContentAction.CREATE}
+          advertisementData={currentAdvertisement}
+          onCloseCallback={() => {
+            setCurrentAdvertisement(null);
+            console.log("Modal closed!");
+          }}
+        />
       )}
     </>
   );

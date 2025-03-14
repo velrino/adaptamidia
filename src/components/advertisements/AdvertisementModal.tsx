@@ -1,44 +1,41 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Button from "../ui/button/Button";
 import { Modal } from "../ui/modal";
 import { IApiAdvertisementItem } from "@/backend/api/api.interface";
-import AdvertisementModalTab from "./AdvertisementModal/AdvertisementModalTab";
 import { ContentAction } from "@/interfaces/general";
-import { useAdvertisement } from "./AdvertisementModal/context";
-import ParentComponent from "./AdvertisementModal/example";
+import AdvertisementModalTab from "./AdvertisementModal/AdvertisementModalTab";
 
-interface AdvertisementModalProps {
+interface IAdvertisementModalProps {
   action: ContentAction;
-  advertisementData?: IApiAdvertisementItem;
+  advertisementData: IApiAdvertisementItem;
   setOpen?: (open: boolean) => void;
   onCloseCallback: () => void;
 }
 
 export default function AdvertisementModal({
   action,
+  advertisementData,
   onCloseCallback,
-}: AdvertisementModalProps) {
+}: IAdvertisementModalProps) {
   const handleClose = () => {
     if (onCloseCallback) {
       onCloseCallback();
     }
   };
 
-  // const [record, setRecord] = useState<IApiAdvertisementItem>();
+  const [data, setData] = useState<IApiAdvertisementItem>(advertisementData);
 
-  // useEffect(() => {
-  //   console.log({ data });
-  //   setRecord(() => advertisementData);
-  // }, [advertisementData]);
-
-  const { data } = useAdvertisement();
+  const handleUpdate = (updatedData: Partial<IApiAdvertisementItem>) => {
+    setData((prev) => ({ ...prev, ...updatedData }));
+  };
 
   const save = () => {
     console.clear();
     console.log({ action, data });
   };
+
   return (
     <Modal
       isOpen={true}
@@ -57,8 +54,7 @@ export default function AdvertisementModal({
 
         {/* START CONTENT */}
         <div>
-          {/* <ParentComponent /> */}
-          <AdvertisementModalTab action={action} />
+          <AdvertisementModalTab data={data} onUpdate={handleUpdate} />
         </div>
         <div className="w-full flex justify-center">
           <div className="flex gap-3 pt-2">

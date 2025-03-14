@@ -62,7 +62,7 @@ export interface IApiAdvertisementItem {
   created_at: string;
   updated_at: string;
   audience: AdsAudience[];
-  neighborhood?: string[];
+  neighborhood: string[];
   segments: string[];
 }
 

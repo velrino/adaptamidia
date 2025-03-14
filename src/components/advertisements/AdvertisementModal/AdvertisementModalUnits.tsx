@@ -1,6 +1,6 @@
 import { IApiUnitItemResponse } from "@/backend/api/api.interface";
 import Accordion from "@/components/ui/accordion/Accordion";
-import React, { useState, useMemo, useEffect, ReactNode } from "react";
+import React, { useState, useMemo, ReactNode } from "react";
 import { SumAllDevices } from "./helper";
 import { IoMdCloseCircleOutline } from "react-icons/io";
 import { useModal } from "@/hooks/useModal";
@@ -11,7 +11,6 @@ import {
 } from "./AdvertisementModalUnits/interface";
 import Image from "next/image";
 import { PiUsersLight, PiEye, PiDesktop } from "react-icons/pi";
-import { IoLocationOutline } from "react-icons/io5";
 import { AdPeriod } from "@/interfaces/ads";
 import { BsCashCoin } from "react-icons/bs";
 import { FormatCurrency, FormatThousand } from "@/utils/generic";
@@ -44,10 +43,9 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
     }));
   };
 
-  // Group units by neighborhood using useMemo for optimization
   const groupedUnits = useMemo(() => {
     const grouped = content.reduce((acc, unit) => {
-      const neighborhood = `${unit.city} - ${unit.neighborhood}` || "Unknown"; // Fallback para bairros indefinidos
+      const neighborhood = `${unit.city} - ${unit.neighborhood}` || "Unknown";
       if (!acc[neighborhood]) {
         acc[neighborhood] = [];
       }
@@ -55,7 +53,6 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
       return acc;
     }, {} as Record<string, IApiUnitItemResponse[]>);
 
-    // Ordenar os bairros alfabeticamente e reconstruir o objeto
     return Object.fromEntries(
       Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b))
     );

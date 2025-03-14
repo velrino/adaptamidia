@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { faker } from "@faker-js/faker";
 import {
   AdsAudience,
@@ -9,6 +11,11 @@ import {
 import { IApiAdvertisementResponse } from "../api/api.interface";
 import { DateHelper } from "@/utils/date";
 import { IReactSelectOption } from "@/interfaces/general";
+import { CompanyUnitsGroupdMock } from "./units";
+
+const neighborhoodsMock = [
+  CompanyUnitsGroupdMock.data.map((item) => item.neighborhood)[0],
+];
 
 const getRandom = (list: any[], min = 2, max = 5): AdsAudience[] => {
   return Array.from({ length: faker.number.int({ min, max }) }, () =>
@@ -63,6 +70,7 @@ export const AdvertisementsMock = ({
         _id: faker.string.uuid(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        neighborhood: neighborhoodsMock,
         audience: getRandom(Object.values(AdsAudience)),
         segments: getRandom(Object.values(BrandSegment)),
       };
@@ -120,6 +128,7 @@ export const AdvertisementsMockData: IApiAdvertisementResponse = {
       _id: "67a1150e9f1be9d226e7cae0",
       created_at: "2025-02-03T19:12:14.377Z",
       updated_at: "2025-02-03T19:12:14.377Z",
+      neighborhood: neighborhoodsMock,
       audience: getRandom(Object.values(AdsAudience)),
       segments: getRandom(Object.values(BrandSegment)),
     },
@@ -152,6 +161,7 @@ export const AdvertisementsMockData: IApiAdvertisementResponse = {
       _id: "67a1150e9f1be9d226e7cae0",
       created_at: "2025-02-03T19:12:14.377Z",
       updated_at: "2025-02-03T19:12:14.377Z",
+      neighborhood: neighborhoodsMock,
       audience: getRandom(Object.values(AdsAudience)),
       segments: getRandom(Object.values(BrandSegment)),
     },

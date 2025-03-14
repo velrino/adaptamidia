@@ -1,54 +1,22 @@
-import React, {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { memo, useCallback, useEffect, useState } from "react";
 import Select from "react-select";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { IApiAdvertisementItem } from "@/backend/api/api.interface";
-import { useDynamicForm } from "@/utils/form";
 import { SegmentOptionsMock } from "@/backend/mock/advertisements";
 import { AdsAudience } from "@/interfaces/ads";
 import { IReactSelectOption } from "@/interfaces/general";
 import { CompanyMockData } from "@/backend/mock/client";
 import { EnumApiCompanyType } from "@/backend/api/api.enum";
-import { useAdvertisement } from "./context";
-import { AdvertisementModalCommonProps } from "./interface";
+import { IAdvertisementModalCommonProps } from "./interface";
 
 const AdvertisementModalAbout = memo(
-  (params: AdvertisementModalCommonProps) => {
-    const { data, onCallback } = useAdvertisement();
-    const prevFormDataRef = useRef<IApiAdvertisementItem | undefined>(
-      undefined
-    );
-
-    // Memoiza o initialFormData para evitar recálculos desnecessários
-    const initialFormData = useMemo(() => {
-      console.log({ AdvertisementModalAbout: "initialFormData recalculated" });
-      return data;
-    }, [data]);
-
-    const { formData, handleChange } =
-      useDynamicForm<IApiAdvertisementItem>(initialFormData);
-
-    // Evita chamar onCallback desnecessariamente
-    useEffect(() => {
-      if (formData && formData !== prevFormDataRef.current) {
-        console.log("formData changed, calling onCallback");
-        onCallback(formData);
-        prevFormDataRef.current = formData;
-      }
-    }, [formData, onCallback]);
-
+  ({ data, onUpdate }: IAdvertisementModalCommonProps) => {
     const updateForm = (
       column: keyof IApiAdvertisementItem,
       value: unknown
     ) => {
-      handleChange(column, value);
+      onUpdate({ [column]: value });
     };
 
     // Start Audience
@@ -125,7 +93,7 @@ const AdvertisementModalAbout = memo(
     return (
       <div className="overflow-y-auto min-h-[75vh] max-h-[75vh] px-6">
         <div className="grid gap-6 sm:grid-cols-2">
-          {formData && (
+          {data && (
             <>
               <div>
                 <Label htmlFor="title">Título {data.end_date}</Label>
@@ -133,7 +101,7 @@ const AdvertisementModalAbout = memo(
                   type="text"
                   placeholder="Informe o título"
                   id="title"
-                  value={formData?.title}
+                  value={data.title}
                   onChange={(e) => updateForm("title", e.target.value)}
                   maxLength={100}
                 />
@@ -147,7 +115,7 @@ const AdvertisementModalAbout = memo(
                   isLoading={isAdvertiserLoading}
                   value={
                     advertiserOptions.find(
-                      (option) => option.value === formData.company
+                      (option) => option.value === data.company
                     ) || null
                   }
                   options={advertiserOptions}
@@ -167,7 +135,7 @@ const AdvertisementModalAbout = memo(
                   placeholder={`Selecione os Segmentos`}
                   value={
                     segmentOptions.filter((option: IReactSelectOption) =>
-                      formData.segments?.includes(option.value as string)
+                      data.segments?.includes(option.value as string)
                     ) || []
                   }
                   options={segmentOptions}
@@ -187,7 +155,7 @@ const AdvertisementModalAbout = memo(
                   placeholder={`Selecione as Audiências`}
                   value={
                     audienceOptions.filter((option: IReactSelectOption) =>
-                      formData.audience?.includes(option.value as AdsAudience)
+                      data.audience?.includes(option.value as AdsAudience)
                     ) || []
                   }
                   options={audienceOptions}

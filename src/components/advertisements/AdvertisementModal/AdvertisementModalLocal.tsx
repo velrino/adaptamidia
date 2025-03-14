@@ -6,7 +6,6 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import Label from "@/components/form/Label";
@@ -14,7 +13,6 @@ import {
   IApiAdvertisementItem,
   IApiUnitItemResponse,
 } from "@/backend/api/api.interface";
-import { useDynamicForm } from "@/utils/form";
 import { DateHelper, DateHelperFormat, DateInputStyle } from "@/utils/date";
 import Flatpickr from "react-flatpickr";
 import { CalenderIcon } from "@/icons";
@@ -41,8 +39,7 @@ import {
 } from "@/utils/generic";
 import { AdPeriod, AdPeriodText } from "@/interfaces/ads";
 import { BsCashCoin } from "react-icons/bs";
-import { useAdvertisement } from "./context";
-import { AdvertisementModalCommonProps } from "./interface";
+import { IAdvertisementModalCommonProps } from "./interface";
 
 const LazyMap = dynamic(() => import("./Ads/Map"), {
   ssr: false,
@@ -64,12 +61,7 @@ const defaultFormReport: IDefaultFormReport = {
 };
 
 const AdvertisementModalLocal = memo(
-  (params: AdvertisementModalCommonProps) => {
-    const { data, onCallback } = useAdvertisement();
-    const prevFormDataRef = useRef<IApiAdvertisementItem | undefined>(
-      undefined
-    );
-
+  ({ data, onUpdate }: IAdvertisementModalCommonProps) => {
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
     const maxStartDate = useMemo(
@@ -100,23 +92,6 @@ const AdvertisementModalLocal = memo(
       }
     }, [data, tomorrow]);
 
-    // Inicializa o formData apenas uma vez, quando o componente é montado ou quando o ID do anúncio muda
-    const initialFormData = useMemo(() => {
-      console.log("Initializing formData with data:", data);
-      return data;
-    }, [data._id]); // Dependência apenas no ID do anúncio
-
-    const { formData, handleChange } =
-      useDynamicForm<IApiAdvertisementItem>(initialFormData);
-
-    // Evita chamar onCallback desnecessariamente
-    useEffect(() => {
-      if (formData && formData !== prevFormDataRef.current) {
-        onCallback(formData);
-        prevFormDataRef.current = formData;
-      }
-    }, [formData, onCallback]);
-
     const [formReport, setFormReport] =
       useState<IDefaultFormReport>(defaultFormReport);
     const [diffBetweenDates, setDiffBetweenDates] = useState<number>(0);
@@ -144,21 +119,16 @@ const AdvertisementModalLocal = memo(
 
     const filterUnitsByNeighborhood = useCallback(() => {
       const currentUnits = CompanyUnitsMockData.filter((unit) =>
-        formData.neighborhood?.includes(unit.neighborhood)
+        data.neighborhood?.includes(unit.neighborhood)
       );
       setUnits(currentUnits);
-    }, [formData.neighborhood]);
+    }, [data.neighborhood]);
 
     useEffect(() => {
-      const neighborhoods = CompanyUnitsGroupdMock.data.map(
-        (item) => item.neighborhood
-      );
-      updateForm("neighborhood", neighborhoods);
-    }, []);
-
-    useEffect(() => {
+      console.clear();
+      console.log({ neighborhood: data.neighborhood });
       filterUnitsByNeighborhood();
-    }, [formData.neighborhood, filterUnitsByNeighborhood]);
+    }, [data.neighborhood, filterUnitsByNeighborhood]);
 
     const classifyPeriod = useCallback((diff: number): AdPeriod => {
       if (diff <= 1) return AdPeriod.DAILY;
@@ -172,7 +142,7 @@ const AdvertisementModalLocal = memo(
       if (startDate && endDate) {
         const diff = Math.abs(DateHelper.diff(endDate, startDate) || 0);
         setDiffBetweenDates(diff);
-
+        console.log({ diffBetweenDates });
         const periodClassified = classifyPeriod(diff);
         const { years, months, days } = DateHelper.diffDateToObject(diff);
 
@@ -211,9 +181,9 @@ const AdvertisementModalLocal = memo(
 
     const updateForm = useCallback(
       (column: keyof IApiAdvertisementItem, value: unknown) => {
-        handleChange(column, value);
+        onUpdate({ [column]: value });
       },
-      [handleChange]
+      [onUpdate]
     );
 
     const [unitsOptions, setUnitsOptions] = useState<IReactSelectOption[]>([]);
@@ -336,7 +306,7 @@ const AdvertisementModalLocal = memo(
             />
           </div>
           <div className="overflow-y-auto max-h-[75vh] pb-28 pr-6 col-span-2">
-            {formData && (
+            {data && (
               <div className="grid gap-3 sm:grid-cols-2">
                 {startDate && endDate && (
                   <div className="col-span-2">
@@ -365,7 +335,7 @@ const AdvertisementModalLocal = memo(
 
                       {/* End Date Picker */}
                       <div>
-                        <Label htmlFor="endDate">Data final {data.title}</Label>
+                        <Label htmlFor="endDate">Data final</Label>
                         <div className="relative w-full flatpickr-wrapper">
                           <Flatpickr
                             options={{
@@ -430,15 +400,17 @@ const AdvertisementModalLocal = memo(
                     </div>
 
                     <div className="col-span-2">
-                      <Label htmlFor="title">Regiões</Label>
+                      <Label htmlFor="title">
+                        Regiões {data.neighborhood.length}
+                      </Label>
                       <Select
                         isMulti
                         placeholder="Selecione as regiões"
                         isDisabled={isUnitsLoading}
                         isLoading={isUnitsLoading}
                         value={
-                          unitsOptions.filter((option) =>
-                            formData.neighborhood?.includes(option.value)
+                          unitsOptions.filter((option: IReactSelectOption) =>
+                            data.neighborhood.includes(option.value as string)
                           ) || []
                         }
                         options={unitsOptions}
