@@ -1,11 +1,18 @@
 import { faker } from "@faker-js/faker";
-import { AdsAudience, AdStatus, AdType } from "@/interfaces/ads";
+import {
+  AdsAudience,
+  AdStatus,
+  AdType,
+  BrandSegment,
+  BrandSegmentTranslations,
+} from "@/interfaces/ads";
 import { IApiAdvertisementResponse } from "../api/api.interface";
 import { DateHelper } from "@/utils/date";
+import { IReactSelectOption } from "@/interfaces/general";
 
-const getRandomAudiences = (min = 2, max = 5): AdsAudience[] => {
+const getRandom = (list: any[], min = 2, max = 5): AdsAudience[] => {
   return Array.from({ length: faker.number.int({ min, max }) }, () =>
-    faker.helpers.arrayElement(Object.values(AdsAudience))
+    faker.helpers.arrayElement(list)
   );
 };
 
@@ -56,7 +63,8 @@ export const AdvertisementsMock = ({
         _id: faker.string.uuid(),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        audience: getRandomAudiences(),
+        audience: getRandom(Object.values(AdsAudience)),
+        segments: getRandom(Object.values(BrandSegment)),
       };
     }
   );
@@ -112,7 +120,8 @@ export const AdvertisementsMockData: IApiAdvertisementResponse = {
       _id: "67a1150e9f1be9d226e7cae0",
       created_at: "2025-02-03T19:12:14.377Z",
       updated_at: "2025-02-03T19:12:14.377Z",
-      audience: getRandomAudiences(),
+      audience: getRandom(Object.values(AdsAudience)),
+      segments: getRandom(Object.values(BrandSegment)),
     },
     {
       company: "67d226d9b502526b43e5d1ed",
@@ -143,7 +152,8 @@ export const AdvertisementsMockData: IApiAdvertisementResponse = {
       _id: "67a1150e9f1be9d226e7cae0",
       created_at: "2025-02-03T19:12:14.377Z",
       updated_at: "2025-02-03T19:12:14.377Z",
-      audience: getRandomAudiences(),
+      audience: getRandom(Object.values(AdsAudience)),
+      segments: getRandom(Object.values(BrandSegment)),
     },
   ],
 };
@@ -160,3 +170,7 @@ export const AudienceOptionsMock = [
   { value: AdsAudience.SHOPPERS, text: "Compradores", selected: false },
   { value: AdsAudience.ATHLETES, text: "Atletas", selected: false },
 ];
+
+export const SegmentOptionsMock: IReactSelectOption[] = Object.entries(
+  BrandSegmentTranslations
+).map(([value, label]) => ({ value: value as BrandSegment, label }));

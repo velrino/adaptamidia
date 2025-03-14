@@ -150,3 +150,49 @@ export interface IAdAboutDisplay {
 export interface IAdsDayTimes {
   [day: string]: { hour: string }[];
 }
+
+export enum BrandSegment {
+  AUTOMOTIVE = "AUTOMOTIVE",
+  FASHION = "FASHION",
+  TECHNOLOGY = "TECHNOLOGY",
+  HEALTHCARE = "HEALTHCARE",
+  FOOD_AND_BEVERAGE = "FOOD_AND_BEVERAGE",
+  EDUCATION = "EDUCATION",
+  FINANCE = "FINANCE",
+  ENTERTAINMENT = "ENTERTAINMENT",
+  SPORTS = "SPORTS",
+  TRAVEL = "TRAVEL",
+  BEAUTY = "BEAUTY",
+  RETAIL = "RETAIL",
+  TELECOMMUNICATIONS = "TELECOMMUNICATIONS",
+  ENERGY = "ENERGY",
+  REAL_ESTATE = "REAL_ESTATE",
+  LOGISTICS = "LOGISTICS",
+  HOSPITALITY = "HOSPITALITY",
+  PETS = "PETS",
+  GOVERNMENT = "GOVERNMENT",
+  AGRICULTURE = "AGRICULTURE",
+}
+
+export const BrandSegmentTranslations: Record<BrandSegment, string> = {
+  [BrandSegment.AUTOMOTIVE]: "Automotivo",
+  [BrandSegment.FASHION]: "Moda",
+  [BrandSegment.TECHNOLOGY]: "Tecnologia",
+  [BrandSegment.HEALTHCARE]: "Saúde",
+  [BrandSegment.FOOD_AND_BEVERAGE]: "Alimentos e Bebidas",
+  [BrandSegment.EDUCATION]: "Educação",
+  [BrandSegment.FINANCE]: "Finanças",
+  [BrandSegment.ENTERTAINMENT]: "Entretenimento",
+  [BrandSegment.SPORTS]: "Esportes",
+  [BrandSegment.TRAVEL]: "Viagem",
+  [BrandSegment.BEAUTY]: "Beleza",
+  [BrandSegment.RETAIL]: "Varejo",
+  [BrandSegment.TELECOMMUNICATIONS]: "Telecomunicações",
+  [BrandSegment.ENERGY]: "Energia",
+  [BrandSegment.REAL_ESTATE]: "Imobiliário",
+  [BrandSegment.LOGISTICS]: "Logística",
+  [BrandSegment.HOSPITALITY]: "Hospitalidade",
+  [BrandSegment.PETS]: "Pets",
+  [BrandSegment.GOVERNMENT]: "Governo",
+  [BrandSegment.AGRICULTURE]: "Agronegócio",
+};
