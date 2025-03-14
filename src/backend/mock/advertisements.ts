@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { AdsAudience, AdStatus, AdType } from "@/interfaces/ads";
 import { IApiAdvertisementResponse } from "../api/api.interface";
+import { DateHelper } from "@/utils/date";
 
 const getRandomAudiences = (min = 2, max = 5): AdsAudience[] => {
   return Array.from({ length: faker.number.int({ min, max }) }, () =>
@@ -26,6 +27,10 @@ export const AdvertisementsMock = ({
 
       const totalSeconds = items.reduce((sum, item) => sum + item.seconds, 0);
 
+      const start_date = DateHelper.dayjs()
+        .add(1, "day")
+        .toDate()
+        .toISOString();
       return {
         company: "67d226d9b502526b43e5d1ed",
         title: faker.company.catchPhrase(),
@@ -45,7 +50,8 @@ export const AdvertisementsMock = ({
           AdStatus.INACTIVE,
           AdStatus.REVIEW,
         ]),
-        start_date: faker.date.past().toISOString(),
+        // start_date: faker.date.past().toISOString(),
+        start_date,
         end_date: faker.date.future().toISOString(),
         _id: faker.string.uuid(),
         created_at: new Date().toISOString(),

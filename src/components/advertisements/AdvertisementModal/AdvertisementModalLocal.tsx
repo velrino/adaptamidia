@@ -32,13 +32,14 @@ import {
   IAdvertisementModalUnitCallback,
 } from "./AdvertisementModalUnits/interface";
 import Spinner from "@/components/ui/spinner/Spinner";
-import { PiUsersLight } from "react-icons/pi";
+import { PiEye, PiUsersLight } from "react-icons/pi";
 import {
   FormatCurrency,
   FormatThousand,
   SumUnitPeriodNative,
 } from "@/utils/generic";
-import { AdPeriod } from "@/interfaces/ads";
+import { AdPeriod, AdPeriodText } from "@/interfaces/ads";
+import { BsCashCoin } from "react-icons/bs";
 
 const LazyMap = dynamic(() => import("./Ads/Map"), {
   ssr: false,
@@ -62,10 +63,22 @@ const defaultFormReport: IDefaultFormReport = {
 export default function AdvertisementModalLocal(
   params: AdvertisementModalCommonProps
 ) {
+  const [diffBetweenDates, setDiffBetweenDates] = useState<number>(0);
+  const [metricItemMessage, setMetricItemMessage] = useState<{
+    label: string;
+    value: string;
+  }>({
+    label: "",
+    value: "",
+  });
+  const [currentPeriod, setCurrentPeriod] = useState<AdPeriod>(AdPeriod.DAILY);
+  const [currentPeriodText, setCurrentPeriodText] = useState<string>(
+    AdPeriodText[currentPeriod]
+  );
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const maxStartDate = DateHelper.dayjs().add(2, "months").toDate();
-  const maxEndDate = DateHelper.dayjs().add(1, "year").toDate();
+  const maxEndDate = DateHelper.dayjs().add(2, "year").toDate();
 
   const [formReport, setFormReport] = useState<IDefaultFormReport>({
     ...defaultFormReport,
@@ -125,9 +138,54 @@ export default function AdvertisementModalLocal(
     filterUnitsByNeighborhood();
   }, [formData.neighborhood]);
 
+  function classifyPeriod(diff: number): AdPeriod {
+    if (diff <= 1) return AdPeriod.DAILY;
+    if (diff < 29) return AdPeriod.WEEKLY;
+    if (diff <= 30) return AdPeriod.MONTHLY;
+    if (diff >= 365) return AdPeriod.YEARLY;
+    return AdPeriod.MONTHLY;
+  }
+
   useEffect(() => {
-    console.log({ example: startDate });
-  }, [startDate]);
+    const currentStartDate = DateHelper.dayjs(startDate);
+    const currentEndDate = DateHelper.dayjs(endDate);
+    if (currentStartDate.isValid() && currentEndDate.isValid()) {
+      const diff = Math.abs(
+        DateHelper.diff(currentEndDate.toDate(), currentStartDate.toDate()) || 0
+      );
+
+      setDiffBetweenDates(diff);
+      const periodClassified = classifyPeriod(diff);
+
+      const { years, months, days } = DateHelper.diffDateToObject(diff);
+
+      const currentMessage = [
+        years ? `${years} ano${years > 1 ? "s" : ""}` : "",
+        months ? `${months} meses` : months === 1 ? "1 mês" : "",
+        days ? `${days} dia${days > 1 ? "s" : ""}` : "",
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      setCurrentPeriod(() => periodClassified);
+      setMetricItemMessage({ label: periodClassified, value: currentMessage });
+    }
+  }, [startDate, endDate]);
+
+  const [investmentText, setInvestmentText] = useState<string>("");
+
+  useEffect(() => {
+    setCurrentPeriodText(() => AdPeriodText[currentPeriod]);
+    const calculatePeriodPriceTotal = () => {
+      const result = FormatCurrency(
+        SumUnitPeriodNative(units, currentPeriod, "price_total")
+      );
+
+      setInvestmentText(() => result);
+    };
+
+    calculatePeriodPriceTotal();
+  }, [units, currentPeriod]);
 
   const updateFormReport = (
     key: keyof IDefaultFormReport,
@@ -257,8 +315,8 @@ export default function AdvertisementModalLocal(
 
   return (
     <>
-      <div className="grid gap-6 sm:grid-cols-3">
-        <div className="">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div>
           <LazyMap
             list={units}
             key={`map-units-${
@@ -268,7 +326,7 @@ export default function AdvertisementModalLocal(
         </div>
         <div className="overflow-y-auto max-h-[75vh] pb-28 pr-6 col-span-2">
           {formData && (
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2">
               {startDate && endDate && (
                 <div className="col-span-2">
                   <div className="grid gap-6 sm:grid-cols-2">
@@ -321,79 +379,83 @@ export default function AdvertisementModalLocal(
                 </div>
               )}
 
-              <div className="col-span-2">
-                <div className="w-full ">
-                  <div className="flex flex-row w-full gap-3">
-                    <MetricItem
-                      label="Alcance"
-                      value={FormatThousand(
-                        SumUnitPeriodNative(
-                          units,
-                          AdPeriod.MONTHLY,
-                          "price_total"
-                        )
-                      )}
-                      icon={<PiUsersLight size={15} />}
-                    />
-                    <MetricItem
-                      label="Exibições"
-                      value={FormatThousand(
-                        SumUnitPeriodNative(
-                          units,
-                          AdPeriod.MONTHLY,
-                          "display_times"
-                        )
-                      )}
-                      icon={<PiUsersLight size={15} />}
-                    />
-                    <MetricItem
-                      label="Investimento"
-                      value={FormatCurrency(
-                        SumUnitPeriodNative(
-                          units,
-                          AdPeriod.MONTHLY,
-                          "price_total"
-                        )
-                      )}
-                      icon={<PiUsersLight size={15} />}
+              {!formReport.start_date && !formReport.end_date && (
+                <>
+                  <div className="col-span-2">
+                    <div className="w-full ">
+                      <div className="flex flex-row w-full gap-3">
+                        <MetricItem
+                          label={`Período (${currentPeriodText})`}
+                          // label={currentPeriod}
+                          value={metricItemMessage.value}
+                          icon={<PiUsersLight size={15} />}
+                        />
+                        <MetricItem
+                          label={`Alcance (${currentPeriodText})`}
+                          value={FormatThousand(
+                            SumUnitPeriodNative(
+                              units,
+                              AdPeriod.MONTHLY,
+                              "price_total"
+                            )
+                          )}
+                          icon={<PiUsersLight size={15} />}
+                        />
+                        <MetricItem
+                          label={`Exibições (${currentPeriodText})`}
+                          value={FormatThousand(
+                            SumUnitPeriodNative(
+                              units,
+                              AdPeriod.MONTHLY,
+                              "display_times"
+                            )
+                          )}
+                          icon={<PiEye size={15} />}
+                        />
+                        <MetricItem
+                          label={`Investimento (${currentPeriodText})`}
+                          value={investmentText}
+                          icon={<BsCashCoin size={15} />}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="col-span-2">
+                    <Label htmlFor="title">Regiões</Label>
+                    <Select
+                      isMulti
+                      placeholder={`Selecione as regiões`}
+                      isDisabled={isUnitsLoading}
+                      isLoading={isUnitsLoading}
+                      value={
+                        unitsOptions.filter((option) =>
+                          formData.neighborhood?.includes(option.value)
+                        ) || []
+                      }
+                      options={unitsOptions}
+                      onChange={(newValue) => {
+                        const neighborhoods = newValue.map(
+                          (neighborhood) => neighborhood.value
+                        );
+                        updateForm("neighborhood", neighborhoods);
+                      }}
                     />
                   </div>
-                </div>
-              </div>
 
-              <div className="col-span-2">
-                <Label htmlFor="title">Regiões</Label>
-                <Select
-                  isMulti
-                  placeholder={`Selecione as regiões`}
-                  isDisabled={isUnitsLoading}
-                  isLoading={isUnitsLoading}
-                  value={
-                    unitsOptions.filter((option) =>
-                      formData.neighborhood?.includes(option.value)
-                    ) || []
-                  }
-                  options={unitsOptions}
-                  onChange={(newValue) => {
-                    const neighborhoods = newValue.map(
-                      (neighborhood) => neighborhood.value
-                    );
-                    updateForm("neighborhood", neighborhoods);
-                  }}
-                />
-              </div>
-
-              <div className="col-span-2">
-                <AdvertisementModalUnits
-                  title={`Estabelecimentos (${units.length}) - ${SumAllDevices(
-                    units
-                  )} Telas`}
-                  content={units}
-                  isOpen={showUnits}
-                  toggleAccordion={handleToggleShowUnits}
-                  callback={advertisementModalUnitsCallback}
-                />
-              </div>
+                  <div className="col-span-2">
+                    <AdvertisementModalUnits
+                      title={`Estabelecimentos (${
+                        units.length
+                      }) - ${SumAllDevices(units)} Telas`}
+                      content={units}
+                      isOpen={showUnits}
+                      toggleAccordion={handleToggleShowUnits}
+                      callback={advertisementModalUnitsCallback}
+                    />
+                  </div>
+                </>
+              )}
 
               {/* <div>{faker.number.int({ min: 2000, max: 30000 })}</div> */}
             </div>

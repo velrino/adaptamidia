@@ -1,6 +1,6 @@
 import { IApiUnitItemResponse } from "@/backend/api/api.interface";
 import Accordion from "@/components/ui/accordion/Accordion";
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, ReactNode } from "react";
 import { SumAllDevices } from "./helper";
 import { IoMdCloseCircleOutline } from "react-icons/io";
 import { useModal } from "@/hooks/useModal";
@@ -46,14 +46,19 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
 
   // Group units by neighborhood using useMemo for optimization
   const groupedUnits = useMemo(() => {
-    return content.reduce((acc, unit) => {
-      const neighborhood = unit.neighborhood || "Unknown"; // Fallback for units without a neighborhood
+    const grouped = content.reduce((acc, unit) => {
+      const neighborhood = `${unit.city} - ${unit.neighborhood}` || "Unknown"; // Fallback para bairros indefinidos
       if (!acc[neighborhood]) {
         acc[neighborhood] = [];
       }
       acc[neighborhood].push(unit);
       return acc;
     }, {} as Record<string, IApiUnitItemResponse[]>);
+
+    // Ordenar os bairros alfabeticamente e reconstruir o objeto
+    return Object.fromEntries(
+      Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b))
+    );
   }, [content]);
 
   const modalRemoteUnit = useModal();
@@ -74,12 +79,20 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
   //   modalRemoteUnit.openModal();
   // }, [content]);
 
-  function MetricItem({ label, value, icon }) {
+  function MetricItem({
+    label,
+    value,
+    icon,
+  }: {
+    label: string;
+    value: string | number;
+    icon: ReactNode;
+  }) {
     return (
       <div className="flex flex-col w-full items-s text-gray-600 dark:text-gray-300 border-l first:border-l-0 pl-3 first:pl-0">
         <div className="flex items-center gap-1">
-          <span className="text-sm">{label}</span>
           {icon}
+          <span className="text-sm">{label}</span>
         </div>
         <div className="flex items-center gap-1">
           <span className="text-md font-bold">{value}</span>
@@ -133,9 +146,9 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
                       className="rounded-2xl border border-gray-200 dark:border-gray-700"
                     >
                       <div className="grid md:grid-cols-2 lg:grid-cols-12">
-                        <div className="col-span-3 relative h-full w-full p-0">
+                        <div className="col-span-2 relative h-full w-full p-0">
                           <Image
-                            src="/images/local/1.jpg"
+                            src={unit.image}
                             alt="Imagem do local"
                             layout="fill" // Faz a imagem ocupar todo o espaço disponível
                             objectFit="cover" // Faz o corte para preencher o espaço mantendo a proporção
@@ -143,7 +156,7 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
                             className="rounded-l-lg"
                           />
                         </div>
-                        <div className="col-span-9 p-4">
+                        <div className="col-span-10 p-4">
                           <div className="flex justify-between items-center">
                             <div className="text-md font-semibold text-gray-900 dark:text-white truncate">
                               {unit.name}

@@ -73,6 +73,19 @@ export const DateHelper = {
   timeAgo: (date: string | Date) => {
     return dayjs(date).fromNow();
   },
+  diffDateToObject(days: number) {
+    const baseDate = dayjs().startOf("day");
+    const newDate = baseDate.add(days, "day");
+
+    const years = newDate.diff(baseDate, "year");
+    const months = newDate.diff(baseDate.add(years, "year"), "month");
+    const remainingDays = newDate.diff(
+      baseDate.add(years, "year").add(months, "month"),
+      "day"
+    );
+
+    return { years, months, days: remainingDays };
+  },
 };
 
 export enum DaysOfWeek {

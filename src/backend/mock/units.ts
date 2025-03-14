@@ -130,6 +130,7 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = [
   },
 ].map((item) => ({
   ...item,
+  image: `/images/local/${faker.number.int({ min: 1, max: 5 })}.jpg`,
   prices: [
     {
       period: AdPeriod.DAILY,
@@ -145,6 +146,12 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = [
     },
     {
       period: AdPeriod.MONTHLY,
+      display_times: faker.number.int({ min: 10000, max: 50000 }),
+      price_total: faker.number.int({ min: 1000, max: 5000 }),
+      average_visitors: faker.number.int({ min: 10000, max: 100000 }),
+    },
+    {
+      period: AdPeriod.YEARLY,
       display_times: faker.number.int({ min: 10000, max: 50000 }),
       price_total: faker.number.int({ min: 1000, max: 5000 }),
       average_visitors: faker.number.int({ min: 10000, max: 100000 }),

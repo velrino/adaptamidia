@@ -69,6 +69,7 @@ export interface IApiUnitItemResponse {
   _id: string;
   company: string;
   name: string;
+  image: string;
   full_address: string;
   neighborhood: string;
   address: string;

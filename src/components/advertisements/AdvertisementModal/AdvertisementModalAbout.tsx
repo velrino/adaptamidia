@@ -181,7 +181,7 @@ export default function AdvertisementModalAbout(
   return (
     <>
       <div className="grid gap-6 sm:grid-cols-2">
-        <div className="overflow-y-auto max-h-[75vh] pb-28">
+        <div className="overflow-y-auto max-h-[75vh] pb-28 px-6">
           {formData && (
             <div className="grid gap-6 sm:grid-cols-2">
               <div className="col-span-2">

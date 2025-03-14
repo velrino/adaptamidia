@@ -77,7 +77,7 @@ export default function AdvertisementMap(parameters: MapProps) {
   const zoom = calculateZoom(parameters.list);
 
   return (
-    <>
+    <div className="max-h-[75vh]">
       <MapContainer
         center={center}
         zoom={zoom}
@@ -92,9 +92,10 @@ export default function AdvertisementMap(parameters: MapProps) {
           height: "100%",
           width: "100%",
           // ...parameters.style,
-          minHeight: parameters.style?.minHeight || 500,
-          maxHeight: 500,
+          minHeight: parameters.style?.minHeight || "75vh",
+          maxHeight: "75vh",
         }}
+        className="max-h-[75vh]"
         // {...parameters?.customMapContainer}
       >
         <TileLayer
@@ -140,6 +141,6 @@ export default function AdvertisementMap(parameters: MapProps) {
           </Marker>
         ))}
       </MapContainer>
-    </>
+    </div>
   );
 }

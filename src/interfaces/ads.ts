@@ -22,6 +22,13 @@ export enum AdPeriod {
   YEARLY = "YEARLY",
 }
 
+export const AdPeriodText: Record<AdPeriod, string> = {
+  [AdPeriod.DAILY]: "Diário",
+  [AdPeriod.WEEKLY]: "Semanal",
+  [AdPeriod.MONTHLY]: "Mensal",
+  [AdPeriod.YEARLY]: "Anual",
+};
+
 export enum AdSortKey {
   company = "company",
   title = "title",

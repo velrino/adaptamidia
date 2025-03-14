@@ -33,7 +33,7 @@ export default function AdvertisementModal({
   }, [data]);
 
   const callback = (result: IApiAdvertisementItem) => {
-    console.clear();
+    // console.clear();
     console.log({ principal: result });
   };
 
@@ -63,21 +63,18 @@ export default function AdvertisementModal({
             />
           )}
         </div>
-        {/* END CONTENT */}
-
-        {/* START FOOTER */}
-        <div></div>
-        {/* END FOOTER */}
-      </div>
-      <div className="fixed w-full gap-3 mt-8 bg-white dark:bg-gray-900 bottom-0 flex justify-center py-5 left-0 border-t-1 dark:border-white/[0.03]">
-        <div className="flex gap-3">
-          <Button size="sm" variant="outline" onClick={handleClose}>
-            Cancelar
-          </Button>
-          <Button size="sm" onClick={handleClose}>
-            Salvar
-          </Button>
+        <div className="w-full flex justify-center">
+          <div className="flex gap-3 pt-2">
+            <Button size="sm" variant="outline" onClick={handleClose}>
+              Cancelar
+            </Button>
+            <Button size="sm" onClick={handleClose}>
+              Salvar
+            </Button>
+          </div>
         </div>
+
+        {/* END CONTENT */}
       </div>
     </Modal>
   );
