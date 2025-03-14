@@ -3,6 +3,9 @@ import React from "react";
 import AdvertisementModalLocal from "./AdvertisementModalLocal";
 import AdvertisementModalAbout from "./AdvertisementModalAbout";
 import { IAdvertisementModalCommonProps } from "./interface";
+import { Display } from "../Ads/Display";
+import { AdsCurrentType, DisplayThemes } from "@/interfaces/ads";
+import { AdvertisementComponent } from "./AdvertisementModalItems";
 
 const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
   data,
@@ -18,6 +21,29 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
       id: "ABOUT",
       label: "Sobre",
       content: <AdvertisementModalAbout data={data} onUpdate={onUpdate} />,
+    },
+    {
+      id: "ADS",
+      label: "Anúncios",
+      content: (
+        <div className="grid grid-cols-2 gap-4 p-4">
+          <div className="text-white text-center">
+            <AdvertisementComponent items={[...data.items, ...data.items]} />
+          </div>
+          <div className="text-white flex justify-center text-center max-h-0">
+            <div className="scale-47">
+              <Display
+                list={[data].map((item) => ({
+                  data: item,
+                  type: AdsCurrentType.ADVERTISEMENT,
+                }))}
+                theme={DisplayThemes.brand}
+                preview={false}
+              />
+            </div>
+          </div>
+        </div>
+      ),
     },
     // {
     //   id: "Three",
