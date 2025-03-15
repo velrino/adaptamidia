@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
 import { IApiUnitItemResponse } from "../api/api.interface";
 import { AdPeriod } from "@/interfaces/ads";
+import { GenerateNumberRange } from "@/utils/generic";
 
 export const CompanyUnitsMockData: IApiUnitItemResponse[] = [
   {
@@ -131,11 +132,12 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = [
 ].map((item) => ({
   ...item,
   image: `/images/local/${faker.number.int({ min: 1, max: 5 })}.jpg`,
-  prices: [
+  prices: GenerateNumberRange(15, 40).flatMap((seconds) => [
     {
       period: AdPeriod.DAILY,
       display_times: faker.number.int({ min: 100, max: 500 }),
       price_total: faker.number.int({ min: 50, max: 100 }),
+      seconds,
       average_visitors: faker.number.int({ min: 300, max: 1000 }),
     },
     {
@@ -143,20 +145,23 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = [
       display_times: faker.number.int({ min: 1000, max: 5000 }),
       price_total: faker.number.int({ min: 100, max: 500 }),
       average_visitors: faker.number.int({ min: 3000, max: 10000 }),
+      seconds,
     },
     {
       period: AdPeriod.MONTHLY,
       display_times: faker.number.int({ min: 10000, max: 50000 }),
       price_total: faker.number.int({ min: 1000, max: 5000 }),
       average_visitors: faker.number.int({ min: 10000, max: 100000 }),
+      seconds,
     },
     {
       period: AdPeriod.YEARLY,
       display_times: faker.number.int({ min: 10000, max: 50000 }),
       price_total: faker.number.int({ min: 1000, max: 5000 }),
       average_visitors: faker.number.int({ min: 10000, max: 100000 }),
+      seconds,
     },
-  ],
+  ]),
 })) as IApiUnitItemResponse[];
 
 export const CompanyUnitsMock = {

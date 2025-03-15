@@ -85,6 +85,7 @@ export interface IApiUnitItemResponse {
   };
   prices: {
     period: AdPeriod;
+    seconds: number;
     display_times: number;
     price_total: number;
     average_visitors: number;

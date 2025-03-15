@@ -58,7 +58,7 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
         tabs={tabs}
         defaultTabId="LOCAL"
         styles={{
-          nav: "p-6",
+          nav: "p-0",
           navMenu: "mx-auto",
         }}
       />

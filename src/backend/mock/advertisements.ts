@@ -34,12 +34,12 @@ export const AdvertisementsMock = ({
       const items = Array.from({ length: 3 }, () => ({
         title: faker.commerce.productName(),
         description: faker.commerce.productDescription(),
-        seconds: faker.number.int({ min: 5, max: 10 }),
+        seconds: faker.number.int({ min: 20, max: 50 }),
         source: `/images/ads/${faker.number.int({ min: 1, max: 9 })}.jpg`,
         type: AdType.IMAGE,
       }));
 
-      const totalSeconds = items.reduce((sum, item) => sum + item.seconds, 0);
+      // const totalSeconds = items.reduce((sum, item) => sum + item.seconds, 0);
 
       const start_date = DateHelper.dayjs()
         .add(1, "day")
@@ -51,14 +51,8 @@ export const AdvertisementsMock = ({
         description: faker.word.words({ count: { min: 10, max: 30 } }),
         type: AdType.IMAGE,
         spotlight: Boolean(Math.random() < 0.5),
-        items: Array.from({ length: 2 }, () => ({
-          title: faker.commerce.productName(),
-          description: faker.commerce.productDescription(),
-          seconds: faker.number.int({ min: 20, max: 50 }),
-          source: `/images/ads/${faker.number.int({ min: 1, max: 9 })}.jpg`,
-          type: AdType.IMAGE,
-        })),
-        seconds: totalSeconds,
+        items,
+        seconds: 20,
         status: faker.helpers.arrayElement([
           AdStatus.ACTIVE,
           AdStatus.INACTIVE,
@@ -168,19 +162,21 @@ export const AdvertisementsMockData: IApiAdvertisementResponse = {
   ],
 };
 
-export const AudienceOptionsMock = [
-  { value: AdsAudience.EXECUTIVES, text: "Executivos", selected: false },
-  { value: AdsAudience.TOURISTS, text: "Turistas", selected: false },
-  { value: AdsAudience.PASSENGERS, text: "Passageiros", selected: false },
-  { value: AdsAudience.DRIVERS, text: "Motoristas", selected: false },
-  { value: AdsAudience.STUDENTS, text: "Estudantes", selected: false },
-  { value: AdsAudience.CONSUMERS, text: "Consumidores", selected: false },
-  { value: AdsAudience.FANS, text: "Torcedores", selected: false },
-  { value: AdsAudience.PARTYGOERS, text: "Festeiros", selected: false },
-  { value: AdsAudience.SHOPPERS, text: "Compradores", selected: false },
-  { value: AdsAudience.ATHLETES, text: "Atletas", selected: false },
-];
+export const AudienceOptionsMock: IReactSelectOption[] = [
+  { value: AdsAudience.EXECUTIVES, label: "Executivos" },
+  { value: AdsAudience.TOURISTS, label: "Turistas" },
+  { value: AdsAudience.PASSENGERS, label: "Passageiros" },
+  { value: AdsAudience.DRIVERS, label: "Motoristas" },
+  { value: AdsAudience.STUDENTS, label: "Estudantes" },
+  { value: AdsAudience.CONSUMERS, label: "Consumidores" },
+  { value: AdsAudience.FANS, label: "Torcedores" },
+  { value: AdsAudience.PARTYGOERS, label: "Festeiros" },
+  { value: AdsAudience.SHOPPERS, label: "Compradores" },
+  { value: AdsAudience.ATHLETES, label: "Atletas" },
+].sort((a, b) => a.label.localeCompare(b.label));
 
 export const SegmentOptionsMock: IReactSelectOption[] = Object.entries(
   BrandSegmentTranslations
-).map(([value, label]) => ({ value: value as BrandSegment, label }));
+)
+  .map(([value, label]) => ({ value: value as BrandSegment, label }))
+  .sort((a, b) => a.label.localeCompare(b.label));

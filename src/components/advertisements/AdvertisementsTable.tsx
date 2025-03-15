@@ -47,7 +47,7 @@ export default function AdvertisementsTable() {
     if (!response) return;
 
     handleResponse().then((data) => {
-      // setCurrentAdvertisement(data[0] || null);
+      setCurrentAdvertisement(data[0] || null);
       setList(data);
     });
   }, [response, handleResponse]);

@@ -60,3 +60,25 @@ export function FormatCurrency(
 export function FormatThousand(value: number): string {
   return value.toLocaleString("pt-BR");
 }
+
+export function GenerateNumberRange(
+  min: number,
+  max: number,
+  step: number = 5
+): number[] {
+  return Array.from(
+    { length: (max - min) / step + 1 },
+    (_, i) => min + i * step
+  );
+}
+
+export function GenerateNumberRangeAsOptions(
+  min: number,
+  max: number,
+  interval: number = 5
+) {
+  return GenerateNumberRange(min, max, interval).map((value) => ({
+    value: value.toString(),
+    label: `${value} segundos`,
+  }));
+}

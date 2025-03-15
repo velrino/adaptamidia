@@ -3,7 +3,10 @@ import Select from "react-select";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { IApiAdvertisementItem } from "@/backend/api/api.interface";
-import { SegmentOptionsMock } from "@/backend/mock/advertisements";
+import {
+  AudienceOptionsMock,
+  SegmentOptionsMock,
+} from "@/backend/mock/advertisements";
 import { AdsAudience } from "@/interfaces/ads";
 import { IReactSelectOption } from "@/interfaces/general";
 import { CompanyMockData } from "@/backend/mock/client";
@@ -28,7 +31,7 @@ const AdvertisementModalAbout = memo(
     > => {
       return new Promise<IReactSelectOption[]>((resolve) => {
         setTimeout(() => {
-          resolve(SegmentOptionsMock);
+          resolve(AudienceOptionsMock);
         }, 1);
       });
     }, []);
@@ -96,7 +99,7 @@ const AdvertisementModalAbout = memo(
           {data && (
             <>
               <div>
-                <Label htmlFor="title">Título {data.end_date}</Label>
+                <Label htmlFor="title">Título</Label>
                 <Input
                   type="text"
                   placeholder="Informe o título"

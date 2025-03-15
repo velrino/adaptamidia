@@ -18,6 +18,7 @@ import { FormatCurrency, FormatThousand } from "@/utils/generic";
 interface IAdvertisementModalUnits {
   title: string;
   content: IApiUnitItemResponse[];
+  seconds: number;
   isOpen: boolean;
   toggleAccordion: () => void;
   callback: (item: IAdvertisementModalUnitCallback) => void;
@@ -27,6 +28,7 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
   title,
   content,
   isOpen,
+  seconds,
   toggleAccordion,
   callback,
 }) => {
@@ -127,13 +129,19 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
                 {units.map((unit: IApiUnitItemResponse) => {
                   const currentMetrics = {
                     [AdPeriod.DAILY]: unit.prices.find(
-                      (price) => price.period === AdPeriod.MONTHLY
+                      (price) =>
+                        price.period === AdPeriod.DAILY &&
+                        price.seconds === seconds
                     ),
                     [AdPeriod.WEEKLY]: unit.prices.find(
-                      (price) => price.period === AdPeriod.WEEKLY
+                      (price) =>
+                        price.period === AdPeriod.WEEKLY &&
+                        price.seconds === seconds
                     ),
                     [AdPeriod.MONTHLY]: unit.prices.find(
-                      (price) => price.period === AdPeriod.MONTHLY
+                      (price) =>
+                        price.period === AdPeriod.MONTHLY &&
+                        price.seconds === seconds
                     ),
                   };
 

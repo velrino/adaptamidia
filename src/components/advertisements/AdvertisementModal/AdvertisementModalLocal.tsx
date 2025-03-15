@@ -22,7 +22,7 @@ import {
   CompanyUnitsMockData,
 } from "@/backend/mock/units";
 import dynamic from "next/dynamic";
-import Select from "react-select";
+import SelectReact from "react-select";
 import AdvertisementModalUnits from "./AdvertisementModalUnits";
 import { IReactSelectOption } from "@/interfaces/general";
 import { SumAllDevices } from "./helper";
@@ -35,11 +35,13 @@ import { PiEye, PiUsersLight } from "react-icons/pi";
 import {
   FormatCurrency,
   FormatThousand,
+  GenerateNumberRangeAsOptions,
   SumUnitPeriodNative,
 } from "@/utils/generic";
 import { AdPeriod, AdPeriodText } from "@/interfaces/ads";
 import { BsCashCoin } from "react-icons/bs";
 import { IAdvertisementModalCommonProps } from "./interface";
+import Select from "@/components/form/Select";
 
 const LazyMap = dynamic(() => import("./Ads/Map"), {
   ssr: false,
@@ -294,6 +296,8 @@ const AdvertisementModalLocal = memo(
       []
     );
 
+    const options = GenerateNumberRangeAsOptions(20, 40);
+
     return (
       <>
         <div className="grid gap-3 sm:grid-cols-3">
@@ -310,7 +314,7 @@ const AdvertisementModalLocal = memo(
               <div className="grid gap-3 sm:grid-cols-2">
                 {startDate && endDate && (
                   <div className="col-span-2">
-                    <div className="grid gap-6 sm:grid-cols-2">
+                    <div className="grid gap-6 sm:grid-cols-3">
                       {/* Start Date Picker */}
                       <div>
                         <Label htmlFor="startDate">Data inicial</Label>
@@ -332,7 +336,6 @@ const AdvertisementModalLocal = memo(
                           {formReport.start_date}
                         </div>
                       </div>
-
                       {/* End Date Picker */}
                       <div>
                         <Label htmlFor="endDate">Data final</Label>
@@ -353,6 +356,18 @@ const AdvertisementModalLocal = memo(
                         <div className="text-sm text-red-500">
                           {formReport.end_date}
                         </div>
+                      </div>
+                      <div>
+                        <Label>Segundos</Label>
+                        <Select
+                          options={options}
+                          defaultValue={String(data.seconds)}
+                          placeholder="Segundos"
+                          onChange={(value: string) => {
+                            updateForm("seconds", Number(value));
+                          }}
+                          className="dark:bg-dark-900"
+                        />
                       </div>
                     </div>
                   </div>
@@ -403,11 +418,12 @@ const AdvertisementModalLocal = memo(
                       <Label htmlFor="title">
                         Regiões {data.neighborhood.length}
                       </Label>
-                      <Select
+                      <SelectReact
                         isMulti
                         placeholder="Selecione as regiões"
                         isDisabled={isUnitsLoading}
                         isLoading={isUnitsLoading}
+                        className="dark:bg-dark-900"
                         value={
                           unitsOptions.filter((option: IReactSelectOption) =>
                             data.neighborhood.includes(option.value as string)
@@ -429,6 +445,7 @@ const AdvertisementModalLocal = memo(
                           units.length
                         }) - ${SumAllDevices(units)} Telas`}
                         content={units}
+                        seconds={data.seconds}
                         isOpen={showUnits}
                         toggleAccordion={handleToggleShowUnits}
                         callback={advertisementModalUnitsCallback}

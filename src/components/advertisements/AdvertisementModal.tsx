@@ -42,32 +42,25 @@ export default function AdvertisementModal({
       onClose={handleClose}
       showCloseButton={false}
       isFullscreen={true}
-      className="min-w-[100vw] max-w-[100vw] min-h-[100vh] p-6 lg:p-10 rounded-none"
     >
-      <div className="fixed top-0 left-0  justify-between w-full h-screen overflow-x-hidden overflow-y-hidden bg-white dark:bg-gray-900">
-        {/* HEADER CONTENT */}
-        <h4 className="mb-2 text-xl font-semibold text-gray-800 dark:text-white/90 sm:text-title-sm px-5 pt-5">
-          {action === ContentAction.CREATE && "Criar Anúncio"}
-          {action === ContentAction.UPDATE && "Editar Anúncio"}
-        </h4>
-        {/* END CONTENT */}
-
-        {/* START CONTENT */}
-        <div>
-          <AdvertisementModalTab data={data} onUpdate={handleUpdate} />
-        </div>
-        <div className="w-full flex justify-center">
-          <div className="flex gap-3 pt-2">
-            <Button size="sm" variant="outline" onClick={handleClose}>
-              Cancelar
-            </Button>
-            <Button size="sm" onClick={save}>
-              Salvar
-            </Button>
+      <div className="fixed top-0 left-0 flex flex-col w-full h-screen overflow-x-hidden overflow-y-auto bg-white dark:bg-gray-900 p-0">
+        <div className="flex-grow">
+          <h4 className="font-semibold text-gray-800 m-0 text-title-sm dark:text-white/90 px-5 py-2">
+            {action === ContentAction.CREATE && "Criar Anúncio"}
+            {action === ContentAction.UPDATE && "Editar Anúncio"}
+          </h4>
+          <div>
+            <AdvertisementModalTab data={data} onUpdate={handleUpdate} />
           </div>
         </div>
-
-        {/* END CONTENT */}
+        <div className="fixed bottom-0 left-0 right-0 flex items-center justify-end w-full gap-3 bg-white dark:bg-gray-900 px-6 pb-6">
+          <Button size="sm" variant="outline" onClick={handleClose}>
+            Fechar
+          </Button>
+          <Button size="sm" onClick={save}>
+            Salvar
+          </Button>
+        </div>
       </div>
     </Modal>
   );
