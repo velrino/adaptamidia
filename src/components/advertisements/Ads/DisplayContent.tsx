@@ -36,15 +36,6 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
   const { dolar } = resources;
   const [currentTime, setCurrentTime] = useState(new Date());
 
-  // Update the exchange rate and time every second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(new Date()); // Update the time
-    }, 1000);
-
-    return () => clearInterval(interval); // Clear the interval when the component unmounts
-  }, []);
-
   const isAdvertisement = item.type === AdsCurrentType.ADVERTISEMENT;
 
   const getAdvertisement = () => {
@@ -54,6 +45,20 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
   const getNews = () => {
     return item.data as IApiNewsResponseItem;
   };
+
+  // Update the exchange rate and time every second
+  useEffect(() => {
+    console.log({
+      source: getAdvertisement().items[0].source,
+      isAdvertisement,
+      type: getAdvertisement().type,
+    });
+    const interval = setInterval(() => {
+      setCurrentTime(new Date()); // Update the time
+    }, 1000);
+
+    return () => clearInterval(interval); // Clear the interval when the component unmounts
+  }, [item]);
 
   return (
     <div

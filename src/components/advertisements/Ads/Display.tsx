@@ -22,8 +22,8 @@ interface AdStat {
 }
 
 const sendAPI = () => {
-  const storedData = JSON.parse(localStorage.getItem("adStats") || "[]");
-  console.log("Sending data to API:", storedData);
+  // const storedData = JSON.parse(localStorage.getItem("adStats") || "[]");
+  // console.log("Sending data to API:", storedData);
 };
 
 const updateAdStats = (adIndex: number) => {
@@ -87,7 +87,8 @@ export function Display({ list, theme, preview }: IDisplay) {
 
       updateAdStats(currentAdIndex);
 
-      console.log({ type: currentItem.type, currentAd: seconds });
+      console.clear();
+      console.log({ list });
 
       const timer = setTimeout(() => {
         const nextIndex = (currentAdIndex + 1) % list.length;

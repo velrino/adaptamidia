@@ -1,5 +1,5 @@
 import React, { forwardRef, useRef, useState } from "react";
-import { IAdvertisementFormItem } from "@/interfaces/ads";
+import { AdType, IAdvertisementFormItem } from "@/interfaces/ads";
 import Image from "next/image";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -13,36 +13,21 @@ import {
   useSortable,
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { LuX } from "react-icons/lu";
 
 import { SmartPointerSensor } from "@/utils/dnd";
-import { ImageCropperModal } from "./ImageCropperModal";
-import Input from "@/components/form/input/InputField";
-import TextArea from "@/components/form/input/TextArea";
 import { Modal } from "@/components/ui/modal";
+import { MediaCropperModal } from "./ImageCropperModal";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 interface ScrollableListProps {
   items: IAdvertisementFormItem[];
-  onUpdate: (updatedItems: IAdvertisementFormItem[]) => void;
-  onCropComplete: (croppedImage: Blob) => void;
+  onCropComplete: (croppedImage: Blob, type: AdType) => void;
 }
 
-// interface AdItemProps extends React.HTMLAttributes<HTMLDivElement> {
-//   id: string;
-// }
-
 export const SortableAdItem = forwardRef<HTMLDivElement, any>(
-  ({
-    id,
-    item,
-    index,
-    handleTitleChange,
-    handleSecondsChange,
-    // handleDescriptionChange,
-    onDelete,
-    ...props
-  }) => {
+  ({ id, item, index, onDelete, ...props }) => {
     const { attributes, listeners, setNodeRef, transform, transition } =
       useSortable({ id });
 
@@ -71,20 +56,29 @@ export const SortableAdItem = forwardRef<HTMLDivElement, any>(
                   setShowDelete(true);
                 }}
               >
-                DEFHCAR
-                {/* <X aria-hidden="true" className="h-6 w-6 text-white" /> */}
+                <LuX aria-hidden="true" className="h-6 w-6 text-white" />
               </button>
             </div>
           </div>
+          {item.type === AdType.IMAGE ? (
+            <Image
+              src={item.source}
+              alt="Item"
+              width={500}
+              height={100}
+              className="w-full min-h-[50px] max-h-[100px] rounded-sm object-cover"
+            />
+          ) : (
+            <video
+              src={item.source}
+              width={500}
+              height={100}
+              className="w-full min-h-[50px] max-h-[100px] rounded-sm object-cover"
+              controls
+            />
+          )}
 
-          <Image
-            src={item.source}
-            alt="Item"
-            width={500}
-            height={100}
-            className="w-full min-h-[50px] max-h-[100px] rounded-sm object-cover"
-          />
-          <div className="my-2">
+          {/* <div className="my-2">
             <div>
               <Input
                 placeholder="Título"
@@ -130,7 +124,7 @@ export const SortableAdItem = forwardRef<HTMLDivElement, any>(
                 {item.description.length}/255
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         <Modal
@@ -168,7 +162,6 @@ SortableAdItem.displayName = "SortableAdItem";
 
 export const AdvertisementItems: React.FC<ScrollableListProps> = ({
   items,
-  onUpdate,
   onCropComplete,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -195,41 +188,41 @@ export const AdvertisementItems: React.FC<ScrollableListProps> = ({
     isDragging.current = false;
   };
 
-  const handleTitleChange = (index: number, newTitle: string) => {
-    const updatedItems = items.map((item, i) =>
-      i === index ? { ...item, title: newTitle } : item
-    );
-    onUpdate(updatedItems);
-  };
+  // const handleTitleChange = (index: number, newTitle: string) => {
+  //   const updatedItems = items.map((item, i) =>
+  //     i === index ? { ...item, title: newTitle } : item
+  //   );
+  //   onUpdate(updatedItems);
+  // };
 
-  const handleDescriptionChange = (index: number, newDescription: string) => {
-    const updatedItems = items.map((item, i) =>
-      i === index ? { ...item, description: newDescription } : item
-    );
-    onUpdate(updatedItems);
-  };
+  // const handleDescriptionChange = (index: number, newDescription: string) => {
+  //   const updatedItems = items.map((item, i) =>
+  //     i === index ? { ...item, description: newDescription } : item
+  //   );
+  //   onUpdate(updatedItems);
+  // };
 
-  const handleSecondsChange = (index: number, value: string) => {
-    let num = Number(value);
+  // const handleSecondsChange = (index: number, value: string) => {
+  //   let num = Number(value);
 
-    if (isNaN(num)) {
-      num = 1; // Define 1 se não for um número
-    } else {
-      if (num < 1) num = 1; // Mínimo permitido: 1
-      if (num > 60) num = 60; // Máximo permitido: 60
-    }
+  //   if (isNaN(num)) {
+  //     num = 1; // Define 1 se não for um número
+  //   } else {
+  //     if (num < 1) num = 1; // Mínimo permitido: 1
+  //     if (num > 60) num = 60; // Máximo permitido: 60
+  //   }
 
-    onUpdate(
-      items.map((item, i) => (i === index ? { ...item, seconds: num } : item))
-    );
-  };
+  //   onUpdate(
+  //     items.map((item, i) => (i === index ? { ...item, seconds: num } : item))
+  //   );
+  // };
 
   const sensors = useSensors(useSensor(SmartPointerSensor));
 
-  const handleRemoveItem = (index: number) => {
-    const updatedItems = items.filter((_, i) => i !== index);
-    onUpdate(updatedItems);
-  };
+  // const handleRemoveItem = (index: number) => {
+  //   const updatedItems = items.filter((_, i) => i !== index);
+  //   onUpdate(updatedItems);
+  // };
 
   function handleDragEnd(event: any) {
     const { active, over } = event;
@@ -243,7 +236,7 @@ export const AdvertisementItems: React.FC<ScrollableListProps> = ({
         updatedItems.splice(oldIndex, 1);
         updatedItems.splice(newIndex, 0, items[oldIndex]);
 
-        onUpdate(updatedItems);
+        // onUpdate(updatedItems);
       }
     }
   }
@@ -265,7 +258,7 @@ export const AdvertisementItems: React.FC<ScrollableListProps> = ({
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseUp}
             onMouseUp={handleMouseUp}
-            className="flex gap-4 overflow-x-auto min-h-[60vh] max-h-[60vh] cursor-grab active:cursor-grabbing p-0 px-2"
+            className="flex gap-4 overflow-x-auto min-h-[60vh] max-h-[60vh] cursor-grab active:cursor-grabbing p-0 px-2 mx-auto"
           >
             {items.map((item, index) => (
               <SortableAdItem
@@ -273,14 +266,14 @@ export const AdvertisementItems: React.FC<ScrollableListProps> = ({
                 id={item.id}
                 item={item}
                 index={index}
-                handleTitleChange={handleTitleChange}
-                handleSecondsChange={handleSecondsChange}
-                handleDescriptionChange={handleDescriptionChange}
-                onDelete={() => handleRemoveItem(index)}
+                // handleTitleChange={handleTitleChange}
+                // handleSecondsChange={handleSecondsChange}
+                // handleDescriptionChange={handleDescriptionChange}
+                // onDelete={() => handleRemoveItem(index)}
               />
             ))}
             <div className="mx-3 my-auto">
-              <ImageCropperModal
+              <MediaCropperModal
                 open={true}
                 onClose={() => console.log("Fechar")}
                 onCropComplete={onCropComplete}

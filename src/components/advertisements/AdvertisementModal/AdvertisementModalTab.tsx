@@ -24,11 +24,11 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
     },
     {
       id: "ADS",
-      label: "Anúncios",
+      label: "Anúncio",
       content: (
         <div className="grid grid-cols-2 gap-4 p-4">
           <div className="text-white text-center">
-            <AdvertisementComponent items={[...data.items, ...data.items]} />
+            <AdvertisementComponent items={data.items} onUpdate={onUpdate} />
           </div>
           <div className="text-white flex justify-center text-center max-h-0">
             <div className="scale-47">
@@ -56,7 +56,7 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
     <div>
       <Tabs
         tabs={tabs}
-        defaultTabId="LOCAL"
+        defaultTabId="ADS"
         styles={{
           nav: "p-0",
           navMenu: "mx-auto",

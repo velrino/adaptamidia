@@ -1,42 +1,33 @@
-import { IApiAdvertisementItemItem } from "@/backend/api/api.interface";
+import {
+  IApiAdvertisementItem,
+  IApiAdvertisementItemItem,
+} from "@/backend/api/api.interface";
 import { AdType } from "@/interfaces/ads";
-import { useEffect, useState } from "react";
 import { AdvertisementItems } from "./Ads/MediaList";
 
 export function AdvertisementComponent({
   items,
+  onUpdate,
 }: {
   items: IApiAdvertisementItemItem[];
+  onUpdate: (data: Partial<IApiAdvertisementItem>) => void;
 }) {
-  const [tempItems, setTempItems] = useState<IApiAdvertisementItemItem[]>([]);
-
-  const handleCroppedImage = (croppedBlob: Blob) => {
+  const handleCroppedImage = (croppedBlob: Blob, type: AdType) => {
     const newItem: IApiAdvertisementItemItem = {
       id: new Date().getTime().toString(),
-      description: "example",
-      seconds: 5,
+      description: String(),
+      seconds: 30,
       source: URL.createObjectURL(croppedBlob),
-      title: "Novo anúncio",
-      type: AdType.IMAGE,
+      title: String(),
+      type,
     };
 
-    setTempItems((prev) => [...prev, newItem]);
+    const updatedData = { items: [newItem], type };
+
+    onUpdate(updatedData);
   };
 
-  useEffect(() => {
-    console.log({ tempItems });
-  }, [tempItems]);
-
   return (
-    <>
-      <AdvertisementItems
-        items={items}
-        onUpdate={setTempItems}
-        onCropComplete={handleCroppedImage}
-      />
-      <div className="grid place-items-center w-full">
-        <div className="font-bold text-xl rounded text-white">2 Segundos</div>
-      </div>
-    </>
+    <AdvertisementItems items={items} onCropComplete={handleCroppedImage} />
   );
 }
