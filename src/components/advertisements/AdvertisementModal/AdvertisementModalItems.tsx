@@ -3,13 +3,12 @@ import {
   IApiAdvertisementItemItem,
 } from "@/backend/api/api.interface";
 import { AdType } from "@/interfaces/ads";
-import { AdvertisementItems } from "./Ads/MediaList";
+import { MediaCropperModal } from "./Ads/ImageCropperModal";
+import { useModal } from "@/hooks/useModal";
 
 export function AdvertisementComponent({
-  items,
   onUpdate,
 }: {
-  items: IApiAdvertisementItemItem[];
   onUpdate: (data: Partial<IApiAdvertisementItem>) => void;
 }) {
   const handleCroppedImage = (croppedBlob: Blob, type: AdType) => {
@@ -27,7 +26,15 @@ export function AdvertisementComponent({
     onUpdate(updatedData);
   };
 
+  const modalMediaCropper = useModal();
+
   return (
-    <AdvertisementItems items={items} onCropComplete={handleCroppedImage} />
+    <div className="flex items-center justify-center min-h-full text-white text-center">
+      <MediaCropperModal
+        open={modalMediaCropper.isOpen}
+        currentModal={modalMediaCropper}
+        onCropComplete={handleCroppedImage}
+      />
+    </div>
   );
 }

@@ -27,20 +27,25 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
       label: "Anúncio",
       content: (
         <div className="grid grid-cols-2 gap-4 p-4">
-          <div className="text-white text-center">
-            <AdvertisementComponent items={data.items} onUpdate={onUpdate} />
-          </div>
-          <div className="text-white flex justify-center text-center max-h-0">
-            <div className="scale-47">
-              <Display
-                list={[data].map((item) => ({
-                  data: item,
-                  type: AdsCurrentType.ADVERTISEMENT,
-                }))}
-                theme={DisplayThemes.brand}
-                preview={false}
-              />
+          <div className="text-black dark:text-white text-center">
+            <div className="h-10">Preview</div>
+            <div className="flex justify-center max-h-0">
+              <div className="scale-45">
+                <Display
+                  list={[data].map((item) => ({
+                    data: item,
+                    type: AdsCurrentType.ADVERTISEMENT,
+                  }))}
+                  theme={DisplayThemes.brand}
+                  preview={{
+                    show: true,
+                  }}
+                />
+              </div>
             </div>
+          </div>
+          <div className="aspect-video">
+            <AdvertisementComponent onUpdate={onUpdate} />
           </div>
         </div>
       ),

@@ -50,10 +50,17 @@ const updateAdStats = (adIndex: number) => {
 export interface IDisplay {
   list: IAdsCurrentItem[];
   theme: IDisplayTheme;
-  preview: boolean;
+  preview: {
+    show: boolean;
+    item?: IAdsCurrentItem;
+    previewUrl?: string;
+  };
+  style?: {
+    container?: string;
+  };
 }
 
-export function Display({ list, theme, preview }: IDisplay) {
+export function Display({ list, theme, preview, style }: IDisplay) {
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [advertisement, setAdvertisement] = useState(false);
   const [dolar, setDolar] = useState<number>(0);
@@ -87,16 +94,13 @@ export function Display({ list, theme, preview }: IDisplay) {
 
       updateAdStats(currentAdIndex);
 
-      console.clear();
-      console.log({ list });
-
       const timer = setTimeout(() => {
         const nextIndex = (currentAdIndex + 1) % list.length;
         setAdvertisement(() => false);
 
         setCurrentAdIndex(nextIndex);
 
-        if (!preview) {
+        if (!preview.show) {
           sendAPI();
         }
       }, seconds * 1000);
@@ -106,7 +110,7 @@ export function Display({ list, theme, preview }: IDisplay) {
   }, [list, currentAdIndex, preview]);
 
   return (
-    <div className="h-screen w-screen flex">
+    <div className={style?.container || "h-screen w-screen flex"}>
       {advertisement && <AdsSidebar theme={theme} />}
       {currentDisplay && (
         <DisplayContent

@@ -1,5 +1,6 @@
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
+import { IUseModal } from "@/hooks/useModal";
 import { AdType } from "@/interfaces/ads";
 import React, { useState, useCallback, useRef } from "react";
 import Cropper from "react-easy-crop";
@@ -84,13 +85,13 @@ export async function getCroppedImg(
 
 interface MediaCropperModalProps {
   open: boolean;
-  onClose: () => void;
+  currentModal: IUseModal;
   onCropComplete: (croppedMedia: Blob, type: AdType) => void;
 }
 
 export const MediaCropperModal: React.FC<MediaCropperModalProps> = ({
   open,
-  onClose,
+  currentModal,
   onCropComplete,
 }) => {
   const [fileSrc, setFileSrc] = useState<string | null>(null);
@@ -110,6 +111,7 @@ export const MediaCropperModal: React.FC<MediaCropperModalProps> = ({
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     if (event.target.files && event.target.files.length > 0) {
+      currentModal.openModal();
       const file = event.target.files[0];
       const fileDataUrl = URL.createObjectURL(file);
       setFileSrc(fileDataUrl);
@@ -144,7 +146,7 @@ export const MediaCropperModal: React.FC<MediaCropperModalProps> = ({
         croppedMediaBlob,
         fileType === "video" ? AdType.VIDEO : AdType.IMAGE
       );
-      onClose();
+      currentModal.closeModal();
       setFileSrc(null);
     }
   };
@@ -162,21 +164,21 @@ export const MediaCropperModal: React.FC<MediaCropperModalProps> = ({
         onClick={() => fileInputRef.current?.click()}
         className="p-10 bg-principal hover:bg-principal"
       >
-        <LuImageUp size={40} className="text-gray-900" />
+        <LuImageUp size={40} className="text-white" />
       </Button>
 
       {fileSrc && (
         <Modal
           isOpen={open}
-          onClose={onClose}
+          onClose={currentModal.closeModal}
           showCloseButton={false}
-          className="min-w-[95vw] max-w-[95vw] min-h-[95vh] p-6 lg:p-10 flex flex-col"
+          className="max-w-[80vw] p-6"
         >
           {/* <div className="text-black">
             {fileType === "image" ? "Recorte de Imagem" : "Recorte de Vídeo"}
           </div> */}
 
-          <div className="relative w-full h-[60vh] bg-gray-900">
+          <div className="relative w-full max-h-[60vh] bg-gray-900 aspect-video">
             <Cropper
               {...(fileType === "image"
                 ? { image: fileSrc }
@@ -190,7 +192,7 @@ export const MediaCropperModal: React.FC<MediaCropperModalProps> = ({
             />
           </div>
           <div className="flex justify-between mt-4">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={currentModal.closeModal}>
               Cancelar
             </Button>
             <Button onClick={handleCrop}>

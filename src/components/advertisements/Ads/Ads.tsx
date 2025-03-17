@@ -89,5 +89,13 @@ export default function AdsComponent() {
     getResponse();
   }, [getResponse]);
 
-  return <Display list={list} theme={theme} preview={false} />;
+  return (
+    <Display
+      list={list}
+      theme={theme}
+      preview={{
+        show: false,
+      }}
+    />
+  );
 }
