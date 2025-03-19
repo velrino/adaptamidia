@@ -22,6 +22,7 @@ import {
   CompanyUnitsMock,
 } from "@/backend/mock/units";
 import { CompanyUnitSortKey } from "@/interfaces/company-unit";
+import CompanyUnitModal from "../CompanyUnitModal/CompanyUnitModal";
 
 export default function CompanieUnitsTable() {
   const [currentPage, setCurrentPage] = useState(1);
@@ -54,8 +55,7 @@ export default function CompanieUnitsTable() {
 
     handleResponse().then((data) => {
       setContentAction(() => ContentAction.UPDATE);
-      // setCurrentSelected(tempList[0] || null);
-
+      // setCurrentSelected(data[0] || null);
       setList(data);
     });
   }, [response, handleResponse]);
@@ -283,15 +283,15 @@ export default function CompanieUnitsTable() {
           </div>
         </div>
       </div>
-      {/* {currentSelected && (
-        <CompanyModal
+      {currentSelected && (
+        <CompanyUnitModal
           action={contentAction}
           record={currentSelected}
           onCloseCallback={() => {
             setCurrentSelected(null);
           }}
         />
-      )} */}
+      )}
     </>
   );
 }

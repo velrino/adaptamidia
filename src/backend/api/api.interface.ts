@@ -74,6 +74,7 @@ export interface IApiAdvertisementItem {
 export interface IApiUnitItemResponse {
   _id?: string;
   company: string;
+  complement: string;
   name: string;
   image: string;
   full_address: string;
@@ -155,7 +156,7 @@ export interface IApiUpdateCompanyRequest {
 }
 
 export interface IApiCompanyResponse {
-  _id?: string;
+  _id: string;
   document: string;
   document_type: ICompanyDocumentType;
   name: string;
@@ -171,4 +172,42 @@ export interface IApiCompaniesResponse {
   data: IApiCompanyResponse[];
   limit: number;
   page: number;
+}
+
+export interface IApiCreateCompanyUnitRequest {
+  company_id: string;
+  address: string;
+  complement: string;
+  type: string;
+  name: string;
+}
+
+export interface IApiUpdateCompanyUnitRequest {
+  company: string;
+  complement: string;
+  name: string;
+  full_address: string;
+  neighborhood: string;
+  address: string;
+  city: string;
+  state: string;
+  country: string;
+  street_number: string;
+  type: string;
+  status: string;
+  devices: {
+    smart_tv: number;
+  };
+  prices: {
+    period: AdPeriod;
+    seconds: number;
+    display_times: number;
+    price_total: number;
+    average_visitors: number;
+  }[];
+  max_capacity: number;
+  location: {
+    type: string;
+    coordinates: [number, number];
+  };
 }

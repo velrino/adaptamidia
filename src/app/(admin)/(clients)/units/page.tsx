@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function UnitsPage() {
   return (
     <div>
-      <PageBreadcrumb pageTitle="Empresas" />
+      <PageBreadcrumb pageTitle="Unidades das Empresas" />
       <div className="space-y-5 sm:space-y-6">
         <CompanieUnitsTable />
       </div>

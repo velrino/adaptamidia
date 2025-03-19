@@ -99,10 +99,11 @@ export default function CompanyModal({
     >
       <div className="fixed top-0 left-0 flex flex-col w-full h-screen overflow-x-hidden overflow-y-auto bg-white dark:bg-gray-900 p-0">
         <div className="flex-grow">
-          <h4 className="font-semibold text-gray-800 m-0 text-title-sm dark:text-white/90 px-5 py-2">
-            {action === ContentAction.CREATE && "Criar Empresa"}
-            {action === ContentAction.UPDATE && "Editar Empresa"}
-          </h4>
+          <div className="font-semibold text-gray-800 m-0 text-title-sm dark:text-white/90 px-5 py-2">
+            {`${action === ContentAction.CREATE ? "Criar" : "Editar"} ${
+              data.name || "Empresa"
+            }`}
+          </div>
           <div>
             <CompanyModalForm
               action={action}
