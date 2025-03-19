@@ -1,26 +1,27 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { debounce } from "lodash";
+import React, { ReactNode, useCallback, useEffect, useState } from "react";
 import Select from "react-select";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { isCPF, isCNPJ } from "validation-br";
-import { IReactSelectOption } from "@/interfaces/general";
-import {
-  CompanyDefaultFormReport,
-  ICompanyDefaultFormReport,
-  ICompanyModalCommonProps,
-} from "../interface";
+import { ContentAction, IReactSelectOption } from "@/interfaces/general";
+import { ICompanyModalCommonProps } from "../interface";
 import { IApiCompanyResponse } from "@/backend/api/api.interface";
 import {
   CompanyDocumentTypesOptions,
+  CompanyStatusOptions,
   CompanyTypesOptions,
   ICompanyDocumentType,
 } from "@/interfaces/company";
 import { FormatBrazillianDocument } from "@/utils/generic";
+import { PiClockAfternoonThin } from "react-icons/pi";
+import { DateHelper } from "@/utils/date";
 
 export const CompanyModalForm = ({
+  action,
   data,
   onUpdate,
+  formReport,
+  setFormReport,
 }: ICompanyModalCommonProps) => {
   const updateForm = (column: keyof IApiCompanyResponse, value: unknown) => {
     onUpdate({ [column]: value });
@@ -33,13 +34,13 @@ export const CompanyModalForm = ({
     IReactSelectOption[]
   >(CompanyDocumentTypesOptions);
 
-  const [formReport, setFormReport] = useState<ICompanyDefaultFormReport>(
-    CompanyDefaultFormReport
-  );
+  const [companyStatusOptions, setCompanyStatusOptions] =
+    useState<IReactSelectOption[]>(CompanyStatusOptions);
 
   useEffect(() => {
     setCompanyTypeOptions(CompanyTypesOptions);
     setCompanyDocumentTypeOptions(CompanyDocumentTypesOptions);
+    setCompanyStatusOptions(CompanyStatusOptions);
   }, []);
 
   const handleCompanyDocument = (value: string) => {
@@ -67,7 +68,28 @@ export const CompanyModalForm = ({
   };
 
   // Apply debounce to handleCompanyDocument function, delaying execution by 300ms
-  const handleCompanyDocumentDebounced = debounce(handleCompanyDocument, 300);
+  // const handleCompanyDocumentDebounced = debounce(handleCompanyDocument, 300);
+
+  const MetricItem = useCallback(
+    ({
+      label,
+      value,
+      icon,
+    }: {
+      label: string;
+      value: string;
+      icon: ReactNode;
+    }) => (
+      <div className="flex flex-col flex-1 min-w-0 items-start text-gray-600 dark:text-gray-300 border-l first:border-l-0 pl-3 first:pl-0">
+        <div className="flex items-center gap-2">
+          {icon}
+          <span className="text-sm  font-bold">{label}</span>
+        </div>
+        <div>{value}</div>
+      </div>
+    ),
+    []
+  );
 
   return (
     <div className="overflow-y-auto min-h-[75vh] max-h-[75vh] px-6">
@@ -109,7 +131,7 @@ export const CompanyModalForm = ({
                 placeholder="Informe o documento"
                 id="document"
                 value={data.document}
-                onChange={(e) => handleCompanyDocumentDebounced(e.target.value)}
+                onChange={(e) => handleCompanyDocument(e.target.value)}
                 maxLength={18}
               />
               <div className="text-sm text-red-500">{formReport.document}</div>
@@ -141,19 +163,45 @@ export const CompanyModalForm = ({
                 // isDisabled={isAdvertiserLoading}
                 // isLoading={isAdvertiserLoading}
                 value={
-                  companyDocumentTypeOptions.find(
-                    (option) => option.value === data.document_type
+                  companyStatusOptions.find(
+                    (option) => option.value === data.status
                   ) || null
                 }
-                options={companyDocumentTypeOptions}
+                options={companyStatusOptions}
                 onChange={(currentOption) =>
                   updateForm(
-                    "document_type",
+                    "status",
                     currentOption ? currentOption.value : null
                   )
                 }
               />
             </div>
+            {action !== ContentAction.CREATE && (
+              <div className="col-span-2">
+                <div className="w-full">
+                  <div className="flex flex-row w-full gap-3">
+                    {data.created_at && (
+                      <MetricItem
+                        label={`Criado em:`}
+                        value={`${DateHelper.format(
+                          data.created_at
+                        )} - ${DateHelper.timeAgo(data.created_at)}`}
+                        icon={<PiClockAfternoonThin size={15} />}
+                      />
+                    )}
+                    {data.updated_at && (
+                      <MetricItem
+                        label={`Atualizado em:`}
+                        value={`${DateHelper.format(
+                          data.updated_at
+                        )} - ${DateHelper.timeAgo(data.updated_at)}`}
+                        icon={<PiClockAfternoonThin size={15} />}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

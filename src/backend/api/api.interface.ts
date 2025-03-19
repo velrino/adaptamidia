@@ -1,4 +1,9 @@
 import { AdPeriod, AdsAudience, AdStatus, AdType } from "@/interfaces/ads";
+import {
+  ICompanyDocumentType,
+  ICompanyStatus,
+  ICompanyType,
+} from "@/interfaces/company";
 
 export interface IApiPaginateParameters {
   page: number;
@@ -133,13 +138,29 @@ export interface IApiNewsResponse {
   data: IApiNewsResponseItem[];
 }
 
-export interface IApiCompanyResponse {
-  _id: string;
+export interface IApiCreateCompanyRequest {
   document: string;
-  document_type: string;
+  type: ICompanyType;
+  document_type: ICompanyDocumentType;
   name: string;
-  type: string;
-  status: string;
+  status: ICompanyStatus;
+}
+
+export interface IApiUpdateCompanyRequest {
+  document: string;
+  type: ICompanyType;
+  document_type: ICompanyDocumentType;
+  name: string;
+  status: ICompanyStatus;
+}
+
+export interface IApiCompanyResponse {
+  _id?: string;
+  document: string;
+  document_type: ICompanyDocumentType;
+  name: string;
+  type: ICompanyType;
+  status: ICompanyStatus;
   created_at: string;
   updated_at: string;
 }

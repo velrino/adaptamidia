@@ -3,6 +3,16 @@ import {
   IApiCompanyResponse,
 } from "../api/api.interface";
 
+export const CompanyRecordDefault: IApiCompanyResponse = {
+  document: String(),
+  name: String(),
+  type: "LOCAL",
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  document_type: String(),
+  status: String(),
+};
+
 export const CompaniesMockData: IApiCompanyResponse[] = [
   {
     _id: "67d226d9b502526b43e5d1ed",

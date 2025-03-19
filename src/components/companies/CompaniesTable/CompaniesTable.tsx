@@ -17,7 +17,10 @@ import {
 import { ContentAction, SortOrder } from "@/interfaces/general";
 import { DateHelper } from "@/utils/date";
 import { AngleDownIcon, AngleUpIcon } from "@/icons";
-import { CompaniesResponseMock } from "@/backend/mock/client";
+import {
+  CompaniesResponseMock,
+  CompanyRecordDefault,
+} from "@/backend/mock/client";
 import { CompanySortKey } from "@/interfaces/company";
 import Button from "@/components/ui/button/Button";
 import CompanyModal from "../CompanyModal/CompanyModal";
@@ -59,7 +62,7 @@ export default function CompaniesTable() {
         document: FormatBrazillianDocument(item.document),
       }));
 
-      setCurrentSelected(tempList[0] || null);
+      // setCurrentSelected(tempList[0] || null);
 
       setList(tempList);
     });
@@ -167,7 +170,15 @@ export default function CompaniesTable() {
             />
           </div>
           <div>
-            <Button size="sm">Criar</Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                setContentAction(() => ContentAction.CREATE);
+                setCurrentSelected(CompanyRecordDefault);
+              }}
+            >
+              Criar
+            </Button>
           </div>
         </div>
 

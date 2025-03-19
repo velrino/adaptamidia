@@ -4,8 +4,16 @@ import React, { useState } from "react";
 import { ContentAction } from "@/interfaces/general";
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
-import { IApiCompanyResponse } from "@/backend/api/api.interface";
+import {
+  IApiCompanyResponse,
+  IApiCreateCompanyRequest,
+  IApiUpdateCompanyRequest,
+} from "@/backend/api/api.interface";
 import { CompanyModalForm } from "./Form/CompanyModalForm";
+import {
+  CompanyDefaultFormReport,
+  ICompanyDefaultFormReport,
+} from "./interface";
 
 interface ICompanyModalProps {
   action: ContentAction;
@@ -27,13 +35,63 @@ export default function CompanyModal({
 
   const [data, setData] = useState<IApiCompanyResponse>(record);
 
+  const [formReport, setFormReport] = useState<ICompanyDefaultFormReport>(
+    CompanyDefaultFormReport
+  );
+
   const handleUpdate = (updatedData: Partial<IApiCompanyResponse>) => {
     setData((prev) => ({ ...prev, ...updatedData }));
   };
 
+  const validateForm = () => {
+    const validate = Object.values(formReport).every((value) => value);
+
+    if (!data.document.length) {
+      return true;
+    }
+
+    if (!data.name.length) {
+      return true;
+    }
+
+    if (!data.status.length) {
+      return true;
+    }
+
+    if (!data.document_type.length) {
+      return true;
+    }
+
+    return validate;
+  };
+
   const save = () => {
     console.clear();
-    console.log({ action, data });
+    if (validateForm()) {
+      return;
+    }
+
+    if (action === ContentAction.CREATE) {
+      const body: IApiCreateCompanyRequest = {
+        document_type: data.document_type,
+        document: data.document,
+        type: data.type,
+        name: data.name,
+        status: data.status,
+      };
+      console.log({ action, body });
+    } else if (action === ContentAction.UPDATE && data._id) {
+      const companyId = data._id;
+      const body: IApiUpdateCompanyRequest = {
+        document_type: data.document_type,
+        document: data.document,
+        type: data.type,
+        name: data.name,
+        status: data.status,
+      };
+
+      console.log({ action, companyId, body });
+    }
   };
 
   return (
@@ -50,7 +108,13 @@ export default function CompanyModal({
             {action === ContentAction.UPDATE && "Editar Empresa"}
           </h4>
           <div>
-            <CompanyModalForm data={data} onUpdate={handleUpdate} />
+            <CompanyModalForm
+              action={action}
+              data={data}
+              onUpdate={handleUpdate}
+              formReport={formReport}
+              setFormReport={setFormReport}
+            />
           </div>
         </div>
         <div className="fixed bottom-0 left-0 right-0 flex items-center justify-end w-full gap-3 bg-white dark:bg-gray-900 px-6 pb-6">
