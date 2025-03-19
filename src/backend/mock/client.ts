@@ -1,12 +1,9 @@
-export const CompanyMockData = [
-  {
-    _id: "67d226d9b502526b43e5d1fd",
-    document: "79867048000151",
-    name: "Example",
-    type: "ADVERTISER",
-    created_at: "2025-03-13T00:29:13.659Z",
-    updated_at: "2025-03-13T00:29:13.659Z",
-  },
+import {
+  IApiCompaniesResponse,
+  IApiCompanyResponse,
+} from "../api/api.interface";
+
+export const CompaniesMockData: IApiCompanyResponse[] = [
   {
     _id: "67d226d9b502526b43e5d1ed",
     document: "55661931000122",
@@ -14,6 +11,8 @@ export const CompanyMockData = [
     type: "ADVERTISER",
     created_at: "2025-03-13T00:29:13.659Z",
     updated_at: "2025-03-13T00:29:13.659Z",
+    document_type: "CNPJ",
+    status: "IN_REVIEW",
   },
   {
     _id: "67d228068e13c91d607fb6ed",
@@ -22,6 +21,18 @@ export const CompanyMockData = [
     type: "LOCAL",
     created_at: "2025-03-13T00:34:15.002Z",
     updated_at: "2025-03-13T00:34:15.002Z",
+    document_type: "CNPJ",
+    status: "IN_REVIEW",
+  },
+  {
+    _id: "67dadd899321569f2c93e8c6",
+    document: "60701190000104",
+    document_type: "CNPJ",
+    name: "Quinta do Conde",
+    type: "LOCAL",
+    status: "IN_REVIEW",
+    created_at: "2025-03-19T15:06:49.458Z",
+    updated_at: "2025-03-19T15:06:49.458Z",
   },
   {
     _id: "67d22be98e13c91d607fb704",
@@ -30,6 +41,8 @@ export const CompanyMockData = [
     type: "LOCAL",
     created_at: "2025-03-13T00:50:49.357Z",
     updated_at: "2025-03-13T00:50:49.357Z",
+    document_type: "CNPJ",
+    status: "IN_REVIEW",
   },
   {
     _id: "67d22695b502526b43e5d1e9",
@@ -38,6 +51,8 @@ export const CompanyMockData = [
     type: "LOCAL",
     created_at: "2025-03-13T00:28:05.129Z",
     updated_at: "2025-03-13T00:28:05.129Z",
+    document_type: "CNPJ",
+    status: "IN_REVIEW",
   },
   {
     _id: "67d22b588e13c91d607fb6fb",
@@ -46,6 +61,8 @@ export const CompanyMockData = [
     type: "LOCAL",
     created_at: "2025-03-13T00:48:24.263Z",
     updated_at: "2025-03-13T00:48:24.263Z",
+    document_type: "CNPJ",
+    status: "IN_REVIEW",
   },
   {
     _id: "67d22c748e13c91d607fb70d",
@@ -54,13 +71,15 @@ export const CompanyMockData = [
     type: "LOCAL",
     created_at: "2025-03-13T00:53:08.713Z",
     updated_at: "2025-03-13T00:53:08.713Z",
+    document_type: "CNPJ",
+    status: "IN_REVIEW",
   },
 ];
 
-export const CompanyMock = {
+export const CompaniesResponseMock: IApiCompaniesResponse = {
   pages: 1,
   total: 6,
-  data: CompanyMockData,
+  data: CompaniesMockData,
   limit: 20,
   page: 0,
 };

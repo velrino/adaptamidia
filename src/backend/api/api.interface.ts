@@ -132,3 +132,22 @@ export interface IApiNewsResponse {
   parameters: IApiPaginateParameters;
   data: IApiNewsResponseItem[];
 }
+
+export interface IApiCompanyResponse {
+  _id: string;
+  document: string;
+  document_type: string;
+  name: string;
+  type: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IApiCompaniesResponse {
+  pages: number;
+  total: number;
+  data: IApiCompanyResponse[];
+  limit: number;
+  page: number;
+}

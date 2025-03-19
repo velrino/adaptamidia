@@ -1,0 +1,67 @@
+"use client";
+
+import React, { useState } from "react";
+import { ContentAction } from "@/interfaces/general";
+import { Modal } from "@/components/ui/modal";
+import Button from "@/components/ui/button/Button";
+import { IApiCompanyResponse } from "@/backend/api/api.interface";
+import { CompanyModalForm } from "./Form/CompanyModalForm";
+
+interface ICompanyModalProps {
+  action: ContentAction;
+  record: IApiCompanyResponse;
+  setOpen?: (open: boolean) => void;
+  onCloseCallback: () => void;
+}
+
+export default function CompanyModal({
+  action,
+  record,
+  onCloseCallback,
+}: ICompanyModalProps) {
+  const handleClose = () => {
+    if (onCloseCallback) {
+      onCloseCallback();
+    }
+  };
+
+  const [data, setData] = useState<IApiCompanyResponse>(record);
+
+  const handleUpdate = (updatedData: Partial<IApiCompanyResponse>) => {
+    setData((prev) => ({ ...prev, ...updatedData }));
+  };
+
+  const save = () => {
+    console.clear();
+    console.log({ action, data });
+  };
+
+  return (
+    <Modal
+      isOpen={true}
+      onClose={handleClose}
+      showCloseButton={false}
+      isFullscreen={true}
+    >
+      <div className="fixed top-0 left-0 flex flex-col w-full h-screen overflow-x-hidden overflow-y-auto bg-white dark:bg-gray-900 p-0">
+        <div className="flex-grow">
+          <h4 className="font-semibold text-gray-800 m-0 text-title-sm dark:text-white/90 px-5 py-2">
+            {action === ContentAction.CREATE && "Criar Empresa"}
+            {action === ContentAction.UPDATE && "Editar Empresa"}
+          </h4>
+          <div>
+            <CompanyModalForm data={data} onUpdate={handleUpdate} />
+          </div>
+        </div>
+        <div className="fixed bottom-0 left-0 right-0 flex items-center justify-end w-full gap-3 bg-white dark:bg-gray-900 px-6 pb-6">
+          <Button size="sm" variant="outline" onClick={handleClose}>
+            Fechar
+          </Button>
+          <Button size="sm" onClick={save}>
+            Salvar
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}

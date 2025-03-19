@@ -23,6 +23,7 @@ import {
 } from "../icons/index";
 import { BsWindowStack } from "react-icons/bs";
 import SidebarWidget from "./SidebarWidget";
+import { PiBuildingOfficeLight } from "react-icons/pi";
 
 type NavItem = {
   name: string;
@@ -49,6 +50,15 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "Anúncios", path: "/advertisements", pro: false },
       { name: "Métricas", path: "/analytics", pro: true },
+    ],
+  },
+  {
+    icon: <PiBuildingOfficeLight size={25} />,
+    name: "Clientes",
+    subItems: [
+      { name: "Empresas", path: "/companies", pro: false },
+      { name: "Unidades", path: "/units", pro: true },
+      { name: "Métricas", path: "/companies-metrics", pro: true },
     ],
   },
   {
