@@ -2,11 +2,12 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { SchemaDefault } from 'src/shared/shema';
 import { CompanyUnitStatus, CompanyUnitType } from './company-unit.interface';
+import { Company } from '../company/company.schema';
 
 @Schema({ ...SchemaDefault, collection: 'company_units' })
 export class CompanyUnit {
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true, index: true })
-  company: Types.ObjectId;
+  company: Types.ObjectId | Company;
 
   @Prop({ required: true })
   name: string;

@@ -10,6 +10,7 @@ import { RESULT } from 'src/shared/result.enum';
 import { ListCompanyUnitPaginateDto } from './list.interface';
 import { MongoDbDateQuery } from 'src/shared/mongo.schema';
 import { PaginatedResponseDto } from 'src/shared/interfaces/paginate.dto';
+import { Company } from 'src/modules/company/company.schema';
 
 @Injectable()
 export class ListCompanyUnitService {
@@ -111,8 +112,11 @@ export class ListCompanyUnitService {
     const total = await this.companyUnitModel.countDocuments(query);
 
     const data = await this.companyUnitModel
-      .find(query) // Exclude the "config" field
-      .sort({ createdAt: -1 }) // Sort by the most recent
+      .find(query)
+      .populate<{ company: Company }>({
+        path: 'company',
+      })
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parameters.limit)
       .lean()
