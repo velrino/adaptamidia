@@ -72,7 +72,7 @@ export interface IApiAdvertisementItem {
 }
 
 export interface IApiUnitItemResponse {
-  _id: string;
+  _id?: string;
   company: string;
   name: string;
   image: string;

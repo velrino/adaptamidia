@@ -3,6 +3,33 @@ import { IApiUnitItemResponse } from "../api/api.interface";
 import { AdPeriod } from "@/interfaces/ads";
 import { GenerateNumberRange } from "@/utils/generic";
 
+export const CompanyUnitRecordDefault: IApiUnitItemResponse = {
+  _id: String(),
+  company: String(),
+  name: String(),
+  full_address: String(),
+  neighborhood: String(),
+  address: String(),
+  city: String(),
+  state: String(),
+  country: String(),
+  street_number: String(),
+  type: String(),
+  status: String(),
+  max_capacity: 0,
+  location: {
+    type: "Point",
+    coordinates: [0, 0],
+  },
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  devices: {
+    smart_tv: 0,
+  },
+  image: `/images/local/${faker.number.int({ min: 1, max: 5 })}.jpg`,
+  prices: [],
+};
+
 export const CompanyUnitsMockData: IApiUnitItemResponse[] = [
   {
     _id: "67d22b758e13c91d607fb700",

@@ -62,8 +62,6 @@ export default function CompanyModal({
   };
 
   const save = () => {
-    console.clear();
-
     if (validateForm()) {
       showToast("Preencha o formulário corretamente!", IToastType.ERROR);
       return;

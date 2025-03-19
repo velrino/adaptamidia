@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Gerencie os clientes ",
 };
 
-export default function AdvertisingPage() {
+export default function CompaniesPage() {
   return (
     <div>
       <PageBreadcrumb pageTitle="Empresas" />
