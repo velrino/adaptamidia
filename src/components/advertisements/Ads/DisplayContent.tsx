@@ -64,17 +64,19 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
       `}
     >
       {/* Logo no topo */}
-      <div className="absolute top-5 left-0 z-[99999]">
-        <div className="bg-neutral-900/50 p-5 rounded-t-lg">
-          <Image
-            src="/images/logo/logo-dark.png"
-            alt="Logo"
-            width={120} // Defina a largura esperada
-            height={40} // Defina a altura esperada
-            className="object-cover"
-          />
+      {!isAdvertisement && (
+        <div className="absolute top-5 left-0 z-[99999]">
+          <div className="bg-neutral-900/50 p-5 rounded-r-lg">
+            <Image
+              src="/images/logo/logo-dark.png"
+              alt="Logo"
+              width={120}
+              height={40}
+              className="object-cover"
+            />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Título e descrição (se não for anúncio) */}
       {!isAdvertisement && (

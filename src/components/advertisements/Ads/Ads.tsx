@@ -52,25 +52,42 @@ export default function AdsComponent() {
   useEffect(() => {
     if (!response) return;
 
-    handleResponse().then((data) => {
+    handleResponse().then(() => {
       const example = [...AdvertisementsMockData.data].map((item) => ({
         data: item,
         type: AdsCurrentType.ADVERTISEMENT,
       }));
-      const ads = [...data].map((item) => ({
-        data: item,
-        type: AdsCurrentType.ADVERTISEMENT,
-      }));
-      const news = [...newsMockData.data].map((item) => ({
-        data: item,
-        type: AdsCurrentType.NEWS,
-      }));
+      // const ads = [...data].map((item) => ({
+      //   data: item,
+      //   type: AdsCurrentType.ADVERTISEMENT,
+      // }));
+      const news = ShuffleArray(
+        [...newsMockData.data].map((item) => ({
+          data: item,
+          type: AdsCurrentType.NEWS,
+        }))
+      );
 
-      const combinedList = [...news, ...ads];
+      const combinedList = [
+        ...example,
+        ...news,
+        ...example,
+        ...example,
+        ...example,
+      ];
 
       const shuffledList = ShuffleArray(combinedList);
 
-      setList(() => [...example, ...shuffledList]);
+      setList(() => [
+        example[0],
+        example[1],
+        news[0],
+        example[2],
+        news[1],
+        example[3],
+        example[4],
+        ...shuffledList,
+      ]);
     });
   }, [response, handleResponse]);
 

@@ -82,14 +82,15 @@ export function Display({ list, theme, preview, style }: IDisplay) {
       const currentItem = list[currentAdIndex];
       setCurrentDisplay(() => currentItem);
 
-      let seconds = 3; //currentAd.seconds
+      let seconds = 5; //currentAd.seconds
       if (currentItem.type === AdsCurrentType.ADVERTISEMENT) {
         currentItem.data = currentItem.data as IApiAdvertisementItem;
-        seconds = 3; //currentItem?.data?.seconds || 5;
+        seconds = 10; //currentItem?.data?.seconds || 5;
       }
 
       if (currentItem.type === AdsCurrentType.NEWS) {
         currentItem.data = currentItem.data as IApiNewsResponseItem;
+        seconds = 5;
       }
 
       updateAdStats(currentAdIndex);
