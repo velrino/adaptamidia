@@ -10,4 +10,6 @@ export enum CompanyUnitStatus {
   ACTIVE = 'ACTIVE',
   IN_REVIEW = 'IN_REVIEW',
   INACTIVE = 'INACTIVE',
+  PENDING = 'PENDING',
+  TEST = 'TEST',
 }
