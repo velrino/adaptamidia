@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ContentAction } from "@/interfaces/general";
+import { ContentAction, IToastType } from "@/interfaces/general";
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
 import {
@@ -14,6 +14,7 @@ import {
   CompanyDefaultFormReport,
   ICompanyDefaultFormReport,
 } from "./interface";
+import { useToast } from "@/context/ToastContext";
 
 interface ICompanyModalProps {
   action: ContentAction;
@@ -33,6 +34,8 @@ export default function CompanyModal({
     }
   };
 
+  const { showToast } = useToast();
+
   const [data, setData] = useState<IApiCompanyResponse>(record);
 
   const [formReport, setFormReport] = useState<ICompanyDefaultFormReport>(
@@ -44,30 +47,25 @@ export default function CompanyModal({
   };
 
   const validateForm = () => {
-    const validate = Object.values(formReport).every((value) => value);
+    const requiredFields: (keyof IApiCompanyResponse)[] = [
+      "document",
+      "name",
+      "status",
+      "document_type",
+    ];
 
-    if (!data.document.length) {
+    if (requiredFields.some((field) => !data[field])) {
       return true;
     }
 
-    if (!data.name.length) {
-      return true;
-    }
-
-    if (!data.status.length) {
-      return true;
-    }
-
-    if (!data.document_type.length) {
-      return true;
-    }
-
-    return validate;
+    return Object.values(formReport).every(Boolean);
   };
 
   const save = () => {
     console.clear();
+
     if (validateForm()) {
+      showToast("Preencha o formulário corretamente!", IToastType.ERROR);
       return;
     }
 
