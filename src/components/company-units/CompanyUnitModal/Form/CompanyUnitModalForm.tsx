@@ -11,7 +11,7 @@ import {
 import { CompanyStatusOptions } from "@/interfaces/company";
 import { PiClockAfternoonThin } from "react-icons/pi";
 import { DateHelper } from "@/utils/date";
-import { ICompanyUnitModalCommonProps } from "../interface";
+import { ICompanyUnitModalPrincipalProps } from "../interface";
 import { CompaniesResponseMock } from "@/backend/mock/client";
 import { FormatBrazillianDocument } from "@/utils/generic";
 
@@ -19,9 +19,10 @@ export const CompanyUnitModalForm = ({
   action,
   data,
   onUpdate,
+  formCompany,
 }: // formReport,
 // setFormReport,
-ICompanyUnitModalCommonProps) => {
+ICompanyUnitModalPrincipalProps) => {
   const updateForm = (column: keyof IApiUnitItemResponse, value: unknown) => {
     onUpdate({ [column]: value });
   };
@@ -125,13 +126,12 @@ ICompanyUnitModalCommonProps) => {
                 // isLoading={isAdvertiserLoading}
                 value={
                   companiesOptions.find(
-                    (option) => option.value === data.company
+                    (option) => option.value === formCompany?.companySelected
                   ) || null
                 }
                 options={companiesOptions}
                 onChange={(currentOption) =>
-                  updateForm(
-                    "company",
+                  formCompany?.setCompanySelected(
                     currentOption ? currentOption.value : null
                   )
                 }

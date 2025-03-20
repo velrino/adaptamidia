@@ -2,6 +2,7 @@ import {
   IApiAdvertisementItem,
   IApiNewsResponseItem,
 } from "@/backend/api/api.interface";
+import { IReactSelectOption } from "./general";
 
 export enum AdType {
   IMAGE = "IMAGE",
@@ -28,6 +29,13 @@ export const AdPeriodText: Record<AdPeriod, string> = {
   [AdPeriod.MONTHLY]: "Mensal",
   [AdPeriod.YEARLY]: "Anual",
 };
+
+export const AdPeriodOptions: IReactSelectOption[] = [
+  { value: AdPeriod.DAILY, label: AdPeriodText.DAILY },
+  { value: AdPeriod.WEEKLY, label: AdPeriodText.WEEKLY },
+  { value: AdPeriod.MONTHLY, label: AdPeriodText.MONTHLY },
+  { value: AdPeriod.YEARLY, label: AdPeriodText.YEARLY },
+].sort((a, b) => a.label.localeCompare(b.label));
 
 export enum AdSortKey {
   company = "company",

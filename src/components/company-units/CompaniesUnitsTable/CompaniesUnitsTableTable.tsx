@@ -176,7 +176,8 @@ export default function CompanieUnitsTable() {
               <TableHeader className="border-t border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
                   {[
-                    { key: CompanyUnitSortKey.name, label: "Nome" },
+                    { key: CompanyUnitSortKey.name, label: "Local" },
+                    { key: CompanyUnitSortKey.company, label: "Empresa" },
                     { key: CompanyUnitSortKey.full_address, label: "Endereço" },
                     { key: CompanyUnitSortKey.neighborhood, label: "Bairro" },
                     { key: CompanyUnitSortKey.city, label: "Cidade" },
@@ -237,7 +238,7 @@ export default function CompanieUnitsTable() {
                         {/* Imagem */}
                         <div className="w-10 h-10 overflow-hidden rounded-full">
                           <Image
-                            width={100} // Ajustado para manter proporção com o container
+                            width={100}
                             height={100}
                             src={"/images/company/default.webp"}
                             alt="title"
@@ -251,6 +252,9 @@ export default function CompanieUnitsTable() {
                           {item.name}
                         </span>
                       </div>
+                    </TableCell>
+                    <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
+                      {item.company.name}
                     </TableCell>
                     <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
                       {item.full_address}

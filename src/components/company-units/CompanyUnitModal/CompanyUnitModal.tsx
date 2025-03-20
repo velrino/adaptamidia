@@ -16,6 +16,8 @@ import {
   IApiUpdateCompanyUnitRequest,
 } from "@/backend/api/api.interface";
 import { CompanyUnitModalForm } from "./Form/CompanyUnitModalForm";
+import { Tabs } from "@/components/ui/tabs/Principal";
+import { CompanyUnitModalPricesTable } from "./CompanyUnitModalPricesTable/CompanyUnitModalPricesTable";
 
 interface ICompanyUnitModalProps {
   action: ContentAction;
@@ -38,6 +40,9 @@ export default function CompanyUnitModal({
   const { showToast } = useToast();
 
   const [data, setData] = useState<IApiUnitItemResponse>(record);
+  const [companySelected, setCompanySelected] = useState<string | null>(
+    record.company?._id
+  );
 
   const [formReport, setFormReport] = useState<ICompanyUnitDefaultFormReport>(
     CompanyUnitDefaultFormReport
@@ -57,7 +62,7 @@ export default function CompanyUnitModal({
         "company",
       ];
 
-      if (requiredFields.some((field) => !data[field])) {
+      if (requiredFields.some((field) => !data[field]) || !companySelected) {
         return true;
       }
 
@@ -71,19 +76,19 @@ export default function CompanyUnitModal({
       return;
     }
 
-    if (action === ContentAction.CREATE) {
+    if (action === ContentAction.CREATE && companySelected) {
       const body: IApiCreateCompanyUnitRequest = {
         address: data.full_address,
         type: data.type,
         name: data.name,
         complement: data.complement,
-        company_id: data.company,
+        company_id: companySelected,
       };
       console.log({ action, body });
-    } else if (action === ContentAction.UPDATE && data._id) {
+    } else if (action === ContentAction.UPDATE && data._id && companySelected) {
       const companyUnitId = data._id;
       const body: IApiUpdateCompanyUnitRequest = {
-        company: data.company,
+        company: companySelected,
         complement: data.complement,
         name: data.name,
         full_address: data.full_address,
@@ -107,6 +112,36 @@ export default function CompanyUnitModal({
     }
   };
 
+  const tabs = [
+    {
+      id: "INFO",
+      label: "Info",
+      content: (
+        <CompanyUnitModalForm
+          action={action}
+          data={data}
+          onUpdate={handleUpdate}
+          formReport={formReport}
+          setFormReport={setFormReport}
+          formCompany={{ companySelected, setCompanySelected }}
+        />
+      ),
+    },
+    {
+      id: "PRICES",
+      label: "Preços",
+      content: (
+        <CompanyUnitModalPricesTable
+          action={action}
+          data={data}
+          onUpdate={handleUpdate}
+          formReport={formReport}
+          setFormReport={setFormReport}
+        />
+      ),
+    },
+  ];
+
   return (
     <Modal
       isOpen={true}
@@ -123,12 +158,13 @@ export default function CompanyUnitModal({
           </div>
 
           <div>
-            <CompanyUnitModalForm
-              action={action}
-              data={data}
-              onUpdate={handleUpdate}
-              formReport={formReport}
-              setFormReport={setFormReport}
+            <Tabs
+              tabs={tabs}
+              defaultTabId="INFO"
+              styles={{
+                nav: "p-0",
+                navMenu: "mx-auto",
+              }}
             />
           </div>
         </div>

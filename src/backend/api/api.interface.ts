@@ -71,9 +71,28 @@ export interface IApiAdvertisementItem {
   segments: string[];
 }
 
+export interface IApiUnitPriceItemResponse {
+  period: AdPeriod;
+  seconds: number;
+  display_times: number;
+  price_total: number;
+  average_visitors: number;
+}
+
+export interface IApiUnitItemCompanyResponse {
+  _id: string;
+  document: string;
+  document_type: ICompanyDocumentType;
+  name: string;
+  type: ICompanyType;
+  status: ICompanyStatus;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface IApiUnitItemResponse {
   _id?: string;
-  company: string;
+  company: IApiUnitItemCompanyResponse;
   complement: string;
   name: string;
   image: string;
@@ -89,13 +108,7 @@ export interface IApiUnitItemResponse {
   devices: {
     smart_tv: number;
   };
-  prices: {
-    period: AdPeriod;
-    seconds: number;
-    display_times: number;
-    price_total: number;
-    average_visitors: number;
-  }[];
+  prices: IApiUnitPriceItemResponse[];
   max_capacity: number;
   location: {
     type: string;

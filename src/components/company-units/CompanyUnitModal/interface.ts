@@ -11,6 +11,14 @@ export interface ICompanyUnitModalCommonProps {
   >;
 }
 
+export interface ICompanyUnitModalPrincipalProps
+  extends ICompanyUnitModalCommonProps {
+  formCompany: {
+    companySelected: string | null;
+    setCompanySelected: React.Dispatch<React.SetStateAction<string | null>>;
+  };
+}
+
 export interface ICompanyUnitDefaultFormReport {
   name: string;
 }
