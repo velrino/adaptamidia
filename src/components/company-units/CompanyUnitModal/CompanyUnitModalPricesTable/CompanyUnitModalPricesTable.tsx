@@ -119,7 +119,7 @@ ICompanyUnitModalCommonProps) => {
     }).format(value / 100); // Divide por 100 para representar centavos corretamente
   };
 
-  const secondsOptions = GenerateNumberRangeAsOptions(20, 40);
+  const secondsOptions = GenerateNumberRangeAsOptions(15, 40);
 
   return (
     <div className="overflow-y-auto min-h-[75vh] max-h-[75vh] px-6">

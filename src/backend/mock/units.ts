@@ -219,43 +219,61 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = (
       updated_at: "2025-03-13T11:35:33.208Z",
     },
   ] as any
-).map((item: any) => ({
-  ...item,
-  devices: {
-    smart_tv: faker.number.int({ min: 3, max: 10 }),
-  },
-  image: `/images/local/${faker.number.int({ min: 1, max: 5 })}.jpg`,
-  prices: GenerateNumberRange(15, 40).flatMap((seconds) => [
-    {
-      period: AdPeriod.DAILY,
-      display_times: faker.number.int({ min: 100, max: 500 }),
-      price_total: faker.number.int({ min: 50, max: 100 }),
-      seconds,
-      average_visitors: faker.number.int({ min: 300, max: 1000 }),
+).map((item: any) => {
+  const uniquePrices = new Map();
+
+  const prices = GenerateNumberRange(15, 40)
+    .flatMap((seconds) => [
+      {
+        period: AdPeriod.DAILY,
+        display_times: faker.number.int({ min: 100, max: 500 }),
+        price_total: faker.number.int({ min: 50, max: 100 }),
+        seconds,
+        average_visitors: faker.number.int({ min: 300, max: 1000 }),
+      },
+      {
+        period: AdPeriod.WEEKLY,
+        display_times: faker.number.int({ min: 1000, max: 5000 }),
+        price_total: faker.number.int({ min: 100, max: 500 }),
+        average_visitors: faker.number.int({ min: 3000, max: 10000 }),
+        seconds,
+      },
+      {
+        period: AdPeriod.MONTHLY,
+        display_times: faker.number.int({ min: 10000, max: 50000 }),
+        price_total: faker.number.int({ min: 1000, max: 5000 }),
+        average_visitors: faker.number.int({ min: 10000, max: 100000 }),
+        seconds,
+      },
+      {
+        period: AdPeriod.YEARLY,
+        display_times: faker.number.int({ min: 10000, max: 50000 }),
+        price_total: faker.number.int({ min: 1000, max: 5000 }),
+        average_visitors: faker.number.int({ min: 10000, max: 100000 }),
+        seconds,
+      },
+    ])
+    .filter((ad) => {
+      const key = `${ad.period}-${ad.seconds}`;
+      console.log({ key });
+
+      if (uniquePrices.has(key)) {
+        return false;
+      }
+
+      uniquePrices.set(key, true);
+      return true;
+    });
+
+  return {
+    ...item,
+    devices: {
+      smart_tv: faker.number.int({ min: 3, max: 10 }),
     },
-    {
-      period: AdPeriod.WEEKLY,
-      display_times: faker.number.int({ min: 1000, max: 5000 }),
-      price_total: faker.number.int({ min: 100, max: 500 }),
-      average_visitors: faker.number.int({ min: 3000, max: 10000 }),
-      seconds,
-    },
-    {
-      period: AdPeriod.MONTHLY,
-      display_times: faker.number.int({ min: 10000, max: 50000 }),
-      price_total: faker.number.int({ min: 1000, max: 5000 }),
-      average_visitors: faker.number.int({ min: 10000, max: 100000 }),
-      seconds,
-    },
-    {
-      period: AdPeriod.YEARLY,
-      display_times: faker.number.int({ min: 10000, max: 50000 }),
-      price_total: faker.number.int({ min: 1000, max: 5000 }),
-      average_visitors: faker.number.int({ min: 10000, max: 100000 }),
-      seconds,
-    },
-  ]),
-})) as IApiUnitItemResponse[];
+    image: `/images/local/${faker.number.int({ min: 1, max: 5 })}.jpg`,
+    prices,
+  };
+}) as IApiUnitItemResponse[];
 
 export const CompanyUnitsMock = {
   pages: 1,
