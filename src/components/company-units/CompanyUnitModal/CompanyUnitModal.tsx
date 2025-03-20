@@ -18,6 +18,7 @@ import {
 import { CompanyUnitModalForm } from "./Form/CompanyUnitModalForm";
 import { Tabs } from "@/components/ui/tabs/Principal";
 import { CompanyUnitModalPricesTable } from "./CompanyUnitModalPricesTable/CompanyUnitModalPricesTable";
+import { CompanyUnitModalPopularTimes } from "./CompanyUnitModalPopularTimes/CompanyUnitModalPopularTimes";
 
 interface ICompanyUnitModalProps {
   action: ContentAction;
@@ -139,6 +140,19 @@ export default function CompanyUnitModal({
         />
       ),
     },
+    {
+      id: "POPULAR_TIMES",
+      label: "Horários",
+      content: (
+        <CompanyUnitModalPopularTimes
+          action={action}
+          data={data}
+          onUpdate={handleUpdate}
+          formReport={formReport}
+          setFormReport={setFormReport}
+        />
+      ),
+    },
   ];
 
   return (
@@ -159,7 +173,7 @@ export default function CompanyUnitModal({
           <div>
             <Tabs
               tabs={tabs}
-              defaultTabId="PRICES"
+              defaultTabId="POPULAR_TIMES"
               styles={{
                 nav: "p-0",
                 navMenu: "mx-auto",

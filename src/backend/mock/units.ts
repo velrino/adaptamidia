@@ -1,7 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { faker } from "@faker-js/faker";
-import { IApiUnitItemResponse } from "../api/api.interface";
+import {
+  IApiUnitItemResponse,
+  IApiUnitPopularTimeRecordResponse,
+} from "../api/api.interface";
 import { AdPeriod } from "@/interfaces/ads";
 import { GenerateNumberRange } from "@/utils/generic";
+
+import { GenerateWeekData } from "@/interfaces/company-unit";
 import {
   ICompanyDocumentType,
   ICompanyStatus,
@@ -10,7 +17,16 @@ import {
 
 export const CompanyUnitRecordDefault: IApiUnitItemResponse = {
   _id: String(),
-  company: String(),
+  company: {
+    _id: String(),
+    created_at: String(),
+    updated_at: String(),
+    document: String(),
+    document_type: ICompanyDocumentType.CNPJ,
+    name: String(),
+    type: ICompanyType.LOCAL,
+    status: ICompanyStatus.IN_REVIEW,
+  },
   name: String(),
   full_address: String(),
   neighborhood: String(),
@@ -34,6 +50,10 @@ export const CompanyUnitRecordDefault: IApiUnitItemResponse = {
   },
   image: `/images/local/${faker.number.int({ min: 1, max: 5 })}.jpg`,
   prices: [],
+  popular_time: {
+    _id: faker.string.uuid(),
+    data: GenerateWeekData(),
+  },
 };
 
 export const CompanyUnitsMockData: IApiUnitItemResponse[] = (
@@ -265,6 +285,11 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = (
       return true;
     });
 
+  const popular_time: IApiUnitPopularTimeRecordResponse = {
+    _id: faker.string.uuid(),
+    data: GenerateWeekData(),
+  };
+
   return {
     ...item,
     devices: {
@@ -272,6 +297,7 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = (
     },
     image: `/images/local/${faker.number.int({ min: 1, max: 5 })}.jpg`,
     prices,
+    popular_time,
   };
 }) as IApiUnitItemResponse[];
 

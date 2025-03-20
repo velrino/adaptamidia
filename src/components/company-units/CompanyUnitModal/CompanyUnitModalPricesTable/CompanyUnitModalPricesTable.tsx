@@ -111,6 +111,12 @@ ICompanyUnitModalCommonProps) => {
     updateForm("price_total", isNaN(cleanValue) ? 0 : cleanValue, index);
   };
 
+  const handleInputAverageVisitors = (value: string, index: number) => {
+    const cleanValue = Number(value.replace(/\D/g, ""));
+
+    updateForm("average_visitors", isNaN(cleanValue) ? 0 : cleanValue, index);
+  };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
@@ -159,12 +165,12 @@ ICompanyUnitModalCommonProps) => {
               { key: CompanyUnitPriceSortKey.price_total, label: "Preço" },
               { key: CompanyUnitPriceSortKey.seconds, label: "Segundos" },
               {
-                key: CompanyUnitPriceSortKey.display_times,
-                label: "Exibições",
-              },
-              {
                 key: CompanyUnitPriceSortKey.average_visitors,
                 label: "Média de visitantes",
+              },
+              {
+                key: CompanyUnitPriceSortKey.display_times,
+                label: "Exibições",
               },
             ].map(({ key, label }) => (
               <TableCell
@@ -244,7 +250,16 @@ ICompanyUnitModalCommonProps) => {
                 />
               </TableCell>
               <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
-                {item.average_visitors}
+                <Input
+                  type="text"
+                  placeholder="Informe a média de visitantes"
+                  id="average_visitors"
+                  value={item.average_visitors}
+                  onChange={(e) =>
+                    handleInputAverageVisitors(e.target.value, i)
+                  }
+                  maxLength={10}
+                />
               </TableCell>
               <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
                 {item.display_times}

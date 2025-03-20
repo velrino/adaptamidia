@@ -1,3 +1,7 @@
+import { IApiUnitPopularTimeData } from "@/backend/api/api.interface";
+import { IDay } from "./general";
+import { faker } from "@faker-js/faker";
+
 export enum CompanyUnitSortKey {
   name = "name",
   type = "type",
@@ -21,4 +25,16 @@ export enum CompanyUnitPriceSortKey {
   price_total = "price_total",
   seconds = "seconds",
   average_visitors = "average_visitors",
+}
+
+export function GenerateWeekData(): IApiUnitPopularTimeData[] {
+  const hours = Array.from({ length: 24 }, (_, i) => ({
+    hour: `${String(i).padStart(2, "0")}:00`,
+    count: faker.number.int({ min: 100, max: 1500 }),
+  }));
+
+  return Object.values(IDay).map((day) => ({
+    day,
+    data: [...hours],
+  }));
 }

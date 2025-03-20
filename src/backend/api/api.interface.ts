@@ -4,6 +4,7 @@ import {
   ICompanyStatus,
   ICompanyType,
 } from "@/interfaces/company";
+import { IDay } from "@/interfaces/general";
 
 export interface IApiPaginateParameters {
   page: number;
@@ -79,6 +80,21 @@ export interface IApiUnitPriceItemResponse {
   average_visitors: number;
 }
 
+export interface IApiUnitPopularTimeItem {
+  hour: string;
+  count: number;
+}
+
+export interface IApiUnitPopularTimeData {
+  day: IDay;
+  data: IApiUnitPopularTimeItem[];
+}
+
+export interface IApiUnitPopularTimeRecordResponse {
+  _id: string;
+  data: IApiUnitPopularTimeData[];
+}
+
 export interface IApiUnitItemCompanyResponse {
   _id: string;
   document: string;
@@ -109,6 +125,7 @@ export interface IApiUnitItemResponse {
     smart_tv: number;
   };
   prices: IApiUnitPriceItemResponse[];
+  popular_time: IApiUnitPopularTimeRecordResponse;
   max_capacity: number;
   location: {
     type: string;
