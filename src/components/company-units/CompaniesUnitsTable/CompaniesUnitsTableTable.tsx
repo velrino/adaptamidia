@@ -55,7 +55,7 @@ export default function CompanieUnitsTable() {
 
     handleResponse().then((data) => {
       setContentAction(() => ContentAction.UPDATE);
-      // setCurrentSelected(data[0] || null);
+      setCurrentSelected(data[0] || null);
       setList(data);
     });
   }, [response, handleResponse]);

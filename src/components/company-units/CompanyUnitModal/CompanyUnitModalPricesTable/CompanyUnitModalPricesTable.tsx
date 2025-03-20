@@ -13,7 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CompanyUnitPriceSortKey } from "@/interfaces/company-unit";
-import { AngleDownIcon, AngleUpIcon } from "@/icons";
+import { AngleDownIcon, AngleUpIcon, TrashBinIcon } from "@/icons";
 import { GenerateNumberRangeAsOptions } from "@/utils/generic";
 import Select from "@/components/form/Select";
 import { IApiUnitPriceItemResponse } from "@/backend/api/api.interface";
@@ -198,6 +198,14 @@ ICompanyUnitModalCommonProps) => {
                 </div>
               </TableCell>
             ))}
+            <TableCell
+              isHeader
+              className="px-4 py-3 border border-gray-100 dark:border-white/[0.05] text-center"
+            >
+              <p className="font-medium text-gray-700 text-theme-xs dark:text-gray-400">
+                Ação
+              </p>
+            </TableCell>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -240,6 +248,13 @@ ICompanyUnitModalCommonProps) => {
               </TableCell>
               <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
                 {item.display_times}
+              </TableCell>
+              <TableCell className="px-4 py-4 font-normal text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm dark:text-white/90 whitespace-nowrap">
+                <div className="flex items-center w-full gap-2 justify-center">
+                  <button className="text-gray-500 hover:text-error-500 dark:text-gray-400 dark:hover:text-error-500">
+                    <TrashBinIcon />
+                  </button>
+                </div>
               </TableCell>
             </TableRow>
           ))}

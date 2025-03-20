@@ -59,7 +59,6 @@ export default function CompanyUnitModal({
         "name",
         "status",
         "address",
-        "company",
       ];
 
       if (requiredFields.some((field) => !data[field]) || !companySelected) {
@@ -160,7 +159,7 @@ export default function CompanyUnitModal({
           <div>
             <Tabs
               tabs={tabs}
-              defaultTabId="INFO"
+              defaultTabId="PRICES"
               styles={{
                 nav: "p-0",
                 navMenu: "mx-auto",
