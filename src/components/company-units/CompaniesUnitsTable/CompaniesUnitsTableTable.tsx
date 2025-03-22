@@ -54,8 +54,8 @@ export default function CompanieUnitsTable() {
     if (!response) return;
 
     handleResponse().then((data) => {
-      setContentAction(() => ContentAction.UPDATE);
-      setCurrentSelected(data[0] || null);
+      // setContentAction(() => ContentAction.UPDATE);
+      // setCurrentSelected(data[0] || null);
       setList(data);
     });
   }, [response, handleResponse]);
@@ -129,7 +129,7 @@ export default function CompanieUnitsTable() {
   return (
     <>
       <div className="overflow-hidden bg-white dark:bg-white/[0.03] rounded-xl">
-        <div className="flex flex-col gap-2 px-4 py-4 border border-b-0 border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 px-4 py-4 border border-b-0 border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center ">
           <div className="relative">
             <button className="absolute text-gray-500 -translate-y-1/2 left-4 top-1/2 dark:text-gray-400">
               <svg

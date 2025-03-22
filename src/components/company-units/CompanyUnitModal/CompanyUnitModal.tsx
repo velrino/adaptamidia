@@ -133,32 +133,36 @@ export default function CompanyUnitModal({
         />
       ),
     },
-    {
-      id: CompanyUnitModalTabs.PRICES,
-      label: "Preços",
-      content: (
-        <CompanyUnitModalPricesTable
-          action={action}
-          data={data}
-          onUpdate={handleUpdate}
-          formReport={formReport}
-          setFormReport={setFormReport}
-        />
-      ),
-    },
-    {
-      id: CompanyUnitModalTabs.POPULAR_TIMES,
-      label: "Horários",
-      content: (
-        <CompanyUnitModalPopularTimes
-          action={action}
-          data={data}
-          onUpdate={handleUpdate}
-          formReport={formReport}
-          setFormReport={setFormReport}
-        />
-      ),
-    },
+    ...(action === ContentAction.UPDATE
+      ? [
+          {
+            id: CompanyUnitModalTabs.PRICES,
+            label: "Preços",
+            content: (
+              <CompanyUnitModalPricesTable
+                action={action}
+                data={data}
+                onUpdate={handleUpdate}
+                formReport={formReport}
+                setFormReport={setFormReport}
+              />
+            ),
+          },
+          {
+            id: CompanyUnitModalTabs.POPULAR_TIMES,
+            label: "Horários",
+            content: (
+              <CompanyUnitModalPopularTimes
+                action={action}
+                data={data}
+                onUpdate={handleUpdate}
+                formReport={formReport}
+                setFormReport={setFormReport}
+              />
+            ),
+          },
+        ]
+      : []),
   ];
 
   return (
