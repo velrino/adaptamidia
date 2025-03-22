@@ -36,13 +36,7 @@ const navItems: NavItem[] = [
   {
     icon: <GridIcon />,
     name: "Dashboard",
-    subItems: [
-      { name: "Home", path: "/", pro: false },
-      { name: "Analytics", path: "/analytics", pro: true },
-      { name: "Marketing", path: "/marketing", pro: true },
-      { name: "CRM", path: "/crm", pro: true },
-      { name: "Stocks", path: "/stocks", new: true, pro: true },
-    ],
+    path: "/",
   },
   {
     icon: <BsWindowStack size={25} />,
@@ -63,6 +57,17 @@ const navItems: NavItem[] = [
   },
   ...(!Environment.isProduction
     ? [
+        {
+          icon: <GridIcon />,
+          name: "Dashboard",
+          subItems: [
+            { name: "Home", path: "/", pro: false },
+            { name: "Analytics", path: "/analytics", pro: true },
+            { name: "Marketing", path: "/marketing", pro: true },
+            { name: "CRM", path: "/crm", pro: true },
+            { name: "Stocks", path: "/stocks", new: true, pro: true },
+          ],
+        },
         {
           icon: <CalenderIcon />,
           name: "Calendar",
@@ -434,12 +439,22 @@ const AppSidebar: React.FC = () => {
               />
             </>
           ) : (
-            <Image
-              src="/images/logo/logo-icon.svg"
-              alt="Logo"
-              width={32}
-              height={32}
-            />
+            <>
+              <Image
+                className="dark:hidden"
+                src="/images/logo/icon-dark.png"
+                alt="Logo"
+                width={32}
+                height={32}
+              />
+              <Image
+                className="hidden dark:block"
+                src="/images/logo/icon-light.png"
+                alt="Logo"
+                width={32}
+                height={32}
+              />
+            </>
           )}
         </Link>
       </div>
