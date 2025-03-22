@@ -27,6 +27,12 @@ interface ICompanyUnitModalProps {
   onCloseCallback: () => void;
 }
 
+export enum CompanyUnitModalTabs {
+  INFO = "INFO",
+  PRICES = "PRICES",
+  POPULAR_TIMES = "POPULAR_TIMES",
+}
+
 export default function CompanyUnitModal({
   action,
   record,
@@ -114,7 +120,7 @@ export default function CompanyUnitModal({
 
   const tabs = [
     {
-      id: "INFO",
+      id: CompanyUnitModalTabs.INFO,
       label: "Info",
       content: (
         <CompanyUnitModalForm
@@ -128,7 +134,7 @@ export default function CompanyUnitModal({
       ),
     },
     {
-      id: "PRICES",
+      id: CompanyUnitModalTabs.PRICES,
       label: "Preços",
       content: (
         <CompanyUnitModalPricesTable
@@ -141,7 +147,7 @@ export default function CompanyUnitModal({
       ),
     },
     {
-      id: "POPULAR_TIMES",
+      id: CompanyUnitModalTabs.POPULAR_TIMES,
       label: "Horários",
       content: (
         <CompanyUnitModalPopularTimes
@@ -173,7 +179,7 @@ export default function CompanyUnitModal({
           <div>
             <Tabs
               tabs={tabs}
-              defaultTabId="POPULAR_TIMES"
+              defaultTabId={CompanyUnitModalTabs.INFO}
               styles={{
                 nav: "p-0",
                 navMenu: "mx-auto",
