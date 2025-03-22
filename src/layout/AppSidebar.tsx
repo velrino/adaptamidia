@@ -22,8 +22,8 @@ import {
   UserCircleIcon,
 } from "../icons/index";
 import { BsWindowStack } from "react-icons/bs";
-import SidebarWidget from "./SidebarWidget";
 import { PiBuildingOfficeLight } from "react-icons/pi";
+import { Environment } from "@/utils/generic";
 
 type NavItem = {
   name: string;
@@ -61,56 +61,60 @@ const navItems: NavItem[] = [
       { name: "Métricas", path: "/companies-metrics", pro: true },
     ],
   },
-  {
-    icon: <CalenderIcon />,
-    name: "Calendar",
-    path: "/calendar",
-  },
-  {
-    icon: <UserCircleIcon />,
-    name: "User Profile",
-    path: "/profile",
-  },
-  {
-    name: "Task",
-    icon: <TaskIcon />,
-    subItems: [
-      { name: "List", path: "/task-list", pro: true },
-      { name: "Kanban", path: "/task-kanban", pro: true },
-    ],
-  },
-  {
-    name: "Forms",
-    icon: <ListIcon />,
-    subItems: [
-      { name: "Form Elements", path: "/form-elements", pro: false },
-      { name: "Form Layout", path: "/form-layout", pro: true },
-    ],
-  },
-  {
-    name: "Tables",
-    icon: <TableIcon />,
-    subItems: [
-      { name: "Basic Tables", path: "/basic-tables", pro: false },
-      { name: "Data Tables", path: "/data-tables", pro: true },
-    ],
-  },
-  {
-    name: "Pages",
-    icon: <PageIcon />,
-    subItems: [
-      { name: "File Manager", path: "/file-manager", pro: true },
-      { name: "Pricing Tables", path: "/pricing-tables", pro: true },
-      { name: "Faqs", path: "/faq", pro: true },
-      { name: "Blank Page", path: "/blank", pro: true },
-      { name: "404 Error", path: "/error-404", pro: true },
-      { name: "500 Error", path: "/error-500", pro: true },
-      { name: "503 Error", path: "/error-503", pro: true },
-      { name: "Coming Soon", path: "/coming-soon", pro: true },
-      { name: "Maintenance", path: "/maintenance", pro: true },
-      { name: "Success", path: "/success", pro: true },
-    ],
-  },
+  ...(!Environment.isProduction
+    ? [
+        {
+          icon: <CalenderIcon />,
+          name: "Calendar",
+          path: "/calendar",
+        },
+        {
+          icon: <UserCircleIcon />,
+          name: "User Profile",
+          path: "/profile",
+        },
+        {
+          name: "Task",
+          icon: <TaskIcon />,
+          subItems: [
+            { name: "List", path: "/task-list", pro: true },
+            { name: "Kanban", path: "/task-kanban", pro: true },
+          ],
+        },
+        {
+          name: "Forms",
+          icon: <ListIcon />,
+          subItems: [
+            { name: "Form Elements", path: "/form-elements", pro: false },
+            { name: "Form Layout", path: "/form-layout", pro: true },
+          ],
+        },
+        {
+          name: "Tables",
+          icon: <TableIcon />,
+          subItems: [
+            { name: "Basic Tables", path: "/basic-tables", pro: false },
+            { name: "Data Tables", path: "/data-tables", pro: true },
+          ],
+        },
+        {
+          name: "Pages",
+          icon: <PageIcon />,
+          subItems: [
+            { name: "File Manager", path: "/file-manager", pro: true },
+            { name: "Pricing Tables", path: "/pricing-tables", pro: true },
+            { name: "Faqs", path: "/faq", pro: true },
+            { name: "Blank Page", path: "/blank", pro: true },
+            { name: "404 Error", path: "/error-404", pro: true },
+            { name: "500 Error", path: "/error-500", pro: true },
+            { name: "503 Error", path: "/error-503", pro: true },
+            { name: "Coming Soon", path: "/coming-soon", pro: true },
+            { name: "Maintenance", path: "/maintenance", pro: true },
+            { name: "Success", path: "/success", pro: true },
+          ],
+        },
+      ]
+    : []),
 ];
 
 const othersItems: NavItem[] = [
@@ -458,41 +462,45 @@ const AppSidebar: React.FC = () => {
               </h2>
               {renderMenuItems(navItems, "main")}
             </div>
-            <div>
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-start"
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Support"
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </h2>
-              {renderMenuItems(supportItems, "support")}
-            </div>
-            <div>
-              <h2
-                className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
-                  !isExpanded && !isHovered
-                    ? "lg:justify-center"
-                    : "justify-start"
-                }`}
-              >
-                {isExpanded || isHovered || isMobileOpen ? (
-                  "Others"
-                ) : (
-                  <HorizontaLDots />
-                )}
-              </h2>
-              {renderMenuItems(othersItems, "others")}
-            </div>
+            {!Environment.isProduction && (
+              <div>
+                <h2
+                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                    !isExpanded && !isHovered
+                      ? "lg:justify-center"
+                      : "justify-start"
+                  }`}
+                >
+                  {isExpanded || isHovered || isMobileOpen ? (
+                    "Support"
+                  ) : (
+                    <HorizontaLDots />
+                  )}
+                </h2>
+                {renderMenuItems(supportItems, "support")}
+              </div>
+            )}
+            {!Environment.isProduction && (
+              <div>
+                <h2
+                  className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
+                    !isExpanded && !isHovered
+                      ? "lg:justify-center"
+                      : "justify-start"
+                  }`}
+                >
+                  {isExpanded || isHovered || isMobileOpen ? (
+                    "Others"
+                  ) : (
+                    <HorizontaLDots />
+                  )}
+                </h2>
+
+                {renderMenuItems(othersItems, "others")}
+              </div>
+            )}
           </div>
         </nav>
-        {isExpanded || isHovered || isMobileOpen ? <SidebarWidget /> : null}
       </div>
     </aside>
   );

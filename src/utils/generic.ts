@@ -99,3 +99,7 @@ export const FormatBrazillianDocument = (value: string): string => {
       .replace(/(\d{4})(\d)/, "$1-$2");
   }
 };
+
+export const Environment = {
+  isProduction: process.env.NEXT_PUBLIC_ENVIRONMENT === "production",
+};
