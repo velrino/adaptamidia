@@ -157,6 +157,31 @@ ICompanyUnitModalPrincipalProps) => {
                 }
               />
             </div>
+            <div></div>
+            <div>
+              <Label htmlFor="devices">Dispositivos</Label>
+              <Input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="Informe o número"
+                id="devices"
+                value={data?.devices?.smart_tv || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^\d*$/.test(value)) {
+                    onUpdate({
+                      ...data,
+                      devices: {
+                        ...data.devices,
+                        smart_tv: Number(value),
+                      },
+                    });
+                  }
+                }}
+                maxLength={5}
+              />
+            </div>
             {action !== ContentAction.CREATE && (
               <div className="col-span-2">
                 <div className="w-full">
