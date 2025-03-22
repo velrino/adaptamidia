@@ -182,6 +182,27 @@ ICompanyUnitModalPrincipalProps) => {
                 maxLength={5}
               />
             </div>
+            <div></div>
+            <div>
+              <Label htmlFor="max_capacity">Máximo de capacidade</Label>
+              <Input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="Informe o número"
+                id="max_capacity"
+                value={data?.max_capacity || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^\d*$/.test(value)) {
+                    onUpdate({
+                      max_capacity: Number(value),
+                    });
+                  }
+                }}
+                maxLength={5}
+              />
+            </div>
             {action !== ContentAction.CREATE && (
               <div className="col-span-2">
                 <div className="w-full">
