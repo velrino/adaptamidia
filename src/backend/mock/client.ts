@@ -9,6 +9,7 @@ import {
 } from "../api/api.interface";
 
 export const CompanyRecordDefault: IApiCompanyResponse = {
+  _id: String(),
   document: String(),
   name: String(),
   created_at: new Date().toISOString(),

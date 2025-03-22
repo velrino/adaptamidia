@@ -275,7 +275,6 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = (
     ])
     .filter((ad) => {
       const key = `${ad.period}-${ad.seconds}`;
-      console.log({ key });
 
       if (uniquePrices.has(key)) {
         return false;

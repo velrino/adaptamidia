@@ -10,8 +10,8 @@ import {
 import { AdsAudience } from "@/interfaces/ads";
 import { IReactSelectOption } from "@/interfaces/general";
 import { CompaniesMockData } from "@/backend/mock/client";
-import { EnumApiCompanyType } from "@/backend/api/api.enum";
 import { IAdvertisementModalCommonProps } from "./interface";
+import { ICompanyType } from "@/interfaces/company";
 
 const AdvertisementModalAbout = memo(
   ({ data, onUpdate }: IAdvertisementModalCommonProps) => {
@@ -75,7 +75,7 @@ const AdvertisementModalAbout = memo(
       try {
         await new Promise((resolve) => setTimeout(resolve, 500));
         const companyList = CompaniesMockData.filter(
-          (item) => item.type === EnumApiCompanyType.ADVERTISER
+          (item) => item.type === ICompanyType.ADVERTISER
         ).map((item) => ({
           value: item._id,
           label: `${item.name} (${item.document})`,

@@ -25,8 +25,8 @@ import { CompanyUnitSortKey } from "@/interfaces/company-unit";
 import CompanyUnitModal from "../CompanyUnitModal/CompanyUnitModal";
 
 export default function CompanieUnitsTable() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [currentPage] = useState(1);
+  // const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortKey, setSortKey] = useState<CompanyUnitSortKey>(
     CompanyUnitSortKey.created_at
   );

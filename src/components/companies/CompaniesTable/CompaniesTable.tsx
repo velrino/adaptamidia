@@ -28,7 +28,7 @@ import { FormatBrazillianDocument } from "@/utils/generic";
 
 export default function CompaniesTable() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(10);
   const [sortKey, setSortKey] = useState<CompanySortKey>(
     CompanySortKey.created_at
   );

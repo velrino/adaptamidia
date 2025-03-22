@@ -1,17 +1,15 @@
 "use client";
-import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { EyeCloseIcon, EyeIcon } from "@/icons";
-import Link from "next/link";
 import React, { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
+  // const [isChecked, setIsChecked] = useState(false);
   const router = useRouter();
 
   // const form = useForm<z.infer<typeof formSchema>>({
@@ -93,7 +91,7 @@ export default function SignInForm() {
                   </span>
                 </div>
               </div>
-              <div className="flex items-center justify-between">
+              {/* <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Checkbox checked={isChecked} onChange={setIsChecked} />
                   <span className="block font-normal text-gray-700 text-theme-sm dark:text-gray-400">
@@ -106,7 +104,7 @@ export default function SignInForm() {
                 >
                   Forgot password?
                 </Link>
-              </div>
+              </div> */}
               <div>
                 <Button className="w-full" size="sm" onClick={onSubmit}>
                   Sign in

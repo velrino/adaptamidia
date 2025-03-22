@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import Label from "@/components/form/Label";
 import Input from "@/components/form/input/InputField";
 import { IReactSelectOption, SortOrder } from "@/interfaces/general";
 
