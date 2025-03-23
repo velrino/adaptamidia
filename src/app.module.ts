@@ -14,6 +14,7 @@ import { CompanyUnitModule } from './modules/company-unit/company-unit.module';
 import { AdvertisementModule } from './modules/advertisement/advertisement.module';
 import { AdvertisementCampaignModule } from './modules/advertisement-campaign/advertisement-campaign.module';
 import { NewsModule } from './modules/news/news.module';
+import { FilesModule } from './modules/files/files.module';
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { NewsModule } from './modules/news/news.module';
     AdvertisementCampaignModule,
     CompanyModule,
     CompanyUnitModule,
+    FilesModule,
     UserModule,
   ],
   controllers: [AppController],

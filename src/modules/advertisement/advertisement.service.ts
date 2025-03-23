@@ -28,9 +28,9 @@ export class AdvertisementService {
     return result;
   }
 
-  calculateTotalSeconds(items: AdvertisementItem[]) {
-    if (!Array.isArray(items) || !items.length) return 0;
+  // calculateTotalSeconds(items: AdvertisementItem[]) {
+  //   if (!Array.isArray(items) || !items.length) return 0;
 
-    return items.reduce((acc, item) => acc + (Number(item.seconds) || 0), 0);
-  }
+  //   return items.reduce((acc, item) => acc + (Number(item.seconds) || 0), 0);
+  // }
 }

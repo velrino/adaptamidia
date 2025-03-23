@@ -13,17 +13,17 @@ import { Type } from 'class-transformer';
 import { AdvertisementType } from '../advertisement.interface';
 
 export class CreateAdvertisementItemDto {
-  @IsNotEmpty()
-  @IsString()
-  title: string;
+  // @IsNotEmpty()
+  // @IsString()
+  // title: string;
 
-  @IsNotEmpty()
-  @IsString()
-  description: string;
+  // @IsNotEmpty()
+  // @IsString()
+  // description: string;
 
-  @IsNotEmpty()
-  @IsNumber()
-  seconds: number;
+  // @IsNotEmpty()
+  // @IsNumber()
+  // seconds: number;
 
   @IsNotEmpty()
   @IsString()
@@ -42,6 +42,10 @@ export class CreateAdvertisementDto {
   @IsNotEmpty()
   @IsString()
   title: string;
+
+  @IsNotEmpty()
+  @IsNumber()
+  seconds: number;
 
   @IsArray()
   @IsNotEmpty()

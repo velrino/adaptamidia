@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Model, Query, Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { SchemaDefault } from 'src/shared/shema';
 import {
   AdvertisementStatus,
@@ -7,14 +7,14 @@ import {
 } from './advertisement.interface';
 
 export class AdvertisementItem {
-  @Prop({ type: String, required: true })
-  title: string;
+  // @Prop({ type: String, required: true })
+  // title: string;
 
-  @Prop({ type: String, required: true })
-  description: string;
+  // @Prop({ type: String, required: true })
+  // description: string;
 
-  @Prop({ type: Number, required: true })
-  seconds: number;
+  // @Prop({ type: Number, required: true })
+  // seconds: number;
 
   @Prop({ type: String, required: true })
   source: string;

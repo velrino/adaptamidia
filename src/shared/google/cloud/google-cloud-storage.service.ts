@@ -2,7 +2,6 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { join } from 'path';
 import { Storage } from '@google-cloud/storage';
-import { v4 as uuidv4 } from 'uuid';
 import { IGoogleStorageBucket } from './google-cloud-storage.interface';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { RESULT } from 'src/shared/result.enum';
@@ -99,10 +98,11 @@ export class GoogleCloudStorageService {
 
       // Delete the file
       const deleteStartTime = Date.now();
-      const deleteResult = await this.deleteFile(
-        uploadResult.filePath,
-        IGoogleStorageBucket.XMP_MIDIA,
-      );
+      // const deleteResult = await this.deleteFile(
+      //   uploadResult.filePath,
+      //   IGoogleStorageBucket.XMP_MIDIA,
+      // );
+      const deleteResult = {};
       const deleteEndTime = Date.now();
 
       const endTime = Date.now(); // Record the end time
@@ -144,13 +144,13 @@ export class GoogleCloudStorageService {
     fileName: string,
     file: Express.Multer.File,
     bucket: IGoogleStorageBucket,
+    makePublic: boolean = false,
   ) {
     const filePath = `${folderName}/${fileName}`;
     const bucketRef = this.storage.bucket(bucket);
     const blob = bucketRef.file(filePath);
 
     try {
-      // Faz o upload do arquivo
       const stream = blob.createWriteStream({
         resumable: false,
         metadata: {
@@ -167,9 +167,10 @@ export class GoogleCloudStorageService {
       });
 
       // Define o arquivo como público (opcional)
-      // await blob.makePublic();
+      if (makePublic) {
+        await blob.makePublic();
+      }
 
-      // Retorna os dados do upload
       return {
         publicUrl: `https://storage.googleapis.com/${bucket}/${filePath}`,
         fileName: fileName,

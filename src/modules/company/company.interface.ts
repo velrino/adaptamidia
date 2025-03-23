@@ -6,4 +6,5 @@ export enum CompanyDocumentType {
 export enum CompanyType {
   ADVERTISER = 'ADVERTISER',
   LOCAL = 'LOCAL',
+  SUDO = 'SUDO',
 }

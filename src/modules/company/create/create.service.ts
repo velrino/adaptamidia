@@ -7,10 +7,23 @@ import { CreateCompanyValidator } from './create.interface';
 import { CompanyHelper } from '../company.helper';
 import { RESULT } from 'src/shared/result.enum';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
+import { CompanyDocumentType, CompanyType } from '../company.interface';
 
 @Injectable()
 export class CreateCompanyService {
   constructor(@InjectModel(Company.name) public model: Model<Company>) {}
+
+  // async onApplicationBootstrap() {
+  //   await this.execute(
+  //     {
+  //       document_type: CompanyDocumentType.CNPJ,
+  //       document: '24370370000189',
+  //       name: 'XMP MEDIA',
+  //       type: CompanyType.SUDO,
+  //     },
+  //     false,
+  //   );
+  // }
 
   executeFromRequest(
     currentRequest: AuthenticatedRequest,
@@ -33,7 +46,7 @@ export class CreateCompanyService {
     }
   }
 
-  async execute(parameters: CreateCompanyValidator) {
+  async execute(parameters: CreateCompanyValidator, validate = true) {
     try {
       parameters.document = CompanyHelper.removeFormatting(parameters.document);
 
@@ -44,6 +57,7 @@ export class CreateCompanyService {
       });
 
       if (checkExist) {
+        if (!validate) return;
         throw new HttpException(
           RESULT.COMPANY_DOCUMENT_ALREADY_EXISTS,
           HttpStatus.UNPROCESSABLE_ENTITY,

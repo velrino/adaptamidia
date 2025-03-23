@@ -38,12 +38,11 @@ export class CreateAdvertisementService extends AdvertisementService {
 
       this.allItemsIsSameType(parameters.items);
 
-      const seconds = this.calculateTotalSeconds(parameters.items);
+      // const seconds = this.calculateTotalSeconds(parameters.items);
 
       const document: any = {
         ...parameters,
         company,
-        seconds,
         status: AdvertisementStatus.REVIEW,
       };
 
