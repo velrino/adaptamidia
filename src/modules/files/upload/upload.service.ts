@@ -27,6 +27,7 @@ export class UploadFileService {
       company,
       file,
       foldername: body.foldername,
+      bucket: body.bucket,
     });
   }
 
@@ -37,9 +38,17 @@ export class UploadFileService {
         : `generic/${parameters.foldername}`,
       uuidv4().toString() as string,
       parameters.file,
-      IGoogleStorageBucket.XMP_MIDIA,
+      parameters.bucket,
     );
 
-    return { uploadResult };
+    const uploaded = await this.model.create({
+      company: parameters.company,
+      bucket: parameters.bucket,
+      path: uploadResult.folderName,
+      file_name: uploadResult.fileName,
+      public_url: uploadResult.publicUrl,
+    });
+
+    return { uploadResult, uploaded };
   }
 }

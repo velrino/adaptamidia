@@ -17,7 +17,7 @@ export class Files {
   bucket: IGoogleStorageBucket;
 
   @Prop({ required: true })
-  folder: string;
+  path: string;
 
   @Prop({ required: true })
   file_name: string;
