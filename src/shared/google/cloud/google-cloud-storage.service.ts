@@ -91,7 +91,7 @@ export class GoogleCloudStorageService {
       // Generate a signed URL
       const signedUrlStartTime = Date.now();
       const signedUrl = await this.getSignedUrl(
-        uploadResult.filePath,
+        uploadResult.path,
         IGoogleStorageBucket.XMP_MIDIA,
       );
       const signedUrlEndTime = Date.now();
@@ -172,11 +172,11 @@ export class GoogleCloudStorageService {
       }
 
       return {
-        publicUrl: `https://storage.googleapis.com/${bucket}/${filePath}`,
-        fileName: fileName,
+        public_url: `https://storage.googleapis.com/${bucket}/${filePath}`,
+        file_name: fileName,
         bucket: bucket,
-        folderName: folderName,
-        filePath,
+        folder_name: folderName,
+        path: filePath,
       };
     } catch (error) {
       Log(
