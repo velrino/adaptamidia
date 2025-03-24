@@ -18,17 +18,20 @@ import { useToast } from "@/context/ToastContext";
 import { GetErrorMessage } from "@/utils/generic";
 import { API } from "@/backend/api/api.endpoints";
 import { useSession } from "next-auth/react";
+import Spinner from "@/components/ui/spinner/Spinner";
 
 interface ICompanyModalProps {
   action: ContentAction;
   record: IApiCompanyResponse;
   setOpen?: (open: boolean) => void;
-  onCloseCallback: (refresh: boolean) => void;
+  refresh: (refresh: boolean) => void;
+  onCloseCallback: () => void;
 }
 
 export default function CompanyModal({
   action,
   record,
+  refresh,
   onCloseCallback,
 }: ICompanyModalProps) {
   const { data: session } = useSession();
@@ -60,11 +63,14 @@ export default function CompanyModal({
     return Object.values(formReport).every(Boolean);
   };
 
+  const [loadingSave, setLoadingSave] = useState(false);
   const save = async () => {
     if (validateForm()) {
       showToast("Preencha o formulário corretamente!", IToastType.ERROR);
       return;
     }
+
+    setLoadingSave(true);
 
     if (action === ContentAction.CREATE) {
       await createCompany({
@@ -73,18 +79,20 @@ export default function CompanyModal({
         type: data.type,
         name: data.name,
         status: data.status,
+      }).finally(() => {
+        setLoadingSave(false);
       });
     } else if (action === ContentAction.UPDATE && data._id) {
       const companyId = data._id;
-      const body: IApiUpdateCompanyRequest = {
+      await updateCompany(companyId, {
         document_type: data.document_type,
         document: data.document,
         type: data.type,
         name: data.name,
         status: data.status,
-      };
-
-      console.log({ action, companyId, body });
+      }).finally(() => {
+        setLoadingSave(false);
+      });
     }
   };
 
@@ -105,7 +113,32 @@ export default function CompanyModal({
         showToast(GetErrorMessage(data.message), IToastType.ERROR);
       } else if (response.ok) {
         showToast(`${body.name} salvo com sucesso!`, IToastType.SUCCESS);
-        onCloseCallback(true);
+        refresh(true);
+        onCloseCallback();
+      }
+    } catch (error) {
+      showToast(GetErrorMessage(error), IToastType.ERROR);
+    }
+  };
+
+  const updateCompany = async (id: string, body: IApiUpdateCompanyRequest) => {
+    if (!session?.api_session) {
+      return;
+    }
+
+    try {
+      const response = await API.companies.update(
+        session.api_session.access_token,
+        id,
+        body
+      );
+
+      const data = await response.json();
+
+      if (data?.error && data?.message) {
+        showToast(GetErrorMessage(data.message), IToastType.ERROR);
+      } else if (response.ok) {
+        showToast(`${body.name} atualizado com sucesso!`, IToastType.SUCCESS);
       }
     } catch (error) {
       showToast(GetErrorMessage(error), IToastType.ERROR);
@@ -115,7 +148,7 @@ export default function CompanyModal({
   return (
     <Modal
       isOpen={true}
-      onClose={() => onCloseCallback(false)}
+      onClose={onCloseCallback}
       showCloseButton={false}
       isFullscreen={true}
     >
@@ -137,16 +170,17 @@ export default function CompanyModal({
           </div>
         </div>
         <div className="fixed bottom-0 left-0 right-0 flex items-center justify-end w-full gap-3 bg-white dark:bg-gray-900 px-6 pb-6">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onCloseCallback(false)}
-          >
+          <Button size="sm" variant="outline" onClick={onCloseCallback}>
             Fechar
           </Button>
-          <Button size="sm" onClick={save}>
-            Salvar
-          </Button>
+
+          {loadingSave ? (
+            <Spinner color="#465fff" />
+          ) : (
+            <Button size="sm" onClick={save}>
+              Salvar
+            </Button>
+          )}
         </div>
       </div>
     </Modal>

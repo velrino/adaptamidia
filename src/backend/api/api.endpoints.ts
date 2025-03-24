@@ -33,5 +33,17 @@ export const API = {
         access_token,
       });
     },
+    async update(
+      access_token: string,
+      id: string,
+      data: IApiUpdateCompanyRequest
+    ) {
+      return ApiResources.request({
+        method: IApiRequestMethod.PUT,
+        path: `/company/${id}`,
+        data,
+        access_token,
+      });
+    },
   },
 };

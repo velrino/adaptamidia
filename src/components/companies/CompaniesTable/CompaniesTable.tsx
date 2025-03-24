@@ -333,11 +333,12 @@ export default function CompaniesTable() {
         <CompanyModal
           action={contentAction}
           record={currentSelected}
-          onCloseCallback={async (refresh: boolean) => {
+          refresh={async (refresh: boolean) => {
             if (refresh) {
               getResponse({});
             }
-
+          }}
+          onCloseCallback={async () => {
             setCurrentSelected(null);
           }}
         />
