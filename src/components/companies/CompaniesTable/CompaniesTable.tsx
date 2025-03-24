@@ -188,6 +188,7 @@ export default function CompaniesTable() {
                 if (e.key === "Enter") {
                   getResponse({
                     name: searchTerm,
+                    page: 1,
                   });
                 }
               }}

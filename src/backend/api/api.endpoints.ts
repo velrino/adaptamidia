@@ -1,6 +1,7 @@
 import {
   IApiAuthLogin,
   IApiPaginateCompanies,
+  IApiPaginateCompanyUnits,
   IApiRequestMethod,
   IApiUpdateCompanyRequest,
 } from "./api.interface";
@@ -41,6 +42,16 @@ export const API = {
       return ApiResources.request({
         method: IApiRequestMethod.PUT,
         path: `/company/${id}`,
+        data,
+        access_token,
+      });
+    },
+  },
+  company_units: {
+    async paginate(access_token: string, data: IApiPaginateCompanyUnits) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: "/company/unit",
         data,
         access_token,
       });

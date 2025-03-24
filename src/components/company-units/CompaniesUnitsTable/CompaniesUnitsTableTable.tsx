@@ -10,21 +10,26 @@ import {
 } from "../../ui/table";
 import Image from "next/image";
 import {
+  IApiPaginateCompanyUnits,
   IApiUnitItemResponse,
   IApiUnitsResponse,
 } from "@/backend/api/api.interface";
-import { ContentAction, SortOrder } from "@/interfaces/general";
+import { ContentAction, IToastType, SortOrder } from "@/interfaces/general";
 import { DateHelper } from "@/utils/date";
 import { AngleDownIcon, AngleUpIcon } from "@/icons";
 import Button from "@/components/ui/button/Button";
-import {
-  CompanyUnitRecordDefault,
-  CompanyUnitsMock,
-} from "@/backend/mock/units";
+import { CompanyUnitRecordDefault } from "@/backend/mock/units";
 import { CompanyUnitSortKey } from "@/interfaces/company-unit";
 import CompanyUnitModal from "../CompanyUnitModal/CompanyUnitModal";
+import { useSession } from "next-auth/react";
+import { useToast } from "@/context/ToastContext";
+import { GetErrorMessage } from "@/utils/generic";
+import { API } from "@/backend/api/api.endpoints";
 
 export default function CompanieUnitsTable() {
+  const { data: session } = useSession();
+  const { showToast } = useToast();
+
   const [currentPage] = useState(1);
   // const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sortKey, setSortKey] = useState<CompanyUnitSortKey>(
@@ -40,40 +45,59 @@ export default function CompanieUnitsTable() {
   const [list, setList] = useState<IApiUnitItemResponse[]>([]);
   const [response, setResponse] = useState<IApiUnitsResponse>();
 
-  const handleResponse = useCallback(async (): Promise<
-    IApiUnitItemResponse[]
-  > => {
-    return new Promise<IApiUnitItemResponse[]>((resolve) => {
-      setTimeout(() => {
-        resolve(response?.data || []);
-      }, 1);
-    });
-  }, [response]);
-
   useEffect(() => {
     if (!response) return;
 
-    handleResponse().then((data) => {
-      // setContentAction(() => ContentAction.UPDATE);
-      // setCurrentSelected(data[0] || null);
-      setList(data);
-    });
-  }, [response, handleResponse]);
+    const map = new Map<string, (typeof response.data)[0]>();
 
-  const getResponse = useCallback(async () => {
-    const currentResponse = CompanyUnitsMock;
-    setResponse(currentResponse);
-
-    return new Promise<IApiUnitItemResponse[]>((resolve) => {
-      setTimeout(() => {
-        resolve(currentResponse.data);
-      }, 1);
+    response.data.forEach((item) => {
+      if (!map.has(item._id)) {
+        map.set(item._id, {
+          ...item,
+        });
+      }
     });
-  }, [currentPage]);
+
+    setList(Array.from(map.values()));
+  }, [response]);
+
+  const getResponse = useCallback(
+    async (apiQuery: IApiPaginateCompanyUnits) => {
+      if (!session?.api_session) {
+        return;
+      }
+
+      try {
+        const query: IApiPaginateCompanyUnits = {
+          page: currentPage,
+          limit: 100,
+          ...apiQuery,
+        };
+
+        const response = await API.company_units.paginate(
+          session.api_session.access_token,
+          query
+        );
+
+        const data = await response.json();
+
+        if (data?.error) {
+          showToast(GetErrorMessage(data.error), IToastType.ERROR);
+        } else if (response.ok) {
+          setResponse(data);
+        }
+      } catch (error) {
+        showToast(GetErrorMessage(error), IToastType.ERROR);
+      }
+    },
+    [currentPage, session?.api_session, showToast, setResponse]
+  );
 
   useEffect(() => {
-    getResponse();
-  }, [getResponse]);
+    if (session?.api_session) {
+      getResponse({});
+    }
+  }, [getResponse, session?.api_session]);
 
   const filteredAndSortedData = useMemo(() => {
     return list
@@ -154,6 +178,14 @@ export default function CompanieUnitsTable() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search..."
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  getResponse({
+                    name: searchTerm,
+                    page: 1,
+                  });
+                }
+              }}
               className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-11 pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[300px]"
             />
           </div>

@@ -130,7 +130,7 @@ export interface IApiUnitItemCompanyResponse {
 }
 
 export interface IApiUnitItemResponse {
-  _id?: string;
+  _id: string;
   company: IApiUnitItemCompanyResponse;
   complement: string;
   name: string;
@@ -230,6 +230,17 @@ export interface IApiCompaniesResponse {
 export interface IApiPaginateCompanies extends IApiPaginateParameters {
   name?: string;
   type?: EnumApiCompanyType;
+}
+
+export interface IApiPaginateCompanyUnits extends IApiPaginateParameters {
+  name?: string;
+  latitude?: string;
+  longitude?: string;
+  radius?: string;
+  city?: string[];
+  state?: string[];
+  country?: string[];
+  neighborhood?: string[];
 }
 
 export interface IApiCreateCompanyUnitRequest {
