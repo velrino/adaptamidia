@@ -51,6 +51,23 @@ export class ListCompanyService {
       query = { ...query, type: { $in: parameters.type } };
     }
 
+    const fields: (keyof ListCompanyPaginateDto)[] = ['name'];
+
+    fields.forEach((field) => {
+      if (parameters[field]) {
+        if (Array.isArray(parameters[field])) {
+          // Se for um array, cria uma lista de expressões regulares e usa $in
+          const regexArray = parameters[field].map(
+            (value: string) => new RegExp(value, 'i'),
+          );
+          query[field] = { $in: regexArray };
+        } else {
+          // Se for uma string única, usa regex diretamente
+          query[field] = { $regex: new RegExp(parameters[field] as any, 'i') };
+        }
+      }
+    });
+
     const total = await this.companyModel.countDocuments(query);
 
     const data = await this.companyModel
