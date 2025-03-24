@@ -4,10 +4,11 @@ import { MongoCollection } from 'src/shared/mongo.schema';
 import { GoogleCloudStorageService } from 'src/shared/google/cloud/google-cloud-storage.service';
 import { FilesController } from './files.controller';
 import { UploadFileService } from './upload/upload.service';
+import { DeleteFileService } from './delete/delete.service';
 
 @Module({
   imports: [MongooseModule.forFeature([MongoCollection.files])],
   controllers: [FilesController],
-  providers: [GoogleCloudStorageService, UploadFileService],
+  providers: [GoogleCloudStorageService, UploadFileService, DeleteFileService],
 })
 export class FilesModule {}
