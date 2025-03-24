@@ -103,3 +103,9 @@ export const FormatBrazillianDocument = (value: string): string => {
 export const Environment = {
   isProduction: process.env.NEXT_PUBLIC_ENVIRONMENT === "production",
 };
+
+export function GetErrorMessage(error: unknown, fallback = "FAILED"): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "string") return error;
+  return fallback;
+}

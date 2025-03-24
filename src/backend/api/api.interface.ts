@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { AdPeriod, AdsAudience, AdStatus, AdType } from "@/interfaces/ads";
 import {
   ICompanyDocumentType,
@@ -5,6 +7,26 @@ import {
   ICompanyType,
 } from "@/interfaces/company";
 import { IDay } from "@/interfaces/general";
+
+export enum IApiRequestMethod {
+  GET = "GET",
+  DELETE = "DELETE",
+  POST = "POST",
+  PUT = "PUT",
+}
+
+export interface IApiRequest {
+  method: IApiRequestMethod;
+  path: string;
+  data?: any;
+  headers?: Headers;
+  access_token?: string;
+}
+
+export interface IApiAuthLogin {
+  email: string;
+  password: string;
+}
 
 export interface IApiPaginateParameters {
   page: number;

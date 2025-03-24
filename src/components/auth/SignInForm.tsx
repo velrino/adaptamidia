@@ -6,37 +6,82 @@ import { EyeCloseIcon, EyeIcon } from "@/icons";
 import React, { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/context/ToastContext";
+import { IToastType } from "@/interfaces/general";
+import { GetErrorMessage } from "@/utils/generic";
+import Spinner from "../ui/spinner/Spinner";
+import { useDynamicForm } from "@/utils/form";
+
+interface ILoginForm {
+  email: string;
+  password: string;
+}
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   // const [isChecked, setIsChecked] = useState(false);
   const router = useRouter();
+  const { showToast } = useToast();
+  const { formData, handleChange } = useDynamicForm<ILoginForm>({
+    email: "",
+    password: "",
+  });
 
-  // const form = useForm<z.infer<typeof formSchema>>({
-  //   resolver: zodResolver(formSchema),
-  //   defaultValues: {
-  //     email: "",
-  //     password: "",
-  //   },
-  //   mode: "onChange",
-  // });
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
+  function updateForm(column: keyof ILoginForm, value: string) {
+    handleChange(column, value);
+  }
+
+  const validateLoginForm = (formData: ILoginForm): boolean => {
+    const { email, password } = formData;
+    let isValid = true;
+
+    // Validação de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) {
+      showToast("Por favor, insira seu e-mail", IToastType.ERROR);
+      isValid = false;
+    } else if (!emailRegex.test(email)) {
+      showToast("Por favor, insira um e-mail válido", IToastType.ERROR);
+      isValid = false;
+    }
+
+    // Validação de senha
+    if (!password) {
+      showToast("Por favor, insira sua senha", IToastType.ERROR);
+      isValid = false;
+    } else if (password.length < 6) {
+      showToast("A senha deve ter pelo menos 6 caracteres", IToastType.ERROR);
+      isValid = false;
+    } else if (password.length > 20) {
+      showToast("A senha não pode ter mais de 20 caracteres", IToastType.ERROR);
+      isValid = false;
+    }
+
+    return isValid;
+  };
 
   async function onSubmit() {
+    const isValid = validateLoginForm(formData);
+    if (!isValid) return;
+
     try {
+      setLoadingSubmit(true);
       const response = await signIn("credentials", {
-        email: "test@example.com",
-        password: "password",
+        email: formData.email,
+        password: formData.password,
         redirect: false,
       });
 
-      console.debug({ response });
-      // if (response?.error) {
-      //   setError(response.error);
-      // } else if (response?.ok) {
-      //   router.replace("/");
-      // }
-      router.replace("/");
+      if (response?.error) {
+        showToast(response?.error, IToastType.ERROR);
+      } else if (response?.ok) {
+        router.replace("/");
+      }
+    } catch (e: unknown) {
+      showToast(GetErrorMessage(e), IToastType.ERROR);
     } finally {
+      setLoadingSubmit(false);
     }
   }
 
@@ -66,18 +111,23 @@ export default function SignInForm() {
             <div className="space-y-6">
               <div>
                 <Label>
-                  Email <span className="text-error-500">*</span>{" "}
+                  Email <span className="text-error-500">*</span>
                 </Label>
-                <Input placeholder="info@gmail.com" />
+                <Input
+                  value={formData.email}
+                  onChange={(e) => updateForm("email", e.target.value)}
+                />
               </div>
               <div>
                 <Label>
-                  Password <span className="text-error-500">*</span>{" "}
+                  Password <span className="text-error-500">*</span>
                 </Label>
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
+                    value={formData.password}
+                    onChange={(e) => updateForm("password", e.target.value)}
                   />
                   <span
                     onClick={() => setShowPassword(!showPassword)}
@@ -105,10 +155,14 @@ export default function SignInForm() {
                   Forgot password?
                 </Link>
               </div> */}
-              <div>
-                <Button className="w-full" size="sm" onClick={onSubmit}>
-                  Sign in
-                </Button>
+              <div className="text-center">
+                {loadingSubmit ? (
+                  <Spinner color="#465fff" />
+                ) : (
+                  <Button className="w-full" size="sm" onClick={onSubmit}>
+                    Sign in
+                  </Button>
+                )}
               </div>
             </div>
             {/* </Form> */}

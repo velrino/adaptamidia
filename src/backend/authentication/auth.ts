@@ -1,6 +1,7 @@
 import "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import { DefaultSession, NextAuthOptions, getServerSession } from "next-auth";
+import { API } from "../api/api.endpoints";
 // import { IApiAuthLogin } from "./services/api/interfaces";
 
 export type User = {
@@ -50,19 +51,26 @@ export const nextAuthOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         console.debug({ credentials });
-        // if (!credentials?.email || !credentials?.password) {
-        //   throw new Error("Unexpected error validating credentials");
-        // }
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Unexpected error validating credentials");
+        }
 
-        return {
-          access_token:
-            "REDACTED",
-          expires_in: "2025-02-20T21:38:11.000-03:00",
-          session: "677ffe3e536ad13a8572fbe3-191.183.41.16-1739493491213",
-          id: "677ffe3e536ad13a8572fbe3",
-          iat: 1739493491,
-          exp: 1740098291,
-        };
+        try {
+          const response = await API.auth.login({
+            email: credentials.email,
+            password: credentials.password,
+          });
+
+          const data = await response.json();
+
+          if (data.access_token) {
+            return data;
+          }
+
+          throw data;
+        } catch (e) {
+          throw e;
+        }
       },
     }),
   ],
