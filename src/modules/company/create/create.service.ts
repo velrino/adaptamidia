@@ -7,7 +7,7 @@ import { CreateCompanyValidator } from './create.interface';
 import { CompanyHelper } from '../company.helper';
 import { RESULT } from 'src/shared/result.enum';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
-import { CompanyDocumentType, CompanyType } from '../company.interface';
+// import { CompanyDocumentType, CompanyType } from '../company.interface';
 
 @Injectable()
 export class CreateCompanyService {

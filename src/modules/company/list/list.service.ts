@@ -6,7 +6,6 @@ import { AuthenticatedRequest } from 'src/shared/request';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { RESULT } from 'src/shared/result.enum';
 import { ListCompanyPaginateDto } from './list.interface';
-import { MongoDbDateQuery } from 'src/shared/mongo.schema';
 import { PaginatedResponseDto } from 'src/shared/interfaces/paginate.dto';
 import { Company, CompanyDocument } from '../company.schema';
 
@@ -72,7 +71,7 @@ export class ListCompanyService {
 
     const data = await this.companyModel
       .find(query) // Exclude the "config" field
-      .sort({ name: -1 }) // Sort by the most recent
+      .sort({ created_at: -1 }) // Sort by the most recent
       .skip(skip)
       .limit(parameters.limit)
       .lean()
