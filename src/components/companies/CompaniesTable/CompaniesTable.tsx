@@ -13,20 +13,24 @@ import CompaniesTableTablePaginationWithIcon from "./CompaniesTableTablePaginati
 import {
   IApiCompaniesResponse,
   IApiCompanyResponse,
+  IApiPaginateCompanies,
 } from "@/backend/api/api.interface";
-import { ContentAction, SortOrder } from "@/interfaces/general";
+import { ContentAction, IToastType, SortOrder } from "@/interfaces/general";
 import { DateHelper } from "@/utils/date";
 import { AngleDownIcon, AngleUpIcon } from "@/icons";
-import {
-  CompaniesResponseMock,
-  CompanyRecordDefault,
-} from "@/backend/mock/client";
+import { CompanyRecordDefault } from "@/backend/mock/client";
 import { CompanySortKey } from "@/interfaces/company";
 import Button from "@/components/ui/button/Button";
 import CompanyModal from "../CompanyModal/CompanyModal";
-import { FormatBrazillianDocument } from "@/utils/generic";
+import { FormatBrazillianDocument, GetErrorMessage } from "@/utils/generic";
+import { useSession } from "next-auth/react";
+import { API } from "@/backend/api/api.endpoints";
+import { useToast } from "@/context/ToastContext";
 
 export default function CompaniesTable() {
+  const { data: session } = useSession();
+  const { showToast } = useToast();
+
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [sortKey, setSortKey] = useState<CompanySortKey>(
@@ -56,7 +60,6 @@ export default function CompaniesTable() {
     if (!response) return;
 
     handleResponse().then((data) => {
-      setContentAction(() => ContentAction.UPDATE);
       const tempList = data.map((item) => ({
         ...item,
         document: FormatBrazillianDocument(item.document),
@@ -68,20 +71,43 @@ export default function CompaniesTable() {
     });
   }, [response, handleResponse]);
 
-  const getResponse = useCallback(async () => {
-    const currentResponse = CompaniesResponseMock;
-    setResponse(currentResponse);
+  const getResponse = useCallback(
+    async (apiQuery: IApiPaginateCompanies) => {
+      if (!session?.api_session) {
+        return;
+      }
 
-    return new Promise<IApiCompanyResponse[]>((resolve) => {
-      setTimeout(() => {
-        resolve(currentResponse.data);
-      }, 1);
-    });
-  }, [currentPage]);
+      try {
+        const query: IApiPaginateCompanies = {
+          page: currentPage,
+          limit: 100,
+          ...apiQuery,
+        };
+
+        const response = await API.companies.paginate(
+          session.api_session.access_token,
+          query
+        );
+
+        const data = await response.json();
+
+        if (data?.error) {
+          showToast(GetErrorMessage(data.error), IToastType.ERROR);
+        } else if (response.ok) {
+          setResponse(data);
+        }
+      } catch (error) {
+        showToast(GetErrorMessage(error), IToastType.ERROR);
+      }
+    },
+    [currentPage, session?.api_session, showToast, setResponse]
+  );
 
   useEffect(() => {
-    getResponse();
-  }, [getResponse]);
+    if (session?.api_session) {
+      getResponse({});
+    }
+  }, [getResponse, session?.api_session]);
 
   const filteredAndSortedData = useMemo(() => {
     return list
@@ -166,6 +192,13 @@ export default function CompaniesTable() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search..."
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  getResponse({
+                    name: searchTerm,
+                  });
+                }
+              }}
               className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-11 pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[300px]"
             />
           </div>

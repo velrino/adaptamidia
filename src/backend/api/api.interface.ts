@@ -7,6 +7,7 @@ import {
   ICompanyType,
 } from "@/interfaces/company";
 import { IDay } from "@/interfaces/general";
+import { EnumApiCompanyType } from "./api.enum";
 
 export enum IApiRequestMethod {
   GET = "GET",
@@ -29,9 +30,9 @@ export interface IApiAuthLogin {
 }
 
 export interface IApiPaginateParameters {
-  page: number;
-  limit: number;
-  cache: boolean;
+  page?: number;
+  limit?: number;
+  cache?: boolean;
 }
 
 export interface IApiToken {
@@ -224,6 +225,11 @@ export interface IApiCompaniesResponse {
   data: IApiCompanyResponse[];
   limit: number;
   page: number;
+}
+
+export interface IApiPaginateCompanies extends IApiPaginateParameters {
+  name?: string;
+  type?: EnumApiCompanyType;
 }
 
 export interface IApiCreateCompanyUnitRequest {

@@ -4,7 +4,7 @@ import { DefaultSession, NextAuthOptions, getServerSession } from "next-auth";
 import { API } from "../api/api.endpoints";
 // import { IApiAuthLogin } from "./services/api/interfaces";
 
-export type User = {
+export type ApiSession = {
   id: string;
   access_token: string;
   expires_in: string;
@@ -15,7 +15,7 @@ export type User = {
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
-    user: User;
+    api_session: ApiSession;
   }
 }
 
@@ -33,7 +33,7 @@ export const nextAuthOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user = token.user as User;
+        session.api_session = token.user as ApiSession;
       }
 
       return session;
