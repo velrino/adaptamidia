@@ -15,12 +15,15 @@ import {
   ICompanyDefaultFormReport,
 } from "./interface";
 import { useToast } from "@/context/ToastContext";
+import { GetErrorMessage } from "@/utils/generic";
+import { API } from "@/backend/api/api.endpoints";
+import { useSession } from "next-auth/react";
 
 interface ICompanyModalProps {
   action: ContentAction;
   record: IApiCompanyResponse;
   setOpen?: (open: boolean) => void;
-  onCloseCallback: () => void;
+  onCloseCallback: (refresh: boolean) => void;
 }
 
 export default function CompanyModal({
@@ -28,11 +31,7 @@ export default function CompanyModal({
   record,
   onCloseCallback,
 }: ICompanyModalProps) {
-  const handleClose = () => {
-    if (onCloseCallback) {
-      onCloseCallback();
-    }
-  };
+  const { data: session } = useSession();
 
   const { showToast } = useToast();
 
@@ -61,21 +60,20 @@ export default function CompanyModal({
     return Object.values(formReport).every(Boolean);
   };
 
-  const save = () => {
+  const save = async () => {
     if (validateForm()) {
       showToast("Preencha o formulário corretamente!", IToastType.ERROR);
       return;
     }
 
     if (action === ContentAction.CREATE) {
-      const body: IApiCreateCompanyRequest = {
+      await createCompany({
         document_type: data.document_type,
         document: data.document,
         type: data.type,
         name: data.name,
         status: data.status,
-      };
-      console.log({ action, body });
+      });
     } else if (action === ContentAction.UPDATE && data._id) {
       const companyId = data._id;
       const body: IApiUpdateCompanyRequest = {
@@ -90,10 +88,34 @@ export default function CompanyModal({
     }
   };
 
+  const createCompany = async (body: IApiCreateCompanyRequest) => {
+    if (!session?.api_session) {
+      return;
+    }
+
+    try {
+      const response = await API.companies.create(
+        session.api_session.access_token,
+        body
+      );
+
+      const data = await response.json();
+
+      if (data?.error && data?.message) {
+        showToast(GetErrorMessage(data.message), IToastType.ERROR);
+      } else if (response.ok) {
+        showToast(`${body.name} salvo com sucesso!`, IToastType.SUCCESS);
+        onCloseCallback(true);
+      }
+    } catch (error) {
+      showToast(GetErrorMessage(error), IToastType.ERROR);
+    }
+  };
+
   return (
     <Modal
       isOpen={true}
-      onClose={handleClose}
+      onClose={() => onCloseCallback(false)}
       showCloseButton={false}
       isFullscreen={true}
     >
@@ -115,7 +137,11 @@ export default function CompanyModal({
           </div>
         </div>
         <div className="fixed bottom-0 left-0 right-0 flex items-center justify-end w-full gap-3 bg-white dark:bg-gray-900 px-6 pb-6">
-          <Button size="sm" variant="outline" onClick={handleClose}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onCloseCallback(false)}
+          >
             Fechar
           </Button>
           <Button size="sm" onClick={save}>
