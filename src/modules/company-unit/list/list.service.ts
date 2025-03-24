@@ -11,6 +11,7 @@ import { ListCompanyUnitPaginateDto } from './list.interface';
 import { MongoDbDateQuery } from 'src/shared/mongo.schema';
 import { PaginatedResponseDto } from 'src/shared/interfaces/paginate.dto';
 import { Company } from 'src/modules/company/company.schema';
+import { CompanyUnitPrepareData } from '../company-unit.interface';
 
 @Injectable()
 export class ListCompanyUnitService {
@@ -81,6 +82,7 @@ export class ListCompanyUnitService {
       'city',
       'state',
       'country',
+      'name',
     ];
 
     fields.forEach((field) => {
@@ -116,7 +118,7 @@ export class ListCompanyUnitService {
       .populate<{ company: Company }>({
         path: 'company',
       })
-      .sort({ createdAt: -1 })
+      .sort({ created_at: -1 })
       .skip(skip)
       .limit(parameters.limit)
       .lean()
@@ -124,11 +126,24 @@ export class ListCompanyUnitService {
 
     const pages = Math.ceil(total / parameters.limit);
 
-    return { pages, total, data, limit: parameters.limit, page: currentPage };
+    return {
+      pages,
+      total,
+      data,
+      limit: parameters.limit,
+      page: currentPage,
+    };
   }
+
+  prepareData(list: CompanyUnit[]) {
+    return list.map((item) => CompanyUnitPrepareData(item));
+  }
+
   async execute(parameters: ListCompanyUnitPaginateDto) {
     try {
       const records = await this.getData(parameters);
+
+      records.data = this.prepareData(records.data);
 
       return records;
     } catch (error) {

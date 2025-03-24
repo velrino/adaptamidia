@@ -3,11 +3,19 @@ import { Document, Types } from 'mongoose';
 import { SchemaDefault } from 'src/shared/shema';
 import { CompanyUnitStatus, CompanyUnitType } from './company-unit.interface';
 import { Company } from '../company/company.schema';
+import { CompanyUnitPopularTime } from './popular-times/company-unit-popular-times.schema';
 
 @Schema({ ...SchemaDefault, collection: 'company_units' })
 export class CompanyUnit {
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true, index: true })
   company: Types.ObjectId | Company;
+
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'CompanyUnitPopularTime',
+    required: false,
+  })
+  popular_time: Types.ObjectId | CompanyUnitPopularTime;
 
   @Prop({ required: true })
   name: string;
@@ -41,17 +49,13 @@ export class CompanyUnit {
 
   @Prop({
     type: {
-      daily: { type: Number, default: 0 }, // Média de pessoas por dia
-      weekly: { type: Number, default: 0 }, // Média de pessoas por semana
-      monthly: { type: Number, default: 0 }, // Média de pessoas por mês
+      smart_tv: { type: Number, default: 0 },
     },
     required: true,
     _id: false,
   })
-  average_visitors: {
-    daily: number;
-    weekly: number;
-    monthly: number;
+  devices: {
+    smart_tv: number;
   };
 
   @Prop({ type: Number, required: true }) // Limite de pessoas permitido no local

@@ -10,18 +10,10 @@ import {
 import { Type } from 'class-transformer';
 import { CompanyUnitType } from '../company-unit.interface';
 
-export class CreateCompanyUnitAverageVisitors {
+export class CreateCompanyUnitDevices {
   @IsNumber()
   @IsNotEmpty()
-  daily: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  weekly: number;
-
-  @IsNumber()
-  @IsNotEmpty()
-  monthly: number;
+  smart_tv: number;
 }
 
 export class CreateCompanyUnitValidator {
@@ -46,9 +38,9 @@ export class CreateCompanyUnitValidator {
   name: string;
 
   @ValidateNested()
-  @Type(() => CreateCompanyUnitAverageVisitors)
+  @Type(() => CreateCompanyUnitDevices)
   @IsNotEmpty()
-  average_visitors: CreateCompanyUnitAverageVisitors;
+  devices: CreateCompanyUnitDevices;
 
   @IsNumber()
   @IsNotEmpty()

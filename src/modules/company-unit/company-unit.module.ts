@@ -8,7 +8,12 @@ import { GroupCompanyUnitService } from './group/group.service';
 
 @Global()
 @Module({
-  imports: [MongooseModule.forFeature([MongoCollection.company_units])],
+  imports: [
+    MongooseModule.forFeature([
+      MongoCollection.company_units,
+      MongoCollection.company_units_popular_times,
+    ]),
+  ],
   controllers: [CompanyUnitController],
   providers: [
     CreateCompanyUnitService,

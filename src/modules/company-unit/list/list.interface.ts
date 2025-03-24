@@ -2,6 +2,10 @@ import { IsOptional, IsString, ValidateIf } from 'class-validator';
 import { PaginateDto } from 'src/shared/interfaces/paginate.dto';
 
 export class ListCompanyUnitPaginateDto extends PaginateDto {
+  @IsOptional()
+  @IsString()
+  name: string;
+
   @ValidateIf((o) => o.longitude !== undefined)
   @IsString()
   latitude: string;

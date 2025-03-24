@@ -8,10 +8,19 @@ import { AuthenticatedRequest } from 'src/shared/request';
 import { GetCompanyService } from 'src/modules/company/get/get.service';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { RESULT } from 'src/shared/result.enum';
-import { CompanyUnitStatus } from '../company-unit.interface';
+import {
+  CompanyUnitPrepareData,
+  CompanyUnitStatus,
+} from '../company-unit.interface';
 import { VerifyUserCanProceed } from 'src/modules/permissions/permissions.helper';
 import { PlaceType2 } from '@googlemaps/google-maps-services-js';
 import { CompanyType } from 'src/modules/company/company.interface';
+import {
+  CompanyUnitPopularTime,
+  CompanyUnitPopularTimeDocument,
+} from '../popular-times/company-unit-popular-times.schema';
+import { CompanyUnitPopularTimeDataDefault } from '../popular-times/company-unit-popular-times.interface';
+import { Company } from 'src/modules/company/company.schema';
 
 @Injectable()
 export class CreateCompanyUnitService {
@@ -19,7 +28,36 @@ export class CreateCompanyUnitService {
     @InjectModel(CompanyUnit.name)
     private readonly companyUnitModel: Model<CompanyUnitDocument>,
     private readonly getCompanyService: GetCompanyService,
+    // POPULAR TIMES
+    @InjectModel(CompanyUnitPopularTime.name)
+    private readonly companyUnitPopularTimeModel: Model<CompanyUnitPopularTimeDocument>,
   ) {}
+
+  // async onApplicationBootstrap() {
+  //   await this.companyUnitPopularTimeModel.deleteMany({});
+  //   const data = await this.companyUnitModel.find({});
+
+  //   for (let index = 0; index < data.length; index++) {
+  //     const element = data[index];
+  //     await this.createPopularTime(new Types.ObjectId(element._id as any));
+  //     console.log({ element: element._id });
+  //   }
+  // }
+
+  // async createPopularTime(companyUnitId: Types.ObjectId) {
+  //   const getPopularTime = await this.companyUnitPopularTimeModel.findOne({
+  //     company_unit: companyUnitId,
+  //   });
+
+  //   if (getPopularTime) {
+  //     return;
+  //   }
+
+  //   await this.companyUnitPopularTimeModel.create({
+  //     company_unit: companyUnitId,
+  //     days: CompanyUnitPopularTimeDataDefault,
+  //   });
+  // }
 
   executeFromRequest(
     currentRequest: AuthenticatedRequest,
@@ -116,22 +154,65 @@ export class CreateCompanyUnitService {
         );
       }
 
-      const created = await this.companyUnitModel.create({
-        ...fullAddressData,
-        average_visitors: parameters.average_visitors,
-        max_capacity: parameters.max_capacity,
-        name: parameters.name,
-        complement: parameters.complement,
-        company: record?._id,
-        type: parameters.type,
-        status: CompanyUnitStatus.IN_REVIEW,
-        location: {
-          type: 'Point',
-          coordinates: [coordinates.lng, coordinates.lat],
-        },
-      });
+      const session = await this.companyUnitModel.db.startSession();
+      session.startTransaction();
 
-      return created;
+      try {
+        const created = await this.companyUnitModel.create(
+          [
+            {
+              ...fullAddressData,
+              devices: parameters.devices,
+              max_capacity: parameters.max_capacity,
+              name: parameters.name,
+              complement: parameters.complement,
+              company: record?._id,
+              type: parameters.type,
+              status: CompanyUnitStatus.IN_REVIEW,
+              location: {
+                type: 'Point',
+                coordinates: [coordinates.lng, coordinates.lat],
+              },
+            },
+          ],
+          { session },
+        );
+
+        const popularTimesCreated =
+          await this.companyUnitPopularTimeModel.create(
+            [
+              {
+                company_unit: created[0]._id,
+                days: CompanyUnitPopularTimeDataDefault,
+              },
+            ],
+            { session },
+          );
+
+        await session.commitTransaction();
+        await session.endSession();
+
+        const updated = await this.companyUnitModel
+          .findOneAndUpdate(
+            { _id: created[0]._id },
+            {
+              popular_time: popularTimesCreated[0]._id,
+            },
+            { new: true },
+          )
+          .populate<{ company: Company }>({
+            path: 'company',
+          })
+          .populate('popular_time')
+          .lean();
+
+        return CompanyUnitPrepareData(updated as any);
+      } catch (error) {
+        await session.abortTransaction();
+        throw error;
+      } finally {
+        await session.endSession();
+      }
     } catch (error) {
       Log(
         LogType.ERROR,

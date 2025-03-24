@@ -25,26 +25,26 @@ export class GoogleCloudStorageService {
     });
   }
 
-  async onApplicationBootstrap() {
-    try {
-      const healt_check = await this.healthCheck();
-      Log(
-        LogType.INFO,
-        GoogleCloudStorageService.name,
-        this.onApplicationBootstrap.name,
-        LogAction.FAILED,
-        { healt_check },
-      );
-    } catch (error) {
-      Log(
-        LogType.ERROR,
-        GoogleCloudStorageService.name,
-        this.onApplicationBootstrap.name,
-        LogAction.FAILED,
-        { error },
-      );
-    }
-  }
+  // async onApplicationBootstrap() {
+  //   try {
+  //     const healt_check = await this.healthCheck();
+  //     Log(
+  //       LogType.INFO,
+  //       GoogleCloudStorageService.name,
+  //       this.onApplicationBootstrap.name,
+  //       LogAction.FAILED,
+  //       { healt_check },
+  //     );
+  //   } catch (error) {
+  //     Log(
+  //       LogType.ERROR,
+  //       GoogleCloudStorageService.name,
+  //       this.onApplicationBootstrap.name,
+  //       LogAction.FAILED,
+  //       { error },
+  //     );
+  //   }
+  // }
 
   async healthCheck() {
     const startTime = Date.now(); // Record the start time

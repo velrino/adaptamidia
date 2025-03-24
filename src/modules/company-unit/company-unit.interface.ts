@@ -1,3 +1,5 @@
+import { CompanyUnit } from './company-unit.schema';
+
 export enum CompanyUnitType {
   BAR = 'BAR',
   RESTAURANT = 'RESTAURANT', // Restaurante
@@ -13,3 +15,20 @@ export enum CompanyUnitStatus {
   PENDING = 'PENDING',
   TEST = 'TEST',
 }
+
+export enum IDay {
+  MONDAY = 'MONDAY',
+  TUESDAY = 'TUESDAY',
+  WEDNESDAY = 'WEDNESDAY',
+  THURSDAY = 'THURSDAY',
+  FRIDAY = 'FRIDAY',
+  SATURDAY = 'SATURDAY',
+  SUNDAY = 'SUNDAY',
+}
+
+export const CompanyUnitPrepareData = (item: CompanyUnit) => {
+  return {
+    ...item,
+    prices: [],
+  };
+};

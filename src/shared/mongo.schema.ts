@@ -7,6 +7,10 @@ import {
   AdvertisementSchema,
 } from 'src/modules/advertisement/advertisement.schema';
 import {
+  CompanyUnitPopularTime,
+  CompanyUnitPopularTimeSchema,
+} from 'src/modules/company-unit/popular-times/company-unit-popular-times.schema';
+import {
   CompanyUnit,
   CompanyUnitSchema,
 } from 'src/modules/company-unit/company-unit.schema';
@@ -23,6 +27,10 @@ export const MongoCollection = {
   },
   companies: { name: Company.name, schema: CompanySchema },
   company_units: { name: CompanyUnit.name, schema: CompanyUnitSchema },
+  company_units_popular_times: {
+    name: CompanyUnitPopularTime.name,
+    schema: CompanyUnitPopularTimeSchema,
+  },
   files: { name: Files.name, schema: FilesSchema },
   news: { name: News.name, schema: NewsSchema },
   users: { name: User.name, schema: UserSchema },
