@@ -46,30 +46,22 @@ export default function CompaniesTable() {
   const [list, setList] = useState<IApiCompanyResponse[]>([]);
   const [response, setResponse] = useState<IApiCompaniesResponse>();
 
-  const handleResponse = useCallback(async (): Promise<
-    IApiCompanyResponse[]
-  > => {
-    return new Promise<IApiCompanyResponse[]>((resolve) => {
-      setTimeout(() => {
-        resolve(response?.data || []);
-      }, 1);
-    });
-  }, [response]);
-
   useEffect(() => {
     if (!response) return;
 
-    handleResponse().then((data) => {
-      const tempList = data.map((item) => ({
-        ...item,
-        document: FormatBrazillianDocument(item.document),
-      }));
+    const map = new Map<string, (typeof response.data)[0]>();
 
-      // setCurrentSelected(tempList[0] || null);
-
-      setList(tempList);
+    response.data.forEach((item) => {
+      if (!map.has(item._id)) {
+        map.set(item._id, {
+          ...item,
+          document: FormatBrazillianDocument(item.document),
+        });
+      }
     });
-  }, [response, handleResponse]);
+
+    setList(Array.from(map.values()));
+  }, [response]);
 
   const getResponse = useCallback(
     async (apiQuery: IApiPaginateCompanies) => {
