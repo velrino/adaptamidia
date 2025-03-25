@@ -47,6 +47,15 @@ export class PaginateDto {
   @IsOptional()
   @IsEnum(SortEnum)
   sort?: SortEnum;
+
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
+  popular_time?: boolean;
 }
 
 export class PaginatedResponseDto<T> {

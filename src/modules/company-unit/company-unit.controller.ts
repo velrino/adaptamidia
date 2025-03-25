@@ -55,4 +55,14 @@ export class CompanyUnitController {
   ) {
     return this.createCompanyUnitService.executeFromRequest(req, data);
   }
+
+  @Get('company/unit/:id')
+  @UseGuards(AuthJwtGuard, PermissionsGuard)
+  @PermissionsAllowed()
+  get(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: ListCompanyUnitPaginateDto,
+  ) {
+    return this.listCompanyUnitService.executeFromRequest(req, query);
+  }
 }

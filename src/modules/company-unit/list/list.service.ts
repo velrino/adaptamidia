@@ -12,6 +12,7 @@ import { MongoDbDateQuery } from 'src/shared/mongo.schema';
 import { PaginatedResponseDto } from 'src/shared/interfaces/paginate.dto';
 import { Company } from 'src/modules/company/company.schema';
 import { CompanyUnitPrepareData } from '../company-unit.interface';
+import { CompanyUnitPopularTime } from '../popular-times/company-unit-popular-times.schema';
 
 @Injectable()
 export class ListCompanyUnitService {
@@ -113,14 +114,22 @@ export class ListCompanyUnitService {
 
     const total = await this.companyUnitModel.countDocuments(query);
 
-    const data = await this.companyUnitModel
+    const queryBuilder = this.companyUnitModel
       .find(query)
       .populate<{ company: Company }>({
         path: 'company',
-      })
+      });
+
+    if (parameters.popular_time) {
+      queryBuilder.populate<{ popular_time: CompanyUnitPopularTime }>({
+        path: 'popular_time',
+      });
+    }
+
+    const data = await queryBuilder
       .sort({ created_at: -1 })
       .skip(skip)
-      .limit(parameters.limit)
+      .limit(parameters.limit) // Note: Make sure this is 'limit' if that's what you intended
       .lean()
       .exec();
 

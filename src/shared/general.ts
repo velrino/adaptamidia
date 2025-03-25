@@ -20,9 +20,11 @@ function isValidObjectId(id: string): boolean {
 export function GetUserCompany(currentRequest: AuthenticatedRequest) {
   const { companies, permissions } = currentRequest.user.user;
 
+  const sudo: boolean = permissions.includes(PermissionsEnum.SUDO);
+
   // If the user does not have SUDO permissions, return the first company ID.
   if (!permissions.includes(PermissionsEnum.SUDO)) {
-    return companies[0] || null;
+    return { comapny: companies[0] || null, sudo };
   }
 
   // If the user has SUDO permissions and a company_id is provided in the request body.
