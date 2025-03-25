@@ -52,7 +52,8 @@ export const CompanyUnitRecordDefault: IApiUnitItemResponse = {
   prices: [],
   popular_time: {
     _id: faker.string.uuid(),
-    data: GenerateWeekData(),
+    company_unit: faker.string.uuid(),
+    days: GenerateWeekData(),
   },
 };
 
@@ -286,7 +287,8 @@ export const CompanyUnitsMockData: IApiUnitItemResponse[] = (
 
   const popular_time: IApiUnitPopularTimeRecordResponse = {
     _id: faker.string.uuid(),
-    data: GenerateWeekData(),
+    company_unit: faker.string.uuid(),
+    days: GenerateWeekData(),
   };
 
   return {

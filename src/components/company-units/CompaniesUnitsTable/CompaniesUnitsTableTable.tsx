@@ -322,9 +322,20 @@ export default function CompanieUnitsTable() {
       {currentSelected && (
         <CompanyUnitModal
           action={contentAction}
+          setContentAction={setContentAction}
+          // setCurrentSelected={setCurrentSelected}
           record={currentSelected}
-          onCloseCallback={() => {
-            setCurrentSelected(null);
+          refresh={async (refresh: boolean) => {
+            if (refresh) {
+              getResponse({});
+            }
+          }}
+          onCloseCallback={(record?: IApiUnitItemResponse | undefined) => {
+            if (record?._id) {
+              setCurrentSelected(record);
+            } else {
+              setCurrentSelected(null);
+            }
           }}
         />
       )}

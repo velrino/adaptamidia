@@ -1,5 +1,6 @@
 import {
   IApiAuthLogin,
+  IApiCreateCompanyUnitRequest,
   IApiPaginateCompanies,
   IApiPaginateCompanyUnits,
   IApiRequestMethod,
@@ -51,6 +52,14 @@ export const API = {
     async paginate(access_token: string, data: IApiPaginateCompanyUnits) {
       return ApiResources.request({
         method: IApiRequestMethod.GET,
+        path: "/company/unit",
+        data,
+        access_token,
+      });
+    },
+    async create(access_token: string, data: IApiCreateCompanyUnitRequest) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
         path: "/company/unit",
         data,
         access_token,

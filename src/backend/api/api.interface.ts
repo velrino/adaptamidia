@@ -239,6 +239,7 @@ export interface IApiCreateCompanyUnitRequest {
   devices: {
     smart_tv: number;
   };
+  max_capacity: number;
 }
 
 export interface IApiUpdateCompanyUnitRequest {

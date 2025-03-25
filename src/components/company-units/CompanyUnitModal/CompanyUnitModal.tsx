@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import { ContentAction, IToastType } from "@/interfaces/general";
 import { Modal } from "@/components/ui/modal";
 import Button from "@/components/ui/button/Button";
@@ -19,12 +19,21 @@ import { CompanyUnitModalForm } from "./Form/CompanyUnitModalForm";
 import { Tabs } from "@/components/ui/tabs/Principal";
 // import { CompanyUnitModalPricesTable } from "./CompanyUnitModalPricesTable/CompanyUnitModalPricesTable";
 import { CompanyUnitModalPopularTimes } from "./CompanyUnitModalPopularTimes/CompanyUnitModalPopularTimes";
+import { API } from "@/backend/api/api.endpoints";
+import { useSession } from "next-auth/react";
+import { GetErrorMessage } from "@/utils/generic";
+import Spinner from "@/components/ui/spinner/Spinner";
 
 interface ICompanyUnitModalProps {
   action: ContentAction;
+  setContentAction: Dispatch<SetStateAction<ContentAction>>;
+  // setCurrentSelected: Dispatch<
+  //   SetStateAction<IApiUnitItemResponse | null | undefined>
+  // >;
   record: IApiUnitItemResponse;
   setOpen?: (open: boolean) => void;
-  onCloseCallback: () => void;
+  refresh: (open: boolean) => void;
+  onCloseCallback: (record?: IApiUnitItemResponse) => void;
 }
 
 export enum CompanyUnitModalTabs {
@@ -35,12 +44,16 @@ export enum CompanyUnitModalTabs {
 
 export default function CompanyUnitModal({
   action,
+  setContentAction,
   record,
+  refresh,
   onCloseCallback,
 }: ICompanyUnitModalProps) {
-  const handleClose = () => {
+  const { data: session } = useSession();
+
+  const handleClose = (data?: IApiUnitItemResponse) => {
     if (onCloseCallback) {
-      onCloseCallback();
+      onCloseCallback(data);
     }
   };
 
@@ -65,7 +78,7 @@ export default function CompanyUnitModal({
         "type",
         "name",
         "status",
-        "address",
+        "full_address",
       ];
 
       if (requiredFields.some((field) => !data[field]) || !companySelected) {
@@ -76,14 +89,16 @@ export default function CompanyUnitModal({
     }
   };
 
-  const saveForm = () => {
+  const [loadingSave, setLoadingSave] = useState(false);
+  const save = async () => {
     if (validateForm()) {
       showToast("Preencha o formulário corretamente!", IToastType.ERROR);
       return;
     }
 
+    setLoadingSave(true);
     if (action === ContentAction.CREATE && companySelected) {
-      const body: IApiCreateCompanyUnitRequest = {
+      await create({
         address: data.full_address,
         type: data.type,
         name: data.name,
@@ -92,8 +107,8 @@ export default function CompanyUnitModal({
         devices: {
           smart_tv: data.devices.smart_tv,
         },
-      };
-      console.log({ action, body });
+        max_capacity: data.max_capacity,
+      }).finally(() => setLoadingSave(false));
     } else if (action === ContentAction.UPDATE && data._id && companySelected) {
       const companyUnitId = data._id;
       const body: IApiUpdateCompanyUnitRequest = {
@@ -123,6 +138,37 @@ export default function CompanyUnitModal({
         prices: data.prices,
         popular_time: data.popular_time,
       });
+    }
+  };
+
+  const create = async (body: IApiCreateCompanyUnitRequest) => {
+    if (!session?.api_session) {
+      return;
+    }
+
+    try {
+      const response = await API.company_units.create(
+        session.api_session.access_token,
+        body
+      );
+
+      const currentData = await response.json();
+
+      if (currentData?.error && currentData?.message) {
+        showToast(GetErrorMessage(currentData.message), IToastType.ERROR);
+      } else if (response.ok && currentData?._id) {
+        showToast(`${body.name} salvo com sucesso!`, IToastType.SUCCESS);
+
+        setData(currentData);
+        setCompanySelected(currentData?.company?._id);
+        setContentAction(ContentAction.UPDATE);
+        refresh(true);
+        // onCloseCallback();
+      } else {
+        showToast("FAILED", IToastType.ERROR);
+      }
+    } catch (error) {
+      showToast(GetErrorMessage(error), IToastType.ERROR);
     }
   };
 
@@ -181,7 +227,7 @@ export default function CompanyUnitModal({
       isFullscreen={true}
     >
       <div className="fixed top-0 left-0 flex flex-col w-full h-screen overflow-x-hidden overflow-y-auto bg-white dark:bg-gray-900 p-0">
-        <div className="flex-grow">
+        <div className="flex-grow mb-10 p-0 m-0">
           <div className="font-semibold text-gray-800 m-0 text-title-sm dark:text-white/90 px-5 py-2">
             {`${action === ContentAction.CREATE ? "Criar" : "Editar"} ${
               data.name || "Unidade"
@@ -199,13 +245,17 @@ export default function CompanyUnitModal({
             />
           </div>
         </div>
-        <div className="fixed bottom-0 left-0 right-0 flex items-center justify-end w-full gap-3 bg-white dark:bg-gray-900 px-6 pb-6">
+        <div className="fixed bottom-0 left-0 right-0 flex items-center justify-end w-full gap-3 bg-white dark:bg-gray-900 px-6 pb-6 dark:border-white/[0.2] border-t-1 ">
           <Button size="sm" variant="outline" onClick={handleClose}>
             Fechar
           </Button>
-          <Button size="sm" onClick={saveForm}>
-            Salvar
-          </Button>
+          {loadingSave ? (
+            <Spinner color="#465fff" />
+          ) : (
+            <Button size="sm" onClick={save}>
+              Salvar
+            </Button>
+          )}
         </div>
       </div>
     </Modal>

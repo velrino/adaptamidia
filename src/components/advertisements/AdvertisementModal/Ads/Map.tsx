@@ -11,16 +11,17 @@ import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import L from "leaflet";
 import { IApiUnitItemResponse } from "@/backend/api/api.interface";
 // import { type Map as LeafletMap } from "leaflet";
+import { type MapOptions } from "leaflet";
 
 // import { useState } from "react";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 interface MapProps {
   style?: {
     minHeight?: number;
   };
-  list: any[];
+  list: IApiUnitItemResponse[];
+  customMapContainer?: MapOptions;
+  enableClickPopUp?: boolean;
 }
 
 const calculateCenter = (list: IApiUnitItemResponse[]) => {
@@ -91,12 +92,12 @@ export default function AdvertisementMap(parameters: MapProps) {
         style={{
           height: "100%",
           width: "100%",
-          // ...parameters.style,
           minHeight: parameters.style?.minHeight || "75vh",
           maxHeight: "75vh",
+          ...parameters.style,
         }}
-        className="max-h-[75vh]"
-        // {...parameters?.customMapContainer}
+        // className="max-h-[75vh]"
+        {...parameters?.customMapContainer}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
