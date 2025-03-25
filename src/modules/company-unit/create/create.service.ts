@@ -168,7 +168,7 @@ export class CreateCompanyUnitService {
               complement: parameters.complement,
               company: record?._id,
               type: parameters.type,
-              status: CompanyUnitStatus.IN_REVIEW,
+              status: parameters.status || CompanyUnitStatus.IN_REVIEW,
               location: {
                 type: 'Point',
                 coordinates: [coordinates.lng, coordinates.lat],

@@ -8,7 +8,7 @@ import {
   IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { CompanyUnitType } from '../company-unit.interface';
+import { CompanyUnitStatus, CompanyUnitType } from '../company-unit.interface';
 
 export class CreateCompanyUnitDevices {
   @IsNumber()
@@ -45,4 +45,8 @@ export class CreateCompanyUnitValidator {
   @IsNumber()
   @IsNotEmpty()
   max_capacity: number;
+
+  @IsEnum(CompanyUnitStatus)
+  @IsNotEmpty()
+  status: CompanyUnitStatus;
 }

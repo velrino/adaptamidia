@@ -5,6 +5,7 @@ import { CompanyUnitController } from './company-unit.controller';
 import { CreateCompanyUnitService } from './create/create.service';
 import { ListCompanyUnitService } from './list/list.service';
 import { GroupCompanyUnitService } from './group/group.service';
+import { UpdateCompanyUnitService } from './update/update.service';
 
 @Global()
 @Module({
@@ -19,6 +20,7 @@ import { GroupCompanyUnitService } from './group/group.service';
     CreateCompanyUnitService,
     ListCompanyUnitService,
     GroupCompanyUnitService,
+    UpdateCompanyUnitService,
   ],
 })
 export class CompanyUnitModule {}

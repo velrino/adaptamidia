@@ -2,7 +2,9 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
+  Put,
   Query,
   Req,
   UseGuards,
@@ -17,6 +19,8 @@ import { ListCompanyUnitService } from './list/list.service';
 import { ListCompanyUnitPaginateDto } from './list/list.interface';
 import { GroupCompanyUnitPaginateDto } from './group/group.interface';
 import { GroupCompanyUnitService } from './group/group.service';
+import { UpdateCompanyUnitService } from './update/update.service';
+import { UpdateCompanyUnitValidator } from './update/update.interface';
 
 @Controller()
 export class CompanyUnitController {
@@ -24,6 +28,7 @@ export class CompanyUnitController {
     private readonly createCompanyUnitService: CreateCompanyUnitService,
     private readonly listCompanyUnitService: ListCompanyUnitService,
     private readonly groupCompanyUnitService: GroupCompanyUnitService,
+    private readonly updateCompanyUnitService: UpdateCompanyUnitService,
   ) {}
 
   @Get('company/unit/group')
@@ -56,11 +61,23 @@ export class CompanyUnitController {
     return this.createCompanyUnitService.executeFromRequest(req, data);
   }
 
+  @Put('company/unit/:id')
+  @UseGuards(AuthJwtGuard, PermissionsGuard)
+  @PermissionsAllowed()
+  updateCompanyUnit(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() data: UpdateCompanyUnitValidator,
+  ) {
+    return this.updateCompanyUnitService.executeFromRequest(req, id, data);
+  }
+
   @Get('company/unit/:id')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
   @PermissionsAllowed()
   get(
     @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
     @Query() query: ListCompanyUnitPaginateDto,
   ) {
     return this.listCompanyUnitService.executeFromRequest(req, query);

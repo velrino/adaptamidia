@@ -41,6 +41,9 @@ export class CompanyUnit {
   @Prop({ required: true })
   street_number: string;
 
+  @Prop({ required: true, default: String() })
+  complement: string;
+
   @Prop({ required: true, index: true })
   type: CompanyUnitType;
 

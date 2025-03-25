@@ -1,5 +1,15 @@
 import { CompanyUnit } from './company-unit.schema';
 
+export interface IFullAddressData {
+  neighborhood: string | null;
+  city: string | null;
+  state: string | null;
+  country: string | null;
+  street_number: string | null;
+  address: string | null;
+  full_address: string | null;
+}
+
 export enum CompanyUnitType {
   COMMERCIAL_BUILDING = 'COMMERCIAL_BUILDING', // Prédio comercial
   RESIDENTIAL_BUILDING = 'RESIDENTIAL_BUILDING', // Prédio residencial
