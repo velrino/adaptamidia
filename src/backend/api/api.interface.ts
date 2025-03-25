@@ -95,27 +95,92 @@ export interface IApiAdvertisementItem {
   segments: string[];
 }
 
-export interface IApiUnitPriceItemResponse {
-  period: AdPeriod;
-  seconds: number;
-  display_times: number;
-  price_total: number;
-  average_visitors: number;
-}
+// START NEWS
 
-export interface IApiUnitPopularTimeItem {
-  hour: string;
-  count: number;
-}
-
-export interface IApiUnitPopularTimeData {
-  day: IDay;
-  data: IApiUnitPopularTimeItem[];
-}
-
-export interface IApiUnitPopularTimeRecordResponse {
+export interface IApiNewsResponseItem {
   _id: string;
-  data: IApiUnitPopularTimeData[];
+  provider: string;
+  language: string;
+  keyword: string;
+  source_id: string | null;
+  source_name: string;
+  author: string;
+  title: string;
+  description: string;
+  url: string;
+  image: string;
+  published_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IApiNewsResponse {
+  from: string;
+  total: number;
+  pages: number;
+  page: number;
+  provider: string | null;
+  parameters: IApiPaginateParameters;
+  data: IApiNewsResponseItem[];
+}
+
+// END NEWS
+
+// START COMPANY
+
+export interface IApiCreateCompanyRequest {
+  document: string;
+  type: ICompanyType;
+  document_type: ICompanyDocumentType;
+  name: string;
+  status: ICompanyStatus;
+}
+
+export interface IApiUpdateCompanyRequest {
+  document: string;
+  type: ICompanyType;
+  document_type: ICompanyDocumentType;
+  name: string;
+  status: ICompanyStatus;
+}
+
+export interface IApiCompanyResponse {
+  _id: string;
+  document: string;
+  document_type: ICompanyDocumentType;
+  name: string;
+  type: ICompanyType;
+  status: ICompanyStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IApiCompaniesResponse {
+  pages: number;
+  total: number;
+  data: IApiCompanyResponse[];
+  limit: number;
+  page: number;
+}
+
+export interface IApiPaginateCompanies extends IApiPaginateParameters {
+  name?: string;
+  type?: EnumApiCompanyType;
+}
+
+// END COMPANY
+
+// START UNIT
+
+export interface IApiPaginateCompanyUnits extends IApiPaginateParameters {
+  name?: string;
+  latitude?: string;
+  longitude?: string;
+  radius?: string;
+  city?: string[];
+  state?: string[];
+  country?: string[];
+  neighborhood?: string[];
 }
 
 export interface IApiUnitItemCompanyResponse {
@@ -165,90 +230,15 @@ export interface IApiUnitsResponse {
   data: IApiUnitItemResponse[];
 }
 
-export interface IApiNewsResponseItem {
-  _id: string;
-  provider: string;
-  language: string;
-  keyword: string;
-  source_id: string | null;
-  source_name: string;
-  author: string;
-  title: string;
-  description: string;
-  url: string;
-  image: string;
-  published_at: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface IApiNewsResponse {
-  from: string;
-  total: number;
-  pages: number;
-  page: number;
-  provider: string | null;
-  parameters: IApiPaginateParameters;
-  data: IApiNewsResponseItem[];
-}
-
-export interface IApiCreateCompanyRequest {
-  document: string;
-  type: ICompanyType;
-  document_type: ICompanyDocumentType;
-  name: string;
-  status: ICompanyStatus;
-}
-
-export interface IApiUpdateCompanyRequest {
-  document: string;
-  type: ICompanyType;
-  document_type: ICompanyDocumentType;
-  name: string;
-  status: ICompanyStatus;
-}
-
-export interface IApiCompanyResponse {
-  _id: string;
-  document: string;
-  document_type: ICompanyDocumentType;
-  name: string;
-  type: ICompanyType;
-  status: ICompanyStatus;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface IApiCompaniesResponse {
-  pages: number;
-  total: number;
-  data: IApiCompanyResponse[];
-  limit: number;
-  page: number;
-}
-
-export interface IApiPaginateCompanies extends IApiPaginateParameters {
-  name?: string;
-  type?: EnumApiCompanyType;
-}
-
-export interface IApiPaginateCompanyUnits extends IApiPaginateParameters {
-  name?: string;
-  latitude?: string;
-  longitude?: string;
-  radius?: string;
-  city?: string[];
-  state?: string[];
-  country?: string[];
-  neighborhood?: string[];
-}
-
 export interface IApiCreateCompanyUnitRequest {
   company_id: string;
   address: string;
   complement: string;
   type: string;
   name: string;
+  devices: {
+    smart_tv: number;
+  };
 }
 
 export interface IApiUpdateCompanyUnitRequest {
@@ -267,6 +257,14 @@ export interface IApiUpdateCompanyUnitRequest {
   devices: {
     smart_tv: number;
   };
+  max_capacity: number;
+  location: {
+    type: string;
+    coordinates: [number, number];
+  };
+}
+
+export interface IApiUpdateCompanyUnitPricesRequest {
   prices: {
     period: AdPeriod;
     seconds: number;
@@ -274,9 +272,42 @@ export interface IApiUpdateCompanyUnitRequest {
     price_total: number;
     average_visitors: number;
   }[];
-  max_capacity: number;
-  location: {
-    type: string;
-    coordinates: [number, number];
-  };
 }
+
+// END UNIT
+
+// START POPULAR TIME
+
+export interface IApiUnitPriceItemResponse {
+  period: AdPeriod;
+  seconds: number;
+  display_times: number;
+  price_total: number;
+  average_visitors: number;
+}
+
+export interface IApiUnitPopularTimeItem {
+  hour: string;
+  count: number;
+}
+
+export interface IApiUnitPopularTimeDays {
+  MONDAY: IApiUnitPopularTimeItem[];
+  TUESDAY: IApiUnitPopularTimeItem[];
+  WEDNESDAY: IApiUnitPopularTimeItem[];
+  THURSDAY: IApiUnitPopularTimeItem[];
+  FRIDAY: IApiUnitPopularTimeItem[];
+  SATURDAY: IApiUnitPopularTimeItem[];
+  SUNDAY: IApiUnitPopularTimeItem[];
+}
+
+export interface IApiUnitPopularTimeRecordResponse {
+  _id: string;
+  company_unit: string;
+  days: Record<IDay, IApiUnitPopularTimeItem[]>;
+}
+
+export interface IApiUpdateCompanyUnitPopularTimesRequest {
+  days: Record<IDay, IApiUnitPopularTimeItem[]>;
+}
+// END POPULAR TIME

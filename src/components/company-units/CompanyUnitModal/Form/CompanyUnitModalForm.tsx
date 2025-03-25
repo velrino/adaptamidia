@@ -137,6 +137,17 @@ ICompanyUnitModalPrincipalProps) => {
                 }
               />
             </div>
+            <div className="col-span-2">
+              <Label htmlFor="name">Endereço</Label>
+              <Input
+                type="text"
+                placeholder="Informe o endereço"
+                id="full_address"
+                value={data.full_address}
+                onChange={(e) => updateForm("full_address", e.target.value)}
+                maxLength={100}
+              />
+            </div>
             <div>
               <Label htmlFor="title">Status</Label>
               <Select

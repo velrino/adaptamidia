@@ -89,6 +89,9 @@ export default function CompanyUnitModal({
         name: data.name,
         complement: data.complement,
         company_id: companySelected,
+        devices: {
+          smart_tv: data.devices.smart_tv,
+        },
       };
       console.log({ action, body });
     } else if (action === ContentAction.UPDATE && data._id && companySelected) {
@@ -109,12 +112,17 @@ export default function CompanyUnitModal({
         devices: {
           smart_tv: data.devices.smart_tv,
         },
-        prices: data.prices,
         max_capacity: data.max_capacity,
         location: data.location,
       };
 
-      console.log({ action, companyUnitId, body });
+      console.log({
+        action,
+        companyUnitId,
+        body,
+        prices: data.prices,
+        popular_time: data.popular_time,
+      });
     }
   };
 
@@ -183,7 +191,7 @@ export default function CompanyUnitModal({
           <div>
             <Tabs
               tabs={tabs}
-              defaultTabId={CompanyUnitModalTabs.INFO}
+              defaultTabId={CompanyUnitModalTabs.POPULAR_TIMES}
               styles={{
                 nav: "p-0",
                 navMenu: "mx-auto",

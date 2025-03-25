@@ -21,24 +21,24 @@ export enum IToastType {
 }
 
 export enum IDay {
-  Monday = "Monday",
-  Tuesday = "Tuesday",
-  Wednesday = "Wednesday",
-  Thursday = "Thursday",
-  Friday = "Friday",
-  Saturday = "Saturday",
-  Sunday = "Sunday",
+  MONDAY = "MONDAY",
+  TUESDAY = "TUESDAY",
+  WEDNESDAY = "WEDNESDAY",
+  THURSDAY = "THURSDAY",
+  FRIDAY = "FRIDAY",
+  SATURDAY = "SATURDAY",
+  SUNDAY = "SUNDAY",
 }
 
 export const TranslateDay = (day: IDay): string => {
   const translations: Record<IDay, string> = {
-    [IDay.Monday]: "Segunda-feira",
-    [IDay.Tuesday]: "Terça-feira",
-    [IDay.Wednesday]: "Quarta-feira",
-    [IDay.Thursday]: "Quinta-feira",
-    [IDay.Friday]: "Sexta-feira",
-    [IDay.Saturday]: "Sábado",
-    [IDay.Sunday]: "Domingo",
+    [IDay.MONDAY]: "Segunda-feira",
+    [IDay.TUESDAY]: "Terça-feira",
+    [IDay.WEDNESDAY]: "Quarta-feira",
+    [IDay.THURSDAY]: "Quinta-feira",
+    [IDay.FRIDAY]: "Sexta-feira",
+    [IDay.SATURDAY]: "Sábado",
+    [IDay.SUNDAY]: "Domingo",
   };
 
   return translations[day] || day;

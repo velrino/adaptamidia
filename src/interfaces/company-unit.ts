@@ -30,11 +30,29 @@ export enum CompanyUnitPriceSortKey {
 export function GenerateWeekData(): IApiUnitPopularTimeData[] {
   const hours = Array.from({ length: 24 }, (_, i) => ({
     hour: `${String(i).padStart(2, "0")}:00`,
-    count: faker.number.int({ min: 100, max: 1500 }),
+    count: 0,
   }));
 
   return Object.values(IDay).map((day) => ({
     day,
     data: [...hours],
   }));
+}
+
+export function GenerateWeekData2(): Record<
+  string,
+  { hour: string; count: number }[]
+> {
+  const hours = Array.from({ length: 24 }, (_, i) => ({
+    hour: `${String(i).padStart(2, "0")}:00`,
+    count: 0,
+  }));
+
+  const weekData: Record<string, { hour: string; count: number }[]> = {};
+
+  Object.values(IDay).forEach((day) => {
+    weekData[day] = [...hours];
+  });
+
+  return weekData;
 }
