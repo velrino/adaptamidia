@@ -17,7 +17,7 @@ import {
 } from "@/backend/api/api.interface";
 import { CompanyUnitModalForm } from "./Form/CompanyUnitModalForm";
 import { Tabs } from "@/components/ui/tabs/Principal";
-import { CompanyUnitModalPricesTable } from "./CompanyUnitModalPricesTable/CompanyUnitModalPricesTable";
+// import { CompanyUnitModalPricesTable } from "./CompanyUnitModalPricesTable/CompanyUnitModalPricesTable";
 import { CompanyUnitModalPopularTimes } from "./CompanyUnitModalPopularTimes/CompanyUnitModalPopularTimes";
 
 interface ICompanyUnitModalProps {
@@ -29,7 +29,7 @@ interface ICompanyUnitModalProps {
 
 export enum CompanyUnitModalTabs {
   INFO = "INFO",
-  PRICES = "PRICES",
+  // PRICES = "PRICES",
   POPULAR_TIMES = "POPULAR_TIMES",
 }
 
@@ -143,19 +143,19 @@ export default function CompanyUnitModal({
     },
     ...(action === ContentAction.UPDATE
       ? [
-          {
-            id: CompanyUnitModalTabs.PRICES,
-            label: "Preços",
-            content: (
-              <CompanyUnitModalPricesTable
-                action={action}
-                data={data}
-                onUpdate={handleUpdate}
-                formReport={formReport}
-                setFormReport={setFormReport}
-              />
-            ),
-          },
+          // {
+          //   id: CompanyUnitModalTabs.PRICES,
+          //   label: "Preços",
+          //   content: (
+          //     <CompanyUnitModalPricesTable
+          //       action={action}
+          //       data={data}
+          //       onUpdate={handleUpdate}
+          //       formReport={formReport}
+          //       setFormReport={setFormReport}
+          //     />
+          //   ),
+          // },
           {
             id: CompanyUnitModalTabs.POPULAR_TIMES,
             label: "Horários",
@@ -191,7 +191,7 @@ export default function CompanyUnitModal({
           <div>
             <Tabs
               tabs={tabs}
-              defaultTabId={CompanyUnitModalTabs.POPULAR_TIMES}
+              defaultTabId={CompanyUnitModalTabs.INFO}
               styles={{
                 nav: "p-0",
                 navMenu: "mx-auto",
