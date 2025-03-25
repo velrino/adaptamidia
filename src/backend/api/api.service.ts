@@ -8,29 +8,32 @@ export const ApiResources = {
 
     const headers = new Headers(parameters.headers);
 
-    if (!headers.has("Content-Type")) {
+    // Only set Content-Type if not FormData
+    if (
+      !headers.has("Content-Type") &&
+      !(parameters.data instanceof FormData)
+    ) {
       headers.set("Content-Type", "application/json");
     }
 
-    // Add Authorization header if the request is authenticated
     if (parameters.access_token) {
       headers.set("Authorization", `Bearer ${parameters.access_token}`);
     }
 
-    // Define the request options
     const options: RequestInit = {
       method: parameters.method,
       headers,
     };
 
     if (parameters.method === IApiRequestMethod.GET && parameters.data) {
-      // Converter parâmetros data para query string
-      // const queryString = new URLSearchParams(parameters.data).toString();
       const queryString = stringifyParams(parameters.data);
       url = `${url}?${queryString}`;
     } else if (parameters.data) {
-      // Se não for GET, adicionar o corpo da requisição
-      options.body = JSON.stringify(parameters.data);
+      // Don't stringify if it's FormData
+      options.body =
+        parameters.data instanceof FormData
+          ? parameters.data
+          : JSON.stringify(parameters.data);
     }
 
     return await fetch(url, options);

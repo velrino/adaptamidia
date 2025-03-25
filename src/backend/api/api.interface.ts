@@ -236,7 +236,9 @@ export interface IApiCreateCompanyUnitRequest {
   address: string;
   complement: string;
   type: string;
+  image: string;
   name: string;
+  status: string;
   devices: {
     smart_tv: number;
   };
@@ -247,6 +249,7 @@ export interface IApiUpdateCompanyUnitRequest {
   company_id: string;
   complement: string;
   name: string;
+  image: string;
   full_address: string;
   // neighborhood: string;
   // address: string;
@@ -313,3 +316,12 @@ export interface IApiUpdateCompanyUnitPopularTimesRequest {
   days: Record<IDay, IApiUnitPopularTimeItem[]>;
 }
 // END POPULAR TIME
+
+// START UPLOAD FILES
+
+export interface IApiUploadFileRequest {
+  file: Blob;
+  company_id: string;
+  foldername: string;
+  bucket: string;
+}

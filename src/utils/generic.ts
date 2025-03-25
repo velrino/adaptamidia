@@ -109,3 +109,24 @@ export function GetErrorMessage(error: unknown, fallback = "FAILED"): string {
   if (typeof error === "string") return error;
   return fallback;
 }
+
+export const GetExtensionFromMimeType = (mime: string): string => {
+  const map: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "image/bmp": "bmp",
+    "image/svg+xml": "svg",
+    "video/mp4": "mp4",
+    "video/webm": "webm",
+    "video/ogg": "ogv",
+    "video/quicktime": "mov",
+    "application/pdf": "pdf",
+    "application/zip": "zip",
+    "text/plain": "txt",
+    "application/json": "json",
+  };
+
+  return map[mime] || "bin";
+};

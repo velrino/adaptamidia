@@ -6,6 +6,7 @@ import {
   IApiRequestMethod,
   IApiUpdateCompanyRequest,
   IApiUpdateCompanyUnitRequest,
+  IApiUploadFileRequest,
 } from "./api.interface";
 import { ApiResources } from "./api.service";
 
@@ -74,6 +75,16 @@ export const API = {
       return ApiResources.request({
         method: IApiRequestMethod.PUT,
         path: `/company/unit/${id}`,
+        data,
+        access_token,
+      });
+    },
+  },
+  files: {
+    async upload(access_token: string, data: IApiUploadFileRequest) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/files",
         data,
         access_token,
       });

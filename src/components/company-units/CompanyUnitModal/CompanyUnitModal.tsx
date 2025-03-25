@@ -102,6 +102,8 @@ export default function CompanyUnitModal({
         address: data.full_address,
         type: data.type,
         name: data.name,
+        status: data.status,
+        image: String(),
         complement: data.complement,
         company_id: companySelected,
         devices: {
@@ -110,16 +112,17 @@ export default function CompanyUnitModal({
         max_capacity: data.max_capacity,
       }).finally(() => setLoadingSave(false));
     } else if (action === ContentAction.UPDATE && data._id && companySelected) {
-      console.log({
-        action,
-        prices: data.prices,
-        popular_time: data.popular_time,
-      });
+      // console.log({
+      //   action,
+      //   prices: data.prices,
+      //   popular_time: data.popular_time,
+      // });
 
       await update(data._id, {
         company_id: companySelected,
         complement: data.complement,
         name: data.name,
+        image: String(),
         full_address: data.full_address,
         type: data.type,
         status: data.status,
