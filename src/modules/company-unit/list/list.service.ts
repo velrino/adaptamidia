@@ -129,7 +129,7 @@ export class ListCompanyUnitService {
     const data = await queryBuilder
       .sort({ created_at: -1 })
       .skip(skip)
-      .limit(parameters.limit) // Note: Make sure this is 'limit' if that's what you intended
+      .limit(parameters.limit)
       .lean()
       .exec();
 
