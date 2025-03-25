@@ -181,6 +181,7 @@ export interface IApiPaginateCompanyUnits extends IApiPaginateParameters {
   state?: string[];
   country?: string[];
   neighborhood?: string[];
+  popular_time?: boolean;
 }
 
 export interface IApiUnitItemCompanyResponse {
@@ -243,26 +244,26 @@ export interface IApiCreateCompanyUnitRequest {
 }
 
 export interface IApiUpdateCompanyUnitRequest {
-  company: string;
+  company_id: string;
   complement: string;
   name: string;
   full_address: string;
-  neighborhood: string;
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  street_number: string;
+  // neighborhood: string;
+  // address: string;
+  // city: string;
+  // state: string;
+  // country: string;
+  // street_number: string;
   type: string;
   status: string;
   devices: {
     smart_tv: number;
   };
   max_capacity: number;
-  location: {
-    type: string;
-    coordinates: [number, number];
-  };
+  // location: {
+  //   type: string;
+  //   coordinates: [number, number];
+  // };
 }
 
 export interface IApiUpdateCompanyUnitPricesRequest {

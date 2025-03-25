@@ -5,6 +5,7 @@ import {
   IApiPaginateCompanyUnits,
   IApiRequestMethod,
   IApiUpdateCompanyRequest,
+  IApiUpdateCompanyUnitRequest,
 } from "./api.interface";
 import { ApiResources } from "./api.service";
 
@@ -61,6 +62,18 @@ export const API = {
       return ApiResources.request({
         method: IApiRequestMethod.POST,
         path: "/company/unit",
+        data,
+        access_token,
+      });
+    },
+    async update(
+      access_token: string,
+      id: string,
+      data: IApiUpdateCompanyUnitRequest
+    ) {
+      return ApiResources.request({
+        method: IApiRequestMethod.PUT,
+        path: `/company/unit/${id}`,
         data,
         access_token,
       });

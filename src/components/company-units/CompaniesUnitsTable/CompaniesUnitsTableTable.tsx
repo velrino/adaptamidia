@@ -71,6 +71,7 @@ export default function CompanieUnitsTable() {
         const query: IApiPaginateCompanyUnits = {
           page: currentPage,
           limit: 100,
+          popular_time: true,
           ...apiQuery,
         };
 

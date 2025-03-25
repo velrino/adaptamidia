@@ -35,6 +35,7 @@ const LazyMap = dynamic(
     ),
   }
 );
+
 export const CompanyUnitModalForm = ({
   action,
   data,
@@ -185,6 +186,89 @@ ICompanyUnitModalPrincipalProps) => {
                 }}
               />
             </div>
+            <div className="col-span-3">
+              <Label htmlFor="title">Tipo</Label>
+              <Select
+                placeholder={`Selecione o tipo`}
+                // isDisabled={isAdvertiserLoading}
+                // isLoading={isAdvertiserLoading}
+                value={
+                  companyUnitTypeOptions.find(
+                    (option) => option.value === data.type
+                  ) || null
+                }
+                options={companyUnitTypeOptions}
+                onChange={(currentOption) =>
+                  updateForm("type", currentOption ? currentOption.value : null)
+                }
+              />
+            </div>
+            <div className="col-span-3">
+              <Label htmlFor="title">Status</Label>
+              <Select
+                placeholder={`Selecione o status`}
+                // isDisabled={isAdvertiserLoading}
+                // isLoading={isAdvertiserLoading}
+                value={
+                  companyStatusOptions.find(
+                    (option) => option.value === data.status
+                  ) || null
+                }
+                options={companyStatusOptions}
+                onChange={(currentOption) =>
+                  updateForm(
+                    "status",
+                    currentOption ? currentOption.value : null
+                  )
+                }
+              />
+            </div>
+
+            <div className="col-span-3">
+              <Label htmlFor="devices">Dispositivos</Label>
+              <Input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="Informe o número"
+                id="devices"
+                value={data?.devices?.smart_tv || "0"}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^\d*$/.test(value)) {
+                    onUpdate({
+                      ...data,
+                      devices: {
+                        ...data.devices,
+                        smart_tv: Number(value),
+                      },
+                    });
+                  }
+                }}
+                maxLength={5}
+              />
+            </div>
+            <div className="col-span-3">
+              <Label htmlFor="max_capacity">Máximo de capacidade</Label>
+              <Input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="Informe o número"
+                id="max_capacity"
+                value={data?.max_capacity || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (/^\d*$/.test(value)) {
+                    onUpdate({
+                      max_capacity: Number(value),
+                    });
+                  }
+                }}
+                maxLength={5}
+              />
+            </div>
+
             <div className="col-span-12">
               <Label htmlFor="name">Endereço</Label>
               <Input
@@ -275,7 +359,7 @@ ICompanyUnitModalPrincipalProps) => {
                 <div className="col-span-12">
                   <LazyMap
                     list={[data]}
-                    key={`map-units-${data._id}-${new Date().toISOString()}`}
+                    key={`map-units-${data._id}-${data.location.coordinates[0]}-${data.location.coordinates[1]}`}
                     style={{ minHeight: 250 }}
                     enableClickPopUp={false}
                     customMapContainer={{
@@ -292,88 +376,7 @@ ICompanyUnitModalPrincipalProps) => {
                 </div>
               </>
             )}
-            <div className="col-span-3">
-              <Label htmlFor="title">Tipo</Label>
-              <Select
-                placeholder={`Selecione o tipo`}
-                // isDisabled={isAdvertiserLoading}
-                // isLoading={isAdvertiserLoading}
-                value={
-                  companyUnitTypeOptions.find(
-                    (option) => option.value === data.type
-                  ) || null
-                }
-                options={companyUnitTypeOptions}
-                onChange={(currentOption) =>
-                  updateForm("type", currentOption ? currentOption.value : null)
-                }
-              />
-            </div>
-            <div className="col-span-3">
-              <Label htmlFor="title">Status</Label>
-              <Select
-                placeholder={`Selecione o status`}
-                // isDisabled={isAdvertiserLoading}
-                // isLoading={isAdvertiserLoading}
-                value={
-                  companyStatusOptions.find(
-                    (option) => option.value === data.status
-                  ) || null
-                }
-                options={companyStatusOptions}
-                onChange={(currentOption) =>
-                  updateForm(
-                    "status",
-                    currentOption ? currentOption.value : null
-                  )
-                }
-              />
-            </div>
 
-            <div className="col-span-3">
-              <Label htmlFor="devices">Dispositivos</Label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder="Informe o número"
-                id="devices"
-                value={data?.devices?.smart_tv || "0"}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (/^\d*$/.test(value)) {
-                    onUpdate({
-                      ...data,
-                      devices: {
-                        ...data.devices,
-                        smart_tv: Number(value),
-                      },
-                    });
-                  }
-                }}
-                maxLength={5}
-              />
-            </div>
-            <div className="col-span-3">
-              <Label htmlFor="max_capacity">Máximo de capacidade</Label>
-              <Input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                placeholder="Informe o número"
-                id="max_capacity"
-                value={data?.max_capacity || ""}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (/^\d*$/.test(value)) {
-                    onUpdate({
-                      max_capacity: Number(value),
-                    });
-                  }
-                }}
-                maxLength={5}
-              />
-            </div>
             {action !== ContentAction.CREATE && (
               <div className="col-span-12">
                 <div className="w-full">

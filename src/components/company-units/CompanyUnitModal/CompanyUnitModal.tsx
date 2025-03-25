@@ -110,34 +110,24 @@ export default function CompanyUnitModal({
         max_capacity: data.max_capacity,
       }).finally(() => setLoadingSave(false));
     } else if (action === ContentAction.UPDATE && data._id && companySelected) {
-      const companyUnitId = data._id;
-      const body: IApiUpdateCompanyUnitRequest = {
-        company: companySelected,
+      console.log({
+        action,
+        prices: data.prices,
+        popular_time: data.popular_time,
+      });
+
+      await update(data._id, {
+        company_id: companySelected,
         complement: data.complement,
         name: data.name,
         full_address: data.full_address,
-        neighborhood: data.neighborhood,
-        address: data.address,
-        city: data.city,
-        state: data.state,
-        country: data.country,
-        street_number: data.street_number,
         type: data.type,
         status: data.status,
         devices: {
           smart_tv: data.devices.smart_tv,
         },
         max_capacity: data.max_capacity,
-        location: data.location,
-      };
-
-      console.log({
-        action,
-        companyUnitId,
-        body,
-        prices: data.prices,
-        popular_time: data.popular_time,
-      });
+      }).finally(() => setLoadingSave(false));
     }
   };
 
@@ -164,6 +154,37 @@ export default function CompanyUnitModal({
         setContentAction(ContentAction.UPDATE);
         refresh(true);
         // onCloseCallback();
+      } else {
+        showToast("FAILED", IToastType.ERROR);
+      }
+    } catch (error) {
+      showToast(GetErrorMessage(error), IToastType.ERROR);
+    }
+  };
+
+  const update = async (id: string, body: IApiUpdateCompanyUnitRequest) => {
+    if (!session?.api_session) {
+      return;
+    }
+
+    try {
+      const response = await API.company_units.update(
+        session.api_session.access_token,
+        id,
+        body
+      );
+
+      const currentData = await response.json();
+
+      if (currentData?.error && currentData?.message) {
+        showToast(GetErrorMessage(currentData.message), IToastType.ERROR);
+      } else if (response.ok && currentData?._id) {
+        showToast(`${body.name} atualizado com sucesso!`, IToastType.SUCCESS);
+
+        setData(currentData);
+        setCompanySelected(currentData?.company?._id);
+        setContentAction(ContentAction.UPDATE);
+        refresh(true);
       } else {
         showToast("FAILED", IToastType.ERROR);
       }
