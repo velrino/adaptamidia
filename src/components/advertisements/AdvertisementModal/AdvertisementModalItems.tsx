@@ -5,7 +5,7 @@ import {
 import { AdType } from "@/interfaces/ads";
 import { MediaCropperModal } from "./Ads/ImageCropperModal";
 import { useModal } from "@/hooks/useModal";
-import { GetErrorMessage, GetExtensionFromMimeType } from "@/utils/generic";
+import { GetErrorMessage } from "@/utils/generic";
 import { API } from "@/backend/api/api.endpoints";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/context/ToastContext";
@@ -24,20 +24,12 @@ export function AdvertisementComponent({
       return;
     }
 
-    const formData = new FormData();
-    const mimeType = croppedBlob.type;
-    const fileExtension = GetExtensionFromMimeType(mimeType);
-    const filename = `file.${fileExtension}`;
-
-    formData.append("file", croppedBlob, filename);
-    formData.append("company_id", "67d226d9b502526b43e5d1ed");
-    formData.append("foldername", "ads");
-    formData.append("bucket", "xmp-midia");
-
-    const response = await API.files.upload(
-      session.api_session.access_token,
-      formData as any
-    );
+    const response = await API.files.upload(session.api_session.access_token, {
+      file: croppedBlob,
+      company_id: "67d226d9b502526b43e5d1ed",
+      foldername: "ads",
+      bucket: "xmp-midia",
+    });
 
     const responseData = await response.json();
 

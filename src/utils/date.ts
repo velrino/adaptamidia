@@ -1,4 +1,4 @@
-import dayjs from "dayjs";
+import dayjs, { ManipulateType } from "dayjs";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
@@ -34,8 +34,8 @@ export const DateHelper = {
   ) => {
     return dayjs(dateString, format);
   },
-  addDays: (date: string | Date, days: number) => {
-    return dayjs(date).add(days, "day");
+  addDays: (date: string | Date, days: number, unit: ManipulateType) => {
+    return dayjs(date).add(days, unit);
   },
   subtractDays: (date: string | Date, days: number) => {
     return dayjs(date).subtract(days, "day");

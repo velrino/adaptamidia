@@ -200,7 +200,7 @@ export interface IApiPaginateCompanyUnits extends IApiPaginateParameters {
   city?: string[];
   state?: string[];
   country?: string[];
-  neighborhood?: string[];
+  neighborhood?: string | string[];
   popular_time?: boolean;
 }
 

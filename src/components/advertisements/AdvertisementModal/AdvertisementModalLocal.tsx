@@ -6,6 +6,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import Label from "@/components/form/Label";
@@ -13,12 +14,13 @@ import {
   IApiAdvertisementItem,
   IApiGroupCompanyUnitsRequest,
   IApiGroupCompanyUnitsResponseItem,
+  IApiPaginateCompanyUnits,
   IApiUnitItemResponse,
 } from "@/backend/api/api.interface";
 import { DateHelper, DateHelperFormat, DateInputStyle } from "@/utils/date";
 import Flatpickr from "react-flatpickr";
 import { CalenderIcon } from "@/icons";
-import { CompanyUnitsMock, CompanyUnitsMockData } from "@/backend/mock/units";
+// import { CompanyUnitsMock, CompanyUnitsMockData } from "@/backend/mock/units";
 import dynamic from "next/dynamic";
 import SelectReact from "react-select";
 import AdvertisementModalUnits from "./AdvertisementModalUnits";
@@ -124,18 +126,79 @@ const AdvertisementModalLocal = memo(
 
     const [units, setUnits] = useState<IApiUnitItemResponse[]>([]);
 
-    const filterUnitsByNeighborhood = useCallback(() => {
-      const currentUnits = CompanyUnitsMockData.filter((unit) =>
-        data.neighborhood?.includes(unit.neighborhood)
-      );
-      setUnits(currentUnits);
-    }, [data.neighborhood]);
+    const getUnits = useCallback(
+      async (apiQuery: IApiPaginateCompanyUnits) => {
+        if (!session?.api_session) {
+          return;
+        }
+
+        setIsUnitsLoading(true);
+        try {
+          const query: IApiPaginateCompanyUnits = {
+            // page: currentPage,
+            limit: 100,
+            ...apiQuery,
+          };
+
+          const response = await API.company_units.paginate(
+            session.api_session.access_token,
+            query
+          );
+
+          const responseData = await response.json();
+
+          if (responseData?.error) {
+            showToast(GetErrorMessage(responseData.error), IToastType.ERROR);
+          } else if (response.ok) {
+            setUnits((prevUnits) => {
+              const existingIds = new Set(
+                prevUnits.map((unit: IApiUnitItemResponse) => unit._id)
+              );
+              const newUnits = responseData.data.filter(
+                (unit: IApiUnitItemResponse) => !existingIds.has(unit._id)
+              );
+              return [...prevUnits, ...newUnits]; // Adiciona apenas os novos
+            });
+            showToast("Adicionado com sucesso", IToastType.SUCCESS);
+          }
+        } catch (error) {
+          showToast(GetErrorMessage(error), IToastType.ERROR);
+        } finally {
+          setIsUnitsLoading(false);
+        }
+      },
+      [session?.api_session, showToast]
+    );
+
+    const lastNeighborhoods = useRef<string[]>(data.neighborhood || []);
 
     useEffect(() => {
-      console.clear();
-      console.log({ neighborhood: data.neighborhood });
-      filterUnitsByNeighborhood();
-    }, [data.neighborhood, filterUnitsByNeighborhood]);
+      const currentNeighborhoods = data.neighborhood || [];
+      const currentLength = currentNeighborhoods.length;
+
+      // Detecta adição de bairro
+      if (currentLength > lastNeighborhoods.current.length) {
+        const lastNeighborhood = currentNeighborhoods.slice(-1)[0];
+        getUnits({ neighborhood: lastNeighborhood });
+      }
+      // Detecta remoção de bairro
+      else if (currentLength < lastNeighborhoods.current.length) {
+        const removedNeighborhood = lastNeighborhoods.current.find(
+          (neighborhood) => !currentNeighborhoods.includes(neighborhood)
+        );
+
+        if (removedNeighborhood) {
+          setUnits((prevUnits) =>
+            prevUnits.filter(
+              (unit) => unit.neighborhood !== removedNeighborhood
+            )
+          );
+        }
+      }
+
+      // Atualiza a referência para o próximo render
+      lastNeighborhoods.current = currentNeighborhoods;
+    }, [data.neighborhood, getUnits]);
 
     const classifyPeriod = useCallback((diff: number): AdPeriod => {
       if (diff <= 1) return AdPeriod.DAILY;
@@ -196,7 +259,7 @@ const AdvertisementModalLocal = memo(
     const [unitsOptions, setUnitsOptions] = useState<IReactSelectOption[]>([]);
     const [isUnitsLoading, setIsUnitsLoading] = useState(false);
 
-    const getResponse = useCallback(
+    const getCompanyGroup = useCallback(
       async (apiQuery: IApiGroupCompanyUnitsRequest) => {
         if (!session?.api_session) {
           return;
@@ -242,9 +305,9 @@ const AdvertisementModalLocal = memo(
 
     useEffect(() => {
       if (session?.api_session) {
-        getResponse({});
+        getCompanyGroup({});
       }
-    }, [getResponse, session?.api_session]);
+    }, [getCompanyGroup, session?.api_session]);
 
     const advertisementModalUnitsCallback = useCallback(
       (current: IAdvertisementModalUnitCallback) => {
@@ -335,12 +398,7 @@ const AdvertisementModalLocal = memo(
       <>
         <div className="grid gap-3 sm:grid-cols-3">
           <div>
-            <LazyMap
-              list={units}
-              key={`map-units-${
-                CompanyUnitsMock.data.length
-              }-${new Date().toISOString()}`}
-            />
+            <LazyMap list={units} key={`map-units-${units.length}`} />
           </div>
           <div className="overflow-y-auto max-h-[75vh] pb-28 pr-6 col-span-2">
             {data && (

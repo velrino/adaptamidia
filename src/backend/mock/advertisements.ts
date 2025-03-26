@@ -8,7 +8,10 @@ import {
   BrandSegment,
   BrandSegmentTranslations,
 } from "@/interfaces/ads";
-import { IApiAdvertisementResponse } from "../api/api.interface";
+import {
+  IApiAdvertisementItem,
+  IApiAdvertisementResponse,
+} from "../api/api.interface";
 import { DateHelper } from "@/utils/date";
 import { IReactSelectOption } from "@/interfaces/general";
 import { CompanyUnitsGroupdMock } from "./units";
@@ -244,3 +247,30 @@ export const SegmentOptionsMock: IReactSelectOption[] = Object.entries(
 )
   .map(([value, label]) => ({ value: value as BrandSegment, label }))
   .sort((a, b) => a.label.localeCompare(b.label));
+
+export const AdsRecordDefault: IApiAdvertisementItem = {
+  _id: String(),
+  company: String(),
+  title: String(),
+  description: String(),
+  type: AdType.IMAGE,
+  spotlight: false,
+  items: [
+    {
+      title: "Item 1",
+      description: "Description for Item 1",
+      seconds: 5,
+      source: "/images/ads/clients/1.png",
+      type: AdType.IMAGE,
+    },
+  ],
+  seconds: 20,
+  status: AdStatus.REVIEW,
+  start_date: DateHelper.addDays(new Date(), 1, "days").toISOString(),
+  end_date: DateHelper.addDays(new Date(), 1, "month").toISOString(),
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  neighborhood: [],
+  audience: [],
+  segments: [],
+};

@@ -1,3 +1,4 @@
+import { GetExtensionFromMimeType } from "@/utils/generic";
 import {
   IApiAuthLogin,
   IApiCreateCompanyUnitRequest,
@@ -91,10 +92,20 @@ export const API = {
   },
   files: {
     async upload(access_token: string, data: IApiUploadFileRequest) {
+      const formData = new FormData();
+      const mimeType = data.file.type;
+      const fileExtension = GetExtensionFromMimeType(mimeType);
+      const filename = `file.${fileExtension}`;
+
+      formData.append("file", data.file, filename);
+      formData.append("company_id", data.company_id);
+      formData.append("foldername", data.foldername);
+      formData.append("bucket", data.bucket);
+
       return ApiResources.request({
         method: IApiRequestMethod.POST,
         path: "/files",
-        data,
+        data: formData,
         access_token,
       });
     },

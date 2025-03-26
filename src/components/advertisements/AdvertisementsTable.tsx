@@ -17,14 +17,21 @@ import {
 } from "@/backend/api/api.interface";
 import { AdSortKey } from "@/interfaces/ads";
 import { ContentAction, SortOrder } from "@/interfaces/general";
-import { AdvertisementsMock } from "@/backend/mock/advertisements";
+import {
+  AdsRecordDefault,
+  AdvertisementsMock,
+} from "@/backend/mock/advertisements";
 import { faker } from "@faker-js/faker";
 import { DateHelper } from "@/utils/date";
 import AdvertisementModal from "./AdvertisementModal";
+import Button from "../ui/button/Button";
 
 export default function AdvertisementsTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [contentAction, setContentAction] = useState<ContentAction>(
+    ContentAction.CREATE
+  );
   const [sortKey, setSortKey] = useState<AdSortKey>(AdSortKey.start_date);
   const [sortOrder, setSortOrder] = useState<SortOrder>(SortOrder.DESC);
   const [searchTerm, setSearchTerm] = useState("");
@@ -63,7 +70,13 @@ export default function AdvertisementsTable() {
     });
   }, [currentPage]);
 
+  const openCreate = () => {
+    setContentAction(() => ContentAction.CREATE);
+    setCurrentAdvertisement(AdsRecordDefault);
+  };
+
   useEffect(() => {
+    openCreate();
     getResponse();
   }, [getResponse]);
 
@@ -120,52 +133,11 @@ export default function AdvertisementsTable() {
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
-  //   const currentData = filteredAndSortedData.slice(startIndex, endIndex);
 
   return (
     <>
       <div className="overflow-hidden bg-white dark:bg-white/[0.03] rounded-xl">
         <div className="flex flex-col gap-2 px-4 py-4 border border-b-0 border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-gray-500 dark:text-gray-400"> Show </span>
-            <div className="relative z-20 bg-transparent">
-              <select
-                className="w-full py-2 pl-3 pr-8 text-sm text-gray-800 bg-transparent border border-gray-300 rounded-lg appearance-none dark:bg-dark-900 h-9 bg-none shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
-                value={itemsPerPage}
-                onChange={(e) => setItemsPerPage(Number(e.target.value))}
-              >
-                {[5, 8, 10].map((value) => (
-                  <option
-                    key={value}
-                    value={value}
-                    className="text-gray-500 dark:bg-gray-900 dark:text-gray-400"
-                  >
-                    {value}
-                  </option>
-                ))}
-              </select>
-              <span className="absolute z-30 text-gray-500 -translate-y-1/2 right-2 top-1/2 dark:text-gray-400">
-                <svg
-                  className="stroke-current"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M3.8335 5.9165L8.00016 10.0832L12.1668 5.9165"
-                    stroke=""
-                    strokeWidth="1.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </span>
-            </div>
-            <span className="text-gray-500 dark:text-gray-400"> entries </span>
-          </div>
-
           <div className="relative">
             <button className="absolute text-gray-500 -translate-y-1/2 left-4 top-1/2 dark:text-gray-400">
               <svg
@@ -190,8 +162,21 @@ export default function AdvertisementsTable() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search..."
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  // getResponse({
+                  //   name: searchTerm,
+                  //   page: 1,
+                  // });
+                }
+              }}
               className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-11 pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[300px]"
             />
+          </div>
+          <div>
+            <Button size="sm" onClick={openCreate}>
+              Criar
+            </Button>
           </div>
         </div>
 
@@ -315,7 +300,7 @@ export default function AdvertisementsTable() {
       </div>
       {currentAdvertisement && (
         <AdvertisementModal
-          action={ContentAction.CREATE}
+          action={contentAction}
           advertisementData={currentAdvertisement}
           onCloseCallback={() => {
             setCurrentAdvertisement(null);
