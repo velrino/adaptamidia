@@ -9,12 +9,15 @@ import {
   GroupCompanyUnitPaginateDto,
   IGroupedCompanyUnitResult,
 } from './group.interface';
+import { RedisService } from 'src/shared/redis/redis.service';
+import { RedisKeysEnum } from 'src/shared/redis/redis.keys';
 
 @Injectable()
 export class GroupCompanyUnitService {
   constructor(
     @InjectModel(CompanyUnit.name)
     private readonly companyUnitModel: Model<CompanyUnitDocument>,
+    private readonly redisService: RedisService,
   ) {}
 
   executeFromRequest(
@@ -87,11 +90,28 @@ export class GroupCompanyUnitService {
 
   async execute(parameters: GroupCompanyUnitPaginateDto) {
     try {
+      const cacheKey = this.redisService.createKeyByObject(
+        RedisKeysEnum.LIST_COMPANY_UNIT_GROUP,
+        parameters,
+      );
+
+      if (parameters.cache) {
+        const dataCached = await this.redisService.get(cacheKey.name);
+
+        if (dataCached) {
+          return dataCached;
+        }
+      }
+
       const records = await this.getData(parameters);
 
-      return {
+      const processedData = {
         data: records.map((item) => ({ ...item._id, count: item.count })),
       };
+
+      await this.redisService.set(cacheKey.name, processedData, 300000);
+
+      return processedData;
     } catch (error) {
       Log(
         LogType.ERROR,
