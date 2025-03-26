@@ -8,12 +8,15 @@ import { RESULT } from 'src/shared/result.enum';
 import { ListCompanyPaginateDto } from './list.interface';
 import { PaginatedResponseDto } from 'src/shared/interfaces/paginate.dto';
 import { Company, CompanyDocument } from '../company.schema';
+import { RedisService } from 'src/shared/redis/redis.service';
+import { RedisKeysEnum } from 'src/shared/redis/redis.keys';
 
 @Injectable()
 export class ListCompanyService {
   constructor(
     @InjectModel(Company.name)
     private readonly companyModel: Model<CompanyDocument>,
+    private readonly redisService: RedisService,
   ) {}
 
   executeFromRequest(
@@ -81,9 +84,25 @@ export class ListCompanyService {
 
     return { pages, total, data, limit: parameters.limit, page: currentPage };
   }
+
   async execute(parameters: ListCompanyPaginateDto) {
     try {
+      const cacheKey = this.redisService.createKeyByObject(
+        RedisKeysEnum.LIST_COMPANY,
+        parameters,
+      );
+
+      if (parameters.cache) {
+        const dataCached = await this.redisService.get(cacheKey.name);
+
+        if (dataCached) {
+          return dataCached;
+        }
+      }
+
       const records = await this.getData(parameters);
+
+      await this.redisService.set(cacheKey.name, records, 300000); // 5 minutes
 
       return records;
     } catch (error) {
