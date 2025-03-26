@@ -28,7 +28,7 @@ import Button from "../ui/button/Button";
 
 export default function AdvertisementsTable() {
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage] = useState(10);
   const [contentAction, setContentAction] = useState<ContentAction>(
     ContentAction.CREATE
   );
