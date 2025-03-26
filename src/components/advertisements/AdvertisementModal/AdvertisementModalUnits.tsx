@@ -24,6 +24,21 @@ interface IAdvertisementModalUnits {
   callback: (item: IAdvertisementModalUnitCallback) => void;
 }
 
+const UnitImageItem = ({ image }: { image: string }) => {
+  const [currentImage, setCurrentImage] = useState(image);
+
+  return (
+    <Image
+      src={currentImage}
+      alt="Imagem do local"
+      fill
+      sizes="(max-width: 768px) 100vw, 50vw"
+      className="rounded-l-lg object-cover object-center"
+      onError={() => setCurrentImage("/images/local/1.jpg")}
+    />
+  );
+};
+
 const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
   title,
   content,
@@ -72,11 +87,6 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
     });
     modalRemoteUnit.closeModal();
   };
-
-  // useEffect(() => {
-  //   setSelected(() => content[0]);
-  //   modalRemoteUnit.openModal();
-  // }, [content]);
 
   function MetricItem({
     label,
@@ -152,14 +162,7 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
                     >
                       <div className="grid md:grid-cols-2 lg:grid-cols-12">
                         <div className="col-span-2 relative h-full w-full p-0">
-                          <Image
-                            src={unit.image}
-                            alt="Imagem do local"
-                            layout="fill" // Faz a imagem ocupar todo o espaço disponível
-                            objectFit="cover" // Faz o corte para preencher o espaço mantendo a proporção
-                            objectPosition="center" // Centraliza a imagem
-                            className="rounded-l-lg"
-                          />
+                          <UnitImageItem image={unit.image} />
                         </div>
                         <div className="col-span-10 p-4">
                           <div className="flex justify-between items-center">
