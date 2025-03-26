@@ -212,7 +212,7 @@ const AdvertisementModalLocal = memo(
       if (startDate && endDate) {
         const diff = Math.abs(DateHelper.diff(endDate, startDate) || 0);
         setDiffBetweenDates(diff);
-        console.log({ diffBetweenDates });
+
         const periodClassified = classifyPeriod(diff);
         const { years, months, days } = DateHelper.diffDateToObject(diff);
 

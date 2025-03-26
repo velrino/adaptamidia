@@ -14,6 +14,7 @@ import { PiUsersLight, PiEye, PiDesktop } from "react-icons/pi";
 import { AdPeriod } from "@/interfaces/ads";
 import { BsCashCoin } from "react-icons/bs";
 import { FormatCurrency, FormatThousand } from "@/utils/generic";
+import { faker } from "@faker-js/faker";
 
 interface IAdvertisementModalUnits {
   title: string;
@@ -137,23 +138,27 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
             >
               <div className="grid gap-2">
                 {units.map((unit: IApiUnitItemResponse) => {
-                  const currentMetrics = {
-                    [AdPeriod.DAILY]: unit.prices.find(
-                      (price) =>
-                        price.period === AdPeriod.DAILY &&
-                        price.seconds === seconds
-                    ),
-                    [AdPeriod.WEEKLY]: unit.prices.find(
-                      (price) =>
-                        price.period === AdPeriod.WEEKLY &&
-                        price.seconds === seconds
-                    ),
-                    [AdPeriod.MONTHLY]: unit.prices.find(
-                      (price) =>
-                        price.period === AdPeriod.MONTHLY &&
-                        price.seconds === seconds
-                    ),
-                  };
+                  // const currentMetrics = {
+                  //   [AdPeriod.DAILY]: unit.prices.find(
+                  //     (price) =>
+                  //       price.period === AdPeriod.DAILY &&
+                  //       price.seconds === seconds
+                  //   ),
+                  //   [AdPeriod.WEEKLY]: unit.prices.find(
+                  //     (price) =>
+                  //       price.period === AdPeriod.WEEKLY &&
+                  //       price.seconds === seconds
+                  //   ),
+                  //   [AdPeriod.MONTHLY]: unit.prices.find(
+                  //     (price) =>
+                  //       price.period === AdPeriod.MONTHLY &&
+                  //       price.seconds === seconds
+                  //   ),
+                  // };
+                  const dailyAverageVisitorsExample = faker.number.int({
+                    min: 75,
+                    max: 200,
+                  });
 
                   return (
                     <div
@@ -189,53 +194,41 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
 
                           <div className="rounded-2xl w-full max-w-md mt-3">
                             <div className="flex gap-3">
-                              {currentMetrics[AdPeriod.DAILY] && (
-                                <MetricItem
-                                  label={"Alcance diário"}
-                                  value={FormatThousand(
-                                    currentMetrics[AdPeriod.DAILY]
-                                      ?.average_visitors
-                                  )}
-                                  icon={<PiUsersLight size={15} />}
-                                />
-                              )}
+                              <MetricItem
+                                label={"Alcance diário"}
+                                value={FormatThousand(
+                                  dailyAverageVisitorsExample
+                                )}
+                                icon={<PiUsersLight size={15} />}
+                              />
 
-                              {currentMetrics[AdPeriod.WEEKLY] && (
-                                <MetricItem
-                                  label="Alcance semanal"
-                                  value={FormatThousand(
-                                    currentMetrics[AdPeriod.WEEKLY]
-                                      ?.average_visitors
-                                  )}
-                                  icon={<PiUsersLight size={15} />}
-                                />
-                              )}
+                              <MetricItem
+                                label={"Alcance semanal"}
+                                value={FormatThousand(
+                                  dailyAverageVisitorsExample * 7
+                                )}
+                                icon={<PiUsersLight size={15} />}
+                              />
 
-                              {currentMetrics[AdPeriod.MONTHLY] && (
-                                <MetricItem
-                                  label="Alcance mensal"
-                                  value={FormatThousand(
-                                    currentMetrics[AdPeriod.MONTHLY]
-                                      ?.average_visitors
-                                  )}
-                                  icon={<PiUsersLight size={15} />}
-                                />
-                              )}
+                              <MetricItem
+                                label={"Alcance Mensal"}
+                                value={FormatThousand(
+                                  dailyAverageVisitorsExample * 31
+                                )}
+                                icon={<PiUsersLight size={15} />}
+                              />
                             </div>
                           </div>
 
                           <div className="rounded-2xl w-full max-w-md mt-3">
                             <div className="flex gap-3">
-                              {currentMetrics[AdPeriod.MONTHLY] && (
-                                <MetricItem
-                                  label="Exibições"
-                                  value={FormatThousand(
-                                    currentMetrics[AdPeriod.MONTHLY]
-                                      ?.average_visitors
-                                  )}
-                                  icon={<PiEye size={15} />}
-                                />
-                              )}
+                              <MetricItem
+                                label="Exibições"
+                                value={FormatThousand(
+                                  dailyAverageVisitorsExample * 42
+                                )}
+                                icon={<PiEye size={15} />}
+                              />
 
                               <MetricItem
                                 label="Telas"
@@ -246,16 +239,13 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
                                 icon={<PiDesktop size={15} />}
                               />
 
-                              {currentMetrics[AdPeriod.MONTHLY] && (
-                                <MetricItem
-                                  label="Investimento"
-                                  value={FormatCurrency(
-                                    currentMetrics[AdPeriod.MONTHLY]
-                                      ?.price_total
-                                  )}
-                                  icon={<BsCashCoin size={15} />}
-                                />
-                              )}
+                              <MetricItem
+                                label="Exibições"
+                                value={FormatThousand(
+                                  dailyAverageVisitorsExample * 29
+                                )}
+                                icon={<PiEye size={15} />}
+                              />
                             </div>
                           </div>
                         </div>
