@@ -11,9 +11,9 @@ import {
 } from "./AdvertisementModalUnits/interface";
 import Image from "next/image";
 import { PiUsersLight, PiEye, PiDesktop } from "react-icons/pi";
-import { AdPeriod } from "@/interfaces/ads";
-import { BsCashCoin } from "react-icons/bs";
-import { FormatCurrency, FormatThousand } from "@/utils/generic";
+// import { AdPeriod } from "@/interfaces/ads";
+// import { BsCashCoin } from "react-icons/bs";
+import { FormatThousand } from "@/utils/generic";
 import { faker } from "@faker-js/faker";
 
 interface IAdvertisementModalUnits {
@@ -44,7 +44,7 @@ const AdvertisementModalUnits: React.FC<IAdvertisementModalUnits> = ({
   title,
   content,
   isOpen,
-  seconds,
+  // seconds,
   toggleAccordion,
   callback,
 }) => {

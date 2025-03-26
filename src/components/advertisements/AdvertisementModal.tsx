@@ -4,8 +4,9 @@ import React, { useState } from "react";
 import Button from "../ui/button/Button";
 import { Modal } from "../ui/modal";
 import { IApiAdvertisementItem } from "@/backend/api/api.interface";
-import { ContentAction } from "@/interfaces/general";
+import { ContentAction, IToastType } from "@/interfaces/general";
 import AdvertisementModalTab from "./AdvertisementModal/AdvertisementModalTab";
+import { useToast } from "@/context/ToastContext";
 
 interface IAdvertisementModalProps {
   action: ContentAction;
@@ -19,6 +20,8 @@ export default function AdvertisementModal({
   advertisementData,
   onCloseCallback,
 }: IAdvertisementModalProps) {
+  const { showToast } = useToast();
+
   const handleClose = () => {
     if (onCloseCallback) {
       onCloseCallback();
@@ -26,14 +29,39 @@ export default function AdvertisementModal({
   };
 
   const [data, setData] = useState<IApiAdvertisementItem>(advertisementData);
+  // const [companySelected, setCompanySelected] = useState<string | null>(
+  //   // advertisementData.company?._id
+  //   advertisementData?.company
+  // );
 
   const handleUpdate = (updatedData: Partial<IApiAdvertisementItem>) => {
     setData((prev) => ({ ...prev, ...updatedData }));
   };
 
+  const validateForm = () => {
+    if (!data.company) {
+      showToast("Escolha um Anunciante!", IToastType.ERROR);
+      return true;
+    }
+
+    if (action === ContentAction.CREATE) {
+      // const requiredFields: (keyof IApiAdvertisementItem)[] = [
+      //   "type",
+      // ];
+      // if (requiredFields.some((field) => !data[field])) {
+      //   return true;
+      // }
+      // return Object.values(formReport).every(Boolean);
+    }
+  };
+
   const save = () => {
     console.clear();
     console.log({ action, data });
+
+    if (validateForm()) {
+      return;
+    }
   };
 
   return (

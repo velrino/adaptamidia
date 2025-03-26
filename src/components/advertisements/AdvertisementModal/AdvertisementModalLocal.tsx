@@ -105,7 +105,7 @@ const AdvertisementModalLocal = memo(
 
     const [formReport, setFormReport] =
       useState<IDefaultFormReport>(defaultFormReport);
-    const [diffBetweenDates, setDiffBetweenDates] = useState<number>(0);
+    const [, setDiffBetweenDates] = useState<number>(0);
     const [metricItemMessage, setMetricItemMessage] = useState<{
       label: string;
       value: string;
