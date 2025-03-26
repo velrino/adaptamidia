@@ -165,6 +165,7 @@ export class CreateCompanyUnitService {
               devices: parameters.devices,
               max_capacity: parameters.max_capacity,
               name: parameters.name,
+              image: parameters.image,
               complement: parameters.complement,
               company: record?._id,
               type: parameters.type,

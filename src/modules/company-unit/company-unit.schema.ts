@@ -20,6 +20,9 @@ export class CompanyUnit {
   @Prop({ required: true })
   name: string;
 
+  @Prop({ required: false, default: String() })
+  image: string;
+
   @Prop({ required: true })
   full_address: string;
 
@@ -41,7 +44,7 @@ export class CompanyUnit {
   @Prop({ required: true })
   street_number: string;
 
-  @Prop({ required: true, default: String() })
+  @Prop({ required: false, default: String() })
   complement: string;
 
   @Prop({ required: true, index: true })

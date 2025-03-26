@@ -13,7 +13,7 @@ export class RedisService {
       .digest('hex');
 
     return {
-      key: `${index.toUpperCase()}_${parameters_encrypted}`,
+      name: `${index.toUpperCase()}_${parameters_encrypted}`,
       parameters_encrypted,
     };
   }
@@ -22,8 +22,8 @@ export class RedisService {
     return `${prefix}:${args.map(String).join(':')}`.toUpperCase();
   }
 
-  async set(key: string, value: any, ttl: number): Promise<void> {
-    await this.cacheManager.set(key, value, ttl);
+  async set(key: string, value: any, ttl: number) {
+    return await this.cacheManager.set(key, value, ttl);
   }
 
   async get<T>(key: string): Promise<T | null> {

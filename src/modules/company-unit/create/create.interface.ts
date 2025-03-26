@@ -49,4 +49,8 @@ export class CreateCompanyUnitValidator {
   @IsEnum(CompanyUnitStatus)
   @IsNotEmpty()
   status: CompanyUnitStatus;
+
+  @IsString()
+  @IsOptional()
+  image: string;
 }

@@ -162,6 +162,7 @@ export class UpdateCompanyUnitService {
       const updateData = {
         ...fullAddressData,
         company: companyId,
+        image: parameters.image,
         complement: parameters.complement,
         name: parameters.name,
         type: parameters.type,

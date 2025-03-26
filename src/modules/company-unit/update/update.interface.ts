@@ -31,6 +31,10 @@ export class UpdateCompanyUnitValidator {
 
   @IsString()
   @IsOptional()
+  image: string;
+
+  @IsString()
+  @IsOptional()
   complement: string;
 
   @IsString()

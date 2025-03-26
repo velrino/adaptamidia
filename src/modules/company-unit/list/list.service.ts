@@ -13,12 +13,15 @@ import { PaginatedResponseDto } from 'src/shared/interfaces/paginate.dto';
 import { Company } from 'src/modules/company/company.schema';
 import { CompanyUnitPrepareData } from '../company-unit.interface';
 import { CompanyUnitPopularTime } from '../popular-times/company-unit-popular-times.schema';
+import { RedisService } from 'src/shared/redis/redis.service';
+import { RedisKeysEnum } from 'src/shared/redis/redis.keys';
 
 @Injectable()
 export class ListCompanyUnitService {
   constructor(
     @InjectModel(CompanyUnit.name)
     private readonly companyUnitModel: Model<CompanyUnitDocument>,
+    private readonly redisService: RedisService,
   ) {}
 
   // onApplicationBootstrap() {
@@ -150,11 +153,29 @@ export class ListCompanyUnitService {
 
   async execute(parameters: ListCompanyUnitPaginateDto) {
     try {
+      const cacheKey = this.redisService.createKeyByObject(
+        RedisKeysEnum.LIST_COMPANY_UNIT,
+        parameters,
+      );
+
+      if (parameters.cache) {
+        const dataCached = await this.redisService.get(cacheKey.name);
+
+        if (dataCached) {
+          return dataCached;
+        }
+      }
+
       const records = await this.getData(parameters);
 
-      records.data = this.prepareData(records.data);
+      const processedData = {
+        ...records,
+        data: this.prepareData(records.data),
+      };
 
-      return records;
+      await this.redisService.set(cacheKey.name, processedData, 300000); // 5 minutes
+
+      return processedData;
     } catch (error) {
       Log(
         LogType.ERROR,
