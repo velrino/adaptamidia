@@ -175,6 +175,7 @@ export interface IApiGroupCompanyUnitsRequest {
   state?: string[];
   country?: string[];
   neighborhood?: string[];
+  cache?: boolean;
 }
 
 export interface IApiGroupCompanyUnitsResponseItem {

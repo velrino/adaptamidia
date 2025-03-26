@@ -328,7 +328,9 @@ export default function CompaniesTable() {
           record={currentSelected}
           refresh={async (refresh: boolean) => {
             if (refresh) {
-              getResponse({});
+              getResponse({
+                cache: false,
+              });
             }
           }}
           onCloseCallback={async () => {

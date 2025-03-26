@@ -18,11 +18,7 @@ import {
 import { DateHelper, DateHelperFormat, DateInputStyle } from "@/utils/date";
 import Flatpickr from "react-flatpickr";
 import { CalenderIcon } from "@/icons";
-import {
-  CompanyUnitsGroupdMock,
-  CompanyUnitsMock,
-  CompanyUnitsMockData,
-} from "@/backend/mock/units";
+import { CompanyUnitsMock, CompanyUnitsMockData } from "@/backend/mock/units";
 import dynamic from "next/dynamic";
 import SelectReact from "react-select";
 import AdvertisementModalUnits from "./AdvertisementModalUnits";

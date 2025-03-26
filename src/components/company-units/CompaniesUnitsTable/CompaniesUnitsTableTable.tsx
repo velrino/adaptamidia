@@ -86,6 +86,11 @@ export default function CompanieUnitsTable() {
           showToast(GetErrorMessage(data.error), IToastType.ERROR);
         } else if (response.ok) {
           setResponse(data);
+          if (query.cache === false) {
+            await API.company_units.group(session.api_session.access_token, {
+              cache: false,
+            });
+          }
         }
       } catch (error) {
         showToast(GetErrorMessage(error), IToastType.ERROR);
@@ -328,7 +333,9 @@ export default function CompanieUnitsTable() {
           record={currentSelected}
           refresh={async (refresh: boolean) => {
             if (refresh) {
-              getResponse({});
+              getResponse({
+                cache: false,
+              });
             }
           }}
           onCloseCallback={(record?: IApiUnitItemResponse | undefined) => {
