@@ -2,6 +2,8 @@ import { createHash } from 'crypto';
 import { Injectable, Inject } from '@nestjs/common';
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { RedisKeysEnum } from './redis.keys';
+import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
+import { RESULT } from '../result.enum';
 
 @Injectable()
 export class RedisService {
@@ -41,7 +43,14 @@ export class RedisService {
       const result = await this.cacheManager.get(key);
       return result === 'pong' ? 'PONG' : 'ERROR';
     } catch (error) {
-      throw new Error('Redis ping failed');
+      const about = RESULT.REDIS_PING_FAILED;
+
+      Log(LogType.ERROR, RedisService.name, this.ping.name, LogAction.FAILED, {
+        about,
+        error,
+      });
+
+      throw new Error(RESULT.REDIS_PING_FAILED);
     }
   }
 }
