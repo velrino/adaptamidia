@@ -11,6 +11,8 @@ import React, {
 import Label from "@/components/form/Label";
 import {
   IApiAdvertisementItem,
+  IApiGroupCompanyUnitsRequest,
+  IApiGroupCompanyUnitsResponseItem,
   IApiUnitItemResponse,
 } from "@/backend/api/api.interface";
 import { DateHelper, DateHelperFormat, DateInputStyle } from "@/utils/date";
@@ -24,7 +26,7 @@ import {
 import dynamic from "next/dynamic";
 import SelectReact from "react-select";
 import AdvertisementModalUnits from "./AdvertisementModalUnits";
-import { IReactSelectOption } from "@/interfaces/general";
+import { IReactSelectOption, IToastType } from "@/interfaces/general";
 import { SumAllDevices } from "./helper";
 import {
   EnumAdvertisementModalUnit,
@@ -36,12 +38,16 @@ import {
   FormatCurrency,
   FormatThousand,
   GenerateNumberRangeAsOptions,
+  GetErrorMessage,
   SumUnitPeriodNative,
 } from "@/utils/generic";
 import { AdPeriod, AdPeriodText } from "@/interfaces/ads";
 import { BsCashCoin } from "react-icons/bs";
 import { IAdvertisementModalCommonProps } from "./interface";
 import Select from "@/components/form/Select";
+import { useSession } from "next-auth/react";
+import { useToast } from "@/context/ToastContext";
+import { API } from "@/backend/api/api.endpoints";
 
 const LazyMap = dynamic(() => import("./Ads/Map"), {
   ssr: false,
@@ -64,6 +70,9 @@ const defaultFormReport: IDefaultFormReport = {
 
 const AdvertisementModalLocal = memo(
   ({ data, onUpdate }: IAdvertisementModalCommonProps) => {
+    const { data: session } = useSession();
+    const { showToast } = useToast();
+
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
     const maxStartDate = useMemo(
@@ -191,27 +200,55 @@ const AdvertisementModalLocal = memo(
     const [unitsOptions, setUnitsOptions] = useState<IReactSelectOption[]>([]);
     const [isUnitsLoading, setIsUnitsLoading] = useState(false);
 
-    const fetchUnitsOptions = useCallback(async () => {
-      setIsUnitsLoading(true);
-      try {
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        const companyUnitList = CompanyUnitsGroupdMock.data
-          .map((item) => ({
-            value: item.neighborhood,
-            label: `${item.city} - ${item.neighborhood}`,
-          }))
-          .sort((a, b) => a.label.localeCompare(b.label));
-        setUnitsOptions(companyUnitList);
-      } catch (error) {
-        console.error("Error fetching units options:", error);
-      } finally {
-        setIsUnitsLoading(false);
-      }
-    }, []);
+    const getResponse = useCallback(
+      async (apiQuery: IApiGroupCompanyUnitsRequest) => {
+        if (!session?.api_session) {
+          return;
+        }
+
+        setIsUnitsLoading(true);
+        try {
+          const query: IApiGroupCompanyUnitsRequest = {
+            // page: currentPage,
+            // limit: 100,
+            // popular_time: true,
+            ...apiQuery,
+          };
+
+          const response = await API.company_units.group(
+            session.api_session.access_token,
+            query
+          );
+
+          const responseData = await response.json();
+
+          if (responseData?.error) {
+            showToast(GetErrorMessage(responseData.error), IToastType.ERROR);
+          } else if (response.ok) {
+            const companyUnitList = responseData.data
+              .map((item: IApiGroupCompanyUnitsResponseItem) => ({
+                value: item.neighborhood,
+                label: `${item.city} - ${item.neighborhood}`,
+              }))
+              .sort((a: IReactSelectOption, b: IReactSelectOption) =>
+                a.label.localeCompare(b.label)
+              );
+            setUnitsOptions(companyUnitList);
+          }
+        } catch (error) {
+          showToast(GetErrorMessage(error), IToastType.ERROR);
+        } finally {
+          setIsUnitsLoading(false);
+        }
+      },
+      [session?.api_session, showToast]
+    );
 
     useEffect(() => {
-      fetchUnitsOptions();
-    }, [fetchUnitsOptions]);
+      if (session?.api_session) {
+        getResponse({});
+      }
+    }, [getResponse, session?.api_session]);
 
     const advertisementModalUnitsCallback = useCallback(
       (current: IAdvertisementModalUnitCallback) => {

@@ -170,6 +170,25 @@ export interface IApiPaginateCompanies extends IApiPaginateParameters {
 
 // END COMPANY
 
+export interface IApiGroupCompanyUnitsRequest {
+  city?: string[];
+  state?: string[];
+  country?: string[];
+  neighborhood?: string[];
+}
+
+export interface IApiGroupCompanyUnitsResponseItem {
+  neighborhood: string;
+  city: string;
+  state: string;
+  country: string;
+  count: number;
+}
+
+export interface IApiGroupCompanyUnitsResponse {
+  data: IApiGroupCompanyUnitsResponseItem[];
+}
+
 // START UNIT
 
 export interface IApiPaginateCompanyUnits extends IApiPaginateParameters {

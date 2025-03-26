@@ -1,6 +1,7 @@
 import {
   IApiAuthLogin,
   IApiCreateCompanyUnitRequest,
+  IApiGroupCompanyUnitsRequest,
   IApiPaginateCompanies,
   IApiPaginateCompanyUnits,
   IApiRequestMethod,
@@ -75,6 +76,14 @@ export const API = {
       return ApiResources.request({
         method: IApiRequestMethod.PUT,
         path: `/company/unit/${id}`,
+        data,
+        access_token,
+      });
+    },
+    async group(access_token: string, data: IApiGroupCompanyUnitsRequest) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: "/company/unit/group",
         data,
         access_token,
       });
