@@ -46,6 +46,7 @@ import Select from "@/components/form/Select";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/context/ToastContext";
 import { API } from "@/backend/api/api.endpoints";
+import { useLoading } from "@/context/LoadingContext";
 
 const LazyMap = dynamic(() => import("./Ads/Map"), {
   ssr: false,
@@ -69,6 +70,7 @@ const defaultFormReport: IDefaultFormReport = {
 const AdvertisementModalLocal = memo(
   ({ data, onUpdate }: IAdvertisementModalCommonProps) => {
     const { data: session } = useSession();
+    const { showFullScreenLoading, hideFullScreenLoading } = useLoading();
     const { showToast } = useToast();
 
     const [startDate, setStartDate] = useState<Date>();
@@ -133,6 +135,7 @@ const AdvertisementModalLocal = memo(
         }
 
         setIsUnitsLoading(true);
+        showFullScreenLoading();
         try {
           const query: IApiPaginateCompanyUnits = {
             // page: currentPage,
@@ -165,9 +168,15 @@ const AdvertisementModalLocal = memo(
           showToast(GetErrorMessage(error), IToastType.ERROR);
         } finally {
           setIsUnitsLoading(false);
+          hideFullScreenLoading();
         }
       },
-      [session?.api_session, showToast]
+      [
+        session?.api_session,
+        showToast,
+        showFullScreenLoading,
+        hideFullScreenLoading,
+      ]
     );
 
     const lastNeighborhoods = useRef<string[]>(data.neighborhood || []);
