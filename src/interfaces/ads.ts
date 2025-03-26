@@ -16,6 +16,13 @@ export enum AdStatus {
   ARCHIVED = "ARCHIVED",
 }
 
+export const AdStatusOptions: IReactSelectOption[] = [
+  { value: AdStatus.ACTIVE, label: "Ativo" },
+  { value: AdStatus.REVIEW, label: "Em revisão" },
+  { value: AdStatus.INACTIVE, label: "Inativo" },
+  { value: AdStatus.ARCHIVED, label: "Arquivado" },
+].sort((a, b) => a.label.localeCompare(b.label));
+
 export enum AdPeriod {
   DAILY = "DAILY",
   WEEKLY = "WEEKLY",

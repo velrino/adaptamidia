@@ -7,7 +7,7 @@ import {
   AudienceOptionsMock,
   SegmentOptionsMock,
 } from "@/backend/mock/advertisements";
-import { AdsAudience } from "@/interfaces/ads";
+import { AdsAudience, AdStatusOptions } from "@/interfaces/ads";
 import { IReactSelectOption } from "@/interfaces/general";
 import { CompaniesMockData } from "@/backend/mock/client";
 import { IAdvertisementModalCommonProps } from "./interface";
@@ -91,7 +91,6 @@ const AdvertisementModalAbout = memo(
     useEffect(() => {
       fetchAdvertiserOptions();
     }, [fetchAdvertiserOptions]);
-    // End Advertiser
 
     return (
       <div className="overflow-y-auto min-h-[75vh] max-h-[75vh] px-6">
@@ -168,6 +167,25 @@ const AdvertisementModalAbout = memo(
                     );
                     updateForm("audience", selectedOptions);
                   }}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="title">Status</Label>
+                <Select
+                  placeholder={`Selecione o status`}
+                  value={
+                    AdStatusOptions.find(
+                      (option) => option.value === data.status
+                    ) || null
+                  }
+                  options={AdStatusOptions}
+                  onChange={(currentOption) =>
+                    updateForm(
+                      "status",
+                      currentOption ? currentOption.value : null
+                    )
+                  }
                 />
               </div>
             </>

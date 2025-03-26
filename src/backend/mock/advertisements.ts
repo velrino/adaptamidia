@@ -257,9 +257,9 @@ export const AdsRecordDefault: IApiAdvertisementItem = {
   spotlight: false,
   items: [
     {
-      title: "Item 1",
-      description: "Description for Item 1",
-      seconds: 5,
+      title: String(),
+      description: String(),
+      seconds: 0,
       source: "/images/ads/clients/1.png",
       type: AdType.IMAGE,
     },
