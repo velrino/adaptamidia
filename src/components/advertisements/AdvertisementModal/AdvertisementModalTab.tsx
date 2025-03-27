@@ -45,7 +45,7 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
             </div>
           </div>
           <div className="aspect-video">
-            <AdvertisementComponent onUpdate={onUpdate} />
+            <AdvertisementComponent data={data} onUpdate={onUpdate} />
           </div>
         </div>
       ),

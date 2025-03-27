@@ -11,6 +11,7 @@ import { AdsAudience, AdStatusOptions } from "@/interfaces/ads";
 import { IReactSelectOption } from "@/interfaces/general";
 import { IAdvertisementModalCommonProps } from "./interface";
 import { CompanySelect } from "@/reusable/CompanySelect/CompanySelect";
+import { EnumApiCompanyType } from "@/backend/api/api.enum";
 
 const AdvertisementModalAbout = memo(
   ({ data, onUpdate }: IAdvertisementModalCommonProps) => {
@@ -84,6 +85,10 @@ const AdvertisementModalAbout = memo(
                 <Label htmlFor="title">Anunciante</Label>
                 <CompanySelect
                   value={data.company}
+                  queryBuilder={{
+                    type: EnumApiCompanyType.ADVERTISER,
+                    limit: 25,
+                  }}
                   onChange={(companyId) => {
                     updateForm("company", companyId);
                   }}

@@ -42,10 +42,6 @@ export default function AdvertisementModal({
   };
 
   const [data, setData] = useState<IApiAdvertisementItem>(advertisementData);
-  // const [companySelected, setCompanySelected] = useState<string | null>(
-  //   // advertisementData.company?._id
-  //   advertisementData?.company
-  // );
 
   const handleUpdate = (updatedData: Partial<IApiAdvertisementItem>) => {
     setData((prev) => ({ ...prev, ...updatedData }));

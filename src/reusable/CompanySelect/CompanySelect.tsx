@@ -12,10 +12,15 @@ import { IReactSelectOption, IToastType } from "@/interfaces/general";
 
 interface CompanySelectProps {
   value: string | null;
+  queryBuilder: IApiPaginateCompanies;
   onChange: (companyId: string | null) => void;
 }
 
-export const CompanySelect = ({ value, onChange }: CompanySelectProps) => {
+export const CompanySelect = ({
+  value,
+  onChange,
+  queryBuilder,
+}: CompanySelectProps) => {
   const { data: session } = useSession();
   const { showToast } = useToast();
   const [companySearchTerm, setCompanySearchTerm] = useState(String());
@@ -34,6 +39,7 @@ export const CompanySelect = ({ value, onChange }: CompanySelectProps) => {
         const query: IApiPaginateCompanies = {
           page: 1,
           limit: 20,
+          ...queryBuilder,
           ...apiQuery,
         };
 

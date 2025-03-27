@@ -10,48 +10,67 @@ import { API } from "@/backend/api/api.endpoints";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/context/ToastContext";
 import { IToastType } from "@/interfaces/general";
+import { useLoading } from "@/context/LoadingContext";
 
 export function AdvertisementComponent({
+  data,
   onUpdate,
 }: {
-  onUpdate: (data: Partial<IApiAdvertisementItem>) => void;
+  data: IApiAdvertisementItem;
+  onUpdate: (payload: Partial<IApiAdvertisementItem>) => void;
 }) {
   const { data: session } = useSession();
   const { showToast } = useToast();
+  const { showFullScreenLoading, hideFullScreenLoading } = useLoading();
 
   const handleCroppedImage = async (croppedBlob: Blob, type: AdType) => {
     if (!session?.api_session) {
       return;
     }
 
-    const response = await API.files.upload(session.api_session.access_token, {
-      file: croppedBlob,
-      company_id: "67d226d9b502526b43e5d1ed",
-      foldername: "ads",
-      bucket: "xmp-midia",
-    });
+    if (!data?.company) {
+      showToast("Escolha um Anunciante!", IToastType.INFO);
+      return;
+    }
 
-    const responseData = await response.json();
+    try {
+      showFullScreenLoading();
+      const response = await API.files.upload(
+        session.api_session.access_token,
+        {
+          file: croppedBlob,
+          company_id: data.company,
+          foldername: "ads",
+          bucket: "xmp-midia",
+        }
+      );
 
-    if (responseData?.error && responseData?.message) {
-      showToast(GetErrorMessage(responseData.message), IToastType.ERROR);
-    } else if (response.ok && responseData?.file?.public_url) {
-      showToast(`Upload feito com sucesso!`, IToastType.SUCCESS);
+      const responseData = await response.json();
 
-      const newItem: IApiAdvertisementItemItem = {
-        id: responseData?.file?._id,
-        description: String(),
-        seconds: 30,
-        source: responseData?.file?.public_url,
-        title: String(),
-        type,
-      };
+      if (responseData?.error && responseData?.message) {
+        showToast(GetErrorMessage(responseData.message), IToastType.ERROR);
+      } else if (response.ok && responseData?.file?.public_url) {
+        showToast(`Upload feito com sucesso!`, IToastType.SUCCESS);
 
-      const updatedData = { items: [newItem], type };
+        const newItem: IApiAdvertisementItemItem = {
+          id: responseData?.file?._id,
+          description: String(),
+          seconds: 30,
+          source: responseData?.file?.public_url,
+          title: String(),
+          type,
+        };
 
-      onUpdate(updatedData);
-    } else {
-      showToast(`Failed upload!`, IToastType.ERROR);
+        const updatedData = { items: [newItem], type };
+
+        onUpdate(updatedData);
+      } else {
+        showToast(`Failed upload!`, IToastType.ERROR);
+      }
+    } catch (error) {
+      showToast(GetErrorMessage(error), IToastType.ERROR);
+    } finally {
+      hideFullScreenLoading();
     }
   };
 
@@ -59,11 +78,19 @@ export function AdvertisementComponent({
 
   return (
     <div className="flex items-center justify-center min-h-full text-white text-center">
-      <MediaCropperModal
-        open={modalMediaCropper.isOpen}
-        currentModal={modalMediaCropper}
-        onCropComplete={handleCroppedImage}
-      />
+      {!data.company && (
+        <div>
+          Selecione um <strong>Anúnciante</strong> antes de fazer upload
+        </div>
+      )}
+
+      {data.company && (
+        <MediaCropperModal
+          open={modalMediaCropper.isOpen}
+          currentModal={modalMediaCropper}
+          onCropComplete={handleCroppedImage}
+        />
+      )}
     </div>
   );
 }
