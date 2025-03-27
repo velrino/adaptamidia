@@ -5,6 +5,7 @@ import {
   IsDateString,
   IsBoolean,
   IsEnum,
+  IsMongoId,
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 
@@ -16,6 +17,16 @@ export enum FromEnum {
 export enum SortEnum {
   ASC = 'asc',
   DESC = 'desc',
+}
+
+export enum ActionType {
+  CREATE = 'CREATE',
+  UPDATE = 'UPDATE',
+}
+
+export class FindByIdParamsDto {
+  @IsMongoId({ message: 'INVALID_ID_FORMAT' })
+  id: string;
 }
 
 export class PaginateDto {

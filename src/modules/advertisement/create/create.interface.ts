@@ -13,17 +13,15 @@ import { Type } from 'class-transformer';
 import { AdvertisementType } from '../advertisement.interface';
 
 export class CreateAdvertisementItemDto {
-  // @IsNotEmpty()
-  // @IsString()
-  // title: string;
+  @IsString()
+  title: string;
 
-  // @IsNotEmpty()
-  // @IsString()
-  // description: string;
+  @IsString()
+  description: string;
 
-  // @IsNotEmpty()
-  // @IsNumber()
-  // seconds: number;
+  @IsNotEmpty()
+  @IsNumber()
+  seconds: number;
 
   @IsNotEmpty()
   @IsString()
@@ -35,6 +33,10 @@ export class CreateAdvertisementItemDto {
 }
 
 export class CreateAdvertisementDto {
+  @IsNotEmpty()
+  @IsString()
+  status: string;
+
   @IsOptional()
   @IsMongoId()
   company: string;
@@ -62,4 +64,16 @@ export class CreateAdvertisementDto {
   @IsDate()
   @Type(() => Date)
   end_date: Date;
+
+  @IsOptional()
+  @IsArray()
+  @IsMongoId({ each: true })
+  @Type(() => String)
+  units: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @Type(() => String)
+  neighborhood: string[];
 }

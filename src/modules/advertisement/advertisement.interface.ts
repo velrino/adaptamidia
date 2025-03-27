@@ -11,4 +11,5 @@ export enum AdvertisementStatus {
   ACTIVE = 'ACTIVE',
   INACTIVE = 'INACTIVE',
   REVIEW = 'REVIEW',
+  ARCHIVED = 'ARCHIVED',
 }

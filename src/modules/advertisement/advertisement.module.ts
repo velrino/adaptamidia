@@ -6,7 +6,13 @@ import { CreateAdvertisementService } from './create/create.service';
 import { AdvertisementService } from './advertisement.service';
 
 @Module({
-  imports: [MongooseModule.forFeature([MongoCollection.advertisement])],
+  imports: [
+    MongooseModule.forFeature([
+      MongoCollection.advertisement,
+      MongoCollection.companies,
+      MongoCollection.company_units,
+    ]),
+  ],
   controllers: [AdvertisementController],
   providers: [AdvertisementService, CreateAdvertisementService],
 })

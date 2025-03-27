@@ -7,14 +7,14 @@ import {
 } from './advertisement.interface';
 
 export class AdvertisementItem {
-  // @Prop({ type: String, required: true })
-  // title: string;
+  @Prop({ type: String, required: false, default: String() })
+  title: string;
 
-  // @Prop({ type: String, required: true })
-  // description: string;
+  @Prop({ type: String, required: false, default: String() })
+  description: string;
 
-  // @Prop({ type: Number, required: true })
-  // seconds: number;
+  @Prop({ type: Number, required: false, default: 0 })
+  seconds: number;
 
   @Prop({ type: String, required: true })
   source: string;
@@ -58,6 +58,43 @@ export class Advertisement {
 
   @Prop({ required: true, type: Date })
   end_date: Date;
+
+  @Prop({
+    required: false,
+    type: [Types.ObjectId],
+    ref: 'CompanyUnit',
+    index: true,
+    default: [],
+    set: (arr: Types.ObjectId[]) =>
+      Array.from(new Set(arr.map((id) => id.toString()))).map(
+        (id) => new Types.ObjectId(id),
+      ),
+  })
+  units: Types.ObjectId[];
+
+  @Prop({
+    required: false,
+    type: [String],
+    default: [],
+    set: (arr: string[]) => Array.from(new Set(arr)),
+  })
+  neighborhood: string[];
+
+  @Prop({
+    required: false,
+    type: [String],
+    default: [],
+    set: (arr: string[]) => Array.from(new Set(arr)),
+  })
+  audience: string[];
+
+  @Prop({
+    required: false,
+    type: [String],
+    default: [],
+    set: (arr: string[]) => Array.from(new Set(arr)),
+  })
+  segment: string[];
 }
 
 export type AdvertisementDocument = Advertisement & Document;
