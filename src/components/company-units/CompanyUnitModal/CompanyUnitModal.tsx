@@ -50,14 +50,13 @@ export default function CompanyUnitModal({
   onCloseCallback,
 }: ICompanyUnitModalProps) {
   const { data: session } = useSession();
+  const { showToast } = useToast();
 
   const handleClose = (data?: IApiUnitItemResponse) => {
     if (onCloseCallback) {
       onCloseCallback(data);
     }
   };
-
-  const { showToast } = useToast();
 
   const [data, setData] = useState<IApiUnitItemResponse>(record);
   const [companySelected, setCompanySelected] = useState<string | null>(

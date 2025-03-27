@@ -1,11 +1,13 @@
 import { GetExtensionFromMimeType } from "@/utils/generic";
 import {
   IApiAuthLogin,
+  IApiCreateAdvertisementRequest,
   IApiCreateCompanyUnitRequest,
   IApiGroupCompanyUnitsRequest,
   IApiPaginateCompanies,
   IApiPaginateCompanyUnits,
   IApiRequestMethod,
+  IApiUpdateAdvertisementRequest,
   IApiUpdateCompanyRequest,
   IApiUpdateCompanyUnitRequest,
   IApiUploadFileRequest,
@@ -19,6 +21,36 @@ export const API = {
         method: IApiRequestMethod.POST,
         path: "/auth/login",
         data,
+      });
+    },
+  },
+  advertisement: {
+    // async paginate(access_token: string, data: IApiPaginateCompanyUnits) {
+    //   return ApiResources.request({
+    //     method: IApiRequestMethod.GET,
+    //     path: "/company/unit",
+    //     data,
+    //     access_token,
+    //   });
+    // },
+    async create(access_token: string, data: IApiCreateAdvertisementRequest) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/advertisement",
+        data,
+        access_token,
+      });
+    },
+    async update(
+      access_token: string,
+      id: string,
+      data: IApiUpdateAdvertisementRequest
+    ) {
+      return ApiResources.request({
+        method: IApiRequestMethod.PUT,
+        path: `/advertisement/${id}`,
+        data,
+        access_token,
       });
     },
   },

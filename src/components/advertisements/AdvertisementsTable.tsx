@@ -302,6 +302,7 @@ export default function AdvertisementsTable() {
         <AdvertisementModal
           action={contentAction}
           advertisementData={currentAdvertisement}
+          setContentAction={setContentAction}
           onCloseCallback={() => {
             setCurrentAdvertisement(null);
             console.log("Modal closed!");

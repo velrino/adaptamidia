@@ -93,6 +93,39 @@ export interface IApiAdvertisementItem {
   audience: AdsAudience[];
   neighborhood: string[];
   segments: string[];
+  units: string[];
+}
+
+export interface IApiCreateAdvertisementRequest {
+  company: string;
+  title: string;
+  description: string;
+  type: AdType;
+  items: IApiAdvertisementItemItem[];
+  seconds: number;
+  status: AdStatus;
+  neighborhood: string[];
+  audience: string[];
+  segments: string[];
+  units: string[];
+  start_date: Date;
+  end_date: Date;
+}
+
+export interface IApiUpdateAdvertisementRequest {
+  company: string;
+  title: string;
+  description: string;
+  type: AdType;
+  items: IApiAdvertisementItemItem[];
+  seconds: number;
+  status: AdStatus;
+  neighborhood: string[];
+  audience: string[];
+  segments: string[];
+  units: string[];
+  start_date: Date;
+  end_date: Date;
 }
 
 // START NEWS

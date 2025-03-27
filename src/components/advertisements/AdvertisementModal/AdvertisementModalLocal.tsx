@@ -249,6 +249,10 @@ const AdvertisementModalLocal = memo(
         SumUnitPeriodNative(units, currentPeriod, "price_total")
       );
       setInvestmentText(result);
+      updateForm(
+        "units",
+        units.map((unit) => unit._id)
+      );
     }, [units, currentPeriod]);
 
     const updateFormReport = useCallback(
