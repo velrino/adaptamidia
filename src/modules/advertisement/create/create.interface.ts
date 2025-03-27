@@ -41,9 +41,11 @@ export class CreateAdvertisementDto {
   @IsMongoId()
   company: string;
 
-  @IsNotEmpty()
   @IsString()
   title: string;
+
+  @IsString()
+  description: string;
 
   @IsNotEmpty()
   @IsNumber()

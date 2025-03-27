@@ -54,7 +54,7 @@ export class CreateAdvertisementService extends AdvertisementService {
         _id: parameters.company,
       });
 
-      if (parameters.units.length !== countUnits) {
+      if (!countUnits) {
         throw new HttpException(
           RESULT.INVALID_COMPANY_ID,
           HttpStatus.NOT_FOUND,

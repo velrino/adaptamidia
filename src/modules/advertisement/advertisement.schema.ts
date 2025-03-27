@@ -33,8 +33,11 @@ export class Advertisement {
   })
   company: Types.ObjectId;
 
-  @Prop({ required: true })
+  @Prop({ type: String, required: false, default: String() })
   title: string;
+
+  @Prop({ type: String, required: false, default: String() })
+  description: string;
 
   @Prop({ required: true, enum: AdvertisementType, uppercase: true })
   type: AdvertisementType;
