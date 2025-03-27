@@ -76,7 +76,7 @@ export default function SignInForm() {
       if (response?.error) {
         showToast(response?.error, IToastType.ERROR);
       } else if (response?.ok) {
-        // router.replace("/");
+        router.push("/");
         window.location.reload();
       }
     } catch (e: unknown) {
