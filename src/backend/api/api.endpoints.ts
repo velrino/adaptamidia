@@ -5,6 +5,7 @@ import {
   IApiCreateCompanyUnitRequest,
   IApiGroupCompanyUnitsRequest,
   IApiPaginateAdvertisement,
+  IApiPaginateAdvertisementPreview,
   IApiPaginateCompanies,
   IApiPaginateCompanyUnits,
   IApiRequestMethod,
@@ -52,6 +53,13 @@ export const API = {
         path: `/advertisement/${id}`,
         data,
         access_token,
+      });
+    },
+    async preview(data: IApiPaginateAdvertisementPreview) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: "/advertisement/preview",
+        data,
       });
     },
   },

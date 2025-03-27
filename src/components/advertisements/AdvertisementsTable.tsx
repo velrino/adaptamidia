@@ -15,7 +15,7 @@ import {
   IApiAdvertisementResponse,
   IApiPaginateAdvertisement,
 } from "@/backend/api/api.interface";
-import { AdSortKey } from "@/interfaces/ads";
+import { AdSortKey, AdType } from "@/interfaces/ads";
 import { ContentAction, IToastType, SortOrder } from "@/interfaces/general";
 import { AdsRecordDefault } from "@/backend/mock/advertisements";
 import { faker } from "@faker-js/faker";
@@ -256,26 +256,28 @@ export default function AdvertisementsTable() {
                       <div className="flex items-center gap-3">
                         {/* Imagem */}
                         <div className="w-10 h-10 overflow-hidden rounded-full">
-                          <Image
-                            width={100} // Ajustado para manter proporção com o container
-                            height={100}
-                            src={
-                              item.items[
-                                faker.number.int({
-                                  min: 0,
-                                  max: Math.max(item.items.length - 1, 0), // Garante índice válido
-                                })
-                              ]?.source || "/placeholder.svg"
-                            }
-                            alt="title"
-                            className="w-full h-full object-cover"
-                            style={{ objectPosition: "center" }}
-                          />
+                          {item.type === AdType.IMAGE && (
+                            <Image
+                              width={100} // Ajustado para manter proporção com o container
+                              height={100}
+                              src={
+                                item.items[
+                                  faker.number.int({
+                                    min: 0,
+                                    max: Math.max(item.items.length - 1, 0), // Garante índice válido
+                                  })
+                                ]?.source || "/placeholder.svg"
+                              }
+                              alt="title"
+                              className="w-full h-full object-cover"
+                              style={{ objectPosition: "center" }}
+                            />
+                          )}
                         </div>
 
                         {/* Texto */}
                         <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                          {item.title}
+                          {item.title || `Rascunho #${i + 1}`}
                         </span>
                       </div>
                     </TableCell>

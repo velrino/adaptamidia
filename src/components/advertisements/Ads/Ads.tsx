@@ -1,16 +1,17 @@
 "use client";
 
 import {
-  IApiAdvertisementItem,
   IApiAdvertisementResponse,
+  IApiPaginateAdvertisement,
+  IApiPaginateAdvertisementPreview,
 } from "@/backend/api/api.interface";
-import {
-  AdvertisementsMock,
-  AdvertisementsMockData,
-} from "@/backend/mock/advertisements";
+// import {
+//   AdvertisementsMock,
+//   AdvertisementsMockData,
+// } from "@/backend/mock/advertisements";
 import React, { useState, useEffect, useCallback } from "react";
 import { newsMockData } from "@/backend/mock/news";
-import { ShuffleArray } from "@/utils/generic";
+import { GetErrorMessage, ShuffleArray } from "@/utils/generic";
 import {
   AdsCurrentType,
   DisplayThemes,
@@ -19,12 +20,17 @@ import {
 } from "@/interfaces/ads";
 import { useSearchParams } from "next/navigation";
 import { Display } from "./Display";
+import { IToastType } from "@/interfaces/general";
+import { useToast } from "@/context/ToastContext";
+import { API } from "@/backend/api/api.endpoints";
 
 export default function AdsComponent() {
   const [theme, setTheme] = useState<IDisplayTheme>(DisplayThemes.green);
+  const { showToast } = useToast();
 
   const searchParams = useSearchParams();
   const accessToken = searchParams.get("access_token") || null;
+  const adsIdForPreview = searchParams.get("id") || null;
   const preview = searchParams.get("preview") || null;
   const themeInformed = searchParams.get("theme") || "green";
 
@@ -37,82 +43,94 @@ export default function AdsComponent() {
   }, [accessToken, preview, themeInformed]);
 
   const [list, setList] = useState<IAdsCurrentItem[]>([]);
-  const [response, setResponse] = useState<IApiAdvertisementResponse>();
 
-  const handleResponse = useCallback(async (): Promise<
-    IApiAdvertisementItem[]
-  > => {
-    return new Promise<IApiAdvertisementItem[]>((resolve) => {
-      setTimeout(() => {
-        resolve(response?.data || []);
-      }, 1);
-    });
-  }, [response]);
+  const [responseAdvertisement, setResponseAdvertisement] =
+    useState<IApiAdvertisementResponse>();
+  const getResponse = useCallback(
+    async (apiQuery: IApiPaginateAdvertisement) => {
+      if (!accessToken) {
+        showToast("Informe o Access Token", IToastType.ERROR);
+        return;
+      }
+
+      try {
+        const query: IApiPaginateAdvertisement = {
+          page: 1,
+          limit: 100,
+          ...apiQuery,
+        };
+
+        const response = await API.advertisement.paginate(accessToken, query);
+
+        const data = await response.json();
+
+        if (data?.error) {
+          showToast(GetErrorMessage(data.error), IToastType.ERROR);
+        } else if (response.ok) {
+          setResponseAdvertisement(data);
+        }
+      } catch (error) {
+        showToast(GetErrorMessage(error), IToastType.ERROR);
+      }
+    },
+    [accessToken, showToast, setResponseAdvertisement]
+  );
+
+  const getPreview = useCallback(
+    async (apiQuery: IApiPaginateAdvertisementPreview) => {
+      try {
+        const query: IApiPaginateAdvertisementPreview = {
+          page: 1,
+          limit: 1,
+          ...apiQuery,
+        };
+
+        const response = await API.advertisement.preview(query);
+
+        const data = await response.json();
+
+        if (data?.error) {
+          showToast(GetErrorMessage(data.error), IToastType.ERROR);
+        } else if (response.ok) {
+          setResponseAdvertisement(data);
+        }
+      } catch (error) {
+        showToast(GetErrorMessage(error), IToastType.ERROR);
+      }
+    },
+    [showToast, setResponseAdvertisement]
+  );
 
   useEffect(() => {
-    if (!response) return;
+    if (adsIdForPreview) {
+      getPreview({
+        id: adsIdForPreview,
+      });
+    } else {
+      getResponse({});
+    }
+  }, [getResponse, getPreview, adsIdForPreview]);
 
-    handleResponse().then(() => {
-      const example = [...AdvertisementsMockData.data].map((item) => ({
+  useEffect(() => {
+    if (!responseAdvertisement) return;
+
+    if (adsIdForPreview) {
+      const adsForPreview = [...responseAdvertisement.data].map((item) => ({
         data: item,
         type: AdsCurrentType.ADVERTISEMENT,
       }));
-      // const ads = [...data].map((item) => ({
-      //   data: item,
-      //   type: AdsCurrentType.ADVERTISEMENT,
-      // }));
-      const news = ShuffleArray(
-        [...newsMockData.data].map((item) => ({
-          data: item,
-          type: AdsCurrentType.NEWS,
-        }))
-      );
 
-      const combinedList = [
-        ...example,
-        ...news,
-        ...example,
-        ...example,
-        ...example,
-      ];
+      const randomNews = ShuffleArray(newsMockData.data);
+      const news = [randomNews[0], randomNews[1]].map((item) => ({
+        data: item,
+        type: AdsCurrentType.NEWS,
+      }));
 
-      const shuffledList = ShuffleArray(combinedList);
-
-      setList(() => [
-        example[0],
-        example[1],
-        news[0],
-        example[2],
-        news[1],
-        example[3],
-        example[4],
-        ...shuffledList,
-      ]);
-    });
-  }, [response, handleResponse]);
-
-  const getResponse = useCallback(async () => {
-    const currentResponse = AdvertisementsMock({ page: 1 });
-    setResponse(currentResponse);
-
-    return new Promise<IApiAdvertisementItem[]>((resolve) => {
-      setTimeout(() => {
-        resolve(currentResponse.data);
-      }, 1);
-    });
-  }, []);
-
-  useEffect(() => {
-    getResponse();
-  }, [getResponse]);
+      setList([...adsForPreview, ...news]);
+    }
+  }, [responseAdvertisement]);
 
   return (
-    <Display
-      list={list}
-      theme={theme}
-      preview={{
-        show: false,
-      }}
-    />
+    <>{list.length && <Display list={list} theme={theme} preview={false} />}</>
   );
 }

@@ -6,11 +6,22 @@ import { IAdvertisementModalCommonProps } from "./interface";
 import { Display } from "../Ads/Display";
 import { AdsCurrentType, DisplayThemes } from "@/interfaces/ads";
 import { AdvertisementComponent } from "./AdvertisementModalItems";
+import { useSession } from "next-auth/react";
 
 const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
   data,
   onUpdate,
 }: IAdvertisementModalCommonProps) => {
+  const { data: session } = useSession();
+
+  const openPreview = () => {
+    if (!session?.api_session || !data._id) {
+      return;
+    }
+
+    window.open(`/display?id=${data._id}`, "_blank");
+  };
+
   const tabs = [
     {
       id: "LOCAL",
@@ -28,7 +39,18 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
       content: (
         <div className="grid grid-cols-2 gap-4 p-4">
           <div className="text-black dark:text-white text-center">
-            <div className="h-10">Preview</div>
+            {data._id && (
+              <div className="cursor-pointer">
+                <div className="h-10" onClick={openPreview}>
+                  Abrir no Display
+                </div>
+              </div>
+            )}
+            {!data._id && (
+              <div>
+                <div className="h-10">Salve para ver no Display</div>
+              </div>
+            )}
             <div className="flex justify-center max-h-0">
               <div className="scale-45">
                 <Display
@@ -37,9 +59,7 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
                     type: AdsCurrentType.ADVERTISEMENT,
                   }))}
                   theme={DisplayThemes.brand}
-                  preview={{
-                    show: true,
-                  }}
+                  preview={true}
                 />
               </div>
             </div>

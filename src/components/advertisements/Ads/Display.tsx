@@ -50,11 +50,7 @@ const updateAdStats = (adIndex: number) => {
 export interface IDisplay {
   list: IAdsCurrentItem[];
   theme: IDisplayTheme;
-  preview: {
-    show: boolean;
-    item?: IAdsCurrentItem;
-    previewUrl?: string;
-  };
+  preview: boolean;
   style?: {
     container?: string;
   };
@@ -101,7 +97,7 @@ export function Display({ list, theme, preview, style }: IDisplay) {
 
         setCurrentAdIndex(nextIndex);
 
-        if (!preview.show) {
+        if (preview === false) {
           sendAPI();
         }
       }, seconds * 1000);

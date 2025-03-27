@@ -59,6 +59,13 @@ export interface IApiUserResponse {
 }
 
 export interface IApiPaginateAdvertisement extends IApiPaginateParameters {
+  id?: string[] | string;
+  title?: string;
+}
+
+export interface IApiPaginateAdvertisementPreview
+  extends IApiPaginateParameters {
+  id: string[] | string;
   title?: string;
 }
 
