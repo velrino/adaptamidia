@@ -10,9 +10,9 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.enableCors();
 
-  const port = process.env.PORT || 4002;
+  const port = process.env.PORT || 8080;
 
-  await app.listen(port, '0.0.0.0');
+  await app.listen(port);
 
   console.info(
     `Server started on http://0.0.0.0:${port}`,
