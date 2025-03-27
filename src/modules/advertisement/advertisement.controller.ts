@@ -19,8 +19,12 @@ import {
   ActionType,
   FindByIdParamsDto,
 } from 'src/shared/interfaces/paginate.dto';
-import { ListAdvertisementPaginateDto } from './list/list.interface';
+import {
+  ListAdvertisementPaginateDto,
+  ListAdvertisementPreviewPaginateDto,
+} from './list/list.interface';
 import { ListAdvertisementService } from './list/list.service';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller()
 export class AdvertisementController {
@@ -28,6 +32,16 @@ export class AdvertisementController {
     private readonly createAdvertisementService: CreateAdvertisementService,
     private readonly listAdvertisementService: ListAdvertisementService,
   ) {}
+
+  @Get('advertisement/preview')
+  @Throttle({ default: { limit: 50, ttl: 60000 } })
+  preview(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: ListAdvertisementPreviewPaginateDto,
+  ) {
+    console.log({ query: query });
+    return this.listAdvertisementService.executeFromRequest(req, query);
+  }
 
   @Get('advertisement')
   @UseGuards(AuthJwtGuard, PermissionsGuard)

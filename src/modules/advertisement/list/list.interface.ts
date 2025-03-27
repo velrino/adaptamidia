@@ -2,13 +2,15 @@ import { Transform } from 'class-transformer';
 import {
   IsArray,
   IsMongoId,
+  IsNotEmpty,
   IsOptional,
   IsString,
   ValidateIf,
 } from 'class-validator';
+import { NormalizeToArray } from 'src/shared/general';
 import { PaginateDto } from 'src/shared/interfaces/paginate.dto';
 
-export class ListAdvertisementPaginateDto extends PaginateDto {
+export class ListAdvertisementPaginateDefaultDto extends PaginateDto {
   @IsOptional()
   @IsString()
   title: string;
@@ -40,17 +42,20 @@ export class ListAdvertisementPaginateDto extends PaginateDto {
   @IsOptional()
   @IsString({ each: true })
   neighborhood?: string[];
+}
 
+export class ListAdvertisementPaginateDto extends ListAdvertisementPaginateDefaultDto {
   @IsOptional()
-  @Transform(({ value }) => {
-    // Se for string única, transforma em array com 1 elemento
-    if (typeof value === 'string') return [value];
-    // Se for array, retorna direto
-    if (Array.isArray(value)) return value;
-    // Se for undefined/null, retorna undefined
-    return value;
-  })
+  @Transform(({ value }) => NormalizeToArray(value))
   @IsArray()
-  @IsMongoId({ each: true })
+  @IsMongoId({ each: true, message: 'INVALID_ID_FORMAT' })
   id?: string[];
+}
+
+export class ListAdvertisementPreviewPaginateDto extends ListAdvertisementPaginateDefaultDto {
+  @IsNotEmpty()
+  @Transform(({ value }) => NormalizeToArray(value))
+  @IsArray()
+  @IsMongoId({ each: true, message: 'INVALID_ID_FORMAT' })
+  id: string[];
 }

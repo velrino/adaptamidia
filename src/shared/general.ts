@@ -45,3 +45,9 @@ export function GetUserCompany(currentRequest: AuthenticatedRequest) {
   // If no company_id is provided and the user has SUDO permissions, return null.
   return null;
 }
+
+export function NormalizeToArray(value: any): string[] {
+  if (typeof value === 'string') return [value];
+  if (Array.isArray(value)) return value;
+  return [];
+}
