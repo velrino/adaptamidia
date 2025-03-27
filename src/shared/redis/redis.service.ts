@@ -10,6 +10,8 @@ export class RedisService {
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
 
   createKeyByObject(index: string, obj: Record<string, any>) {
+    delete obj.cache;
+
     const parameters_encrypted = createHash('sha256')
       .update(String(JSON.stringify(obj)))
       .digest('hex');

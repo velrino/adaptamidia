@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
   Post,
   Put,
+  Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -17,12 +19,25 @@ import {
   ActionType,
   FindByIdParamsDto,
 } from 'src/shared/interfaces/paginate.dto';
+import { ListAdvertisementPaginateDto } from './list/list.interface';
+import { ListAdvertisementService } from './list/list.service';
 
 @Controller()
 export class AdvertisementController {
   constructor(
     private readonly createAdvertisementService: CreateAdvertisementService,
+    private readonly listAdvertisementService: ListAdvertisementService,
   ) {}
+
+  @Get('advertisement')
+  @UseGuards(AuthJwtGuard, PermissionsGuard)
+  @PermissionsAllowed()
+  list(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: ListAdvertisementPaginateDto,
+  ) {
+    return this.listAdvertisementService.executeFromRequest(req, query);
+  }
 
   @Post('advertisement')
   @UseGuards(AuthJwtGuard, PermissionsGuard)

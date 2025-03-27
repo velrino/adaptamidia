@@ -5,6 +5,7 @@ import {
   AdvertisementStatus,
   AdvertisementType,
 } from './advertisement.interface';
+import { Company } from '../company/company.schema';
 
 export class AdvertisementItem {
   @Prop({ type: String, required: false, default: String() })
@@ -31,7 +32,7 @@ export class Advertisement {
     ref: 'Company',
     index: true,
   })
-  company: Types.ObjectId;
+  company: Types.ObjectId | Company;
 
   @Prop({ type: String, required: false, default: String() })
   title: string;
@@ -97,7 +98,7 @@ export class Advertisement {
     default: [],
     set: (arr: string[]) => Array.from(new Set(arr)),
   })
-  segment: string[];
+  segments: string[];
 }
 
 export type AdvertisementDocument = Advertisement & Document;

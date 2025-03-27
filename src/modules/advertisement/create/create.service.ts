@@ -115,8 +115,6 @@ export class CreateAdvertisementService extends AdvertisementService {
 
   async executeCreate(parameters: CreateAdvertisementDto) {
     try {
-      await this.model.deleteMany({});
-
       const company = new Types.ObjectId(parameters.company);
 
       await this.validate(parameters);

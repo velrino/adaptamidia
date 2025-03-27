@@ -4,6 +4,7 @@ import { MongoCollection } from 'src/shared/mongo.schema';
 import { AdvertisementController } from './advertisement.controller';
 import { CreateAdvertisementService } from './create/create.service';
 import { AdvertisementService } from './advertisement.service';
+import { ListAdvertisementService } from './list/list.service';
 
 @Module({
   imports: [
@@ -14,6 +15,10 @@ import { AdvertisementService } from './advertisement.service';
     ]),
   ],
   controllers: [AdvertisementController],
-  providers: [AdvertisementService, CreateAdvertisementService],
+  providers: [
+    AdvertisementService,
+    CreateAdvertisementService,
+    ListAdvertisementService,
+  ],
 })
 export class AdvertisementModule {}

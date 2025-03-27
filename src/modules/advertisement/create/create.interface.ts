@@ -78,4 +78,10 @@ export class CreateAdvertisementDto {
   @IsString({ each: true })
   @Type(() => String)
   neighborhood: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @Type(() => String)
+  segments: string[];
 }
