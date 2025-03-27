@@ -49,6 +49,10 @@ export class CreateAdvertisementService extends AdvertisementService {
   }
 
   async validate(parameters: CreateAdvertisementDto) {
+    if (!parameters.company) {
+      throw new HttpException(RESULT.INVALID_COMPANY_ID, HttpStatus.NOT_FOUND);
+    }
+
     if (parameters.company) {
       const countUnits = await this.companyModel.countDocuments({
         _id: parameters.company,
