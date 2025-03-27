@@ -84,7 +84,7 @@ const AdvertisementModalAbout = memo(
               <div>
                 <Label htmlFor="title">Anunciante</Label>
                 <CompanySelect
-                  value={data.company._id}
+                  value={data?.company?._id}
                   queryBuilder={{
                     type: EnumApiCompanyType.ADVERTISER,
                     limit: 25,
