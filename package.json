@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "engines": {
-    "node": "23.x.x"
+    "node": "20.x"
   },
   "scripts": {
     "deploy": "nest build && vercel --prod",
