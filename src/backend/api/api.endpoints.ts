@@ -4,6 +4,7 @@ import {
   IApiCreateAdvertisementRequest,
   IApiCreateCompanyUnitRequest,
   IApiGroupCompanyUnitsRequest,
+  IApiPaginateAdvertisement,
   IApiPaginateCompanies,
   IApiPaginateCompanyUnits,
   IApiRequestMethod,
@@ -25,14 +26,14 @@ export const API = {
     },
   },
   advertisement: {
-    // async paginate(access_token: string, data: IApiPaginateCompanyUnits) {
-    //   return ApiResources.request({
-    //     method: IApiRequestMethod.GET,
-    //     path: "/company/unit",
-    //     data,
-    //     access_token,
-    //   });
-    // },
+    async paginate(access_token: string, data: IApiPaginateAdvertisement) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: "/advertisement",
+        data,
+        access_token,
+      });
+    },
     async create(access_token: string, data: IApiCreateAdvertisementRequest) {
       return ApiResources.request({
         method: IApiRequestMethod.POST,

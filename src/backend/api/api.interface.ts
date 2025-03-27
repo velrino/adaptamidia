@@ -58,6 +58,10 @@ export interface IApiUserResponse {
   user: IApiUser;
 }
 
+export interface IApiPaginateAdvertisement extends IApiPaginateParameters {
+  title?: string;
+}
+
 export interface IApiAdvertisementResponse {
   total: number;
   limit: number;
@@ -75,9 +79,20 @@ export interface IApiAdvertisementItemItem {
   type: AdType;
 }
 
+export interface IApiAdvertisementItemCompanyResponse {
+  _id: string;
+  document: string;
+  document_type: ICompanyDocumentType;
+  name: string;
+  type: ICompanyType;
+  status: ICompanyStatus;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface IApiAdvertisementItem {
   _id: string;
-  company: string;
+  company: IApiAdvertisementItemCompanyResponse;
   title: string;
   // show: boolean;
   description: string;

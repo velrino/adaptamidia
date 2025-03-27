@@ -10,25 +10,28 @@ import {
 } from "../ui/table";
 import { AngleDownIcon, AngleUpIcon } from "@/icons";
 import Image from "next/image";
-import AdvertisementsTablePaginationWithIcon from "./AdvertisementsTablePaginationWithIcon";
 import {
   IApiAdvertisementItem,
   IApiAdvertisementResponse,
+  IApiPaginateAdvertisement,
 } from "@/backend/api/api.interface";
 import { AdSortKey } from "@/interfaces/ads";
-import { ContentAction, SortOrder } from "@/interfaces/general";
-import {
-  AdsRecordDefault,
-  AdvertisementsMock,
-} from "@/backend/mock/advertisements";
+import { ContentAction, IToastType, SortOrder } from "@/interfaces/general";
+import { AdsRecordDefault } from "@/backend/mock/advertisements";
 import { faker } from "@faker-js/faker";
 import { DateHelper } from "@/utils/date";
 import AdvertisementModal from "./AdvertisementModal";
 import Button from "../ui/button/Button";
+import { useSession } from "next-auth/react";
+import { useToast } from "@/context/ToastContext";
+import { API } from "@/backend/api/api.endpoints";
+import { GetErrorMessage } from "@/utils/generic";
 
 export default function AdvertisementsTable() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(10);
+  const { data: session } = useSession();
+  const { showToast } = useToast();
+
+  const [currentPage] = useState(1);
   const [contentAction, setContentAction] = useState<ContentAction>(
     ContentAction.CREATE
   );
@@ -59,26 +62,48 @@ export default function AdvertisementsTable() {
     });
   }, [response, handleResponse]);
 
-  const getResponse = useCallback(async () => {
-    const currentResponse = AdvertisementsMock({ page: currentPage });
-    setResponse(currentResponse);
-
-    return new Promise<IApiAdvertisementItem[]>((resolve) => {
-      setTimeout(() => {
-        resolve(currentResponse.data);
-      }, 1);
-    });
-  }, [currentPage]);
-
   const openCreate = () => {
     setContentAction(() => ContentAction.CREATE);
     setCurrentAdvertisement(AdsRecordDefault);
   };
 
+  const getResponse = useCallback(
+    async (apiQuery: IApiPaginateAdvertisement) => {
+      if (!session?.api_session) {
+        return;
+      }
+
+      try {
+        const query: IApiPaginateAdvertisement = {
+          page: currentPage,
+          limit: 100,
+          ...apiQuery,
+        };
+
+        const response = await API.advertisement.paginate(
+          session.api_session.access_token,
+          query
+        );
+
+        const data = await response.json();
+
+        if (data?.error) {
+          showToast(GetErrorMessage(data.error), IToastType.ERROR);
+        } else if (response.ok) {
+          setResponse(data);
+        }
+      } catch (error) {
+        showToast(GetErrorMessage(error), IToastType.ERROR);
+      }
+    },
+    [currentPage, session?.api_session, showToast, setResponse]
+  );
+
   useEffect(() => {
-    openCreate();
-    getResponse();
-  }, [getResponse]);
+    if (session?.api_session) {
+      getResponse({});
+    }
+  }, [getResponse, session?.api_session]);
 
   const filteredAndSortedData = useMemo(() => {
     return list
@@ -113,13 +138,6 @@ export default function AdvertisementsTable() {
       });
   }, [list, sortKey, sortOrder, searchTerm]);
 
-  const totalItems = filteredAndSortedData.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
   const handleSort = (key: AdSortKey) => {
     if (sortKey === key) {
       setSortOrder(
@@ -130,9 +148,6 @@ export default function AdvertisementsTable() {
       setSortOrder(SortOrder.ASC);
     }
   };
-
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
 
   return (
     <>
@@ -187,6 +202,7 @@ export default function AdvertisementsTable() {
                 <TableRow>
                   {[
                     { key: AdSortKey.title, label: "Titulo" },
+                    { key: AdSortKey.company, label: "Anunciante" },
                     { key: AdSortKey.type, label: "Tipo" },
                     { key: AdSortKey.start_date, label: "Data inicial" },
                     { key: AdSortKey.end_date, label: "Data final" },
@@ -231,7 +247,10 @@ export default function AdvertisementsTable() {
                   <TableRow
                     key={i + 1}
                     className="cursor-pointer"
-                    onClick={() => setCurrentAdvertisement(item)}
+                    onClick={() => {
+                      setContentAction(ContentAction.UPDATE);
+                      setCurrentAdvertisement(item);
+                    }}
                   >
                     <TableCell className="px-4 py-3 border border-gray-100 dark:border-white/[0.05] whitespace-nowrap">
                       <div className="flex items-center gap-3">
@@ -261,6 +280,9 @@ export default function AdvertisementsTable() {
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
+                      {item.company.name}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
                       {item.type}
                     </TableCell>
                     <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
@@ -281,28 +303,19 @@ export default function AdvertisementsTable() {
             </Table>
           </div>
         </div>
-
-        <div className="border border-t-0 rounded-b-xl border-gray-100 py-4 pl-[18px] pr-4 dark:border-white/[0.05]">
-          <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between">
-            {/* Left side: Showing entries */}
-            <div className="pb-3 xl:pb-0">
-              <p className="pb-3 text-sm font-medium text-center text-gray-500 border-b border-gray-100 dark:border-gray-800 dark:text-gray-400 xl:border-b-0 xl:pb-0 xl:text-left">
-                Showing {startIndex + 1} to {endIndex} of {totalItems} entries
-              </p>
-            </div>
-            <AdvertisementsTablePaginationWithIcon
-              totalPages={totalPages}
-              initialPage={currentPage}
-              onPageChange={handlePageChange}
-            />
-          </div>
-        </div>
       </div>
       {currentAdvertisement && (
         <AdvertisementModal
           action={contentAction}
           advertisementData={currentAdvertisement}
           setContentAction={setContentAction}
+          refresh={async (refresh: boolean) => {
+            if (refresh) {
+              getResponse({
+                cache: false,
+              });
+            }
+          }}
           onCloseCallback={() => {
             setCurrentAdvertisement(null);
             console.log("Modal closed!");

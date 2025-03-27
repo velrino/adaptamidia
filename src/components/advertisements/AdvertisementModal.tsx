@@ -22,6 +22,7 @@ interface IAdvertisementModalProps {
   advertisementData: IApiAdvertisementItem;
   setContentAction: Dispatch<SetStateAction<ContentAction>>;
   setOpen?: (open: boolean) => void;
+  refresh: (refresh: boolean) => void;
   onCloseCallback: () => void;
 }
 
@@ -30,6 +31,7 @@ export default function AdvertisementModal({
   advertisementData,
   onCloseCallback,
   setContentAction,
+  refresh,
 }: IAdvertisementModalProps) {
   const { showToast } = useToast();
   const { data: session } = useSession();
@@ -75,7 +77,7 @@ export default function AdvertisementModal({
     setLoadingSave(true);
     if (action === ContentAction.CREATE) {
       await create({
-        company: data.company,
+        company: data.company._id,
         title: data.title,
         description: data.description,
         type: data.type,
@@ -91,7 +93,7 @@ export default function AdvertisementModal({
       }).finally(() => setLoadingSave(false));
     } else if (action === ContentAction.UPDATE) {
       await update({
-        company: data.company,
+        company: data.company._id,
         title: data.title,
         description: data.description,
         type: data.type,
@@ -132,6 +134,7 @@ export default function AdvertisementModal({
 
         setData(currentData);
         setContentAction(ContentAction.UPDATE);
+        refresh(true);
       } else {
         showToast("FAILED", IToastType.ERROR);
       }
@@ -167,6 +170,7 @@ export default function AdvertisementModal({
 
         setData(currentData);
         setContentAction(ContentAction.UPDATE);
+        refresh(true);
       } else {
         showToast("FAILED", IToastType.ERROR);
       }

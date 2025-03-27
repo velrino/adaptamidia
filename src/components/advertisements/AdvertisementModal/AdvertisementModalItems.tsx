@@ -39,7 +39,7 @@ export function AdvertisementComponent({
         session.api_session.access_token,
         {
           file: croppedBlob,
-          company_id: data.company,
+          company_id: data.company._id,
           foldername: "ads",
           bucket: "xmp-midia",
         }
