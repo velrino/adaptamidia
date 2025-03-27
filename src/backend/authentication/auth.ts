@@ -50,7 +50,6 @@ export const nextAuthOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        console.debug({ credentials });
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Unexpected error validating credentials");
         }
