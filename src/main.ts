@@ -4,7 +4,10 @@ import { ValidationPipe } from '@nestjs/common';
 import { AllExceptionsFilter } from './exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['error', 'warn', 'log', 'verbose'],
+    abortOnError: false,
+  });
 
   app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
@@ -12,11 +15,21 @@ async function bootstrap() {
 
   const port = process.env.PORT || 8080;
 
-  await app.listen(port, '0.0.0.0');
+  // Add more detailed startup logging
+  console.log(`Attempting to start server on port ${port}`);
+  console.log(`Current environment:`, process.env);
 
-  console.info(
-    `Server started on http://0.0.0.0:${port}`,
-    new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
-  );
+  await app.listen(port, '0.0.0.0', () => {
+    console.log(`Server successfully started on http://0.0.0.0:${port}`);
+  });
+
+  // Add process handlers for better error visibility
+  process.on('unhandledRejection', (reason) => {
+    console.error('Unhandled Rejection at:', reason);
+  });
+
+  process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception thrown:', error);
+  });
 }
 bootstrap();
