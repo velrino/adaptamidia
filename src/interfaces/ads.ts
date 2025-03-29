@@ -187,6 +187,13 @@ export enum BrandSegment {
   PETS = "PETS",
   GOVERNMENT = "GOVERNMENT",
   AGRICULTURE = "AGRICULTURE",
+  AESTHETIC_CLINIC = "AESTHETIC_CLINIC",
+  DENTAL_OFFICE = "DENTAL_OFFICE",
+  INSURANCE_COMPANY = "INSURANCE_COMPANY",
+  LAW_OFFICE = "LAW_OFFICE",
+  MOBILE_ACCESSORY_STORE = "MOBILE_ACCESSORY_STORE",
+  MEDICAL_CLINIC = "MEDICAL_CLINIC",
+  LABORATORY = "LABORATORY",
 }
 
 export const BrandSegmentTranslations: Record<BrandSegment, string> = {
@@ -210,4 +217,11 @@ export const BrandSegmentTranslations: Record<BrandSegment, string> = {
   [BrandSegment.PETS]: "Pets",
   [BrandSegment.GOVERNMENT]: "Governo",
   [BrandSegment.AGRICULTURE]: "Agronegócio",
+  [BrandSegment.AESTHETIC_CLINIC]: "Clínica de Estética",
+  [BrandSegment.DENTAL_OFFICE]: "Consultório Odontológico",
+  [BrandSegment.INSURANCE_COMPANY]: "Seguradora",
+  [BrandSegment.LAW_OFFICE]: "Escritório de Advocacia",
+  [BrandSegment.MOBILE_ACCESSORY_STORE]: "Loja de Acessórios para Celulares",
+  [BrandSegment.MEDICAL_CLINIC]: "Clínica Médica",
+  [BrandSegment.LABORATORY]: "Laboratório",
 };

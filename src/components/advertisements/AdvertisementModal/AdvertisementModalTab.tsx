@@ -24,14 +24,14 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
 
   const tabs = [
     {
-      id: "LOCAL",
-      label: "Locais",
-      content: <AdvertisementModalLocal data={data} onUpdate={onUpdate} />,
-    },
-    {
       id: "ABOUT",
       label: "Sobre",
       content: <AdvertisementModalAbout data={data} onUpdate={onUpdate} />,
+    },
+    {
+      id: "LOCAL",
+      label: "Locais",
+      content: <AdvertisementModalLocal data={data} onUpdate={onUpdate} />,
     },
     {
       id: "ADS",
@@ -81,7 +81,7 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
     <div>
       <Tabs
         tabs={tabs}
-        defaultTabId="LOCAL"
+        defaultTabId="ABOUT"
         styles={{
           nav: "p-0",
           navMenu: "mx-auto",

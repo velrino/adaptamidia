@@ -47,6 +47,12 @@ export function GenerateWeekData(): Record<IDay, IApiUnitPopularTimeItem[]> {
 
 export const CompanyUnitTypeLabels: Record<EnumApiCompanyUnitType, string> = {
   [EnumApiCompanyUnitType.AIRPORT]: "Aeroporto",
+  [EnumApiCompanyUnitType.AESTHETIC_CLINIC]: "Clínica de Estética",
+  [EnumApiCompanyUnitType.DENTAL_OFFICE]: "Consultório Odontológico",
+  [EnumApiCompanyUnitType.INSURANCE_COMPANY]: "Seguradora",
+  [EnumApiCompanyUnitType.LAW_OFFICE]: "Escritório de Advocacia",
+  [EnumApiCompanyUnitType.MOBILE_ACCESSORY_STORE]:
+    "Loja de Acessórios para Celulares",
   [EnumApiCompanyUnitType.COMMERCIAL_BUILDING]: "Prédio comercial",
   [EnumApiCompanyUnitType.RESIDENTIAL_BUILDING]: "Prédio residencial",
 
