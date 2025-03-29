@@ -25,13 +25,28 @@ import {
 } from './list/list.interface';
 import { ListAdvertisementService } from './list/list.service';
 import { Throttle } from '@nestjs/throttler';
+import { DisplayAdvertisementService } from './display/display.service';
+import { DisplayAdvertisementPaginateDto } from './display/display.interface';
 
 @Controller()
 export class AdvertisementController {
   constructor(
     private readonly createAdvertisementService: CreateAdvertisementService,
     private readonly listAdvertisementService: ListAdvertisementService,
+    private readonly displayAdvertisementService: DisplayAdvertisementService,
   ) {}
+
+  @Get('advertisement/display/:id')
+  // @Throttle({ default: { limit: 50, ttl: 60000 } })
+  display(
+    @Param() params: FindByIdParamsDto,
+    @Query() query: DisplayAdvertisementPaginateDto,
+  ) {
+    return this.displayAdvertisementService.executeFromRequest({
+      ...query,
+      id: params.id,
+    });
+  }
 
   @Get('advertisement/preview')
   @Throttle({ default: { limit: 50, ttl: 60000 } })
