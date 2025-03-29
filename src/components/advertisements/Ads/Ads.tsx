@@ -127,6 +127,7 @@ export default function AdsComponent() {
       }));
 
       setList([...adsForPreview, ...news]);
+      // setList(news);
     }
   }, [responseAdvertisement]);
 

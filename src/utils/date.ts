@@ -10,6 +10,7 @@ dayjs.extend(isSameOrAfter);
 export enum DateHelperFormat {
   NORMAL = "NORMAL",
   SHORT = "SHORT",
+  SHORT2 = "SHORT2",
   TIME = "TIME",
 }
 
@@ -18,6 +19,7 @@ export const DateHelper = {
   formats: {
     NORMAL: "DD/MM/YYYY HH:mm:ss",
     SHORT: "DD/MM/YYYY",
+    SHORT2: "DD/MM/YY",
     TIME: "HH:mm:ss",
   },
   format: (

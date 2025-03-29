@@ -1,6 +1,5 @@
 "use client";
 
-/* eslint-disable @next/next/no-img-element */
 import {
   AdsCurrentType,
   AdType,
@@ -55,6 +54,10 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
     return item.data as IApiNewsResponseItem;
   };
 
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(item.data.description, "text/html");
+  const cleanDescription = doc.body.textContent || "";
+
   return (
     <div
       className={`
@@ -63,34 +66,53 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
         bg-black flex items-center justify-center overflow-hidden
       `}
     >
-      {/* Logo no topo */}
       {!isAdvertisement && (
-        <div className="absolute top-5 left-0 z-[99999]">
-          <div className="bg-neutral-900/50 p-5 rounded-r-lg">
-            <Image
-              src="/images/logo/logo-dark.png"
-              alt="Logo"
-              width={120}
-              height={40}
-              className="object-cover"
-            />
+        <div className="absolute bottom-20 left-10 w-[90vw]">
+          <div className=" text-white font-bold py-4 px-6 rounded-md flex items-center justify-between">
+            <div className="flex items-center">
+              <div>
+                <div className="grid grid-cols-12">
+                  <div className="col-span-2 bg-neutral-900/95 rounded-l-full flex items-center justify-center">
+                    <Image
+                      width={100}
+                      height={20}
+                      src="/images/logo/icon-light.png"
+                      alt="Logo"
+                    />
+                  </div>
+                  <div className="col-span-10">
+                    <div className="bg-neutral-900/95 text-white rounded-tr-full max-w-[40vw]">
+                      <div className="uppercase text-gray-300 text-2xl pt-2">
+                        {getNews().keyword}
+                      </div>
+                    </div>
+                    <div className="bg-neutral-900/95 text-white rounded-r-full max-w-[80vw]">
+                      <div className="grid grid-cols-12">
+                        <div className="col-span-10">
+                          <div className="uppercase text-gray-300 text-3xl my-3">
+                            {item.data.title.toUpperCase()}
+                          </div>
+                          <div className="text-gray-300 text-md overflow-hidden text-ellipsis my-3 font-light">
+                            {cleanDescription}
+                          </div>
+                        </div>
+                        <div className="col-span-2 flex items-center justify-center">
+                          <div className="bg-white">
+                            <Image
+                              src="/images/ads/qrcode.png"
+                              height={100}
+                              width={100}
+                              alt="Logo"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* Título e descrição (se não for anúncio) */}
-      {!isAdvertisement && (
-        <div className="absolute bottom-20 text-white text-4xl py-2 z-50 left-0 w-[85vw]">
-          {item.data.title && (
-            <div className="bg-neutral-900/50 p-5 rounded-t-lg">
-              {item.data.title.toUpperCase()}
-            </div>
-          )}
-          {item.data.description && (
-            <div className="bg-neutral-900/95 p-5 rounded-b-lg">
-              {item.data.description}
-            </div>
-          )}
         </div>
       )}
 
@@ -134,7 +156,10 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
             <span>Hoje 31º / 19º</span>
           </div>
           <div className="px-4 py-2">
-            {DateHelper.format(currentTime, DateHelperFormat.TIME)}
+            {`${DateHelper.format(
+              currentTime,
+              DateHelperFormat.SHORT2
+            )} - ${DateHelper.format(currentTime, DateHelperFormat.TIME)}`}
           </div>
         </footer>
       )}
