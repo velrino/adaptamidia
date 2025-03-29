@@ -131,11 +131,13 @@ export class CreateAdvertisementService extends AdvertisementService {
         status: parameters.status || AdvertisementStatus.REVIEW,
       };
 
-      const record = await this.model.create({
+      let record = await this.model.create({
         ...document,
         start_date: new Date(parameters.start_date),
         end_date: new Date(parameters.end_date),
       });
+
+      record = await record.populate<{ company: Company }>('company');
 
       return record;
     } catch (error) {
@@ -171,15 +173,19 @@ export class CreateAdvertisementService extends AdvertisementService {
         status: parameters.status || AdvertisementStatus.REVIEW,
       };
 
-      const record = await this.model.findOneAndUpdate(
-        { _id: advertisementId },
-        {
-          ...documentData,
-          start_date: new Date(parameters.start_date),
-          end_date: new Date(parameters.end_date),
-        },
-        { new: true },
-      );
+      const record = await this.model
+        .findOneAndUpdate(
+          { _id: advertisementId },
+          {
+            ...documentData,
+            start_date: new Date(parameters.start_date),
+            end_date: new Date(parameters.end_date),
+          },
+          { new: true },
+        )
+        .populate<{ company: Company }>({
+          path: 'company',
+        });
 
       return record;
     } catch (error) {
