@@ -292,7 +292,7 @@ export default function CompanieUnitsTable() {
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
-                      {item.company.name}
+                      {item?.company?.name || ""}
                     </TableCell>
                     <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
                       {item.full_address}
