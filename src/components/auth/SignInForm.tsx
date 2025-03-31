@@ -76,7 +76,8 @@ export default function SignInForm() {
       if (response?.error) {
         showToast(response?.error, IToastType.ERROR);
       } else if (response?.ok) {
-        router.push("/home");
+        // router.push("/home");
+        window.location.href = "/home";
       }
     } catch (e: unknown) {
       showToast(GetErrorMessage(e), IToastType.ERROR);
