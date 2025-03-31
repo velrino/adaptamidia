@@ -54,7 +54,7 @@ export const AdsRecordDefault: IApiAdvertisementItem = {
       title: String(),
       description: String(),
       seconds: 0,
-      source: "/images/ads/clients/1.png",
+      source: "/images/ads/example.png",
       type: AdType.IMAGE,
     },
   ],
