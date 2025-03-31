@@ -15,6 +15,7 @@ import { AdvertisementModule } from './modules/advertisement/advertisement.modul
 import { AdvertisementCampaignModule } from './modules/advertisement-campaign/advertisement-campaign.module';
 import { NewsModule } from './modules/news/news.module';
 import { FilesModule } from './modules/files/files.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { FilesModule } from './modules/files/files.module';
       },
       inject: [ConfigService],
     }),
+    ScheduleModule.forRoot(),
     NewsModule,
     RedisModule,
     PusherModule,

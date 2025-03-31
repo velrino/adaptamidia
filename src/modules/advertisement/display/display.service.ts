@@ -4,9 +4,6 @@ import { Model, QueryOptions, SortOrder, Types } from 'mongoose';
 
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { RESULT } from 'src/shared/result.enum';
-import { MongoDbDateQuery } from 'src/shared/mongo.schema';
-import { PaginatedResponseDto } from 'src/shared/interfaces/paginate.dto';
-import { Company, CompanyDocument } from 'src/modules/company/company.schema';
 import { RedisService } from 'src/shared/redis/redis.service';
 import { RedisKeysEnum } from 'src/shared/redis/redis.keys';
 import { Advertisement, AdvertisementDocument } from '../advertisement.schema';

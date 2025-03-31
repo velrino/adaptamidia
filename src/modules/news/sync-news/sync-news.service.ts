@@ -13,6 +13,7 @@ import { Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { DateTime } from 'luxon';
 import { RESULT } from 'src/shared/result.enum';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class SyncNewsService {
@@ -27,10 +28,14 @@ export class SyncNewsService {
     // this.providerNewsApi = new NewsAPI('SUA_API_KEY');
   }
 
-  //   async onApplicationBootstrap() {
-  //     await this.execute();
-  //     console.log('Syncing news data...');
-  //   }
+  async onApplicationBootstrap() {
+    await this.execute();
+  }
+
+  @Cron(CronExpression.EVERY_3_HOURS)
+  async handleCron() {
+    await this.execute();
+  }
 
   async getNewsEverythingAbout(q: string): Promise<INewsApiResponse> {
     try {
@@ -48,6 +53,13 @@ export class SyncNewsService {
 
   async execute() {
     // await this.model.deleteMany({});
+    Log(
+      LogType.INFO,
+      SyncNewsService.name,
+      this.execute.name,
+      LogAction.STARTED,
+      {},
+    );
 
     const timeAgo = DateTime.utc().minus({ hour: 1 }).toJSDate();
     const provider = NewsProviderEnum.NEWS_API;
