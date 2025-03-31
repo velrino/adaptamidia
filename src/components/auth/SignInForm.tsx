@@ -5,7 +5,7 @@ import Button from "@/components/ui/button/Button";
 import { EyeCloseIcon, EyeIcon } from "@/icons";
 import React, { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 import { useToast } from "@/context/ToastContext";
 import { IToastType } from "@/interfaces/general";
 import { GetErrorMessage } from "@/utils/generic";
@@ -20,7 +20,7 @@ interface ILoginForm {
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   // const [isChecked, setIsChecked] = useState(false);
-  const router = useRouter();
+  // const router = useRouter();
   const { showToast } = useToast();
   const { formData, handleChange } = useDynamicForm<ILoginForm>({
     email: "",
