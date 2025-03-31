@@ -105,3 +105,13 @@ export const CompanyUnitPrepareData = (item: CompanyUnit) => {
     prices: [],
   };
 };
+
+export const COMPANY_UNIT_DEFAULT_PREFERENCES = {
+  exclude_news_source_name: [],
+  include_news_source_name: [],
+  min_news_before_ad: 2,
+  max_news_before_ad: 4,
+  min_ads_in_sequence: 1,
+  max_ads_in_sequence: 2,
+  target_size: 100,
+};

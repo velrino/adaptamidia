@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, QueryOptions, Types } from 'mongoose';
+import { Model, QueryOptions, SortOrder, Types } from 'mongoose';
 
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { RESULT } from 'src/shared/result.enum';
@@ -11,14 +11,18 @@ import { RedisService } from 'src/shared/redis/redis.service';
 import { RedisKeysEnum } from 'src/shared/redis/redis.keys';
 import { Advertisement, AdvertisementDocument } from '../advertisement.schema';
 import {
+  DisplayType,
+  IDisplayAdvertisementNewsQuery,
   IDisplayAdvertisementPaginateDto,
   IDisplayAdvertisementUnit,
+  IDisplayItem,
 } from './display.interface';
 import { DateTime } from 'luxon';
 import {
   CompanyUnit,
   CompanyUnitDocument,
 } from 'src/modules/company-unit/company-unit.schema';
+import { News, NewsDocument } from 'src/modules/news/news.schema';
 
 @Injectable()
 export class DisplayAdvertisementService {
@@ -27,6 +31,8 @@ export class DisplayAdvertisementService {
     private readonly model: Model<AdvertisementDocument>,
     @InjectModel(CompanyUnit.name)
     private readonly companyUnitModel: Model<CompanyUnitDocument>,
+    @InjectModel(News.name)
+    readonly newsModel: Model<NewsDocument>,
     private readonly redisService: RedisService,
   ) {}
 
@@ -48,9 +54,7 @@ export class DisplayAdvertisementService {
     }
   }
 
-  async getData(
-    parameters: IDisplayAdvertisementPaginateDto,
-  ): Promise<PaginatedResponseDto<Advertisement>> {
+  async getAds(parameters: IDisplayAdvertisementPaginateDto) {
     const currentPage = parameters.page - 1;
 
     const skip = currentPage * parameters.limit;
@@ -78,6 +82,16 @@ export class DisplayAdvertisementService {
     const queryBuilder = this.model.find(query);
 
     const data = await queryBuilder
+      .select({
+        _id: 1,
+        status: 1,
+        type: 1,
+        seconds: 1,
+        start_date: 1,
+        end_date: 1,
+        title: 1,
+        items: 1,
+      })
       .sort({ created_at: -1 })
       .skip(skip)
       .limit(parameters.limit)
@@ -107,7 +121,7 @@ export class DisplayAdvertisementService {
 
     const record = await this.companyUnitModel
       .findOne({ _id: id, company: { $exists: true, $ne: null } })
-      .select(['_id', 'name', 'status', 'company'])
+      .select(['_id', 'name', 'status', 'company', 'preferences'])
       .populate<{
         company: NonNullable<IDisplayAdvertisementUnit['company']>;
       }>({
@@ -135,29 +149,230 @@ export class DisplayAdvertisementService {
     return record;
   }
 
+  async getNews(parameters: IDisplayAdvertisementNewsQuery) {
+    const cacheKey = this.redisService.createKeyByObject(
+      `${RedisKeysEnum.DISPLAY_NEWS}`,
+      parameters,
+    );
+
+    const dataCached: any = await this.redisService.get(
+      cacheKey.parameters_encrypted,
+    );
+
+    if (dataCached) {
+      return dataCached;
+    }
+
+    const query: QueryOptions<NewsDocument[]> = {};
+
+    // Include specific sources (if provided)
+    if (parameters?.include_source_name?.length) {
+      query.source_name = { $in: parameters.include_source_name };
+    }
+
+    // Exclude specific sources (if provided)
+    // If both include and exclude exist, combine them correctly
+    if (parameters?.exclude_source_name?.length) {
+      if (query.source_name?.$in) {
+        query.source_name.$in = query.source_name.$in.filter(
+          (current_source_name: string) =>
+            !parameters.exclude_source_name.includes(current_source_name),
+        );
+      } else {
+        query.source_name = { $nin: parameters.exclude_source_name };
+      }
+    }
+
+    const dbQuery = this.newsModel.find(query);
+
+    const sortBy: Record<string, SortOrder> = { published_at: -1 };
+
+    const record = await dbQuery
+      .sort(sortBy)
+      .limit(parameters.limit)
+      .lean()
+      .exec();
+
+    await this.redisService.set(cacheKey.parameters_encrypted, record, 300000); // 5 minutes
+
+    return record;
+  }
+
+  generateContent({
+    newsList,
+    adsList,
+    min_news_before_ad = 2,
+    max_news_before_ad = 4,
+    min_ads_in_sequence = 1,
+    max_ads_in_sequence = 1,
+    target_size,
+  }: {
+    newsList: NewsDocument[];
+    adsList: AdvertisementDocument[];
+    min_news_before_ad?: number;
+    max_news_before_ad?: number;
+    min_ads_in_sequence?: number;
+    max_ads_in_sequence?: number;
+    target_size: number;
+  }): {
+    result: IDisplayItem[];
+    total: {
+      news: number;
+      ads: number;
+    };
+  } {
+    const result: IDisplayItem[] = new Array(target_size);
+    let resultIndex = 0;
+    let newsIndex = 0;
+    let adsIndex = 0;
+    let totalNews = 0;
+    let totalAds = 0;
+
+    const randBetween = (min: number, max: number) =>
+      Math.floor(Math.random() * (max - min + 1)) + min;
+
+    while (resultIndex < target_size) {
+      // --- ADD NEWS  ---
+      const newsCount = randBetween(min_news_before_ad, max_news_before_ad);
+      const newsToAdd = Math.min(
+        newsCount,
+        newsList.length - newsIndex,
+        target_size - resultIndex,
+      );
+
+      for (let i = 0; i < newsToAdd; i++) {
+        result[resultIndex++] = {
+          type: DisplayType.NEWS,
+          news: newsList[newsIndex++],
+        };
+        totalNews++;
+      }
+
+      // Only add ads if you've added some content first and there's still space
+      if (newsToAdd > 0 && resultIndex < target_size) {
+        const adsCount = randBetween(min_ads_in_sequence, max_ads_in_sequence);
+        const adsToAdd = Math.min(adsCount, target_size - resultIndex);
+
+        for (let i = 0; i < adsToAdd; i++) {
+          result[resultIndex++] = {
+            type: DisplayType.ADVERTISEMENT,
+            ads: adsList[adsIndex],
+          };
+          totalAds++;
+          adsIndex = (adsIndex + 1) % adsList.length;
+        }
+      }
+
+      // If filled less than targetSize, trim the array.
+      if (newsIndex >= newsList.length) {
+        break;
+      }
+    }
+
+    // If there are no more news, exit the loop
+    if (resultIndex < target_size) {
+      result.length = resultIndex;
+    }
+
+    return {
+      result,
+      total: {
+        news: totalNews,
+        ads: totalAds,
+      },
+    };
+  }
+
   async execute(parameters: IDisplayAdvertisementPaginateDto) {
     try {
       const unitId = new Types.ObjectId(parameters.id);
 
       const currentUnit: IDisplayAdvertisementUnit = await this.getUnit(unitId);
-      //   const cacheKey = this.redisService.createKeyByObject(
-      //     RedisKeysEnum.LIST_ADS,
-      //     parameters,
-      //   );
 
-      //   if (parameters.cache) {
-      //     const dataCached = await this.redisService.get(cacheKey.name);
+      const newsQuery: IDisplayAdvertisementNewsQuery = {
+        include_source_name:
+          currentUnit?.preferences?.include_source_name || [],
+        exclude_source_name:
+          currentUnit?.preferences?.exclude_source_name || [],
+        limit: parameters.news_limit || 50,
+        cache: parameters.cache,
+      };
+      const newsList = await this.getNews(newsQuery);
 
-      //     if (dataCached) {
-      //       return dataCached;
-      //     }
-      //   }
+      const cacheKeyParameters = {
+        ...parameters,
+        ...newsQuery,
+      };
 
-      const records = await this.getData(parameters);
+      const cacheKey = this.redisService.createKeyByObject(
+        `${RedisKeysEnum.DISPLAY_RESULT}:${parameters.id}`,
+        cacheKeyParameters,
+      );
 
-      //   await this.redisService.set(cacheKey.name, records, 300000); // 5 minutes
+      if (parameters.cache) {
+        const dataCached = await this.redisService.get(cacheKey.name);
 
-      return { unit: currentUnit, records };
+        if (dataCached) {
+          return dataCached;
+        }
+      }
+
+      const records = await this.getAds({ ...parameters, limit: 100 });
+
+      const contentGenerated = this.generateContent({
+        newsList: newsList,
+        adsList: records.data,
+        min_news_before_ad:
+          parameters.min_news_before_ad ||
+          currentUnit?.preferences?.min_news_before_ad ||
+          1,
+        max_news_before_ad:
+          parameters.max_news_before_ad ||
+          currentUnit?.preferences?.max_news_before_ad ||
+          3,
+        min_ads_in_sequence:
+          parameters.min_ads_in_sequence ||
+          currentUnit?.preferences?.min_ads_in_sequence ||
+          1,
+        max_ads_in_sequence:
+          parameters.max_ads_in_sequence ||
+          currentUnit?.preferences?.max_ads_in_sequence ||
+          3,
+        target_size:
+          parameters.target_size ||
+          currentUnit?.preferences?.target_size ||
+          100,
+      });
+
+      const paginate = {
+        pages: records.pages,
+        total: records.total,
+        limit: records.limit,
+        page: records.page,
+      };
+
+      const content = {
+        total: contentGenerated.result.length,
+        ads: {
+          total: contentGenerated.total.ads,
+          unique: records.data.length,
+        },
+        news: {
+          total: contentGenerated.total.news,
+          unique: newsList.length,
+        },
+      };
+
+      const result = {
+        unit: currentUnit,
+        paginate,
+        content,
+        data: contentGenerated.result,
+      };
+
+      await this.redisService.set(cacheKey.name, result, 300000); // 5 minutes
+
+      return result;
     } catch (error) {
       Log(
         LogType.ERROR,

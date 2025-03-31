@@ -9,6 +9,7 @@ import { GetCompanyService } from 'src/modules/company/get/get.service';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { RESULT } from 'src/shared/result.enum';
 import {
+  COMPANY_UNIT_DEFAULT_PREFERENCES,
   CompanyUnitPrepareData,
   CompanyUnitStatus,
 } from '../company-unit.interface';
@@ -33,16 +34,12 @@ export class CreateCompanyUnitService {
     private readonly companyUnitPopularTimeModel: Model<CompanyUnitPopularTimeDocument>,
   ) {}
 
-  // async onApplicationBootstrap() {
-  //   await this.companyUnitPopularTimeModel.deleteMany({});
-  //   const data = await this.companyUnitModel.find({});
-
-  //   for (let index = 0; index < data.length; index++) {
-  //     const element = data[index];
-  //     await this.createPopularTime(new Types.ObjectId(element._id as any));
-  //     console.log({ element: element._id });
-  //   }
-  // }
+  async onApplicationBootstrap() {
+    await this.companyUnitModel.updateMany(
+      { preferences: { $exists: false } },
+      { $set: { preferences: COMPANY_UNIT_DEFAULT_PREFERENCES } },
+    );
+  }
 
   // async createPopularTime(companyUnitId: Types.ObjectId) {
   //   const getPopularTime = await this.companyUnitPopularTimeModel.findOne({
@@ -174,6 +171,7 @@ export class CreateCompanyUnitService {
                 type: 'Point',
                 coordinates: [coordinates.lng, coordinates.lat],
               },
+              preferences: COMPANY_UNIT_DEFAULT_PREFERENCES,
             },
           ],
           { session },

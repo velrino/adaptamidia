@@ -1,10 +1,42 @@
-import { IsMongoId, IsNotEmpty } from 'class-validator';
+import { IsMongoId, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { Types } from 'mongoose';
-import { CompanyDocument } from 'src/modules/company/company.schema';
 import { PaginateDto } from 'src/shared/interfaces/paginate.dto';
 import { AdvertisementStatus } from '../advertisement.interface';
+import { NewsDocument } from 'src/modules/news/news.schema';
+import { Advertisement } from '../advertisement.schema';
+import { Transform } from 'class-transformer';
 
-export class DisplayAdvertisementPaginateDto extends PaginateDto {}
+export class DisplayAdvertisementPaginateDto extends PaginateDto {
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  min_news_before_ad: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  max_news_before_ad: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  min_ads_in_sequence: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  max_ads_in_sequence: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  target_size: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Transform(({ value }) => Number(value))
+  news_limit: number;
+}
 
 export class IDisplayAdvertisementPaginateDto extends DisplayAdvertisementPaginateDto {
   @IsNotEmpty()
@@ -21,4 +53,32 @@ export interface IDisplayAdvertisementUnit {
     name: string;
     status: AdvertisementStatus;
   } | null;
+  //TODO
+  preferences: {
+    exclude_source_name: string[];
+    include_source_name: string[];
+    min_news_before_ad: number;
+    max_news_before_ad: number;
+    min_ads_in_sequence: number;
+    max_ads_in_sequence: number;
+    target_size: number;
+  };
+}
+
+export interface IDisplayAdvertisementNewsQuery {
+  exclude_source_name: string[];
+  include_source_name: string[];
+  limit: number;
+  cache: boolean;
+}
+
+export enum DisplayType {
+  ADVERTISEMENT = 'ADVERTISEMENT',
+  NEWS = 'NEWS',
+}
+
+export interface IDisplayItem {
+  type: DisplayType;
+  news?: NewsDocument;
+  ads?: Advertisement;
 }

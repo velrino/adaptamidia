@@ -5,6 +5,29 @@ import { CompanyUnitStatus, CompanyUnitType } from './company-unit.interface';
 import { Company } from '../company/company.schema';
 import { CompanyUnitPopularTime } from './popular-times/company-unit-popular-times.schema';
 
+export class CompanyUnitPreferences {
+  @Prop({ type: [String], default: [] })
+  exclude_news_source_name: string[];
+
+  @Prop({ type: [String], default: [] })
+  include_news_source_name: string[];
+
+  @Prop({ required: true })
+  min_news_before_ad: number;
+
+  @Prop({ required: true })
+  max_news_before_ad: number;
+
+  @Prop({ required: true })
+  min_ads_in_sequence: number;
+
+  @Prop({ required: true })
+  max_ads_in_sequence: number;
+
+  @Prop({ required: true })
+  target_size: number;
+}
+
 @Schema({ ...SchemaDefault, collection: 'company_units' })
 export class CompanyUnit {
   @Prop({ type: Types.ObjectId, ref: 'Company', required: true, index: true })
@@ -82,6 +105,9 @@ export class CompanyUnit {
     type: string;
     coordinates: [number, number];
   };
+
+  @Prop({ type: CompanyUnitPreferences, required: true, _id: false })
+  preferences: CompanyUnitPreferences;
 }
 
 export type CompanyUnitDocument = CompanyUnit & Document;

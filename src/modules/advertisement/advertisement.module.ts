@@ -13,6 +13,7 @@ import { DisplayAdvertisementService } from './display/display.service';
       MongoCollection.advertisement,
       MongoCollection.companies,
       MongoCollection.company_units,
+      MongoCollection.news,
     ]),
   ],
   controllers: [AdvertisementController],
