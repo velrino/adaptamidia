@@ -2,6 +2,9 @@
 
 import {
   IApiAdvertisementResponse,
+  IApiDisplayRequest,
+  IApiDisplayResponse,
+  IApiDisplayResponseItem,
   IApiPaginateAdvertisement,
   IApiPaginateAdvertisementPreview,
 } from "@/backend/api/api.interface";
@@ -12,26 +15,24 @@ import {
 import React, { useState, useEffect, useCallback } from "react";
 import { newsMockData } from "@/backend/mock/news";
 import { GetErrorMessage, ShuffleArray } from "@/utils/generic";
-import {
-  AdsCurrentType,
-  DisplayThemes,
-  IAdsCurrentItem,
-  IDisplayTheme,
-} from "@/interfaces/ads";
+import { AdsCurrentType, DisplayThemes, IDisplayTheme } from "@/interfaces/ads";
 import { useSearchParams } from "next/navigation";
 import { Display } from "./Display";
 import { IToastType } from "@/interfaces/general";
 import { useToast } from "@/context/ToastContext";
 import { API } from "@/backend/api/api.endpoints";
+import { useLoading } from "@/context/LoadingContext";
 
 export default function AdsComponent() {
   const [theme, setTheme] = useState<IDisplayTheme>(DisplayThemes.green);
   const { showToast } = useToast();
+  const { showFullScreenLoading, hideFullScreenLoading } = useLoading();
 
   const searchParams = useSearchParams();
   const accessToken = searchParams.get("access_token") || null;
   const adsIdForPreview = searchParams.get("id") || null;
   const preview = searchParams.get("preview") || null;
+  const currentUnit = searchParams.get("unit") || null;
   const themeInformed = searchParams.get("theme") || "green";
 
   useEffect(() => {
@@ -42,10 +43,13 @@ export default function AdsComponent() {
     }
   }, [accessToken, preview, themeInformed]);
 
-  const [list, setList] = useState<IAdsCurrentItem[]>([]);
+  const [list, setList] = useState<IApiDisplayResponseItem[]>([]);
+  const [apiDisplayResponse, setApiDisplayResponse] =
+    useState<IApiDisplayResponse | null>(null);
 
   const [responseAdvertisement, setResponseAdvertisement] =
     useState<IApiAdvertisementResponse>();
+
   const getResponse = useCallback(
     async (apiQuery: IApiPaginateAdvertisement) => {
       if (!accessToken) {
@@ -101,37 +105,82 @@ export default function AdsComponent() {
     [showToast, setResponseAdvertisement]
   );
 
+  const getDisplayByUnit = useCallback(
+    async (apiQuery: IApiDisplayRequest) => {
+      if (!currentUnit) {
+        console.log({ getDisplayByUnit: currentUnit });
+        return;
+      }
+
+      showFullScreenLoading();
+
+      try {
+        const query: IApiDisplayRequest = {
+          page: 1,
+          limit: 1,
+          ...apiQuery,
+        };
+
+        const response = await API.advertisement.display(currentUnit, query);
+
+        const data = await response.json();
+
+        if (data?.error) {
+          showToast(GetErrorMessage(data.error), IToastType.ERROR);
+        } else if (response.ok) {
+          setApiDisplayResponse(data);
+        }
+      } catch (error) {
+        showToast(GetErrorMessage(error), IToastType.ERROR);
+      } finally {
+        hideFullScreenLoading();
+      }
+    },
+    [showToast, setApiDisplayResponse, currentUnit]
+  );
+
   useEffect(() => {
     if (adsIdForPreview) {
       getPreview({
         id: adsIdForPreview,
       });
+    } else if (currentUnit) {
+      getDisplayByUnit({ page: 1 });
     } else {
       getResponse({});
     }
-  }, [getResponse, getPreview, adsIdForPreview]);
+  }, [getResponse, getPreview, adsIdForPreview, currentUnit, getDisplayByUnit]);
 
   useEffect(() => {
     if (!responseAdvertisement) return;
 
     if (adsIdForPreview) {
       const adsForPreview = [...responseAdvertisement.data].map((item) => ({
-        data: item,
+        ads: item,
         type: AdsCurrentType.ADVERTISEMENT,
       }));
 
       const randomNews = ShuffleArray(newsMockData.data);
       const news = [randomNews[0], randomNews[1]].map((item) => ({
-        data: item,
+        news: item,
         type: AdsCurrentType.NEWS,
       }));
 
-      setList([...adsForPreview, ...news]);
+      setList([...adsForPreview, ...news] as IApiDisplayResponseItem[]);
       // setList(news);
     }
   }, [responseAdvertisement]);
 
+  useEffect(() => {
+    if (apiDisplayResponse) {
+      setList(() => apiDisplayResponse.data);
+      // console.log({ apiDisplayResponse });
+    }
+  }, [apiDisplayResponse]);
+
   return (
-    <>{list.length && <Display list={list} theme={theme} preview={false} />}</>
+    <>
+      {list.length > 0 && <Display list={list} theme={theme} preview={false} />}
+    </>
   );
 }

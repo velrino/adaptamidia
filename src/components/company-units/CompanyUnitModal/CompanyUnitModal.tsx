@@ -242,6 +242,14 @@ export default function CompanyUnitModal({
       : []),
   ];
 
+  const openDisplay = () => {
+    if (!data._id) {
+      return;
+    }
+
+    window.open(`/display?unit=${data._id}`, "_blank");
+  };
+
   return (
     <Modal
       isOpen={true}
@@ -251,12 +259,20 @@ export default function CompanyUnitModal({
     >
       <div className="fixed top-0 left-0 flex flex-col w-full h-screen overflow-x-hidden overflow-y-auto bg-white dark:bg-gray-900 p-0">
         <div className="flex-grow mb-10 p-0 m-0">
-          <div className="font-semibold text-gray-800 m-0 text-title-sm dark:text-white/90 px-5 py-2">
-            {`${action === ContentAction.CREATE ? "Criar" : "Editar"} ${
-              data.name || "Unidade"
-            }`}
+          <div className="flex justify-between">
+            <div className="font-semibold text-gray-800 m-0 text-title-sm dark:text-white/90 px-5 py-2">
+              {`${action === ContentAction.CREATE ? "Criar" : "Editar"} ${
+                data.name || "Unidade"
+              }`}
+            </div>
+            <div className="mr-5 mt-3">
+              {data._id && (
+                <Button size="sm" onClick={openDisplay}>
+                  Ir para Display
+                </Button>
+              )}
+            </div>
           </div>
-
           <div>
             <Tabs
               tabs={tabs}

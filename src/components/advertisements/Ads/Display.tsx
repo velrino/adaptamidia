@@ -1,18 +1,11 @@
 "use client";
 
-import {
-  IApiAdvertisementItem,
-  IApiNewsResponseItem,
-} from "@/backend/api/api.interface";
+import { IApiDisplayResponseItem } from "@/backend/api/api.interface";
 
 import React, { useState, useEffect } from "react";
 import { AdsSidebar } from "./AdsSidebar";
 import { DisplayContent } from "./DisplayContent";
-import {
-  AdsCurrentType,
-  IAdsCurrentItem,
-  IDisplayTheme,
-} from "@/interfaces/ads";
+import { AdsCurrentType, IDisplayTheme } from "@/interfaces/ads";
 import { faker } from "@faker-js/faker";
 
 interface AdStat {
@@ -48,7 +41,7 @@ const updateAdStats = (adIndex: number) => {
 };
 
 export interface IDisplay {
-  list: IAdsCurrentItem[];
+  list: IApiDisplayResponseItem[];
   theme: IDisplayTheme;
   preview: boolean;
   style?: {
@@ -61,7 +54,8 @@ export function Display({ list, theme, preview, style }: IDisplay) {
   const [advertisement, setAdvertisement] = useState(false);
   const [dolar, setDolar] = useState<number>(0);
 
-  const [currentDisplay, setCurrentDisplay] = useState<IAdsCurrentItem>();
+  const [currentDisplay, setCurrentDisplay] =
+    useState<IApiDisplayResponseItem>();
 
   useEffect(() => {
     setDolar(() =>
@@ -79,13 +73,12 @@ export function Display({ list, theme, preview, style }: IDisplay) {
       setCurrentDisplay(() => currentItem);
 
       let seconds = 5; //currentAd.seconds
-      if (currentItem.type === AdsCurrentType.ADVERTISEMENT) {
-        currentItem.data = currentItem.data as IApiAdvertisementItem;
-        seconds = 10; //currentItem?.data?.seconds || 5;
-      }
-
-      if (currentItem.type === AdsCurrentType.NEWS) {
-        currentItem.data = currentItem.data as IApiNewsResponseItem;
+      if (
+        currentItem.ads &&
+        currentItem.type === AdsCurrentType.ADVERTISEMENT
+      ) {
+        seconds = currentItem.ads?.seconds; //currentItem?.data?.seconds || 5;
+      } else {
         seconds = 5;
       }
 

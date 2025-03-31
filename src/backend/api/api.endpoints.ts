@@ -3,6 +3,7 @@ import {
   IApiAuthLogin,
   IApiCreateAdvertisementRequest,
   IApiCreateCompanyUnitRequest,
+  IApiDisplayRequest,
   IApiGroupCompanyUnitsRequest,
   IApiPaginateAdvertisement,
   IApiPaginateAdvertisementPreview,
@@ -59,6 +60,13 @@ export const API = {
       return ApiResources.request({
         method: IApiRequestMethod.GET,
         path: "/advertisement/preview",
+        data,
+      });
+    },
+    async display(id: string, data: IApiDisplayRequest) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: `/advertisement/display/${id}`,
         data,
       });
     },

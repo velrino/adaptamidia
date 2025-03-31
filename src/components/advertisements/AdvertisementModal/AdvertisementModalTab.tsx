@@ -7,6 +7,7 @@ import { Display } from "../Ads/Display";
 import { AdsCurrentType, DisplayThemes } from "@/interfaces/ads";
 import { AdvertisementComponent } from "./AdvertisementModalItems";
 import { useSession } from "next-auth/react";
+import { IApiDisplayResponseItem } from "@/backend/api/api.interface";
 
 const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
   data,
@@ -54,10 +55,12 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
             <div className="flex justify-center max-h-0">
               <div className="scale-45">
                 <Display
-                  list={[data].map((item) => ({
-                    data: item,
-                    type: AdsCurrentType.ADVERTISEMENT,
-                  }))}
+                  list={
+                    [data].map((item) => ({
+                      ads: item,
+                      type: AdsCurrentType.ADVERTISEMENT,
+                    })) as IApiDisplayResponseItem[]
+                  }
                   theme={DisplayThemes.brand}
                   preview={true}
                 />

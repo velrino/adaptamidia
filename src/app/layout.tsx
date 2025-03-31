@@ -6,6 +6,7 @@ import "flatpickr/dist/flatpickr.css";
 import { SidebarProvider } from "@/context/SidebarContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { ToastProvider } from "@/context/ToastContext";
+import { LoadingProvider } from "@/context/LoadingContext";
 
 const outfit = Outfit({
   variable: "--font-outfit-sans",
@@ -22,7 +23,9 @@ export default function RootLayout({
       <body className={`${outfit.variable} dark:bg-gray-900`}>
         <ThemeProvider>
           <ToastProvider>
-            <SidebarProvider>{children}</SidebarProvider>
+            <LoadingProvider>
+              <SidebarProvider>{children}</SidebarProvider>
+            </LoadingProvider>
           </ToastProvider>
         </ThemeProvider>
       </body>

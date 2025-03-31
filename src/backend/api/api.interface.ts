@@ -1,6 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { AdPeriod, AdsAudience, AdStatus, AdType } from "@/interfaces/ads";
+import {
+  AdPeriod,
+  AdsAudience,
+  AdsCurrentType,
+  AdStatus,
+  AdType,
+} from "@/interfaces/ads";
 import {
   ICompanyDocumentType,
   ICompanyStatus,
@@ -399,4 +405,117 @@ export interface IApiUploadFileRequest {
   company_id: string;
   foldername: string;
   bucket: string;
+}
+
+// DISPLAY
+
+export interface IApiDisplayRequest extends IApiPaginateParameters {
+  // Número mínimo de notícias antes de exibir um anúncio
+  min_news_before_ad?: number;
+  // Número máximo de notícias antes de exibir um anúncio
+  max_news_before_ad?: number;
+  // Número mínimo de anúncios em sequência
+  min_ads_in_sequence?: number;
+  // Número máximo de anúncios em sequência
+  max_ads_in_sequence?: number;
+  // Tamanho alvo (parece que houve uma mudança de 100 para 4)
+  target_size?: number;
+}
+
+export interface IApiDisplayResponse {
+  unit: IApiDisplayResponseUnit;
+  paginate: IApiDisplayResponsePaginate;
+  content: IApiDisplayResponseContent;
+  data: IApiDisplayResponseItem[];
+}
+
+export interface IApiDisplayResponseUnit {
+  _id: string;
+  company: IApiDisplayResponseCompany;
+  name: string;
+  status: string;
+  preferences: IApiDisplayResponseUnitPreferences;
+}
+
+export interface IApiDisplayResponseCompany {
+  _id: string;
+  name: string;
+  status: string;
+}
+
+export interface IApiDisplayResponseUnitPreferences {
+  exclude_news_source_name: any[];
+  include_news_source_name: any[];
+  min_news_before_ad: number;
+  max_news_before_ad: number;
+  min_ads_in_sequence: number;
+  max_ads_in_sequence: number;
+  target_size: number;
+}
+
+export interface IApiDisplayResponsePaginate {
+  pages: number;
+  total: number;
+  limit: number;
+  page: number;
+}
+
+export interface IApiDisplayResponseContent {
+  total: number;
+  ads: IApiDisplayResponseContentAds;
+  news: IApiDisplayResponseContentNews;
+}
+
+export interface IApiDisplayResponseContentAds {
+  total: number;
+  unique: number;
+}
+
+export interface IApiDisplayResponseContentNews {
+  total: number;
+  unique: number;
+}
+
+export interface IApiDisplayResponseItem {
+  type: AdsCurrentType;
+  // data: IApiDisplayResponseItemAds | IApiDisplayResponseItemAdsNews;
+  ads?: IApiDisplayResponseItemAds;
+  news?: IApiDisplayResponseItemAdsNews;
+}
+
+export interface IApiDisplayResponseItemAds {
+  _id: string;
+  title: string;
+  type: string;
+  items: IApiDisplayResponseItemAdsItem[];
+  seconds: number;
+  status: string;
+  start_date: string;
+  end_date: string;
+}
+
+export interface IApiDisplayResponseItemAdsItem {
+  id: string;
+  description: string;
+  seconds: number;
+  source: string;
+  title: string;
+  type: string;
+}
+
+export interface IApiDisplayResponseItemAdsNews {
+  _id: string;
+  provider: string;
+  language: string;
+  keyword: string;
+  source_id: any;
+  source_name: string;
+  author: string;
+  title: string;
+  description: string;
+  url: string;
+  image: string;
+  published_at: string;
+  created_at: string;
+  updated_at: string;
 }

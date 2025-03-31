@@ -1,20 +1,15 @@
 "use client";
 
-import {
-  AdsCurrentType,
-  AdType,
-  IAdsCurrentItem,
-  IDisplayTheme,
-} from "@/interfaces/ads";
-import React, { useState, useEffect } from "react";
+import { AdsCurrentType, AdType, IDisplayTheme } from "@/interfaces/ads";
+import React, { useState, useEffect, useCallback } from "react";
 import { DateHelper, DateHelperFormat } from "@/utils/date";
 import {
   IApiAdvertisementItem,
+  IApiDisplayResponseItem,
   IApiNewsResponseItem,
 } from "@/backend/api/api.interface";
 import { CiCloud } from "react-icons/ci";
 import Image from "next/image";
-// import Image from "next/image";
 
 export interface IDisplayResources {
   dolar: number;
@@ -22,7 +17,7 @@ export interface IDisplayResources {
 }
 
 export interface IDisplayContent {
-  item: IAdsCurrentItem;
+  item: IApiDisplayResponseItem;
   advertisement: boolean;
   resources: IDisplayResources;
 }
@@ -44,19 +39,30 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
     return () => clearInterval(interval); // Clear the interval when the component unmounts
   }, []);
 
-  const isAdvertisement = item.type === AdsCurrentType.ADVERTISEMENT;
+  const isAdvertisement =
+    item.ads && item.type === AdsCurrentType.ADVERTISEMENT;
 
-  const getAdvertisement = () => {
-    return item.data as IApiAdvertisementItem;
-  };
+  const getAdvertisement = useCallback(() => {
+    return item.ads as IApiAdvertisementItem;
+  }, [item]);
 
-  const getNews = () => {
-    return item.data as IApiNewsResponseItem;
-  };
+  const getNews = useCallback(() => {
+    return item.news as IApiNewsResponseItem;
+  }, [item]);
 
   const parser = new DOMParser();
-  const doc = parser.parseFromString(item.data.description, "text/html");
-  const cleanDescription = doc.body.textContent || "";
+  const doc =
+    item.news && parser.parseFromString(item.news.description, "text/html");
+  const cleanDescription = (doc && doc.body.textContent) || "";
+  const [assetURL, setAssetURL] = useState<string | null>(String());
+
+  useEffect(() => {
+    if (item?.news && item?.news?.image) {
+      setAssetURL(() => getNews().image);
+    } else if (item?.ads && item?.ads?.items?.[0]?.source) {
+      setAssetURL(() => getAdvertisement().items[0].source);
+    }
+  }, [item, getAdvertisement, getNews]);
 
   return (
     <div
@@ -81,22 +87,22 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
                     />
                   </div>
                   <div className="col-span-10">
-                    <div className="bg-neutral-900/95 text-white rounded-tr-full max-w-[40vw]">
+                    <div className="bg-neutral-900/95 text-white rounded-tr-full max-w-[15vw]">
                       <div className="uppercase text-gray-300 text-2xl pt-2">
-                        {getNews().keyword}
+                        {item.news && getNews().keyword}
                       </div>
                     </div>
                     <div className="bg-neutral-900/95 text-white rounded-r-full max-w-[80vw]">
                       <div className="grid grid-cols-12">
                         <div className="col-span-10">
-                          <div className="uppercase text-gray-300 text-3xl my-3">
-                            {item.data.title.toUpperCase()}
+                          <div className="uppercase text-white text-3xl my-3">
+                            {item.news && getNews().title.toUpperCase()}
                           </div>
                           <div className="text-gray-300 text-md overflow-hidden text-ellipsis my-3 font-light">
                             {cleanDescription}
                           </div>
                         </div>
-                        <div className="col-span-2 flex items-center justify-center">
+                        {/* <div className="col-span-2 flex items-center justify-center">
                           <div className="bg-white">
                             <Image
                               src="/images/ads/qrcode.png"
@@ -105,7 +111,7 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
                               alt="Logo"
                             />
                           </div>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
                   </div>
@@ -117,28 +123,18 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
       )}
 
       {/* Mídia (vídeo ou imagem) */}
-      {isAdvertisement && getAdvertisement().type === AdType.VIDEO ? (
+      {assetURL && item.ads && item.ads.type === AdType.VIDEO ? (
         <video
-          src={
-            isAdvertisement
-              ? getAdvertisement().items[0].source
-              : getNews().image
-          }
+          src={assetURL}
           autoPlay
           loop
           muted
           className="h-full w-full object-cover"
         />
       ) : (
-        <img
-          src={
-            isAdvertisement
-              ? getAdvertisement().items[0].source
-              : getNews().image
-          }
-          alt={item.data.title}
-          className="h-full w-full object-cover"
-        />
+        assetURL && (
+          <img src={assetURL} alt={""} className="h-full w-full object-cover" />
+        )
       )}
 
       {/* Rodapé (se não for anúncio) */}

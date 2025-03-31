@@ -1,3 +1,5 @@
+"use client";
+
 import Spinner from "@/components/ui/spinner/Spinner";
 import { createContext, useContext, useState } from "react";
 

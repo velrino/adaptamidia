@@ -1,7 +1,3 @@
-import {
-  IApiAdvertisementItem,
-  IApiNewsResponseItem,
-} from "@/backend/api/api.interface";
 import { IReactSelectOption } from "./general";
 
 export enum AdType {
@@ -59,10 +55,10 @@ export enum AdsCurrentType {
   NEWS = "NEWS",
 }
 
-export interface IAdsCurrentItem {
-  type: AdsCurrentType;
-  data: IApiAdvertisementItem | IApiNewsResponseItem;
-}
+// export interface IAdsCurrentItem {
+//   type: AdsCurrentType;
+//   data: IApiAdvertisementItem | IApiNewsResponseItem;
+// }
 
 export interface IDisplayTheme {
   primary: string;
