@@ -51,3 +51,11 @@ export function NormalizeToArray(value: any): string[] {
   if (Array.isArray(value)) return value;
   return [];
 }
+
+export const ShuffleArray = (array = []) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};

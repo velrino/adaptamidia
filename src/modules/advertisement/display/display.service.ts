@@ -20,6 +20,7 @@ import {
   CompanyUnitDocument,
 } from 'src/modules/company-unit/company-unit.schema';
 import { News, NewsDocument } from 'src/modules/news/news.schema';
+import { ShuffleArray } from 'src/shared/general';
 
 @Injectable()
 export class DisplayAdvertisementService {
@@ -294,7 +295,8 @@ export class DisplayAdvertisementService {
         limit: parameters.news_limit || 50,
         cache: parameters.cache,
       };
-      const newsList = await this.getNews(newsQuery);
+
+      const newsList = ShuffleArray(await this.getNews(newsQuery));
 
       const cacheKeyParameters = {
         ...parameters,
