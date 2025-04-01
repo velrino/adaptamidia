@@ -88,6 +88,9 @@ export class HttpMiddleware implements NestMiddleware {
           0, // Valor padrão se nenhum cabeçalho estiver presente
       ),
       source: getIpSource(req.headers),
+      timezone: Array.isArray(req.headers['x-timezone'])
+        ? req.headers['x-timezone'][0] || 'UTC' // Take first if array
+        : req.headers['x-timezone'] || 'UTC',
       // Adicionando o campo userAgent para capturar o cabeçalho 'user-agent'
       ...userAgentParsed,
       headers: headersRest,

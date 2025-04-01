@@ -76,3 +76,8 @@ export class PaginatedResponseDto<T> {
   pages: number;
   data: T[];
 }
+
+export interface ICheckExist {
+  id: string;
+  exists: boolean;
+}

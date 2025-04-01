@@ -18,6 +18,10 @@ import { Company, CompanySchema } from 'src/modules/company/company.schema';
 import { Files, FilesSchema } from 'src/modules/files/files.schema';
 import { News, NewsSchema } from 'src/modules/news/news.schema';
 import { User, UserSchema } from 'src/modules/user/user.schema';
+import {
+  DisplayLog,
+  DisplayLogSchema,
+} from 'src/modules/display-logs/display-logs.schema';
 
 export const MongoCollection = {
   advertisement: { name: Advertisement.name, schema: AdvertisementSchema },
@@ -31,6 +35,7 @@ export const MongoCollection = {
     name: CompanyUnitPopularTime.name,
     schema: CompanyUnitPopularTimeSchema,
   },
+  display_logs: { name: DisplayLog.name, schema: DisplayLogSchema },
   files: { name: Files.name, schema: FilesSchema },
   news: { name: News.name, schema: NewsSchema },
   users: { name: User.name, schema: UserSchema },

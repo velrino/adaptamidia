@@ -16,6 +16,9 @@ import { AdvertisementCampaignModule } from './modules/advertisement-campaign/ad
 import { NewsModule } from './modules/news/news.module';
 import { FilesModule } from './modules/files/files.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { DisplayLogsModule } from './modules/display-logs/display-logs.module';
+import { BullModule } from '@nestjs/bull';
+import { QueueModule } from './modules/queue/queue.module';
 
 @Module({
   imports: [
@@ -41,6 +44,21 @@ import { ScheduleModule } from '@nestjs/schedule';
       },
       inject: [ConfigService],
     }),
+    /*
+     * Bull com Redis para fila
+     */
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        redis: {
+          host: configService.get<string>('REDIS_HOST', 'localhost'),
+          port: configService.get<number>('REDIS_PORT', 6379),
+          password: configService.get<string>('REDIS_PASSWORD'),
+        },
+      }),
+      inject: [ConfigService],
+    }),
+    QueueModule,
     ScheduleModule.forRoot(),
     NewsModule,
     RedisModule,
@@ -50,6 +68,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     AdvertisementCampaignModule,
     CompanyModule,
     CompanyUnitModule,
+    DisplayLogsModule,
     FilesModule,
     UserModule,
   ],

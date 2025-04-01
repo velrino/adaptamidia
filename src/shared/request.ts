@@ -9,6 +9,7 @@ export interface RequestCustomClient extends IUserAgentParserResult {
   latitude: number;
   longitude: number;
   source: IpSourceEnum;
+  timezone: string;
   headers?: IncomingHttpHeaders;
 }
 

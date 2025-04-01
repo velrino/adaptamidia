@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from './request';
 import { Types } from 'mongoose';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { RESULT } from './result.enum';
+import { DateTime } from 'luxon';
 
 /**
  * Validates if a given string is a valid MongoDB ObjectId.
@@ -59,3 +60,12 @@ export const ShuffleArray = (array = []) => {
   }
   return array;
 };
+
+export function CalculateTimeDifferenceInSeconds(
+  startAt: DateTime,
+  endAt: DateTime,
+) {
+  const differenceInSeconds = endAt.diff(startAt, 'seconds').as('seconds');
+
+  return isNaN(differenceInSeconds) ? 0 : differenceInSeconds;
+}
