@@ -28,14 +28,14 @@ export class SyncNewsService {
     // this.providerNewsApi = new NewsAPI('SUA_API_KEY');
   }
 
-  async onApplicationBootstrap() {
-    await this.execute();
-  }
+  // async onApplicationBootstrap() {
+  //   await this.execute();
+  // }
 
-  @Cron(CronExpression.EVERY_3_HOURS)
-  async handleCron() {
-    await this.execute();
-  }
+  // @Cron(CronExpression.EVERY_3_HOURS)
+  // async handleCron() {
+  //   await this.execute();
+  // }
 
   async getNewsEverythingAbout(q: string): Promise<INewsApiResponse> {
     try {
@@ -47,124 +47,138 @@ export class SyncNewsService {
         q,
       });
     } catch (error) {
-      throw new Error(`Erro ao buscar notícias: ${error.message}`);
+      throw new Error(error);
     }
   }
 
   async execute() {
     // await this.model.deleteMany({});
-    Log(
-      LogType.INFO,
-      SyncNewsService.name,
-      this.execute.name,
-      LogAction.STARTED,
-      {},
-    );
-
-    const timeAgo = DateTime.utc().minus({ hour: 1 }).toJSDate();
-    const provider = NewsProviderEnum.NEWS_API;
-    const keywords = Object.values(NewsKeywordEnum);
-    const minRecentNews = 10;
-
-    for (const keyword of keywords) {
-      const newsCount = await this.model.countDocuments({
-        keyword,
-        created_at: { $gte: timeAgo },
-      });
-
-      if (newsCount > minRecentNews) {
-        Log(
-          LogType.INFO,
-          SyncNewsService.name,
-          this.execute.name,
-          LogAction.SKIP,
-          {
-            about: RESULT.NEWS_RECENT_EXIST,
-            keyword,
-          },
-        );
-        continue;
-      }
-
-      const articles: INewsApiArticle[] = await this.getNewsEverythingAbout(
-        keyword,
-      ).then((res) =>
-        res.articles.filter(
-          ({ author, urlToImage, title, url, source }) =>
-            author && urlToImage && title && url && source?.name,
-        ),
-      );
-
-      if (!articles.length) {
-        Log(
-          LogType.INFO,
-          SyncNewsService.name,
-          this.execute.name,
-          LogAction.SKIP,
-          {
-            about: RESULT.NEWS_NO_VALID_ARTICLES,
-            keyword,
-          },
-        );
-        continue;
-      }
-
-      const existingUrls = new Set(
-        await this.model
-          .find({ url: { $in: articles.map(({ url }) => url) } }, 'url')
-          .then((docs) => docs.map(({ url }) => url)),
-      );
-
-      const newArticles = articles.filter(({ url }) => !existingUrls.has(url));
-      if (!newArticles.length) {
-        Log(
-          LogType.INFO,
-          SyncNewsService.name,
-          this.execute.name,
-          LogAction.SKIP,
-          {
-            about: RESULT.NEWS_ALL_ARTICLES_ARE_DUPLICATES,
-            keyword,
-          },
-        );
-        continue;
-      }
-
-      const created = await this.model.insertMany(
-        newArticles.map(
-          ({
-            source,
-            title,
-            author,
-            description,
-            url,
-            urlToImage,
-            publishedAt,
-          }) => ({
-            keyword,
-            provider,
-            language: LanguageEnum.PT_BR,
-            source_id: source.id,
-            source_name: source.name,
-            title,
-            author,
-            description,
-            url,
-            image: urlToImage,
-            published_at: new Date(publishedAt),
-          }),
-        ),
-      );
-
+    try {
       Log(
         LogType.INFO,
         SyncNewsService.name,
         this.execute.name,
-        LogAction.SKIP,
-        {
-          about: RESULT.NEWS_ALL_ARTICLES_SAVED,
+        LogAction.STARTED,
+        {},
+      );
+
+      const timeAgo = DateTime.utc().minus({ hour: 1 }).toJSDate();
+      const provider = NewsProviderEnum.NEWS_API;
+      const keywords = Object.values(NewsKeywordEnum);
+      const minRecentNews = 10;
+
+      for (const keyword of keywords) {
+        const newsCount = await this.model.countDocuments({
           keyword,
-          created: created.map(({ _id }) => _id),
+          created_at: { $gte: timeAgo },
+        });
+
+        if (newsCount > minRecentNews) {
+          Log(
+            LogType.INFO,
+            SyncNewsService.name,
+            this.execute.name,
+            LogAction.SKIP,
+            {
+              about: RESULT.NEWS_RECENT_EXIST,
+              keyword,
+            },
+          );
+          continue;
+        }
+
+        const articles: INewsApiArticle[] = await this.getNewsEverythingAbout(
+          keyword,
+        ).then((res) =>
+          res.articles.filter(
+            ({ author, urlToImage, title, url, source }) =>
+              author && urlToImage && title && url && source?.name,
+          ),
+        );
+
+        if (!articles.length) {
+          Log(
+            LogType.INFO,
+            SyncNewsService.name,
+            this.execute.name,
+            LogAction.SKIP,
+            {
+              about: RESULT.NEWS_NO_VALID_ARTICLES,
+              keyword,
+            },
+          );
+          continue;
+        }
+
+        const existingUrls = new Set(
+          await this.model
+            .find({ url: { $in: articles.map(({ url }) => url) } }, 'url')
+            .then((docs) => docs.map(({ url }) => url)),
+        );
+
+        const newArticles = articles.filter(
+          ({ url }) => !existingUrls.has(url),
+        );
+        if (!newArticles.length) {
+          Log(
+            LogType.INFO,
+            SyncNewsService.name,
+            this.execute.name,
+            LogAction.SKIP,
+            {
+              about: RESULT.NEWS_ALL_ARTICLES_ARE_DUPLICATES,
+              keyword,
+            },
+          );
+          continue;
+        }
+
+        const created = await this.model.insertMany(
+          newArticles.map(
+            ({
+              source,
+              title,
+              author,
+              description,
+              url,
+              urlToImage,
+              publishedAt,
+            }) => ({
+              keyword,
+              provider,
+              language: LanguageEnum.PT_BR,
+              source_id: source.id,
+              source_name: source.name,
+              title,
+              author,
+              description,
+              url,
+              image: urlToImage,
+              published_at: new Date(publishedAt),
+            }),
+          ),
+        );
+
+        Log(
+          LogType.INFO,
+          SyncNewsService.name,
+          this.execute.name,
+          LogAction.SKIP,
+          {
+            about: RESULT.NEWS_ALL_ARTICLES_SAVED,
+            keyword,
+            created: created.map(({ _id }) => _id),
+          },
+        );
+      }
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        SyncNewsService.name,
+        this.execute.name,
+        LogAction.FAILED,
+        {
+          error,
         },
       );
     }
