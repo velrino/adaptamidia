@@ -21,6 +21,7 @@ function openDB(): Promise<IDBDatabase> {
 }
 
 export async function addLogToQueue(data: IApiCreateDisplayLogRequest) {
+  console.log({ addLogToQueue: data });
   const db = await openDB();
   const tx = db.transaction(STORE_NAME, "readwrite");
   const store = tx.objectStore(STORE_NAME);

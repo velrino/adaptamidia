@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { API } from "@/backend/api/api.endpoints";
 import {
@@ -12,11 +11,7 @@ import { useEffect } from "react";
 
 function useDisplayLogsQueue() {
   useEffect(() => {
-    let isMounted = true;
-
-    const processLogs = async () => {
-      if (!isMounted) return;
-
+    const interval = setInterval(async () => {
       const logs = await getAllLogs();
       if (!logs.length) return;
 
@@ -31,22 +26,15 @@ function useDisplayLogsQueue() {
         }
       }
 
-      if (failed.length !== logs.length && isMounted) {
+      if (failed.length !== logs.length) {
         await clearLogs();
         for (const fail of failed) {
           await addLogToQueue(fail);
         }
       }
-    };
+    }, 5000);
 
-    const interval = setInterval(processLogs, 5000);
-
-    processLogs();
-
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
+    return () => clearInterval(interval);
   }, []);
 }
 
