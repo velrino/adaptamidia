@@ -139,6 +139,16 @@ export const API = {
       });
     },
   },
+  display_logs: {
+    async create(data: IApiUpdateCompanyRequest) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/display/log",
+        data,
+        // access_token,
+      });
+    },
+  },
   files: {
     async upload(access_token: string, data: IApiUploadFileRequest) {
       const formData = new FormData();

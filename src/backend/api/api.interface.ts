@@ -14,6 +14,7 @@ import {
 } from "@/interfaces/company";
 import { IDay } from "@/interfaces/general";
 import { EnumApiCompanyType } from "./api.enum";
+import { DisplayLogStatus, DisplayType } from "@/interfaces/display-logs";
 
 export enum IApiRequestMethod {
   GET = "GET",
@@ -518,4 +519,16 @@ export interface IApiDisplayResponseItemAdsNews {
   published_at: string;
   created_at: string;
   updated_at: string;
+}
+
+// DISPLAY LOGS
+
+export interface IApiCreateDisplayLogRequest {
+  identifier: string;
+  id: string;
+  local: string;
+  type: DisplayType;
+  status: DisplayLogStatus;
+  start_at: string;
+  end_at: string;
 }

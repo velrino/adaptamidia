@@ -7,17 +7,16 @@ import { AdsSidebar } from "./AdsSidebar";
 import { DisplayContent } from "./DisplayContent";
 import { AdsCurrentType, IDisplayTheme } from "@/interfaces/ads";
 import { faker } from "@faker-js/faker";
+import { addLogToQueue } from "@/backend/queue/display_logs_create";
+import { DisplayLogStatus, DisplayType } from "@/interfaces/display-logs";
+import { DateHelper } from "@/utils/date";
+import useDisplayLogsQueue from "@/hooks/useDisplayLogsQueue";
 
 interface AdStat {
   index: number;
   count: number;
   timestamps: string[];
 }
-
-const sendAPI = () => {
-  // const storedData = JSON.parse(localStorage.getItem("adStats") || "[]");
-  // console.log("Sending data to API:", storedData);
-};
 
 const updateAdStats = (adIndex: number) => {
   const stats: AdStat[] = JSON.parse(
@@ -44,14 +43,17 @@ export interface IDisplay {
   list: IApiDisplayResponseItem[];
   theme: IDisplayTheme;
   preview: boolean;
+  unit?: string | null;
   style?: {
     container?: string;
   };
 }
 
-export function Display({ list, theme, preview, style }: IDisplay) {
+export function Display({ list, theme, preview, style, unit }: IDisplay) {
+  useDisplayLogsQueue();
+
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
-  const [advertisement, setAdvertisement] = useState(false);
+  const [advertisement] = useState(false);
   const [dolar, setDolar] = useState<number>(0);
 
   const [currentDisplay, setCurrentDisplay] =
@@ -77,21 +79,33 @@ export function Display({ list, theme, preview, style }: IDisplay) {
         currentItem.ads &&
         currentItem.type === AdsCurrentType.ADVERTISEMENT
       ) {
-        seconds = currentItem.ads?.seconds; //currentItem?.data?.seconds || 5;
+        seconds = currentItem.ads?.seconds || 20; //currentItem?.data?.seconds || 5;
       } else {
         seconds = 5;
       }
 
       updateAdStats(currentAdIndex);
 
-      const timer = setTimeout(() => {
+      const timer = setTimeout(async () => {
         const nextIndex = (currentAdIndex + 1) % list.length;
-        setAdvertisement(() => false);
+        // setAdvertisement(() => false);
 
         setCurrentAdIndex(nextIndex);
+        const currentId = currentDisplay?.ads?._id || currentDisplay?.news?._id;
+        const currentSeconds = currentItem.ads?.seconds || 5;
 
-        if (preview === false) {
-          sendAPI();
+        if (preview === false && unit && currentId) {
+          await addLogToQueue({
+            identifier: "",
+            id: currentId,
+            local: unit,
+            type: DisplayType.ADVERTISEMENT,
+            status: DisplayLogStatus.FINISHED,
+            start_at: DateHelper.dayjs()
+              .subtract(currentSeconds, "seconds")
+              .toISOString(),
+            end_at: DateHelper.dayjs().toISOString(),
+          });
         }
       }, seconds * 1000);
 

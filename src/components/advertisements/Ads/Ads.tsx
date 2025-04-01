@@ -174,13 +174,14 @@ export default function AdsComponent() {
   useEffect(() => {
     if (apiDisplayResponse) {
       setList(() => apiDisplayResponse.data);
-      // console.log({ apiDisplayResponse });
     }
   }, [apiDisplayResponse]);
 
   return (
     <>
-      {list.length > 0 && <Display list={list} theme={theme} preview={false} />}
+      {list.length > 0 && (
+        <Display list={list} theme={theme} preview={false} unit={currentUnit} />
+      )}
     </>
   );
 }
