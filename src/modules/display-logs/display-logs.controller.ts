@@ -11,7 +11,7 @@ export class DisplayLogController {
   ) {}
 
   @Post('display/log')
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
   preview(@Req() req: CustomRequest, @Body() body: ICreateDisplayLogDto) {
     return this.createDisplayLogService.executeFromGuestRequest(req, body);
   }
