@@ -10,6 +10,7 @@ import { DisplayLogStatus } from '../display-logs.interface';
 import { Transform, Type } from 'class-transformer';
 import { Types } from 'mongoose';
 import { FromEnum } from 'src/shared/interfaces/paginate.dto';
+import { PermissionsEnum } from 'src/modules/permissions/permissions.enum';
 
 export enum IDashboardDisplayLogType {
   TOTAL_BY_TYPE = 'TOTAL_BY_TYPE',
@@ -82,6 +83,7 @@ export class IDashboardDisplayLogDto {
 }
 
 export interface IDashboardDisplayLog {
+  permissions: PermissionsEnum[];
   from: FromEnum;
   chart_type: IDashboardDisplayLogType;
   is_admin: boolean;

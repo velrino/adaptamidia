@@ -34,6 +34,7 @@ import {
 } from './auth.interface';
 import { UserOTPEnum } from '../user/user.interface';
 import { AuthOtpService } from './otp/otp.service';
+import { PermissionsEnum } from '../permissions/permissions.enum';
 
 @Injectable()
 export class AuthService {
@@ -88,7 +89,12 @@ export class AuthService {
    * Returns the newly created user.
    */
   private async createUser(email: string, password: string) {
-    const newUser = new this.userModel({ email, password });
+    const newUser = new this.userModel({
+      email,
+      password,
+      permissions: [PermissionsEnum.USER],
+    });
+
     return newUser.save();
   }
 

@@ -18,6 +18,7 @@ import { PermissionsEnum } from 'src/modules/permissions/permissions.enum';
 import { DisplayType } from 'src/modules/advertisement/display/display.interface';
 import { RedisKeysEnum } from 'src/shared/redis/redis.keys';
 import { FromEnum } from 'src/shared/interfaces/paginate.dto';
+import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 
 @Injectable()
 export class DashboardDisplayLogService {
@@ -44,12 +45,16 @@ export class DashboardDisplayLogService {
       }
 
       if (!result.sudo && permissions.includes(PermissionsEnum.ADVERTISER)) {
-        parameters.advertisement = companies;
+        parameters.advertiser = companies;
       } else if (!result.sudo && permissions.includes(PermissionsEnum.LOCAL)) {
         parameters.local = companies;
       }
 
-      return this.execute({ ...parameters, is_admin: result.sudo });
+      return this.execute({
+        ...parameters,
+        is_admin: result.sudo,
+        permissions,
+      });
     } catch (error) {
       throw new HttpException(
         error?.message || RESULT.DASHBOARD_DISPLAY_LOG_EXECUTE_FAILED,
@@ -58,10 +63,10 @@ export class DashboardDisplayLogService {
     }
   }
 
-  async execute(payload: IDashboardDisplayLog) {
+  async execute(parameters: IDashboardDisplayLog) {
     try {
-      if (payload.chart_type === IDashboardDisplayLogType.TOTAL_BY_TYPE) {
-        return await this.dashboardTotalByType(payload);
+      if (parameters.chart_type === IDashboardDisplayLogType.TOTAL_BY_TYPE) {
+        return await this.dashboardTotalByType(parameters);
       }
 
       throw new HttpException(
@@ -69,6 +74,13 @@ export class DashboardDisplayLogService {
         HttpStatus.UNPROCESSABLE_ENTITY,
       );
     } catch (error) {
+      Log(
+        LogType.ERROR,
+        DashboardDisplayLogService.name,
+        this.execute.name,
+        LogAction.FAILED,
+        { parameters, error },
+      );
       throw new HttpException(
         error?.message || RESULT.DASHBOARD_DISPLAY_LOG_FAILED,
         error?.status || HttpStatus.UNPROCESSABLE_ENTITY,
@@ -94,12 +106,26 @@ export class DashboardDisplayLogService {
         }
       }
 
+      const queryBuilder = {
+        start_at: { $gte: parameters.start_at, $lt: parameters.end_at },
+      };
+
+      if (
+        !parameters.is_admin &&
+        parameters.permissions.includes(PermissionsEnum.ADVERTISER)
+      ) {
+        queryBuilder['advertiser'] = { $in: parameters.advertiser };
+      } else if (
+        !parameters.is_admin &&
+        parameters.permissions.includes(PermissionsEnum.LOCAL)
+      ) {
+        queryBuilder['local'] = { $in: parameters.local };
+      }
+
       const query_result: IDashboardTotalByTypeQueryResult[] =
         await this.displayLogModel.aggregate([
           {
-            $match: {
-              start_at: { $gte: parameters.start_at, $lt: parameters.end_at },
-            },
+            $match: queryBuilder,
           },
           {
             $group: {
@@ -135,6 +161,13 @@ export class DashboardDisplayLogService {
 
       return result;
     } catch (error) {
+      Log(
+        LogType.ERROR,
+        DashboardDisplayLogService.name,
+        this.dashboardTotalByType.name,
+        LogAction.FAILED,
+        { parameters, error },
+      );
       throw new HttpException(
         error?.message || RESULT.DASHBOARD_DISPLAY_LOG_FAILED,
         error?.status || HttpStatus.UNPROCESSABLE_ENTITY,
