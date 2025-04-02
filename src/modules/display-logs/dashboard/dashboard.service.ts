@@ -8,7 +8,6 @@ import { RESULT } from 'src/shared/result.enum';
 import {
   IDashboardDisplayLog,
   IDashboardDisplayLogDto,
-  IDashboardDisplayLogQueryTime,
   IDashboardDisplayLogType,
   IDashboardTotalByTypeQueryResult,
   IDashboardTotalByTypeResult,
@@ -145,6 +144,14 @@ export class DashboardDisplayLogService {
         queryBuilder['local'] = { $in: parameters.local };
       }
 
+      if (parameters.advertisement?.length) {
+        queryBuilder['advertisement'] = { $in: parameters.advertisement };
+      }
+
+      if (parameters.news?.length) {
+        queryBuilder['news'] = { $in: parameters.news };
+      }
+
       const records: IDashboardTotalByTypeQueryResult[] =
         await this.displayLogModel.aggregate([
           {
@@ -158,7 +165,7 @@ export class DashboardDisplayLogService {
           },
           {
             $sort: {
-              '_id.start_at': -1,
+              [parameters.sort.column]: parameters.sort.value,
             },
           },
         ]);

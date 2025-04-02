@@ -2,7 +2,6 @@ import {
   IsDate,
   IsEnum,
   IsIn,
-  IsMongoId,
   IsNotEmpty,
   IsOptional,
   ValidateIf,
@@ -66,6 +65,16 @@ export class IDashboardDisplayLogQueryGroupTotalByTypeDto {
   };
 }
 
+export class IDashboardDisplayLogQuerySortDto {
+  @IsIn(['_id.start_at', 'total'])
+  @IsNotEmpty()
+  column: string;
+
+  @IsIn([1, -1])
+  @IsNotEmpty()
+  value: 1 | -1;
+}
+
 export class IDashboardDisplayLogDto {
   @IsNotEmpty()
   @IsEnum(FromEnum)
@@ -88,7 +97,6 @@ export class IDashboardDisplayLogDto {
   end_at: Date;
 
   @IsOptional()
-  @IsMongoId({ each: true })
   @Transform(({ value }) =>
     Array.isArray(value)
       ? value.map((v) => new Types.ObjectId(v))
@@ -102,11 +110,17 @@ export class IDashboardDisplayLogDto {
       ? value.map((v) => new Types.ObjectId(v))
       : [new Types.ObjectId(value)],
   )
-  @IsMongoId({ each: true })
+  news?: Types.ObjectId[];
+
+  @IsOptional()
+  @Transform(({ value }) =>
+    Array.isArray(value)
+      ? value.map((v) => new Types.ObjectId(v))
+      : [new Types.ObjectId(value)],
+  )
   advertiser?: Types.ObjectId[];
 
   @IsOptional()
-  @IsMongoId({ each: true })
   @Transform(({ value }) =>
     Array.isArray(value)
       ? value.map((v) => new Types.ObjectId(v))
@@ -115,7 +129,6 @@ export class IDashboardDisplayLogDto {
   local?: Types.ObjectId[];
 
   @IsOptional()
-  @IsMongoId({ each: true })
   @Transform(({ value }) =>
     Array.isArray(value)
       ? value.map((v) => new Types.ObjectId(v))
@@ -135,6 +148,11 @@ export class IDashboardDisplayLogDto {
   @ValidateNested()
   @Type(() => IDashboardDisplayLogQueryGroupTotalByTypeDto)
   query_group_total_by_type: IDashboardDisplayLogQueryGroupTotalByTypeDto;
+
+  @IsNotEmpty()
+  @ValidateNested()
+  @Type(() => IDashboardDisplayLogQuerySortDto)
+  sort: IDashboardDisplayLogQuerySortDto;
 }
 
 export interface IDashboardDisplayLog {
@@ -145,12 +163,14 @@ export interface IDashboardDisplayLog {
   start_at: Date;
   end_at: Date;
   advertisement?: Types.ObjectId[];
+  news?: Types.ObjectId[];
   advertiser?: Types.ObjectId[];
   local?: Types.ObjectId[];
   local_unit?: Types.ObjectId[];
   type?: DisplayType[];
   status?: DisplayLogStatus[];
   query_group_total_by_type?: IDashboardDisplayLogQueryGroupTotalByTypeDto;
+  sort: IDashboardDisplayLogQuerySortDto;
 }
 
 // START TOTAL_BY_TYPE
