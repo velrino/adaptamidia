@@ -12,6 +12,6 @@ export enum DeleteFileType {
 
 export class IDeleteFile {
   value: string;
-  company: string;
+  // company: string;
   type: DeleteFileType;
 }

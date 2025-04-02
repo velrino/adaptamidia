@@ -22,10 +22,10 @@ export class UploadFileService {
     body: UploadFileDto,
     file: Express.Multer.File,
   ) {
-    const company = GetUserCompany(currentRequest);
+    const result = GetUserCompany(currentRequest);
 
     return this.execute({
-      company,
+      company: result.company,
       file,
       foldername: body.foldername,
       bucket: body.bucket,
@@ -38,7 +38,7 @@ export class UploadFileService {
         parameters.company
           ? `${parameters.foldername}/${String(parameters.company)}`
           : `generic/${parameters.foldername}`,
-        uuidv4().toString() as string,
+        uuidv4().toString(),
         parameters.file,
         parameters.bucket,
       );

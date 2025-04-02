@@ -18,14 +18,17 @@ function isValidObjectId(id: string): boolean {
  * Retrieves the user's company ID based on permissions and request body.
  * @param currentRequest - The authenticated request object.
  */
-export function GetUserCompany(currentRequest: AuthenticatedRequest) {
+export function GetUserCompany(currentRequest: AuthenticatedRequest): {
+  company: Types.ObjectId | null;
+  sudo: boolean;
+} {
   const { companies, permissions } = currentRequest.user.user;
 
   const sudo: boolean = permissions.includes(PermissionsEnum.SUDO);
 
   // If the user does not have SUDO permissions, return the first company ID.
   if (!permissions.includes(PermissionsEnum.SUDO)) {
-    return { comapny: companies[0] || null, sudo };
+    return { company: companies[0] || null, sudo };
   }
 
   // If the user has SUDO permissions and a company_id is provided in the request body.
@@ -40,11 +43,11 @@ export function GetUserCompany(currentRequest: AuthenticatedRequest) {
       );
     }
 
-    return companyId;
+    return { company: new Types.ObjectId(companyId), sudo };
   }
 
   // If no company_id is provided and the user has SUDO permissions, return null.
-  return null;
+  return { company: null, sudo: true };
 }
 
 export function NormalizeToArray(value: any): string[] {

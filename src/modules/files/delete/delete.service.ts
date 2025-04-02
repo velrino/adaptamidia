@@ -20,11 +20,11 @@ export class DeleteFileService {
     currentRequest: AuthenticatedRequest,
     body: DeleteFileDto,
   ) {
-    const company = GetUserCompany(currentRequest);
+    // const result = GetUserCompany(currentRequest);
 
     return this.execute({
       type: DeleteFileType.ID,
-      company: company,
+      // company: result.company?.toString(),
       value: body.id,
     });
   }
