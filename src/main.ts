@@ -14,7 +14,13 @@ async function bootstrap() {
 
   app.useGlobalFilters(new AllExceptionsFilter());
 
-  app.useGlobalPipes(new ValidationPipe({ transform: true }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      forbidNonWhitelisted: true,
+      whitelist: true,
+    }),
+  );
 
   app.enableCors();
 
