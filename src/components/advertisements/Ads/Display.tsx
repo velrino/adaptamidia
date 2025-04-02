@@ -74,12 +74,12 @@ export function Display({ list, theme, preview, style, unit }: IDisplay) {
       const currentItem = list[currentAdIndex];
       setCurrentDisplay(() => currentItem);
 
-      let seconds = 5; //currentAd.seconds
+      let seconds = 5;
       if (
         currentItem.ads &&
         currentItem.type === AdsCurrentType.ADVERTISEMENT
       ) {
-        seconds = currentItem.ads?.seconds || 20; //currentItem?.data?.seconds || 5;
+        seconds = currentItem.ads?.seconds || 20;
       } else {
         seconds = 5;
       }
@@ -87,26 +87,44 @@ export function Display({ list, theme, preview, style, unit }: IDisplay) {
       updateAdStats(currentAdIndex);
 
       const timer = setTimeout(async () => {
-        const nextIndex = (currentAdIndex + 1) % list.length;
+        const oldItem = list[currentAdIndex];
+
         // setAdvertisement(() => false);
 
-        setCurrentAdIndex(nextIndex);
-        const currentId = currentDisplay?.ads?._id || currentDisplay?.news?._id;
+        const currentId = oldItem?.ads?._id || oldItem?.news?._id;
         const currentSeconds = currentItem.ads?.seconds || 5;
 
         if (preview === false && unit && currentId) {
-          await addLogToQueue({
+          const body = {
             identifier: "",
             id: currentId,
             local: unit,
-            type: DisplayType.ADVERTISEMENT,
+            type: currentItem.ads
+              ? DisplayType.ADVERTISEMENT
+              : DisplayType.NEWS,
             status: DisplayLogStatus.FINISHED,
             start_at: DateHelper.dayjs()
               .subtract(currentSeconds, "seconds")
               .toISOString(),
             end_at: DateHelper.dayjs().toISOString(),
-          });
+          };
+
+          await Promise.race([
+            addLogToQueue(body)
+              .then((res) => ({ success: true, res }))
+              .catch((err) => ({ success: false, err })),
+            new Promise((resolve) =>
+              setTimeout(
+                () => resolve({ success: false, reason: "timeout" }),
+                100
+              )
+            ),
+          ]);
         }
+
+        const nextIndex = (currentAdIndex + 1) % list.length;
+
+        setCurrentAdIndex(nextIndex);
       }, seconds * 1000);
 
       return () => clearTimeout(timer);

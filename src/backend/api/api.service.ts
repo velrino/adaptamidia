@@ -5,7 +5,6 @@ export const ApiResources = {
     let url = `${process.env.NEXT_PUBLIC_BASE_API_URL?.concat(
       parameters.path
     )}`;
-    console.log({ url });
     const headers = new Headers(parameters.headers);
 
     // Only set Content-Type if not FormData

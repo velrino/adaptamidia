@@ -3,6 +3,7 @@ import {
   IApiAuthLogin,
   IApiCreateAdvertisementRequest,
   IApiCreateCompanyUnitRequest,
+  IApiCreateDisplayLogRequest,
   IApiDisplayRequest,
   IApiGroupCompanyUnitsRequest,
   IApiPaginateAdvertisement,
@@ -140,7 +141,7 @@ export const API = {
     },
   },
   display_logs: {
-    async create(data: IApiUpdateCompanyRequest) {
+    async create(data: IApiCreateDisplayLogRequest) {
       return ApiResources.request({
         method: IApiRequestMethod.POST,
         path: "/display/log",
