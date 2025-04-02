@@ -10,7 +10,7 @@ import {
 import { Transform, Type } from 'class-transformer';
 
 export enum FromEnum {
-  DB = 'DB',
+  DATABASE = 'DATABASE',
   CACHE = 'CACHE',
 }
 

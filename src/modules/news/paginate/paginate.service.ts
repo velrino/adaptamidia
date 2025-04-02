@@ -95,7 +95,7 @@ export class PaginateNewsService {
         dbData,
         provider,
         parameters,
-        FromEnum.DB,
+        FromEnum.DATABASE,
       );
     } catch (error) {
       this.handleError(error, parameters);

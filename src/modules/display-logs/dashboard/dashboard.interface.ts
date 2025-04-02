@@ -9,12 +9,17 @@ import { DisplayType } from 'src/modules/advertisement/display/display.interface
 import { DisplayLogStatus } from '../display-logs.interface';
 import { Transform, Type } from 'class-transformer';
 import { Types } from 'mongoose';
+import { FromEnum } from 'src/shared/interfaces/paginate.dto';
 
 export enum IDashboardDisplayLogType {
   TOTAL_BY_TYPE = 'TOTAL_BY_TYPE',
 }
 
 export class IDashboardDisplayLogDto {
+  @IsNotEmpty()
+  @IsEnum(FromEnum)
+  from: FromEnum;
+
   @IsNotEmpty()
   @IsEnum(IDashboardDisplayLogType)
   chart_type: IDashboardDisplayLogType;
@@ -32,6 +37,7 @@ export class IDashboardDisplayLogDto {
   end_at: Date;
 
   @IsOptional()
+  @IsMongoId({ each: true })
   @Transform(({ value }) =>
     Array.isArray(value)
       ? value.map((v) => new Types.ObjectId(v))
@@ -45,9 +51,11 @@ export class IDashboardDisplayLogDto {
       ? value.map((v) => new Types.ObjectId(v))
       : [new Types.ObjectId(value)],
   )
+  @IsMongoId({ each: true })
   advertiser?: Types.ObjectId[];
 
   @IsOptional()
+  @IsMongoId({ each: true })
   @Transform(({ value }) =>
     Array.isArray(value)
       ? value.map((v) => new Types.ObjectId(v))
@@ -56,6 +64,7 @@ export class IDashboardDisplayLogDto {
   local?: Types.ObjectId[];
 
   @IsOptional()
+  @IsMongoId({ each: true })
   @Transform(({ value }) =>
     Array.isArray(value)
       ? value.map((v) => new Types.ObjectId(v))
@@ -73,6 +82,7 @@ export class IDashboardDisplayLogDto {
 }
 
 export interface IDashboardDisplayLog {
+  from: FromEnum;
   chart_type: IDashboardDisplayLogType;
   is_admin: boolean;
   start_at: Date;
@@ -102,6 +112,7 @@ export interface IDashboardTotalByTypeResume {
 }
 
 export interface IDashboardTotalByTypeResult {
+  from: FromEnum;
   parameters: IDashboardDisplayLog;
   resume: IDashboardTotalByTypeResume;
   query_result: IDashboardTotalByTypeQueryResult[];

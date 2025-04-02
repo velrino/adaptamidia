@@ -16,6 +16,8 @@ import {
 import { GetUserCompany } from 'src/shared/general';
 import { PermissionsEnum } from 'src/modules/permissions/permissions.enum';
 import { DisplayType } from 'src/modules/advertisement/display/display.interface';
+import { RedisKeysEnum } from 'src/shared/redis/redis.keys';
+import { FromEnum } from 'src/shared/interfaces/paginate.dto';
 
 @Injectable()
 export class DashboardDisplayLogService {
@@ -56,10 +58,10 @@ export class DashboardDisplayLogService {
     }
   }
 
-  async execute(parameters: IDashboardDisplayLog) {
+  async execute(payload: IDashboardDisplayLog) {
     try {
-      if (parameters.chart_type === IDashboardDisplayLogType.TOTAL_BY_TYPE) {
-        return await this.dashboardTotalByType(parameters);
+      if (payload.chart_type === IDashboardDisplayLogType.TOTAL_BY_TYPE) {
+        return await this.dashboardTotalByType(payload);
       }
 
       throw new HttpException(
@@ -78,6 +80,20 @@ export class DashboardDisplayLogService {
     parameters: IDashboardDisplayLog,
   ): Promise<IDashboardTotalByTypeResult> {
     try {
+      const cacheKey = this.redisService.createKeyByObject(
+        `${RedisKeysEnum.DASHBOARD_DISPLAY_LOGS_TOTAL_BY_TYPE}`,
+        parameters,
+      );
+
+      if (parameters.from === FromEnum.CACHE) {
+        const dataCached: IDashboardTotalByTypeResult | null =
+          await this.redisService.get(cacheKey.name);
+
+        if (dataCached) {
+          return { ...dataCached, from: FromEnum.CACHE };
+        }
+      }
+
       const query_result: IDashboardTotalByTypeQueryResult[] =
         await this.displayLogModel.aggregate([
           {
@@ -108,7 +124,16 @@ export class DashboardDisplayLogService {
           { distributed: {} as Record<DisplayType, number>, total: 0 },
         );
 
-      return { parameters, resume, query_result };
+      const result = {
+        from: FromEnum.DATABASE,
+        parameters,
+        resume,
+        query_result,
+      };
+
+      await this.redisService.set(cacheKey.name, result, 300000);
+
+      return result;
     } catch (error) {
       throw new HttpException(
         error?.message || RESULT.DASHBOARD_DISPLAY_LOG_FAILED,
