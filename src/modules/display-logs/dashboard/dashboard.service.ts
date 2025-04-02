@@ -8,6 +8,7 @@ import { RESULT } from 'src/shared/result.enum';
 import {
   IDashboardDisplayLog,
   IDashboardDisplayLogDto,
+  IDashboardDisplayLogQueryTime,
   IDashboardDisplayLogType,
   IDashboardTotalByTypeQueryResult,
   IDashboardTotalByTypeResult,
@@ -88,10 +89,32 @@ export class DashboardDisplayLogService {
     }
   }
 
+  /*
+   * "query_group_total_by_type": {
+        "type": "$type",
+        "advertiser": "$advertiser",
+        "local": "$local",
+        "local_unit": "$local_unit",
+        "start_at": {
+            "$dateToString": {
+                "format": "%Y-%m-%d",
+                "date": "$start_at",
+                "timezone": "America/Sao_Paulo"
+            }
+        }
+    }
+   */
   async dashboardTotalByType(
     parameters: IDashboardDisplayLog,
   ): Promise<IDashboardTotalByTypeResult> {
     try {
+      if (!parameters.query_group_total_by_type) {
+        throw new HttpException(
+          RESULT.DASHBOARD_DISPLAY_LOG_NEED_MATCH,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       const cacheKey = this.redisService.createKeyByObject(
         `${RedisKeysEnum.DASHBOARD_DISPLAY_LOGS_TOTAL_BY_TYPE}`,
         parameters,
@@ -122,42 +145,61 @@ export class DashboardDisplayLogService {
         queryBuilder['local'] = { $in: parameters.local };
       }
 
-      const query_result: IDashboardTotalByTypeQueryResult[] =
+      const records: IDashboardTotalByTypeQueryResult[] =
         await this.displayLogModel.aggregate([
           {
             $match: queryBuilder,
           },
           {
             $group: {
-              _id: {
-                type: '$type',
-                advertiser: '$advertiser',
-                local: '$local',
-                local_unit: '$local_unit',
-              },
+              _id: parameters.query_group_total_by_type,
               total: { $sum: 1 },
+            },
+          },
+          {
+            $sort: {
+              '_id.start_at': -1,
             },
           },
         ]);
 
       const resume: IDashboardTotalByTypeResume =
-        query_result.reduce<IDashboardTotalByTypeResume>(
-          (acc, { _id: { type }, total }) => {
-            acc.distributed[type] = (acc.distributed[type] ?? 0) + total;
+        records.reduce<IDashboardTotalByTypeResume>(
+          (acc, { _id: { type, start_at }, total }) => {
+            // Initialize the date entry if it doesn't exist
+            if (!acc.dates[start_at]) {
+              acc.dates[start_at] = {
+                distributed: {} as Record<DisplayType, number>,
+                total: 0,
+              };
+            }
+
+            // Add to the type count for this date
+            acc.dates[start_at].distributed[type] =
+              (acc.dates[start_at].distributed[type] || 0) + total;
+
+            // Add to the date total
+            acc.dates[start_at].total += total;
+
+            // Add to the overall total
             acc.total += total;
+
             return acc;
           },
-          { distributed: {} as Record<DisplayType, number>, total: 0 },
+          {
+            dates: {} as IDashboardTotalByTypeResume['dates'],
+            total: 0,
+          },
         );
 
       const result = {
         from: FromEnum.DATABASE,
         parameters,
         resume,
-        query_result,
+        records,
       };
 
-      await this.redisService.set(cacheKey.name, result, 300000);
+      await this.redisService.set(cacheKey.name, result, 60000);
 
       return result;
     } catch (error) {

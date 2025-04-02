@@ -1,9 +1,12 @@
 import {
   IsDate,
   IsEnum,
+  IsIn,
   IsMongoId,
   IsNotEmpty,
   IsOptional,
+  ValidateIf,
+  ValidateNested,
 } from 'class-validator';
 import { DisplayType } from 'src/modules/advertisement/display/display.interface';
 import { DisplayLogStatus } from '../display-logs.interface';
@@ -14,6 +17,53 @@ import { PermissionsEnum } from 'src/modules/permissions/permissions.enum';
 
 export enum IDashboardDisplayLogType {
   TOTAL_BY_TYPE = 'TOTAL_BY_TYPE',
+}
+
+export enum IDashboardDisplayLogQueryTime {
+  DAY = 'DAY',
+  HOUR_AND_MINUTE = 'HOUR_AND_MINUTE',
+}
+
+export class IDashboardDisplayLogQueryDateToStringFormatDto {
+  @IsIn(['%Y-%m-%d %H:%M', '%Y-%m-%d'])
+  @IsNotEmpty()
+  format: string;
+
+  @IsIn(['$start_at'])
+  @Transform(() => '$start_at')
+  @IsNotEmpty()
+  date: string;
+
+  @IsIn(['America/Sao_Paulo'])
+  @IsNotEmpty()
+  timezone: string;
+}
+
+export class IDashboardDisplayLogQueryGroupTotalByTypeDto {
+  @IsIn(['$type'])
+  @Transform(() => '$type')
+  @IsOptional()
+  type?: '$type';
+
+  @IsIn(['$advertiser'])
+  @Transform(() => '$advertiser')
+  @IsOptional()
+  advertiser?: '$advertiser';
+
+  @IsIn(['$local'])
+  @Transform(() => '$local')
+  @IsOptional()
+  local?: '$local';
+
+  @IsIn(['$local_unit'])
+  @Transform(() => '$local_unit')
+  @IsOptional()
+  local_unit?: '$local_unit';
+
+  @IsOptional()
+  start_at: {
+    $dateToString: IDashboardDisplayLogQueryDateToStringFormatDto;
+  };
 }
 
 export class IDashboardDisplayLogDto {
@@ -80,6 +130,11 @@ export class IDashboardDisplayLogDto {
   @IsOptional()
   @IsEnum(DisplayLogStatus, { each: true })
   status?: DisplayLogStatus[];
+
+  @ValidateIf((o) => o.chart_type === IDashboardDisplayLogType.TOTAL_BY_TYPE)
+  @ValidateNested()
+  @Type(() => IDashboardDisplayLogQueryGroupTotalByTypeDto)
+  query_group_total_by_type: IDashboardDisplayLogQueryGroupTotalByTypeDto;
 }
 
 export interface IDashboardDisplayLog {
@@ -95,6 +150,7 @@ export interface IDashboardDisplayLog {
   local_unit?: Types.ObjectId[];
   type?: DisplayType[];
   status?: DisplayLogStatus[];
+  query_group_total_by_type?: IDashboardDisplayLogQueryGroupTotalByTypeDto;
 }
 
 // START TOTAL_BY_TYPE
@@ -104,19 +160,27 @@ export interface IDashboardTotalByTypeQueryResult {
     advertiser: string;
     local: string;
     local_unit: string;
+    start_at: string;
   };
   total: number;
 }
 
 export interface IDashboardTotalByTypeResume {
-  distributed: Record<DisplayType, number>;
-  total: number;
+  dates: Record<
+    string,
+    {
+      // Agrupa por data (string formatada)
+      distributed: Record<DisplayType, number>; // Mantém a distribuição por tipo
+      total: number; // Total para esta data
+    }
+  >;
+  total: number; // Total geral de todos os registros
 }
 
 export interface IDashboardTotalByTypeResult {
   from: FromEnum;
   parameters: IDashboardDisplayLog;
   resume: IDashboardTotalByTypeResume;
-  query_result: IDashboardTotalByTypeQueryResult[];
+  records: IDashboardTotalByTypeQueryResult[];
 }
 // END TOTAL_BY_TYPE
