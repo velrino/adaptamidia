@@ -1,9 +1,10 @@
 "use client";
 
-import { IApiDisplayResponseItem } from "@/backend/api/api.interface";
-
-import React, { useState, useEffect } from "react";
-import { AdsSidebar } from "./AdsSidebar";
+import {
+  IApiCreateDisplayLogRequest,
+  IApiDisplayResponseItem,
+} from "@/backend/api/api.interface";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { DisplayContent } from "./DisplayContent";
 import { AdsCurrentType, IDisplayTheme } from "@/interfaces/ads";
 import { faker } from "@faker-js/faker";
@@ -18,28 +19,7 @@ interface AdStat {
   timestamps: string[];
 }
 
-const updateAdStats = (adIndex: number) => {
-  const stats: AdStat[] = JSON.parse(
-    localStorage.getItem("adStats") || "[]"
-  ) as AdStat[];
-  const adStatIndex = (stats || []).findIndex(
-    (stat: AdStat) => stat.index === adIndex
-  );
-
-  if (adStatIndex > -1) {
-    stats[adStatIndex].count += 1;
-    stats[adStatIndex].timestamps.push(new Date().toISOString());
-  } else {
-    stats.push({
-      index: adIndex,
-      count: 1,
-      timestamps: [new Date().toISOString()],
-    });
-  }
-  localStorage.setItem("adStats", JSON.stringify(stats));
-};
-
-export interface IDisplay {
+interface IDisplay {
   list: IApiDisplayResponseItem[];
   theme: IDisplayTheme;
   preview: boolean;
@@ -49,66 +29,68 @@ export interface IDisplay {
   };
 }
 
+const DEFAULT_AD_SECONDS = 20;
+const DEFAULT_NEWS_SECONDS = 5;
+const LOG_TIMEOUT_MS = 100;
+const DOLAR_RANGE = { min: 5.7, max: 5.9, fractionDigits: 2 };
+
+const updateAdStats = (adIndex: number): void => {
+  const stats: AdStat[] = JSON.parse(
+    localStorage.getItem("adStats") || "[]"
+  ) as AdStat[];
+  const adStatIndex = stats.findIndex((stat) => stat.index === adIndex);
+
+  const now = new Date().toISOString();
+
+  if (adStatIndex > -1) {
+    stats[adStatIndex].count += 1;
+    stats[adStatIndex].timestamps.push(now);
+  } else {
+    stats.push({
+      index: adIndex,
+      count: 1,
+      timestamps: [now],
+    });
+  }
+
+  localStorage.setItem("adStats", JSON.stringify(stats));
+};
+
 export function Display({ list, theme, preview, style, unit }: IDisplay) {
   useDisplayLogsQueue();
-
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
-  const [advertisement] = useState(false);
   const [dolar, setDolar] = useState<number>(0);
-
   const [currentDisplay, setCurrentDisplay] =
     useState<IApiDisplayResponseItem>();
 
+  // Memoized current item to avoid recalculations
+  const currentItem = useMemo(
+    () => list[currentAdIndex],
+    [list, currentAdIndex]
+  );
+
+  // Generate random dolar value once on mount
   useEffect(() => {
-    setDolar(() =>
-      faker.number.float({
-        min: 5.7,
-        max: 5.9,
-        fractionDigits: 2,
-      })
-    );
+    setDolar(faker.number.float(DOLAR_RANGE));
   }, []);
 
-  useEffect(() => {
-    if (list.length) {
-      const currentItem = list[currentAdIndex];
-      setCurrentDisplay(() => currentItem);
+  const sendLog = useCallback(
+    async (item: IApiDisplayResponseItem, displaySeconds: number) => {
+      const currentId = item.ads?._id || item.news?._id;
 
-      let seconds = 5;
-      if (
-        currentItem.ads &&
-        currentItem.type === AdsCurrentType.ADVERTISEMENT
-      ) {
-        seconds = currentItem.ads?.seconds || 20;
-      } else {
-        seconds = 5;
-      }
-
-      updateAdStats(currentAdIndex);
-
-      const timer = setTimeout(async () => {
-        const oldItem = list[currentAdIndex];
-
-        // setAdvertisement(() => false);
-
-        const currentId = oldItem?.ads?._id || oldItem?.news?._id;
-        const currentSeconds = currentItem.ads?.seconds || 5;
-
-        if (preview === false && unit && currentId) {
-          const body = {
-            identifier: "",
-            id: currentId,
-            local: unit,
-            type: currentItem.ads
-              ? DisplayType.ADVERTISEMENT
-              : DisplayType.NEWS,
-            status: DisplayLogStatus.FINISHED,
-            start_at: DateHelper.dayjs()
-              .subtract(currentSeconds, "seconds")
-              .toISOString(),
-            end_at: DateHelper.dayjs().toISOString(),
-          };
-
+      if (preview === false && unit && currentId) {
+        const body: IApiCreateDisplayLogRequest = {
+          identifier: "",
+          id: currentId,
+          local: unit,
+          type: currentItem.ads ? DisplayType.ADVERTISEMENT : DisplayType.NEWS,
+          status: DisplayLogStatus.FINISHED,
+          start_at: DateHelper.dayjs()
+            .subtract(displaySeconds, "seconds")
+            .toISOString(),
+          end_at: DateHelper.dayjs().toISOString(),
+        };
+        try {
           await Promise.race([
             addLogToQueue(body)
               .then((res) => ({ success: true, res }))
@@ -116,34 +98,54 @@ export function Display({ list, theme, preview, style, unit }: IDisplay) {
             new Promise((resolve) =>
               setTimeout(
                 () => resolve({ success: false, reason: "timeout" }),
-                100
+                LOG_TIMEOUT_MS
               )
             ),
           ]);
+        } catch (error) {
+          console.error("Failed to send log:", error);
         }
+      }
+    },
+    [preview, unit, currentItem]
+  );
 
-        const nextIndex = (currentAdIndex + 1) % list.length;
+  // Main display rotation effect
+  useEffect(() => {
+    if (!list.length) return;
 
-        setCurrentAdIndex(nextIndex);
-      }, seconds * 1000);
+    setCurrentDisplay(currentItem);
+    updateAdStats(currentAdIndex);
 
-      return () => clearTimeout(timer);
-    }
-  }, [list, currentAdIndex, preview]);
+    const isAd =
+      currentItem.ads && currentItem.type === AdsCurrentType.ADVERTISEMENT;
+    const displaySeconds = isAd
+      ? currentItem.ads?.seconds || DEFAULT_AD_SECONDS
+      : DEFAULT_NEWS_SECONDS;
+
+    const timer = setTimeout(async () => {
+      if (!preview) {
+        await sendLog(currentItem, displaySeconds);
+      }
+
+      setCurrentAdIndex((prevIndex) => (prevIndex + 1) % list.length);
+    }, displaySeconds * 1000);
+
+    return () => clearTimeout(timer);
+  }, [list, currentAdIndex, currentItem, preview, sendLog]);
+
+  if (!currentDisplay) return null;
 
   return (
     <div className={style?.container || "h-screen w-screen flex"}>
-      {advertisement && <AdsSidebar theme={theme} />}
-      {currentDisplay && (
-        <DisplayContent
-          item={currentDisplay}
-          advertisement={advertisement}
-          resources={{
-            dolar,
-            theme,
-          }}
-        />
-      )}
+      <DisplayContent
+        item={currentDisplay}
+        advertisement={false}
+        resources={{
+          dolar,
+          theme,
+        }}
+      />
     </div>
   );
 }
