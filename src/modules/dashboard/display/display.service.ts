@@ -11,7 +11,7 @@ import {
   IDashboardTotalByTypeQueryResult,
   IDashboardTotalByTypeResult,
   IDashboardTotalByTypeResume,
-} from './dashboard.interface';
+} from './display.interface';
 import { GetUserCompany } from 'src/shared/general';
 import { PermissionsEnum } from 'src/modules/permissions/permissions.enum';
 import { DisplayType } from 'src/modules/advertisement/display/display.interface';
