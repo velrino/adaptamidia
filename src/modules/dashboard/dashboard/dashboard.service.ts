@@ -1,6 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { DisplayLog, DisplayLogDocument } from '../display-logs.schema';
 import { Model } from 'mongoose';
 import { RedisService } from 'src/shared/redis/redis.service';
 import { AuthenticatedRequest } from 'src/shared/request';
@@ -19,6 +18,10 @@ import { DisplayType } from 'src/modules/advertisement/display/display.interface
 import { RedisKeysEnum } from 'src/shared/redis/redis.keys';
 import { FromEnum } from 'src/shared/interfaces/paginate.dto';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
+import {
+  DisplayLog,
+  DisplayLogDocument,
+} from 'src/modules/display-logs/display-logs.schema';
 
 @Injectable()
 export class DashboardDisplayLogService {

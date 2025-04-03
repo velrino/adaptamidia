@@ -8,11 +8,11 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { DisplayType } from 'src/modules/advertisement/display/display.interface';
-import { DisplayLogStatus } from '../display-logs.interface';
 import { Transform, Type } from 'class-transformer';
 import { Types } from 'mongoose';
 import { FromEnum } from 'src/shared/interfaces/paginate.dto';
 import { PermissionsEnum } from 'src/modules/permissions/permissions.enum';
+import { DisplayLogStatus } from 'src/modules/display-logs/display-logs.interface';
 
 export enum IDashboardDisplayLogType {
   TOTAL_BY_TYPE = 'TOTAL_BY_TYPE',

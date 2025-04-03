@@ -19,6 +19,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { DisplayLogsModule } from './modules/display-logs/display-logs.module';
 import { BullModule } from '@nestjs/bull';
 import { QueueModule } from './modules/queue/queue.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { QueueModule } from './modules/queue/queue.module';
     QueueModule,
     ScheduleModule.forRoot(),
     NewsModule,
+    DashboardModule,
     RedisModule,
     PusherModule,
     AuthModule,

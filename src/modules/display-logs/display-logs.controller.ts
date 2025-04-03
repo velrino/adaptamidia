@@ -1,32 +1,18 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
-import { SkipThrottle, Throttle } from '@nestjs/throttler';
-import { AuthenticatedRequest, CustomRequest } from 'src/shared/request';
+import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
+import { CustomRequest } from 'src/shared/request';
 import { CreateDisplayLogService } from './create/create.service';
 import { ICreateDisplayLogDto } from './create/create.interface';
-import { DashboardDisplayLogService } from './dashboard/dashboard.service';
-import { AuthJwtGuard } from '../auth/auth.guard';
-import { IDashboardDisplayLogDto } from './dashboard/dashboard.interface';
 
 @Controller()
 export class DisplayLogController {
   constructor(
     private readonly createDisplayLogService: CreateDisplayLogService,
-    private readonly dashboardDisplayLogService: DashboardDisplayLogService,
   ) {}
 
   @Post('display/log')
   @Throttle({ default: { limit: 100, ttl: 60000 } })
   createLog(@Req() req: CustomRequest, @Body() body: ICreateDisplayLogDto) {
     return this.createDisplayLogService.executeFromGuestRequest(req, body);
-  }
-
-  @Post('display/dashboard')
-  @SkipThrottle()
-  @UseGuards(AuthJwtGuard)
-  dashboard(
-    @Req() req: AuthenticatedRequest,
-    @Body() body: IDashboardDisplayLogDto,
-  ) {
-    return this.dashboardDisplayLogService.executeFromRequest(req, body);
   }
 }

@@ -3,7 +3,6 @@ import { CreateDisplayLogService } from './create/create.service';
 import { MongoCollection } from 'src/shared/mongo.schema';
 import { Module } from '@nestjs/common';
 import { DisplayLogController } from './display-logs.controller';
-import { DashboardDisplayLogService } from './dashboard/dashboard.service';
 
 @Module({
   imports: [
@@ -16,6 +15,6 @@ import { DashboardDisplayLogService } from './dashboard/dashboard.service';
     ]),
   ],
   controllers: [DisplayLogController],
-  providers: [CreateDisplayLogService, DashboardDisplayLogService],
+  providers: [CreateDisplayLogService],
 })
 export class DisplayLogsModule {}
