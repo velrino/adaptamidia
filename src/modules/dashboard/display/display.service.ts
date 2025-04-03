@@ -8,13 +8,10 @@ import {
   IDashboardDisplayLog,
   IDashboardDisplayLogDto,
   IDashboardDisplayLogType,
-  IDashboardTotalByTypeQueryResult,
   IDashboardTotalByTypeResult,
-  IDashboardTotalByTypeResume,
 } from './display.interface';
 import { GetUserCompany } from 'src/shared/general';
 import { PermissionsEnum } from 'src/modules/permissions/permissions.enum';
-import { DisplayType } from 'src/modules/advertisement/display/display.interface';
 import { RedisKeysEnum } from 'src/shared/redis/redis.keys';
 import { FromEnum } from 'src/shared/interfaces/paginate.dto';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
@@ -135,6 +132,7 @@ export class DashboardDisplayLogService {
         start_at: { $gte: parameters.start_at, $lt: parameters.end_at },
       };
 
+      // Filtros adicionais
       if (
         !parameters.is_admin &&
         parameters.permissions.includes(PermissionsEnum.ADVERTISER)
@@ -155,59 +153,53 @@ export class DashboardDisplayLogService {
         queryBuilder['news'] = { $in: parameters.news };
       }
 
-      const records: IDashboardTotalByTypeQueryResult[] =
-        await this.displayLogModel.aggregate([
-          {
-            $match: queryBuilder,
-          },
-          {
-            $group: {
-              _id: parameters.query_group_total_by_type,
-              total: { $sum: 1 },
-            },
-          },
-          {
-            $sort: {
-              [parameters.sort.column]: parameters.sort.value,
-            },
-          },
-        ]);
+      // Configuração da paginação
+      const { page, limit } = parameters;
 
-      const resume: IDashboardTotalByTypeResume =
-        records.reduce<IDashboardTotalByTypeResume>(
-          (acc, { _id: { type, start_at }, total }) => {
-            // Initialize the date entry if it doesn't exist
-            if (!acc.dates[start_at]) {
-              acc.dates[start_at] = {
-                distributed: {} as Record<DisplayType, number>,
-                total: 0,
-              };
-            }
+      const skip = (page - 1) * limit;
 
-            // Add to the type count for this date
-            acc.dates[start_at].distributed[type] =
-              (acc.dates[start_at].distributed[type] || 0) + total;
-
-            // Add to the date total
-            acc.dates[start_at].total += total;
-
-            // Add to the overall total
-            acc.total += total;
-
-            return acc;
+      // Pipeline principal
+      const pipeline = [
+        { $match: queryBuilder },
+        {
+          $group: {
+            _id: parameters.query_group_total_by_type,
+            total: { $sum: 1 },
           },
-          {
-            dates: {} as IDashboardTotalByTypeResume['dates'],
-            total: 0,
+        },
+        {
+          $sort: {
+            [parameters.sort.column]: parameters.sort.value,
           },
-        );
+        },
+      ];
+
+      const countPipeline = [...pipeline, { $count: 'totalCount' }];
+
+      const paginatedPipeline = [
+        ...pipeline,
+        { $skip: skip },
+        { $limit: limit },
+      ];
+
+      const [countResult, records] = await Promise.all([
+        this.displayLogModel.aggregate(countPipeline),
+        this.displayLogModel.aggregate(paginatedPipeline),
+      ]);
+
+      const total_count = countResult[0]?.totalCount || 0;
+      const total_pages = Math.ceil(total_count / limit);
 
       const result = {
         from: FromEnum.DATABASE,
-        parameters,
-        resume,
+        page,
+        limit,
+        total_count,
+        total_pages,
+        has_next_page: page < total_pages,
+        has_previous_page: page > 1,
         records,
-      };
+      } as any;
 
       await this.redisService.set(cacheKey.name, result, 60000);
 

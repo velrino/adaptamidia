@@ -2,8 +2,10 @@ import {
   IsDate,
   IsEnum,
   IsIn,
+  IsInt,
   IsNotEmpty,
   IsOptional,
+  Min,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
@@ -16,11 +18,6 @@ import { DisplayLogStatus } from 'src/modules/display-logs/display-logs.interfac
 
 export enum IDashboardDisplayLogType {
   TOTAL_BY_TYPE = 'TOTAL_BY_TYPE',
-}
-
-export enum IDashboardDisplayLogQueryTime {
-  DAY = 'DAY',
-  HOUR_AND_MINUTE = 'HOUR_AND_MINUTE',
 }
 
 export class IDashboardDisplayLogQueryDateToStringFormatDto {
@@ -83,6 +80,18 @@ export class IDashboardDisplayLogDto {
   @IsNotEmpty()
   @IsEnum(IDashboardDisplayLogType)
   chart_type: IDashboardDisplayLogType;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  page: number = 1;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  limit: number = 20;
 
   @IsNotEmpty()
   @IsDate()
@@ -158,6 +167,8 @@ export class IDashboardDisplayLogDto {
 export interface IDashboardDisplayLog {
   permissions: PermissionsEnum[];
   from: FromEnum;
+  page: number;
+  limit: number;
   chart_type: IDashboardDisplayLogType;
   is_admin: boolean;
   start_at: Date;

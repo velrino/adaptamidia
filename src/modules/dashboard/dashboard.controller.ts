@@ -4,11 +4,14 @@ import { AuthenticatedRequest } from 'src/shared/request';
 import { DashboardDisplayLogService } from './display/display.service';
 import { AuthJwtGuard } from '../auth/auth.guard';
 import { IDashboardDisplayLogDto } from './display/display.interface';
+import { DashboardAdvertisementService } from './advertisement/advertisement.service';
+import { IDashboardAdvertisementDto } from './advertisement/advertisement.interface';
 
 @Controller('dashboard')
 export class DashboardController {
   constructor(
     private readonly dashboardDisplayLogService: DashboardDisplayLogService,
+    private readonly dashboardAdvertisementService: DashboardAdvertisementService,
   ) {}
 
   @Post('display')
@@ -21,10 +24,13 @@ export class DashboardController {
     return this.dashboardDisplayLogService.executeFromRequest(req, body);
   }
 
-  @Post('ads')
+  @Post('advertisement')
   @SkipThrottle()
   @UseGuards(AuthJwtGuard)
-  ads(@Req() req: AuthenticatedRequest, @Body() body: IDashboardDisplayLogDto) {
-    return this.dashboardDisplayLogService.executeFromRequest(req, body);
+  advertisement(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: IDashboardAdvertisementDto,
+  ) {
+    return this.dashboardAdvertisementService.executeFromRequest(req, body);
   }
 }
