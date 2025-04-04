@@ -16,7 +16,7 @@ import { FromEnum } from 'src/shared/interfaces/paginate.dto';
 
 export enum IDashboardAdvertisementChartType {
   TOTAL_BY_CUSTOM = 'TOTAL_BY_CUSTOM',
-  // TOTAL_BY_TYPE = 'TOTAL_BY_TYPE',
+  TOTAL_BY_UNIT = 'TOTAL_BY_UNIT',
 }
 
 export class IDashboardAdvertisementQuerySortDto {
