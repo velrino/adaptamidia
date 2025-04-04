@@ -2,6 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 import { SchemaDefault } from 'src/shared/shema';
 import {
+  AdvertisementMetricsItemDefault,
   AdvertisementStatus,
   AdvertisementType,
 } from './advertisement.interface';
@@ -22,6 +23,23 @@ export class AdvertisementItem {
 
   @Prop({ required: true, enum: AdvertisementType, uppercase: true })
   type: AdvertisementType;
+}
+
+export class AdvertisementMetricsItem {
+  @Prop({ type: Number, required: false, default: 0 })
+  impressions: number; // Quantas vezes foi exibido
+
+  @Prop({ type: Number, required: false, default: 0 })
+  watched: number; // Quantas vezes foi assistido
+
+  @Prop({ type: Number, required: false, default: 0 })
+  skips: number; // Quantos pularam o anúncio
+
+  @Prop({ type: Number, required: false, default: 0 })
+  errors: number; // Falhas de reprodução, por exemplo
+
+  @Prop({ type: Date, default: () => new Date() })
+  last_updated: Date; // Quando as métricas foram atualizadas
 }
 
 @Schema({ ...SchemaDefault, collection: 'advertisements' })
@@ -45,6 +63,13 @@ export class Advertisement {
 
   @Prop({ required: true, type: [AdvertisementItem] })
   items: AdvertisementItem[];
+
+  @Prop({
+    required: true,
+    type: AdvertisementMetricsItem,
+    default: AdvertisementMetricsItemDefault,
+  })
+  metrics: AdvertisementMetricsItem;
 
   @Prop({ required: true, type: Number })
   seconds: number;

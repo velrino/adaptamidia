@@ -14,6 +14,7 @@ import {
 } from 'src/modules/company-unit/company-unit.schema';
 import { Company } from 'src/modules/company/company.schema';
 import { ActionType } from 'src/shared/interfaces/paginate.dto';
+import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 // import { DateTime } from 'luxon';
 
 @Injectable()
@@ -189,6 +190,13 @@ export class CreateAdvertisementService extends AdvertisementService {
 
       return record;
     } catch (error) {
+      Log(
+        LogType.ERROR,
+        CreateAdvertisementService.name,
+        this.executeUpdate.name,
+        LogAction.FAILED,
+        { parameters, error },
+      );
       throw new HttpException(
         error?.message || RESULT.ADVERTISEMENT_CREATE_FAILED,
         error?.status || HttpStatus.UNPROCESSABLE_ENTITY,

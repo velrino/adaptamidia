@@ -12,7 +12,7 @@ import { UserModule } from './modules/user/user.module';
 import { CompanyModule } from './modules/company/company.module';
 import { CompanyUnitModule } from './modules/company-unit/company-unit.module';
 import { AdvertisementModule } from './modules/advertisement/advertisement.module';
-import { AdvertisementCampaignModule } from './modules/advertisement-campaign/advertisement-campaign.module';
+import { AdvertisementMetricsModule } from './modules/advertisement-metrics/advertisement-metrics.module';
 import { NewsModule } from './modules/news/news.module';
 import { FilesModule } from './modules/files/files.module';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -67,7 +67,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     PusherModule,
     AuthModule,
     AdvertisementModule,
-    AdvertisementCampaignModule,
+    AdvertisementMetricsModule,
     CompanyModule,
     CompanyUnitModule,
     DisplayLogsModule,

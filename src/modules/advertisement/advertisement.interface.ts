@@ -1,4 +1,7 @@
-import { Advertisement } from './advertisement.schema';
+import {
+  Advertisement,
+  AdvertisementMetricsItem,
+} from './advertisement.schema';
 
 export type IAdvertisement = Document & Advertisement;
 
@@ -13,3 +16,11 @@ export enum AdvertisementStatus {
   REVIEW = 'REVIEW',
   ARCHIVED = 'ARCHIVED',
 }
+
+export const AdvertisementMetricsItemDefault: AdvertisementMetricsItem = {
+  errors: 0,
+  impressions: 0,
+  last_updated: new Date(),
+  skips: 0,
+  watched: 0,
+};
