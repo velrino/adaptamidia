@@ -678,3 +678,28 @@ export interface IApiDashboardDisplayByUnitResponse {
 }
 
 // END DASHBOARD DISPLAY_BY_UNIT
+
+// START DASHBOARD ADVERTISEMENT_BY_COMPANY
+
+export interface IApiDashboardAdvertisementByCompanyRequest
+  extends IApiDashboardResumeRequest {
+  page: number;
+  limit: number;
+  sort: {
+    column: "total";
+    value: -1 | 1;
+  };
+}
+
+export interface IApiDashboardAdvertisementByCompanyItem {
+  total: number;
+  company_id: AdsCurrentType;
+  company_name: string;
+}
+
+export interface IApiDashboardAdvertisementByCompanyResponse {
+  from: FromEnum;
+  records: IApiDashboardAdvertisementByCompanyItem[];
+}
+
+// END DASHBOARD ADVERTISEMENT_BY_COMPANY

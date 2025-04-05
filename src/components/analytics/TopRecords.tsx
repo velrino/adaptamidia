@@ -4,6 +4,8 @@ import TopRecordsItem from "./TopRecords/TopRecordsItem";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/context/ToastContext";
 import {
+  IApiDashboardAdvertisementByCompanyRequest,
+  IApiDashboardAdvertisementByCompanyResponse,
   IApiDashboardDisplayByAdvertisementRequest,
   IApiDashboardDisplayByAdvertisementResponse,
   IApiDashboardDisplayByUnitRequest,
@@ -108,14 +110,57 @@ export default function TopRecords() {
     [session?.api_session, showToast, apiQueryForm]
   );
 
+  const [responseAdvertisementByCompany, setResponseAdvertisementByCompany] =
+    useState<IApiDashboardAdvertisementByCompanyResponse>();
+  const getResponseAdvertisementByCompany = useCallback(
+    async (apiQuery: Partial<IApiDashboardAdvertisementByCompanyRequest>) => {
+      if (!session?.api_session) {
+        return;
+      }
+
+      try {
+        const query: IApiDashboardDisplayByUnitRequest = {
+          from: FromEnum.CACHE,
+          chart_type: IApiDashboardGeneralType.ADVERTISEMENT_BY_COMPANY,
+          page: 1,
+          limit: 10,
+          sort: {
+            column: "total",
+            value: -1,
+          },
+          ...apiQueryForm,
+          ...apiQuery,
+        };
+
+        const response = await API.dashboard.generalResume(
+          session.api_session.access_token,
+          query
+        );
+
+        const responseData = await response.json();
+
+        if (responseData?.error) {
+          showToast(GetErrorMessage(responseData.message), IToastType.ERROR);
+        } else if (response.ok) {
+          setResponseAdvertisementByCompany(responseData);
+        }
+      } catch (error) {
+        showToast(GetErrorMessage(error), IToastType.ERROR);
+      }
+    },
+    [session?.api_session, showToast, apiQueryForm]
+  );
+
   useEffect(() => {
     if (session?.api_session) {
       getResponseDisplayByAdvertisement({});
       getResponseDisplayByUnit({});
+      getResponseAdvertisementByCompany({});
     }
   }, [
     getResponseDisplayByAdvertisement,
     getResponseDisplayByUnit,
+    getResponseAdvertisementByCompany,
     session?.api_session,
   ]);
 
@@ -136,7 +181,7 @@ export default function TopRecords() {
         }}
       />
       <TopRecordsItem
-        title="Estabelecimentos que Mais Exibem Anúncios"
+        title="Melhores Estabelecimentos"
         list={{
           title: "Estabelecimento",
           valueHeader: "Exibições",
@@ -150,16 +195,17 @@ export default function TopRecords() {
         }}
       />
       <TopRecordsItem
-        title="Lorem"
+        title="Maiores anunciantes"
         list={{
-          title: "Shazam",
-          valueHeader: "Exibições",
-          items: [
-            { label: "La Ville", value: "4.7K" },
-            { label: "Restaurante Paulista", value: "3.4K" },
-            { label: "Restaurante Itaim Bibi", value: "2.9K" },
-            { label: "Restaurante Moema", value: "1.5K" },
-          ],
+          title: "Anunciante",
+          valueHeader: "Anúncios",
+          items: (responseAdvertisementByCompany?.records || []).map((item) => {
+            return {
+              id: item.company_id,
+              label: `${item.company_name}`,
+              value: String(item.total),
+            };
+          }),
         }}
       />
     </>
