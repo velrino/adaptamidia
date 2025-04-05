@@ -5,6 +5,7 @@ import {
   IApiCreateCompanyUnitRequest,
   IApiCreateDisplayLogRequest,
   IApiDashboardDisplayLogRequest,
+  IApiDashboardResumeRequest,
   IApiDisplayRequest,
   IApiGroupCompanyUnitsRequest,
   IApiPaginateAdvertisement,
@@ -149,6 +150,17 @@ export const API = {
       return ApiResources.request({
         method: IApiRequestMethod.POST,
         path: "/dashboard/display",
+        data,
+        access_token,
+      });
+    },
+    async generalResume(
+      access_token: string,
+      data: IApiDashboardResumeRequest
+    ) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/dashboard/general",
         data,
         access_token,
       });

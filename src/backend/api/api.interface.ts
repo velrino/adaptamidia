@@ -19,6 +19,7 @@ import {
   DisplayType,
   IApiDashboardDisplayLogType,
 } from "@/interfaces/display-logs";
+import { IApiDashboardGeneralType } from "@/interfaces/dashboard";
 
 export enum IApiRequestMethod {
   GET = "GET",
@@ -537,7 +538,7 @@ export interface IApiCreateDisplayLogRequest {
   end_at: string;
 }
 
-// DASHBOARD Display
+// START DASHBOARD DISPLAY
 
 export interface IApiDashboardDisplayLogQueryDateToStringFormatDto {
   format: "%Y-%m-%d %H:%M" | "%Y-%m-%d";
@@ -598,3 +599,29 @@ export interface IApiDashboardDisplayLogRecordTypeWithStart {
   type: AdsCurrentType;
   start_at: string;
 }
+// END DASHBOARD DISPLAY
+
+// START DASHBOARD RESUME
+
+export interface IApiDashboardResumeRequest {
+  from: FromEnum;
+  chart_type: IApiDashboardGeneralType;
+  start_at: Date;
+  end_at: Date;
+}
+
+export interface IApiDashboardResumeResponse {
+  from: FromEnum;
+  display: {
+    news: number;
+    advertisement: number;
+  };
+  news: {
+    total: number;
+  };
+  advertisement: {
+    total: number;
+  };
+}
+
+// END DASHBOARD RESUME
