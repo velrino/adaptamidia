@@ -11,6 +11,7 @@ import { GetErrorMessage } from "@/utils/generic";
 import { FromEnum, IToastType } from "@/interfaces/general";
 import { API } from "@/backend/api/api.endpoints";
 import {
+  IApiDashboardDisplayLogRecord,
   IApiDashboardDisplayLogRequest,
   IApiDashboardDisplayLogResponse,
 } from "@/backend/api/api.interface";
@@ -28,7 +29,7 @@ interface IChartValues {
 
 export default function AnalyticsBarChart() {
   const [chartOptions, setChartOptions] = useState<ApexOptions>({
-    colors: ["#465fff", "#fff"],
+    colors: ["#465fff", "#e4e7ec"],
     chart: {
       fontFamily: "Outfit, sans-serif",
       type: "bar",
@@ -95,34 +96,37 @@ export default function AnalyticsBarChart() {
   const [response, setResponse] = useState<IApiDashboardDisplayLogResponse>();
 
   useEffect(() => {
-    const list = response?.records || [];
-    const currentCategories: string[] = [];
-    const typeMap: Record<string, number[]> = {};
-
-    for (const item of list) {
-      currentCategories.push(
-        DateHelper.format(item._id.start_at, DateHelperFormat.SHORT)
+    const normalizeChartData = (records: IApiDashboardDisplayLogRecord[]) => {
+      const grouped = records.reduce(
+        (acc, { _id: { start_at, type }, total }) => {
+          const date = DateHelper.format(start_at, DateHelperFormat.SHORT);
+          acc[date] = acc[date] || {};
+          acc[date][type] = (acc[date][type] || 0) + total;
+          return acc;
+        },
+        {} as Record<string, Record<string, number>>
       );
 
-      const type = item._id.type;
-      const total = item.total;
+      const sortedDates = Object.keys(grouped).sort();
+      const types = [...new Set(records.map((r) => r._id.type))];
 
-      if (!typeMap[type]) {
-        typeMap[type] = [];
-      }
-      typeMap[type].push(total);
+      return {
+        categories: sortedDates,
+        values: types.map((type) => ({
+          name: type,
+          data: sortedDates.map((date) => grouped[date][type] || 0),
+        })),
+      };
+    };
+
+    if (response?.records) {
+      const { categories, values } = normalizeChartData(response.records);
+      setChartOptions((prev) => ({
+        ...prev,
+        xaxis: { ...prev.xaxis, categories },
+      }));
+      setChartValues(values);
     }
-
-    const currentValues = Object.entries(typeMap).map(([name, data]) => ({
-      name,
-      data,
-    }));
-
-    setChartOptions((prev) => ({
-      ...prev,
-      xaxis: { ...prev.xaxis, categories: currentCategories },
-    }));
-    setChartValues(() => currentValues);
   }, [response]);
 
   const getResponse = useCallback(
@@ -139,7 +143,7 @@ export default function AnalyticsBarChart() {
           chart_type: IApiDashboardDisplayLogType.TOTAL_BY_TYPE,
           sort: {
             column: "_id.start_at",
-            value: -1,
+            value: 1,
           },
           start_at: DateHelper.subtractDays(new Date(), 1, "year").toDate(),
           end_at: DateHelper.addDays(new Date(), 1, "year").toDate(),

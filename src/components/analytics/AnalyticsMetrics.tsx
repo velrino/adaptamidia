@@ -10,7 +10,7 @@ import {
 } from "@/backend/api/api.interface";
 import { FromEnum, IToastType } from "@/interfaces/general";
 import { IApiDashboardGeneralType } from "@/interfaces/dashboard";
-import { DateHelper } from "@/utils/date";
+import { DateHelper, DateHelperFormat } from "@/utils/date";
 import { API } from "@/backend/api/api.endpoints";
 import { GetErrorMessage } from "@/utils/generic";
 
@@ -66,6 +66,11 @@ const AnalyticsMetrics: React.FC = () => {
     ]);
   }, [response]);
 
+  const [apiQueryForm, setApiQueryForm] = useState({
+    start_at: DateHelper.subtractDays(new Date(), 1, "year").toDate(),
+    end_at: DateHelper.addDays(new Date(), 1, "year").toDate(),
+  });
+
   const getResponse = useCallback(
     async (apiQuery: Partial<IApiDashboardResumeRequest>) => {
       if (!session?.api_session) {
@@ -76,8 +81,9 @@ const AnalyticsMetrics: React.FC = () => {
         const query: IApiDashboardResumeRequest = {
           from: FromEnum.CACHE,
           chart_type: IApiDashboardGeneralType.RESUME,
-          start_at: DateHelper.subtractDays(new Date(), 1, "year").toDate(),
-          end_at: DateHelper.addDays(new Date(), 1, "year").toDate(),
+          // start_at: DateHelper.subtractDays(new Date(), 1, "year").toDate(),
+          // end_at: DateHelper.addDays(new Date(), 1, "year").toDate(),
+          ...apiQueryForm,
           ...apiQuery,
         };
 
@@ -97,7 +103,7 @@ const AnalyticsMetrics: React.FC = () => {
         showToast(GetErrorMessage(error), IToastType.ERROR);
       }
     },
-    [session?.api_session, showToast]
+    [session?.api_session, showToast, apiQueryForm]
   );
 
   useEffect(() => {
@@ -116,6 +122,15 @@ const AnalyticsMetrics: React.FC = () => {
         >
           <p className="text-gray-500 text-theme-sm dark:text-gray-400">
             {item.title}
+          </p>
+          <p className="text-gray-600 text-xs dark:text-gray-600">
+            {`${DateHelper.format(
+              apiQueryForm.start_at,
+              DateHelperFormat.SHORT
+            )} - ${DateHelper.format(
+              apiQueryForm.end_at,
+              DateHelperFormat.SHORT
+            )}`}
           </p>
           <div className="flex items-end justify-between mt-3">
             <div>
