@@ -625,3 +625,30 @@ export interface IApiDashboardResumeResponse {
 }
 
 // END DASHBOARD RESUME
+
+// START DASHBOARD DISPLAY_BY_ADVERTISEMENT
+
+export interface IApiDashboardDisplayByAdvertisementRequest
+  extends IApiDashboardResumeRequest {
+  page: number;
+  limit: number;
+  sort: {
+    column: "total";
+    value: -1 | 1;
+  };
+}
+
+export interface IApiDashboardDisplayByAdvertisementItem {
+  total: number;
+  advertisement_id: string;
+  advertisement_title: string;
+  company_id: string;
+  company_name: string;
+}
+
+export interface IApiDashboardDisplayByAdvertisementResponse {
+  from: FromEnum;
+  records: IApiDashboardDisplayByAdvertisementItem[];
+}
+
+// END DASHBOARD DISPLAY_BY_ADVERTISEMENT

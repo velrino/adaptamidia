@@ -66,7 +66,7 @@ const AnalyticsMetrics: React.FC = () => {
     ]);
   }, [response]);
 
-  const [apiQueryForm, setApiQueryForm] = useState({
+  const [apiQueryForm] = useState({
     start_at: DateHelper.subtractDays(new Date(), 1, "year").toDate(),
     end_at: DateHelper.addDays(new Date(), 1, "year").toDate(),
   });

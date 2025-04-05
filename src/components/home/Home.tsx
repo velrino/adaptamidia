@@ -13,6 +13,7 @@ import AnalyticsBarChart from "@/components/analytics/AnalyticsBarChart";
 import TopChannel from "../analytics/TopChannel";
 import TopPages from "../analytics/TopPages";
 import ActiveUsersChart from "../analytics/ActiveUsersChart";
+import TopRecords from "../analytics/TopRecords";
 
 export const metadata: Metadata = {
   title:
@@ -29,6 +30,12 @@ export default function HomeComponent() {
 
       <div className="col-span-12">
         <AnalyticsBarChart />
+      </div>
+
+      <div className="col-span-12">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <TopRecords />
+        </div>
       </div>
 
       <div className="col-span-12 xl:col-span-7">
