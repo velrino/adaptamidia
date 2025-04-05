@@ -8,3 +8,7 @@ export enum DisplayLogStatus {
   IN_PROGRESS = "IN_PROGRESS",
   FINISHED = "FINISHED",
 }
+
+export enum IApiDashboardDisplayLogType {
+  TOTAL_BY_TYPE = "TOTAL_BY_TYPE",
+}

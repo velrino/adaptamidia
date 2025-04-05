@@ -12,9 +12,13 @@ import {
   ICompanyStatus,
   ICompanyType,
 } from "@/interfaces/company";
-import { IDay } from "@/interfaces/general";
+import { FromEnum, IDay } from "@/interfaces/general";
 import { EnumApiCompanyType } from "./api.enum";
-import { DisplayLogStatus, DisplayType } from "@/interfaces/display-logs";
+import {
+  DisplayLogStatus,
+  DisplayType,
+  IApiDashboardDisplayLogType,
+} from "@/interfaces/display-logs";
 
 export enum IApiRequestMethod {
   GET = "GET",
@@ -531,4 +535,66 @@ export interface IApiCreateDisplayLogRequest {
   status: DisplayLogStatus;
   start_at: string;
   end_at: string;
+}
+
+// DASHBOARD Display
+
+export interface IApiDashboardDisplayLogQueryDateToStringFormatDto {
+  format: "%Y-%m-%d %H:%M" | "%Y-%m-%d";
+  date: "$start_at";
+  timezone: "America/Sao_Paulo";
+}
+
+export interface IApiDashboardDisplayLogQueryGroupTotalByTypeDto {
+  type?: "$type";
+  advertiser?: "$advertiser";
+  local?: "$local";
+  local_unit?: "$local_unit";
+  start_at: {
+    $dateToString: IApiDashboardDisplayLogQueryDateToStringFormatDto;
+  };
+}
+
+export interface IApiDashboardDisplayLogQuerySortDto {
+  column: "_id.start_at" | "total";
+  value: 1 | -1;
+}
+
+export interface IApiDashboardDisplayLogRequest {
+  from: FromEnum;
+  page: number;
+  limit: number;
+  chart_type: IApiDashboardDisplayLogType;
+  start_at: Date;
+  end_at: Date;
+  advertisement?: string[];
+  news?: string[];
+  advertiser?: string[];
+  local?: string[];
+  local_unit?: string[];
+  type?: DisplayType[];
+  status?: DisplayLogStatus[];
+  query_group_total_by_type?: IApiDashboardDisplayLogQueryGroupTotalByTypeDto;
+  sort: IApiDashboardDisplayLogQuerySortDto;
+}
+
+export interface IApiDashboardDisplayLogResponse {
+  from: string;
+  page: number;
+  limit: number;
+  total_count: number;
+  total_pages: number;
+  has_next_page: boolean;
+  has_previous_page: boolean;
+  records: IApiDashboardDisplayLogRecord[];
+}
+
+export interface IApiDashboardDisplayLogRecord {
+  _id: IApiDashboardDisplayLogRecordTypeWithStart;
+  total: number;
+}
+
+export interface IApiDashboardDisplayLogRecordTypeWithStart {
+  type: AdsCurrentType;
+  start_at: string;
 }

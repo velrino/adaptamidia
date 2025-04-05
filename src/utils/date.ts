@@ -39,8 +39,8 @@ export const DateHelper = {
   addDays: (date: string | Date, days: number, unit: ManipulateType) => {
     return dayjs(date).add(days, unit);
   },
-  subtractDays: (date: string | Date, days: number) => {
-    return dayjs(date).subtract(days, "day");
+  subtractDays: (date: string | Date, days: number, unit: ManipulateType) => {
+    return dayjs(date).subtract(days, unit);
   },
   isBefore: (date1: string | Date, date2: string | Date) => {
     return dayjs(date1).isBefore(date2);

@@ -4,6 +4,7 @@ import {
   IApiCreateAdvertisementRequest,
   IApiCreateCompanyUnitRequest,
   IApiCreateDisplayLogRequest,
+  IApiDashboardDisplayLogRequest,
   IApiDisplayRequest,
   IApiGroupCompanyUnitsRequest,
   IApiPaginateAdvertisement,
@@ -135,6 +136,19 @@ export const API = {
       return ApiResources.request({
         method: IApiRequestMethod.GET,
         path: "/company/unit/group",
+        data,
+        access_token,
+      });
+    },
+  },
+  dashboard: {
+    async displayLogs(
+      access_token: string,
+      data: IApiDashboardDisplayLogRequest
+    ) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/dashboard/display",
         data,
         access_token,
       });

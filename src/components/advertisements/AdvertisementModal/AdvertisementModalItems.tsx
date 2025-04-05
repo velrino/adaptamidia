@@ -78,13 +78,13 @@ export function AdvertisementComponent({
 
   return (
     <div className="flex items-center justify-center min-h-full text-white text-center">
-      {!data.company && (
+      {!data.company?._id && (
         <div>
           Selecione um <strong>Anúnciante</strong> antes de fazer upload
         </div>
       )}
 
-      {data.company && (
+      {data.company?._id && (
         <MediaCropperModal
           open={modalMediaCropper.isOpen}
           currentModal={modalMediaCropper}

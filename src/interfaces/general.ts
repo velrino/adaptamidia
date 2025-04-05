@@ -43,3 +43,8 @@ export const TranslateDay = (day: IDay): string => {
 
   return translations[day] || day;
 };
+
+export enum FromEnum {
+  DATABASE = "DATABASE",
+  CACHE = "CACHE",
+}
