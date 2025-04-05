@@ -102,7 +102,26 @@ export class CreateDisplayLogService {
     try {
       const body = this.prepareBody(currentRequest, parameters);
 
-      return await this.queueService.addDisplayLogCreateQueue(body);
+      // Cria um timeout de 3 segundos
+      const timeout = new Promise((resolve) => setTimeout(resolve, 5000));
+
+      try {
+        // Tenta executar e competir com o timeout
+        const result = await Promise.race([
+          this.execute(body),
+          timeout.then(() => {
+            throw new Error('timeout');
+          }),
+        ]);
+        return result;
+      } catch (error) {
+        if (error.message === 'timeout') {
+          // Se deu timeout, adiciona na fila
+          return await this.queueService.addDisplayLogCreateQueue(body);
+        }
+        throw error;
+      }
+
       // return this.execute(body);
     } catch (error) {
       throw new HttpException(
