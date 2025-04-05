@@ -15,7 +15,7 @@ import {
   IApiDashboardDisplayLogResponse,
 } from "@/backend/api/api.interface";
 import { IApiDashboardDisplayLogType } from "@/interfaces/display-logs";
-import { DateHelper } from "@/utils/date";
+import { DateHelper, DateHelperFormat } from "@/utils/date";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -81,7 +81,7 @@ export default function AnalyticsBarChart() {
 
     tooltip: {
       x: {
-        show: false,
+        show: true,
       },
       y: {
         formatter: (val: number) => `${val}`,
@@ -100,7 +100,9 @@ export default function AnalyticsBarChart() {
     const typeMap: Record<string, number[]> = {};
 
     for (const item of list) {
-      currentCategories.push(item._id.start_at);
+      currentCategories.push(
+        DateHelper.format(item._id.start_at, DateHelperFormat.SHORT)
+      );
 
       const type = item._id.type;
       const total = item.total;
