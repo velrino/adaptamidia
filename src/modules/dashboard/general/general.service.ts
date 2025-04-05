@@ -69,10 +69,22 @@ export class DashboardGeneralService {
     }
   }
 
+  private readonly dashboardHandlers: Record<IDashboardGeneralType, any> = {
+    [IDashboardGeneralType.NEWS_BY_SOURCE_NAME]:
+      this.dashboardNewsBySourceName.bind(this),
+    [IDashboardGeneralType.ADVERTISEMENT_BY_COMPANY]:
+      this.dashboardAdvertisementByCompany.bind(this),
+    [IDashboardGeneralType.RESUME]: this.dashboardResume.bind(this),
+    [IDashboardGeneralType.DISPLAY_BY_UNIT]:
+      this.dashboardDisplayByUnit.bind(this),
+  };
+
   async execute(parameters: IDashboardGeneral) {
     try {
-      if (parameters.chart_type === IDashboardGeneralType.COMPLETE) {
-        return await this.dashboardComplete(parameters);
+      const handler = this.dashboardHandlers[parameters.chart_type];
+
+      if (handler) {
+        return handler(parameters);
       }
 
       throw new HttpException(
@@ -94,20 +106,20 @@ export class DashboardGeneralService {
     }
   }
 
-  async dashboardComplete(parameters: IDashboardGeneral) {
+  async dashboardResume(parameters: IDashboardGeneral) {
     try {
       const cacheKey = this.redisService.createKeyByObject(
         `${RedisKeysEnum.DASHBOARD_GENERAL}`,
         parameters,
       );
 
-      //   if (parameters.from === FromEnum.CACHE) {
-      //     const dataCached = await this.redisService.get(cacheKey.name);
+      if (parameters.from === FromEnum.CACHE) {
+        const dataCached = await this.redisService.get(cacheKey.name);
 
-      //     if (dataCached) {
-      //       return { ...dataCached, from: FromEnum.CACHE };
-      //     }
-      //   }
+        if (dataCached) {
+          return { ...dataCached, from: FromEnum.CACHE };
+        }
+      }
 
       const queryBuilder = {
         start_at: { $gte: parameters.start_at, $lt: parameters.end_at },
@@ -132,58 +144,79 @@ export class DashboardGeneralService {
         published_at: { $gte: parameters.start_at, $lt: parameters.end_at },
       });
 
-      const newsPage = parameters.news_page || 1;
-      const newsLimit = parameters.news_limit || 10;
-      const newsSkip = (newsPage - 1) * newsLimit;
-      const newsBySourceName = await this.newsModel.aggregate([
-        {
-          $match: {
-            published_at: {
-              $gte: parameters.start_at,
-              $lt: parameters.end_at,
-            },
-          },
-        },
-        {
-          $group: {
-            _id: '$source_name',
-            total: { $sum: 1 },
-          },
-        },
-        {
-          $project: {
-            source_name: '$_id',
-            total: 1,
-            _id: 0,
-          },
-        },
-        {
-          $sort: { total: -1 },
-        },
-        {
-          $skip: newsSkip,
-        },
-        {
-          $limit: newsLimit,
-        },
-      ]);
-
       const advertisements = await this.advertisementModel.countDocuments({
         start_date: { $gte: parameters.start_at, $lt: parameters.end_at },
       });
 
-      const advertisementPage = parameters.advertisement_page || 1;
-      const advertisementLimit = parameters.advertisement_limit || 10;
-      const advertisementSkip = (advertisementPage - 1) * advertisementLimit;
+      const result = {
+        from: FromEnum.DATABASE,
+        display: {
+          news: totalDisplayNews,
+          advertisement: totalDisplayAdvertisement,
+        },
+        news: {
+          total: news,
+        },
+        advertisement: {
+          total: advertisements,
+        },
+      } as any;
+
+      await this.redisService.set(
+        cacheKey.name,
+        result,
+        Milliseconds({ minutes: 1 }),
+      );
+
+      return result;
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        DashboardGeneralService.name,
+        this.dashboardResume.name,
+        LogAction.FAILED,
+        { parameters, error },
+      );
+      throw new HttpException(
+        error?.message || RESULT.DASHBOARD_GENERAL_FAILED,
+        error?.status || HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+  }
+
+  async dashboardAdvertisementByCompany(parameters: IDashboardGeneral) {
+    try {
+      const cacheKey = this.redisService.createKeyByObject(
+        `${RedisKeysEnum.DASHBOARD_GENERAL}`,
+        parameters,
+      );
+
+      if (parameters.from === FromEnum.CACHE) {
+        const dataCached = await this.redisService.get(cacheKey.name);
+
+        if (dataCached) {
+          return { ...dataCached, from: FromEnum.CACHE };
+        }
+      }
+
+      const queryBuilder = {
+        start_date: {
+          $gte: parameters.start_at,
+          $lt: parameters.end_at,
+        },
+      };
+
+      if (parameters.company?.length) {
+        queryBuilder['company'] = { $in: parameters.company };
+      }
+
+      const page = parameters.page || 1;
+      const limit = parameters.limit || 10;
+      const skip = (page - 1) * limit;
+
       const advertisementByCompany = await this.advertisementModel.aggregate([
         {
-          $match: {
-            start_date: {
-              $gte: parameters.start_at,
-              $lt: parameters.end_at,
-            },
-            // company: new ObjectId('67e5aec27c3ff7d218fac9b6'), // Filter by specific company ID
-          },
+          $match: queryBuilder,
         },
         {
           $lookup: {
@@ -206,13 +239,13 @@ export class DashboardGeneralService {
           },
         },
         {
-          $sort: { total: -1 },
+          $sort: { [parameters.sort.column]: parameters.sort.value },
         },
         {
-          $skip: advertisementSkip,
+          $skip: skip,
         },
         {
-          $limit: advertisementLimit,
+          $limit: limit,
         },
         {
           $project: {
@@ -226,32 +259,192 @@ export class DashboardGeneralService {
 
       const result = {
         from: FromEnum.DATABASE,
-        display: {
-          news: totalDisplayNews,
-          advertisement: totalDisplayAdvertisement,
-        },
-        news: {
-          total: news,
-          by_source_name: newsBySourceName,
-        },
-        advertisement: {
-          total: advertisements,
-          by_company: advertisementByCompany,
-        },
+        records: advertisementByCompany,
       } as any;
 
-      //   await this.redisService.set(
-      //     cacheKey.name,
-      //     result,
-      //     Milliseconds({ minutes: 5 }),
-      //   );
+      await this.redisService.set(
+        cacheKey.name,
+        result,
+        Milliseconds({ minutes: 5 }),
+      );
 
       return result;
     } catch (error) {
       Log(
         LogType.ERROR,
         DashboardGeneralService.name,
-        this.dashboardComplete.name,
+        this.dashboardAdvertisementByCompany.name,
+        LogAction.FAILED,
+        { parameters, error },
+      );
+      throw new HttpException(
+        error?.message || RESULT.DASHBOARD_GENERAL_FAILED,
+        error?.status || HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+  }
+
+  async dashboardNewsBySourceName(parameters: IDashboardGeneral) {
+    try {
+      const cacheKey = this.redisService.createKeyByObject(
+        `${RedisKeysEnum.DASHBOARD_GENERAL}`,
+        parameters,
+      );
+
+      if (parameters.from === FromEnum.CACHE) {
+        const dataCached = await this.redisService.get(cacheKey.name);
+
+        if (dataCached) {
+          return { ...dataCached, from: FromEnum.CACHE };
+        }
+      }
+
+      const page = parameters.page || 1;
+      const limit = parameters.limit || 10;
+      const skip = (page - 1) * limit;
+
+      const records = await this.newsModel.aggregate([
+        {
+          $match: {
+            published_at: {
+              $gte: parameters.start_at,
+              $lt: parameters.end_at,
+            },
+          },
+        },
+        {
+          $group: {
+            _id: '$source_name',
+            total: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            source_name: '$_id',
+            total: 1,
+            _id: 0,
+          },
+        },
+        {
+          $sort: { [parameters.sort.column]: parameters.sort.value },
+        },
+        {
+          $skip: skip,
+        },
+        {
+          $limit: limit,
+        },
+      ]);
+
+      const result = {
+        from: FromEnum.DATABASE,
+        records,
+      } as any;
+
+      await this.redisService.set(
+        cacheKey.name,
+        result,
+        Milliseconds({ minutes: 5 }),
+      );
+
+      return result;
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        DashboardGeneralService.name,
+        this.dashboardNewsBySourceName.name,
+        LogAction.FAILED,
+        { parameters, error },
+      );
+      throw new HttpException(
+        error?.message || RESULT.DASHBOARD_GENERAL_FAILED,
+        error?.status || HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+  }
+
+  async dashboardDisplayByUnit(parameters: IDashboardGeneral) {
+    try {
+      const cacheKey = this.redisService.createKeyByObject(
+        `${RedisKeysEnum.DASHBOARD_GENERAL}`,
+        parameters,
+      );
+
+      if (parameters.from === FromEnum.CACHE) {
+        const dataCached = await this.redisService.get(cacheKey.name);
+
+        if (dataCached) {
+          return { ...dataCached, from: FromEnum.CACHE };
+        }
+      }
+
+      const queryBuilder = {
+        start_at: { $gte: parameters.start_at, $lt: parameters.end_at },
+      };
+
+      if (parameters.company?.length) {
+        queryBuilder['local'] = { $in: parameters.company };
+      }
+
+      const page = parameters.page || 1;
+      const limit = parameters.limit || 10;
+      const skip = (page - 1) * limit;
+
+      const records = await this.displayLogModel.aggregate([
+        {
+          $match: queryBuilder,
+        },
+        {
+          $lookup: {
+            from: 'company_units',
+            localField: 'local_unit',
+            foreignField: '_id',
+            as: 'companyUnit',
+          },
+        },
+        {
+          $group: {
+            _id: {
+              type: '$type',
+              local_unit_id: '$companyUnit._id',
+              local_unit_name: '$companyUnit.name',
+            },
+            total: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            type: '$_id.type',
+            local_unit_id: { $arrayElemAt: ['$_id.local_unit_id', 0] },
+            local_unit_name: { $arrayElemAt: ['$_id.local_unit_name', 0] },
+            total: 1,
+            _id: 0,
+          },
+        },
+        {
+          $sort: { [parameters.sort.column]: parameters.sort.value },
+        },
+        { $skip: skip },
+        { $limit: limit },
+      ]);
+
+      const result = {
+        from: FromEnum.DATABASE,
+        records,
+      } as any;
+
+      await this.redisService.set(
+        cacheKey.name,
+        result,
+        Milliseconds({ minutes: 5 }),
+      );
+
+      return result;
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        DashboardGeneralService.name,
+        this.dashboardAdvertisementByCompany.name,
         LogAction.FAILED,
         { parameters, error },
       );
