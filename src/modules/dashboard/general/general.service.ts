@@ -383,6 +383,7 @@ export class DashboardGeneralService {
       }
 
       const queryBuilder = {
+        type: DisplayType.ADVERTISEMENT, // TODO
         start_at: { $gte: parameters.start_at, $lt: parameters.end_at },
       };
 
