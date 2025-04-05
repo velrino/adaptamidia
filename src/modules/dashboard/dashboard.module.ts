@@ -4,6 +4,7 @@ import { Module } from '@nestjs/common';
 import { DashboardController } from './dashboard.controller';
 import { DashboardDisplayLogService } from './display/display.service';
 import { DashboardAdvertisementService } from './advertisement/advertisement.service';
+import { DashboardGeneralService } from './general/general.service';
 
 @Module({
   imports: [
@@ -16,6 +17,10 @@ import { DashboardAdvertisementService } from './advertisement/advertisement.ser
     ]),
   ],
   controllers: [DashboardController],
-  providers: [DashboardDisplayLogService, DashboardAdvertisementService],
+  providers: [
+    DashboardDisplayLogService,
+    DashboardAdvertisementService,
+    DashboardGeneralService,
+  ],
 })
 export class DashboardModule {}

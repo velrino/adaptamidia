@@ -6,18 +6,31 @@ import { AuthJwtGuard } from '../auth/auth.guard';
 import { IDashboardDisplayLogDto } from './display/display.interface';
 import { DashboardAdvertisementService } from './advertisement/advertisement.service';
 import { IDashboardAdvertisementDto } from './advertisement/advertisement.interface';
+import { DashboardGeneralService } from './general/general.service';
+import { IDashboardGeneralDto } from './general/general.interface';
 
 @Controller('dashboard')
 export class DashboardController {
   constructor(
+    private readonly dashboardGeneralService: DashboardGeneralService,
     private readonly dashboardDisplayLogService: DashboardDisplayLogService,
     private readonly dashboardAdvertisementService: DashboardAdvertisementService,
   ) {}
 
+  @Post('general')
+  @SkipThrottle()
+  @UseGuards(AuthJwtGuard)
+  general(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: IDashboardGeneralDto,
+  ) {
+    return this.dashboardGeneralService.executeFromRequest(req, body);
+  }
+
   @Post('display')
   @SkipThrottle()
   @UseGuards(AuthJwtGuard)
-  dashboard(
+  displayLog(
     @Req() req: AuthenticatedRequest,
     @Body() body: IDashboardDisplayLogDto,
   ) {
