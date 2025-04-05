@@ -77,6 +77,10 @@ export class DashboardGeneralService {
     [IDashboardGeneralType.RESUME]: this.dashboardResume.bind(this),
     [IDashboardGeneralType.DISPLAY_BY_UNIT]:
       this.dashboardDisplayByUnit.bind(this),
+    [IDashboardGeneralType.DISPLAY_BY_ADVERTISER]:
+      this.dashboardDisplayByAdvertiser.bind(this),
+    [IDashboardGeneralType.DISPLAY_BY_ADVERTISEMENT]:
+      this.dashboardDisplayByAdvertisement.bind(this),
   };
 
   async execute(parameters: IDashboardGeneral) {
@@ -436,7 +440,7 @@ export class DashboardGeneralService {
       await this.redisService.set(
         cacheKey.name,
         result,
-        Milliseconds({ minutes: 5 }),
+        Milliseconds({ minutes: 1 }),
       );
 
       return result;
@@ -444,7 +448,204 @@ export class DashboardGeneralService {
       Log(
         LogType.ERROR,
         DashboardGeneralService.name,
-        this.dashboardAdvertisementByCompany.name,
+        this.dashboardDisplayByUnit.name,
+        LogAction.FAILED,
+        { parameters, error },
+      );
+      throw new HttpException(
+        error?.message || RESULT.DASHBOARD_GENERAL_FAILED,
+        error?.status || HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+  }
+
+  async dashboardDisplayByAdvertiser(parameters: IDashboardGeneral) {
+    try {
+      const cacheKey = this.redisService.createKeyByObject(
+        `${RedisKeysEnum.DASHBOARD_GENERAL}`,
+        parameters,
+      );
+
+      if (parameters.from === FromEnum.CACHE) {
+        const dataCached = await this.redisService.get(cacheKey.name);
+
+        if (dataCached) {
+          return { ...dataCached, from: FromEnum.CACHE };
+        }
+      }
+
+      const queryBuilder = {
+        type: DisplayType.ADVERTISEMENT,
+        start_at: { $gte: parameters.start_at, $lt: parameters.end_at },
+      };
+
+      if (parameters.company?.length) {
+        queryBuilder['advertiser'] = { $in: parameters.company };
+      }
+
+      const page = parameters.page || 1;
+      const limit = parameters.limit || 10;
+      const skip = (page - 1) * limit;
+
+      const records = await this.displayLogModel.aggregate([
+        {
+          $match: queryBuilder,
+        },
+        {
+          $lookup: {
+            from: 'companies',
+            localField: 'advertiser',
+            foreignField: '_id',
+            as: 'company',
+          },
+        },
+        {
+          $group: {
+            _id: {
+              company_id: '$company._id',
+              company_name: '$company.name',
+            },
+            total: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            type: '$_id.type',
+            company_id: { $arrayElemAt: ['$_id.company_id', 0] },
+            company_name: { $arrayElemAt: ['$_id.company_name', 0] },
+            total: 1,
+            _id: 0,
+          },
+        },
+        {
+          $sort: { [parameters.sort.column]: parameters.sort.value },
+        },
+        { $skip: skip },
+        { $limit: limit },
+      ]);
+
+      const result = {
+        from: FromEnum.DATABASE,
+        records,
+      } as any;
+
+      await this.redisService.set(
+        cacheKey.name,
+        result,
+        Milliseconds({ minutes: 1 }),
+      );
+
+      return result;
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        DashboardGeneralService.name,
+        this.dashboardDisplayByAdvertiser.name,
+        LogAction.FAILED,
+        { parameters, error },
+      );
+      throw new HttpException(
+        error?.message || RESULT.DASHBOARD_GENERAL_FAILED,
+        error?.status || HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+  }
+
+  async dashboardDisplayByAdvertisement(parameters: IDashboardGeneral) {
+    try {
+      const cacheKey = this.redisService.createKeyByObject(
+        `${RedisKeysEnum.DASHBOARD_GENERAL}`,
+        parameters,
+      );
+
+      if (parameters.from === FromEnum.CACHE) {
+        const dataCached = await this.redisService.get(cacheKey.name);
+
+        if (dataCached) {
+          return { ...dataCached, from: FromEnum.CACHE };
+        }
+      }
+
+      const queryBuilder = {
+        type: DisplayType.ADVERTISEMENT,
+        start_at: { $gte: parameters.start_at, $lt: parameters.end_at },
+      };
+
+      if (parameters.company?.length) {
+        queryBuilder['advertiser'] = { $in: parameters.company };
+      }
+
+      const page = parameters.page || 1;
+      const limit = parameters.limit || 10;
+      const skip = (page - 1) * limit;
+
+      const records = await this.displayLogModel.aggregate([
+        {
+          $match: queryBuilder,
+        },
+        {
+          $lookup: {
+            from: 'advertisements',
+            localField: 'advertisement',
+            foreignField: '_id',
+            as: 'advertisement',
+          },
+        },
+        {
+          $lookup: {
+            from: 'companies',
+            localField: 'advertiser',
+            foreignField: '_id',
+            as: 'company',
+          },
+        },
+        {
+          $group: {
+            _id: {
+              advertisement_id: '$advertisement._id',
+              advertisement_title: '$advertisement.title',
+              company_id: '$company._id',
+              company_name: '$company.name',
+            },
+            total: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            advertisement_id: { $arrayElemAt: ['$_id.advertisement_id', 0] },
+            advertisement_title: {
+              $arrayElemAt: ['$_id.advertisement_title', 0],
+            },
+            company_id: { $arrayElemAt: ['$_id.company_id', 0] },
+            company_name: { $arrayElemAt: ['$_id.company_name', 0] },
+            total: 1,
+            _id: 0,
+          },
+        },
+        {
+          $sort: { [parameters.sort.column]: parameters.sort.value },
+        },
+        { $skip: skip },
+        { $limit: limit },
+      ]);
+
+      const result = {
+        from: FromEnum.DATABASE,
+        records,
+      } as any;
+
+      await this.redisService.set(
+        cacheKey.name,
+        result,
+        Milliseconds({ minutes: 1 }),
+      );
+
+      return result;
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        DashboardGeneralService.name,
+        this.dashboardDisplayByAdvertisement.name,
         LogAction.FAILED,
         { parameters, error },
       );
