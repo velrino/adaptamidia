@@ -4,7 +4,11 @@ import { Advertisement, AdvertisementDocument } from '../advertisement.schema';
 import { Model, Types } from 'mongoose';
 import { AuthenticatedRequest } from 'src/shared/request';
 import { AdvertisementService } from '../advertisement.service';
-import { AdvertisementStatus } from '../advertisement.interface';
+import {
+  AdvertisementMetricsItemDefault,
+  AdvertisementStatus,
+  AdvertisementType,
+} from '../advertisement.interface';
 import { CreateAdvertisementDto } from './create.interface';
 import { VerifyUserCanProceed } from 'src/modules/permissions/permissions.helper';
 import { RESULT } from 'src/shared/result.enum';
@@ -27,6 +31,15 @@ export class CreateAdvertisementService extends AdvertisementService {
     private readonly companyUnitModel: Model<CompanyUnitDocument>,
   ) {
     super(model);
+  }
+
+  async onApplicationBootstrap() {
+    await this.model.updateMany(
+      { metrics: { $exists: false } },
+      {
+        metrics: AdvertisementMetricsItemDefault,
+      },
+    );
   }
 
   executeFromRequest(
@@ -130,6 +143,10 @@ export class CreateAdvertisementService extends AdvertisementService {
         ...parameters,
         company,
         status: parameters.status || AdvertisementStatus.REVIEW,
+        metrics: AdvertisementMetricsItemDefault,
+        type: parameters?.items.length
+          ? parameters?.items?.[0].type
+          : AdvertisementType.UNDEFINED,
       };
 
       let record = await this.model.create({
@@ -142,6 +159,13 @@ export class CreateAdvertisementService extends AdvertisementService {
 
       return record;
     } catch (error) {
+      Log(
+        LogType.ERROR,
+        CreateAdvertisementService.name,
+        this.executeCreate.name,
+        LogAction.FAILED,
+        { parameters, error },
+      );
       throw new HttpException(
         error?.message || RESULT.ADVERTISEMENT_CREATE_FAILED,
         error?.status || HttpStatus.UNPROCESSABLE_ENTITY,

@@ -26,19 +26,19 @@ export class AdvertisementItem {
 }
 
 export class AdvertisementMetricsItem {
-  @Prop({ type: Number, required: false, default: 0 })
+  @Prop({ type: Number, required: true, default: 0 })
   impressions: number; // Quantas vezes foi exibido
 
-  @Prop({ type: Number, required: false, default: 0 })
+  @Prop({ type: Number, required: true, default: 0 })
   watched: number; // Quantas vezes foi assistido
 
-  @Prop({ type: Number, required: false, default: 0 })
+  @Prop({ type: Number, required: true, default: 0 })
   skips: number; // Quantos pularam o anúncio
 
-  @Prop({ type: Number, required: false, default: 0 })
+  @Prop({ type: Number, required: true, default: 0 })
   errors: number; // Falhas de reprodução, por exemplo
 
-  @Prop({ type: Date, default: () => new Date() })
+  @Prop({ type: Date, required: true, default: () => new Date() })
   last_updated: Date; // Quando as métricas foram atualizadas
 }
 

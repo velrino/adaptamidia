@@ -8,6 +8,7 @@ export type IAdvertisement = Document & Advertisement;
 export enum AdvertisementType {
   IMAGE = 'IMAGE',
   VIDEO = 'VIDEO',
+  UNDEFINED = 'UNDEFINED',
 }
 
 export enum AdvertisementStatus {
