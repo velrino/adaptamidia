@@ -1,5 +1,12 @@
 import { Transform, Type } from 'class-transformer';
-import { IsDate, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
+import {
+  IsDate,
+  IsEnum,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  Min,
+} from 'class-validator';
 import { Types } from 'mongoose';
 import { PermissionsEnum } from 'src/modules/permissions/permissions.enum';
 import { FromEnum } from 'src/shared/interfaces/paginate.dto';
@@ -36,9 +43,33 @@ export class IDashboardGeneralDto {
       : [new Types.ObjectId(value)],
   )
   company?: Types.ObjectId[];
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  news_page: number = 1;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  news_limit: number = 10;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  advertisement_page: number = 1;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  advertisement_limit: number = 10;
 }
 
-export class IDashboardGeneral {
+export interface IDashboardGeneral {
   from: FromEnum;
   chart_type: IDashboardGeneralType;
   start_at: Date;
@@ -46,4 +77,8 @@ export class IDashboardGeneral {
   is_admin: boolean;
   company?: Types.ObjectId[];
   permissions: PermissionsEnum[];
+  news_page: number;
+  news_limit: number;
+  advertisement_page: number;
+  advertisement_limit: number;
 }

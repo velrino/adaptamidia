@@ -53,7 +53,7 @@ export class DisplayLog {
   @Prop({ required: true, type: Number, default: 0 })
   seconds: number;
 
-  @Prop({ required: true, type: Date })
+  @Prop({ required: true, type: Date, index: true })
   start_at: Date;
 
   @Prop({ required: false, type: Date })
