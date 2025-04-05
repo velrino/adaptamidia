@@ -6,6 +6,8 @@ import { useToast } from "@/context/ToastContext";
 import {
   IApiDashboardDisplayByAdvertisementRequest,
   IApiDashboardDisplayByAdvertisementResponse,
+  IApiDashboardDisplayByUnitRequest,
+  IApiDashboardDisplayByUnitResponse,
 } from "@/backend/api/api.interface";
 import { GetErrorMessage } from "@/utils/generic";
 import { FromEnum, IToastType } from "@/interfaces/general";
@@ -16,8 +18,6 @@ import { IApiDashboardGeneralType } from "@/interfaces/dashboard";
 export default function TopRecords() {
   const { data: session } = useSession();
   const { showToast } = useToast();
-  const [responseDisplayByAdvertisement, setResponseDisplayByAdvertisement] =
-    useState<IApiDashboardDisplayByAdvertisementResponse>();
 
   // useEffect(() => {}, [responseDisplayByAdvertisement]);
 
@@ -26,6 +26,8 @@ export default function TopRecords() {
     end_at: DateHelper.addDays(new Date(), 1, "year").toDate(),
   });
 
+  const [responseDisplayByAdvertisement, setResponseDisplayByAdvertisement] =
+    useState<IApiDashboardDisplayByAdvertisementResponse>();
   const getResponseDisplayByAdvertisement = useCallback(
     async (apiQuery: Partial<IApiDashboardDisplayByAdvertisementRequest>) => {
       if (!session?.api_session) {
@@ -65,11 +67,57 @@ export default function TopRecords() {
     [session?.api_session, showToast, apiQueryForm]
   );
 
+  const [responseDisplayByUnit, setResponseDisplayByUnit] =
+    useState<IApiDashboardDisplayByUnitResponse>();
+  const getResponseDisplayByUnit = useCallback(
+    async (apiQuery: Partial<IApiDashboardDisplayByUnitRequest>) => {
+      if (!session?.api_session) {
+        return;
+      }
+
+      try {
+        const query: IApiDashboardDisplayByUnitRequest = {
+          from: FromEnum.CACHE,
+          chart_type: IApiDashboardGeneralType.DISPLAY_BY_UNIT,
+          page: 1,
+          limit: 10,
+          sort: {
+            column: "total",
+            value: -1,
+          },
+          ...apiQueryForm,
+          ...apiQuery,
+        };
+
+        const response = await API.dashboard.generalResume(
+          session.api_session.access_token,
+          query
+        );
+
+        const responseData = await response.json();
+
+        if (responseData?.error) {
+          showToast(GetErrorMessage(responseData.message), IToastType.ERROR);
+        } else if (response.ok) {
+          setResponseDisplayByUnit(responseData);
+        }
+      } catch (error) {
+        showToast(GetErrorMessage(error), IToastType.ERROR);
+      }
+    },
+    [session?.api_session, showToast, apiQueryForm]
+  );
+
   useEffect(() => {
     if (session?.api_session) {
       getResponseDisplayByAdvertisement({});
+      getResponseDisplayByUnit({});
     }
-  }, [getResponseDisplayByAdvertisement, session?.api_session]);
+  }, [
+    getResponseDisplayByAdvertisement,
+    getResponseDisplayByUnit,
+    session?.api_session,
+  ]);
 
   return (
     <>
@@ -88,16 +136,17 @@ export default function TopRecords() {
         }}
       />
       <TopRecordsItem
-        title="Lorem"
+        title="Estabelecimentos que Mais Exibem Anúncios"
         list={{
-          title: "Shazam",
+          title: "Estabelecimento",
           valueHeader: "Exibições",
-          items: [
-            { label: "La Ville", value: "4.7K" },
-            { label: "Restaurante Paulista", value: "3.4K" },
-            { label: "Restaurante Itaim Bibi", value: "2.9K" },
-            { label: "Restaurante Moema", value: "1.5K" },
-          ],
+          items: (responseDisplayByUnit?.records || []).map((item) => {
+            return {
+              id: item.local_unit_id,
+              label: `${item.local_unit_name}`,
+              value: String(item.total),
+            };
+          }),
         }}
       />
       <TopRecordsItem

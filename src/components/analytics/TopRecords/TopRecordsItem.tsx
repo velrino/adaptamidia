@@ -95,19 +95,9 @@ export default function TopRecordsItem({ title, list }: ITopRecordsProps) {
         </div>
       </div>
 
-      <TopRecordsList
-        // title="Shazam"
-        // valueHeader="Exibições"
-        // items={[
-        //   { label: "La Ville", value: "4.7K" },
-        //   { label: "Restaurante Paulista", value: "3.4K" },
-        //   { label: "Restaurante Itaim Bibi", value: "2.9K" },
-        //   { label: "Restaurante Moema", value: "1.5K" },
-        // ]}
-        {...list}
-      />
+      <TopRecordsList {...list} />
 
-      <a
+      {/* <a
         href="#"
         className="flex justify-center gap-2 rounded-lg border border-gray-300 bg-white p-2.5 text-theme-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03]"
       >
@@ -127,7 +117,7 @@ export default function TopRecordsItem({ title, list }: ITopRecordsProps) {
             fill=""
           />
         </svg>
-      </a>
+      </a> */}
     </div>
   );
 }

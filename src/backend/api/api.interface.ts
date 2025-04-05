@@ -652,3 +652,29 @@ export interface IApiDashboardDisplayByAdvertisementResponse {
 }
 
 // END DASHBOARD DISPLAY_BY_ADVERTISEMENT
+
+// START DASHBOARD DISPLAY_BY_UNIT
+
+export interface IApiDashboardDisplayByUnitRequest
+  extends IApiDashboardResumeRequest {
+  page: number;
+  limit: number;
+  sort: {
+    column: "total";
+    value: -1 | 1;
+  };
+}
+
+export interface IApiDashboardDisplayByUnitItem {
+  total: number;
+  type: AdsCurrentType;
+  local_unit_id: string;
+  local_unit_name: string;
+}
+
+export interface IApiDashboardDisplayByUnitResponse {
+  from: FromEnum;
+  records: IApiDashboardDisplayByUnitItem[];
+}
+
+// END DASHBOARD DISPLAY_BY_UNIT
