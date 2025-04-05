@@ -14,7 +14,7 @@ import {
 import { GetErrorMessage } from "@/utils/generic";
 import { FromEnum, IToastType } from "@/interfaces/general";
 import { API } from "@/backend/api/api.endpoints";
-import { DateHelper } from "@/utils/date";
+import { DateHelper, DateHelperFormat } from "@/utils/date";
 import { IApiDashboardGeneralType } from "@/interfaces/dashboard";
 
 export default function TopRecords() {
@@ -164,10 +164,23 @@ export default function TopRecords() {
     session?.api_session,
   ]);
 
+  const [subtitle, setSubtitle] = useState<string>(String());
+
+  useEffect(() => {
+    setSubtitle(
+      () =>
+        `${DateHelper.format(
+          apiQueryForm.start_at,
+          DateHelperFormat.SHORT
+        )} - ${DateHelper.format(apiQueryForm.end_at, DateHelperFormat.SHORT)}`
+    );
+  }, [apiQueryForm]);
+
   return (
     <>
       <TopRecordsItem
         title="Anúncios mais exibidos"
+        subtitle={subtitle}
         list={{
           title: "Anúncio",
           valueHeader: "Exibições",
@@ -182,6 +195,7 @@ export default function TopRecords() {
       />
       <TopRecordsItem
         title="Melhores Estabelecimentos"
+        subtitle={subtitle}
         list={{
           title: "Estabelecimento",
           valueHeader: "Exibições",
@@ -196,6 +210,7 @@ export default function TopRecords() {
       />
       <TopRecordsItem
         title="Maiores anunciantes"
+        subtitle={subtitle}
         list={{
           title: "Anunciante",
           valueHeader: "Anúncios",

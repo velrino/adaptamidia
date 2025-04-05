@@ -129,6 +129,10 @@ export default function AnalyticsBarChart() {
     }
   }, [response]);
 
+  const [apiQueryForm] = useState({
+    start_at: DateHelper.subtractDays(new Date(), 1, "year").toDate(),
+    end_at: DateHelper.addDays(new Date(), 1, "year").toDate(),
+  });
   const getResponse = useCallback(
     async (apiQuery: Partial<IApiDashboardDisplayLogRequest>) => {
       if (!session?.api_session) {
@@ -145,8 +149,7 @@ export default function AnalyticsBarChart() {
             column: "_id.start_at",
             value: 1,
           },
-          start_at: DateHelper.subtractDays(new Date(), 1, "year").toDate(),
-          end_at: DateHelper.addDays(new Date(), 1, "year").toDate(),
+          ...apiQueryForm,
           ...apiQuery,
         };
 
@@ -194,7 +197,14 @@ export default function AnalyticsBarChart() {
             Analytics
           </h3>
           <span className="block text-gray-500 text-theme-sm dark:text-gray-400">
-            Exibições nos últimos dias
+            Exibições entre{" "}
+            {`${DateHelper.format(
+              apiQueryForm.start_at,
+              DateHelperFormat.SHORT
+            )} e ${DateHelper.format(
+              apiQueryForm.end_at,
+              DateHelperFormat.SHORT
+            )}`}
           </span>
         </div>
         {/* <ChartTab /> */}

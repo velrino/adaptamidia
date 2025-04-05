@@ -51,10 +51,15 @@ export const TopRecordsList = ({
 
 interface ITopRecordsProps {
   title: string;
+  subtitle: string;
   list: ITopRecordsListProps;
 }
 
-export default function TopRecordsItem({ title, list }: ITopRecordsProps) {
+export default function TopRecordsItem({
+  title,
+  subtitle,
+  list,
+}: ITopRecordsProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   function toggleDropdown() {
@@ -94,6 +99,7 @@ export default function TopRecordsItem({ title, list }: ITopRecordsProps) {
           </Dropdown>
         </div>
       </div>
+      <p className="text-gray-600 text-xs dark:text-gray-600">{subtitle}</p>
 
       <TopRecordsList {...list} />
 
