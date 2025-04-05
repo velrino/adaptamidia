@@ -3,10 +3,8 @@
 import React, { useCallback, useEffect, useState } from "react";
 // import Chart from "react-apexcharts";
 import { ApexOptions } from "apexcharts";
-import ChartTab from "../common/ChartTab";
 
 import dynamic from "next/dynamic";
-import { faker } from "@faker-js/faker";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/context/ToastContext";
 import { GetErrorMessage } from "@/utils/generic";
