@@ -11,6 +11,9 @@ export class Weather {
   @Prop({ required: false, default: String() })
   icon: string;
 
+  @Prop({ required: false, default: String() })
+  timezone: string;
+
   @Prop({ required: true })
   region: string;
 
@@ -18,29 +21,22 @@ export class Weather {
   country: string;
 
   @Prop({ required: true })
-  temperature: number;
+  temperature_c: number;
+
+  @Prop({ required: true })
+  temperature_f: number;
 
   @Prop({ required: true, index: true })
-  provider: IWeatherProvider[];
+  provider: IWeatherProvider;
 
   @Prop({ required: true, type: Date, index: true })
   last_provided_at: Date;
 
-  @Prop({
-    type: {
-      type: String,
-      enum: ['Point'],
-      required: true,
-    },
-    coordinates: {
-      type: [Number],
-      required: true,
-    },
-  })
-  location: {
-    type: string;
-    coordinates: [number, number];
-  };
+  @Prop({ required: true })
+  latitude: number;
+
+  @Prop({ required: true })
+  longitude: number;
 }
 
 export type WeatherDocument = Weather & Document;
