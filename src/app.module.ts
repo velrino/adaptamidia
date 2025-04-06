@@ -20,6 +20,7 @@ import { DisplayLogsModule } from './modules/display-logs/display-logs.module';
 import { BullModule } from '@nestjs/bull';
 import { QueueModule } from './modules/queue/queue.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { WeatherModule } from './modules/weather/weather.module';
 
 @Module({
   imports: [
@@ -73,6 +74,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     DisplayLogsModule,
     FilesModule,
     UserModule,
+    WeatherModule,
   ],
   controllers: [AppController],
   providers: [AppService],

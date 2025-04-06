@@ -22,6 +22,7 @@ import {
   AdvertisementMetrics,
   AdvertisementMetricsSchema,
 } from 'src/modules/advertisement-metrics/advertisement-metrics.schema';
+import { Weather, WeatherSchema } from 'src/modules/weather/weather.schema';
 
 export const MongoCollection = {
   advertisement: { name: Advertisement.name, schema: AdvertisementSchema },
@@ -39,6 +40,7 @@ export const MongoCollection = {
   files: { name: Files.name, schema: FilesSchema },
   news: { name: News.name, schema: NewsSchema },
   users: { name: User.name, schema: UserSchema },
+  weather: { name: Weather.name, schema: WeatherSchema },
 };
 
 export type MongoDbDateQuery = Partial<Record<'$gte' | '$lte', Date>>;
