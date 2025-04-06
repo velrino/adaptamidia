@@ -13,11 +13,12 @@ import { IApiDashboardGeneralType } from "@/interfaces/dashboard";
 import { DateHelper, DateHelperFormat } from "@/utils/date";
 import { API } from "@/backend/api/api.endpoints";
 import { GetErrorMessage } from "@/utils/generic";
+import CountUp from "react-countup";
 
 interface IChartItem {
   id: number;
   title: string;
-  value: string;
+  value: number;
   change: string;
   direction: string;
   comparisonText: string;
@@ -34,7 +35,7 @@ const AnalyticsMetrics: React.FC = () => {
       {
         id: 1,
         title: "Anúncios exibidos",
-        value: String(response?.display.advertisement || 0),
+        value: Number(response?.display.advertisement || 0),
         change: "+20%",
         direction: "up",
         comparisonText: "Vs last month",
@@ -42,7 +43,7 @@ const AnalyticsMetrics: React.FC = () => {
       {
         id: 2,
         title: "Anúncios criados",
-        value: String(response?.advertisement.total || 0),
+        value: Number(response?.advertisement.total || 0),
         change: "+1.59%",
         direction: "up",
         comparisonText: "Vs last month",
@@ -50,7 +51,7 @@ const AnalyticsMetrics: React.FC = () => {
       {
         id: 3,
         title: "Notícias publicadas",
-        value: String(response?.news.total || 0),
+        value: Number(response?.news.total || 0),
         change: "+4%",
         direction: "up",
         comparisonText: "Vs last month",
@@ -58,7 +59,7 @@ const AnalyticsMetrics: React.FC = () => {
       {
         id: 4,
         title: "Notícias exibidas",
-        value: String(response?.display.news || 0),
+        value: Number(response?.display.news || 0),
         change: "+7%",
         direction: "up",
         comparisonText: "Vs last month",
@@ -135,7 +136,7 @@ const AnalyticsMetrics: React.FC = () => {
           <div className="flex items-end justify-between mt-3">
             <div>
               <h4 className="text-2xl font-bold text-gray-800 dark:text-white/90">
-                {item.value}
+                <CountUp start={0} end={Number(item.value)} duration={2} />
               </h4>
             </div>
             {/* <div className="flex items-center gap-1">
