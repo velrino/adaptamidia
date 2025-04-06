@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Dropdown } from "../../ui/dropdown/Dropdown";
 import { DropdownItem } from "../../ui/dropdown/DropdownItem";
 import { MoreDotIcon } from "@/icons";
+import Spinner from "@/components/ui/spinner/Spinner";
 
 interface ITopRecordsListItem {
   id?: string;
@@ -52,11 +53,13 @@ export const TopRecordsList = ({
 interface ITopRecordsProps {
   title: string;
   subtitle: string;
+  loading: boolean;
   list: ITopRecordsListProps;
 }
 
 export default function TopRecordsItem({
   title,
+  loading,
   subtitle,
   list,
 }: ITopRecordsProps) {
@@ -101,7 +104,13 @@ export default function TopRecordsItem({
       </div>
       <p className="text-gray-600 text-xs dark:text-gray-600">{subtitle}</p>
 
-      <TopRecordsList {...list} />
+      {loading ? (
+        <div className="flex items-center justify-center h-full w-full min-h-64">
+          <Spinner color="#465fff" />
+        </div>
+      ) : (
+        <TopRecordsList {...list} />
+      )}
 
       {/* <a
         href="#"

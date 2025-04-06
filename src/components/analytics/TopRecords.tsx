@@ -30,6 +30,8 @@ export default function TopRecords() {
 
   const [responseDisplayByAdvertisement, setResponseDisplayByAdvertisement] =
     useState<IApiDashboardDisplayByAdvertisementResponse>();
+  const [loadingDisplayByAdvertisement, setLoadingDisplayByAdvertisement] =
+    useState<boolean>(false);
   const getResponseDisplayByAdvertisement = useCallback(
     async (apiQuery: Partial<IApiDashboardDisplayByAdvertisementRequest>) => {
       if (!session?.api_session) {
@@ -37,6 +39,7 @@ export default function TopRecords() {
       }
 
       try {
+        setLoadingDisplayByAdvertisement(true);
         const query: IApiDashboardDisplayByAdvertisementRequest = {
           from: FromEnum.CACHE,
           chart_type: IApiDashboardGeneralType.DISPLAY_BY_ADVERTISEMENT,
@@ -64,6 +67,8 @@ export default function TopRecords() {
         }
       } catch (error) {
         showToast(GetErrorMessage(error), IToastType.ERROR);
+      } finally {
+        setLoadingDisplayByAdvertisement(false);
       }
     },
     [session?.api_session, showToast, apiQueryForm]
@@ -71,6 +76,8 @@ export default function TopRecords() {
 
   const [responseDisplayByUnit, setResponseDisplayByUnit] =
     useState<IApiDashboardDisplayByUnitResponse>();
+  const [loadingDisplayByUnit, setLoadingDisplayByUnit] =
+    useState<boolean>(false);
   const getResponseDisplayByUnit = useCallback(
     async (apiQuery: Partial<IApiDashboardDisplayByUnitRequest>) => {
       if (!session?.api_session) {
@@ -78,6 +85,7 @@ export default function TopRecords() {
       }
 
       try {
+        setLoadingDisplayByUnit(true);
         const query: IApiDashboardDisplayByUnitRequest = {
           from: FromEnum.CACHE,
           chart_type: IApiDashboardGeneralType.DISPLAY_BY_UNIT,
@@ -105,6 +113,8 @@ export default function TopRecords() {
         }
       } catch (error) {
         showToast(GetErrorMessage(error), IToastType.ERROR);
+      } finally {
+        setLoadingDisplayByUnit(false);
       }
     },
     [session?.api_session, showToast, apiQueryForm]
@@ -112,6 +122,8 @@ export default function TopRecords() {
 
   const [responseAdvertisementByCompany, setResponseAdvertisementByCompany] =
     useState<IApiDashboardAdvertisementByCompanyResponse>();
+  const [loadingAdvertisementByCompany, setLoadingAdvertisementByCompany] =
+    useState<boolean>(false);
   const getResponseAdvertisementByCompany = useCallback(
     async (apiQuery: Partial<IApiDashboardAdvertisementByCompanyRequest>) => {
       if (!session?.api_session) {
@@ -119,6 +131,7 @@ export default function TopRecords() {
       }
 
       try {
+        setLoadingAdvertisementByCompany(true);
         const query: IApiDashboardDisplayByUnitRequest = {
           from: FromEnum.CACHE,
           chart_type: IApiDashboardGeneralType.ADVERTISEMENT_BY_COMPANY,
@@ -146,6 +159,8 @@ export default function TopRecords() {
         }
       } catch (error) {
         showToast(GetErrorMessage(error), IToastType.ERROR);
+      } finally {
+        setLoadingAdvertisementByCompany(false);
       }
     },
     [session?.api_session, showToast, apiQueryForm]
@@ -181,6 +196,7 @@ export default function TopRecords() {
       <TopRecordsItem
         title="Anúncios mais exibidos"
         subtitle={subtitle}
+        loading={loadingDisplayByAdvertisement}
         list={{
           title: "Anúncio",
           valueHeader: "Exibições",
@@ -196,6 +212,7 @@ export default function TopRecords() {
       <TopRecordsItem
         title="Melhores Estabelecimentos"
         subtitle={subtitle}
+        loading={loadingDisplayByUnit}
         list={{
           title: "Estabelecimento",
           valueHeader: "Exibições",
@@ -211,6 +228,7 @@ export default function TopRecords() {
       <TopRecordsItem
         title="Maiores anunciantes"
         subtitle={subtitle}
+        loading={loadingAdvertisementByCompany}
         list={{
           title: "Anunciante",
           valueHeader: "Anúncios",
