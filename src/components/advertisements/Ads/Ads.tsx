@@ -117,11 +117,11 @@ export default function AdsComponent() {
       try {
         const query: IApiDisplayRequest = {
           page: 1,
-          limit: 1,
+          limit: 100,
           ...apiQuery,
         };
 
-        const response = await API.advertisement.display(currentUnit, query);
+        const response = await API.display.byUnit(currentUnit, query);
 
         const data = await response.json();
 

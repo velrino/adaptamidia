@@ -66,13 +66,6 @@ export const API = {
         data,
       });
     },
-    async display(id: string, data: IApiDisplayRequest) {
-      return ApiResources.request({
-        method: IApiRequestMethod.GET,
-        path: `/advertisement/display/${id}`,
-        data,
-      });
-    },
   },
   companies: {
     async paginate(access_token: string, data: IApiPaginateCompanies) {
@@ -163,6 +156,15 @@ export const API = {
         path: "/dashboard/general",
         data,
         access_token,
+      });
+    },
+  },
+  display: {
+    async byUnit(id: string, data: IApiDisplayRequest) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: `/display/unit/${id}`,
+        data,
       });
     },
   },
