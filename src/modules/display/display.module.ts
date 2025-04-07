@@ -3,7 +3,9 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { MongoCollection } from 'src/shared/mongo.schema';
 import { WeatherModule } from '../weather/weather.module';
 import { DisplayController } from './display.controller';
-import { DisplayByUnitService } from './unit/display.service';
+import { DisplayByUnitService } from './unit/unit.service';
+import { DisplayService } from './display.service';
+import { DisplayUnitInfoService } from './info/info.service';
 
 @Module({
   imports: [
@@ -16,6 +18,6 @@ import { DisplayByUnitService } from './unit/display.service';
     WeatherModule,
   ],
   controllers: [DisplayController],
-  providers: [DisplayByUnitService],
+  providers: [DisplayService, DisplayByUnitService, DisplayUnitInfoService],
 })
 export class DisplayModule {}

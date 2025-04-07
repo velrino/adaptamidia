@@ -33,7 +33,7 @@ import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import {
   DisplayType,
   IDisplayAdvertisementUnit,
-} from 'src/modules/display/unit/display.interface';
+} from 'src/modules/display/unit/unit.interface';
 
 @Processor(QueuesEnum.DISPLAY_LOG_CREATE)
 @Injectable()

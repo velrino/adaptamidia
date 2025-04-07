@@ -12,7 +12,7 @@ import { Types } from 'mongoose';
 import { DateTime } from 'luxon';
 import { AdvertisementStatus } from 'src/modules/advertisement/advertisement.interface';
 import { CompanyUnitStatus } from 'src/modules/company-unit/company-unit.interface';
-import { DisplayType } from 'src/modules/display/unit/display.interface';
+import { DisplayType } from 'src/modules/display/unit/unit.interface';
 
 export class ICreateDisplayLogDto {
   @Transform(({ value }) => (value ? value : String()))

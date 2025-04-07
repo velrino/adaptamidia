@@ -14,7 +14,7 @@ import { Types } from 'mongoose';
 import { FromEnum } from 'src/shared/interfaces/paginate.dto';
 import { PermissionsEnum } from 'src/modules/permissions/permissions.enum';
 import { DisplayLogStatus } from 'src/modules/display-logs/display-logs.interface';
-import { DisplayType } from 'src/modules/display/unit/display.interface';
+import { DisplayType } from 'src/modules/display/unit/unit.interface';
 
 export enum IDashboardDisplayLogType {
   TOTAL_BY_TYPE = 'TOTAL_BY_TYPE',

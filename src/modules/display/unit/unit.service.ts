@@ -12,31 +12,25 @@ import {
   IDisplayAdvertisementPaginateDto,
   IDisplayAdvertisementUnit,
   IDisplayItem,
-} from './display.interface';
+} from './unit.interface';
 import { DateTime } from 'luxon';
-import {
-  CompanyUnit,
-  CompanyUnitDocument,
-} from 'src/modules/company-unit/company-unit.schema';
 import { News, NewsDocument } from 'src/modules/news/news.schema';
 import { ShuffleArray } from 'src/shared/general';
-import { GetWeatherService } from 'src/modules/weather/get/get.service';
 import {
   Advertisement,
   AdvertisementDocument,
 } from 'src/modules/advertisement/advertisement.schema';
+import { DisplayService } from '../display.service';
 
 @Injectable()
 export class DisplayByUnitService {
   constructor(
+    private readonly displayService: DisplayService,
     @InjectModel(Advertisement.name)
     private readonly model: Model<AdvertisementDocument>,
-    @InjectModel(CompanyUnit.name)
-    private readonly companyUnitModel: Model<CompanyUnitDocument>,
     @InjectModel(News.name)
     readonly newsModel: Model<NewsDocument>,
     private readonly redisService: RedisService,
-    private readonly getWeatherService: GetWeatherService,
   ) {}
 
   executeFromRequest(parameters: IDisplayAdvertisementPaginateDto) {
@@ -110,46 +104,6 @@ export class DisplayByUnitService {
       limit: parameters.limit,
       page: currentPage,
     };
-  }
-
-  async getUnit(id: Types.ObjectId): Promise<IDisplayAdvertisementUnit> {
-    const cacheKey = `${RedisKeysEnum.GET_COMPANY_UNIT}:${id.toString()}`;
-
-    const dataCached: IDisplayAdvertisementUnit | null =
-      await this.redisService.get(cacheKey);
-
-    if (dataCached) {
-      return dataCached;
-    }
-
-    const record = await this.companyUnitModel
-      .findOne({ _id: id, company: { $exists: true, $ne: null } })
-      .select(['_id', 'name', 'status', 'company', 'preferences'])
-      .populate<{
-        company: NonNullable<IDisplayAdvertisementUnit['company']>;
-      }>({
-        path: 'company',
-        select: ['_id', 'name', 'status'],
-      })
-      .lean<IDisplayAdvertisementUnit>();
-
-    if (!record) {
-      throw new HttpException(
-        RESULT.INVALID_COMPANY_UNIT_ID,
-        HttpStatus.NOT_FOUND,
-      );
-    }
-
-    if (!record?.company?._id) {
-      throw new HttpException(
-        RESULT.COMPANY_UNIT_WITHOUT_COMPANY_ID,
-        HttpStatus.UNPROCESSABLE_ENTITY,
-      );
-    }
-
-    await this.redisService.set(cacheKey, record, 300000); // 5 minutes
-
-    return record;
   }
 
   async getNews(parameters: IDisplayAdvertisementNewsQuery) {
@@ -290,7 +244,8 @@ export class DisplayByUnitService {
     try {
       const unitId = new Types.ObjectId(parameters.id);
 
-      const currentUnit: IDisplayAdvertisementUnit = await this.getUnit(unitId);
+      const currentUnit: IDisplayAdvertisementUnit =
+        await this.displayService.getUnit(unitId);
 
       const newsQuery: IDisplayAdvertisementNewsQuery = {
         include_source_name:

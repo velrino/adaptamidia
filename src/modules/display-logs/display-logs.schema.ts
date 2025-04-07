@@ -6,7 +6,7 @@ import { CompanyUnit } from '../company-unit/company-unit.schema';
 import { DisplayLogStatus } from './display-logs.interface';
 import { News } from '../news/news.schema';
 import { Advertisement } from '../advertisement/advertisement.schema';
-import { DisplayType } from '../display/unit/display.interface';
+import { DisplayType } from '../display/unit/unit.interface';
 
 @Schema({ ...SchemaDefault, collection: 'display_logs' })
 export class DisplayLog {

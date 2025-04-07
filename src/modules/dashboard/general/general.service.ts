@@ -22,7 +22,7 @@ import {
   Advertisement,
   AdvertisementDocument,
 } from 'src/modules/advertisement/advertisement.schema';
-import { DisplayType } from 'src/modules/display/unit/display.interface';
+import { DisplayType } from 'src/modules/display/unit/unit.interface';
 
 @Injectable()
 export class DashboardGeneralService {

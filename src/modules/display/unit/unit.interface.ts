@@ -47,6 +47,9 @@ export class IDisplayAdvertisementPaginateDto extends DisplayAdvertisementPagina
 export interface IDisplayAdvertisementUnit {
   _id: Types.ObjectId;
   name: string;
+  city: string;
+  state: string;
+  country: string;
   status: AdvertisementStatus;
   company: {
     _id: Types.ObjectId;
