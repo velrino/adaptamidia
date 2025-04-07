@@ -8,5 +8,6 @@ import { GetWeatherService } from './get/get.service';
   imports: [MongooseModule.forFeature([MongoCollection.weather])],
   controllers: [],
   providers: [GetWeatherService],
+  exports: [GetWeatherService],
 })
 export class WeatherModule {}

@@ -6,7 +6,6 @@ import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { RESULT } from 'src/shared/result.enum';
 import { RedisService } from 'src/shared/redis/redis.service';
 import { RedisKeysEnum } from 'src/shared/redis/redis.keys';
-import { Advertisement, AdvertisementDocument } from '../advertisement.schema';
 import {
   DisplayType,
   IDisplayAdvertisementNewsQuery,
@@ -21,9 +20,14 @@ import {
 } from 'src/modules/company-unit/company-unit.schema';
 import { News, NewsDocument } from 'src/modules/news/news.schema';
 import { ShuffleArray } from 'src/shared/general';
+import { GetWeatherService } from 'src/modules/weather/get/get.service';
+import {
+  Advertisement,
+  AdvertisementDocument,
+} from 'src/modules/advertisement/advertisement.schema';
 
 @Injectable()
-export class DisplayAdvertisementService {
+export class DisplayByUnitService {
   constructor(
     @InjectModel(Advertisement.name)
     private readonly model: Model<AdvertisementDocument>,
@@ -32,6 +36,7 @@ export class DisplayAdvertisementService {
     @InjectModel(News.name)
     readonly newsModel: Model<NewsDocument>,
     private readonly redisService: RedisService,
+    private readonly getWeatherService: GetWeatherService,
   ) {}
 
   executeFromRequest(parameters: IDisplayAdvertisementPaginateDto) {
@@ -375,7 +380,7 @@ export class DisplayAdvertisementService {
     } catch (error) {
       Log(
         LogType.ERROR,
-        DisplayAdvertisementService.name,
+        DisplayByUnitService.name,
         this.execute.name,
         LogAction.FAILED,
         { parameters, error },

@@ -21,6 +21,7 @@ import { BullModule } from '@nestjs/bull';
 import { QueueModule } from './modules/queue/queue.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { WeatherModule } from './modules/weather/weather.module';
+import { DisplayModule } from './modules/display/display.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { WeatherModule } from './modules/weather/weather.module';
     DashboardModule,
     RedisModule,
     PusherModule,
+    DisplayModule,
     AuthModule,
     AdvertisementModule,
     AdvertisementMetricsModule,

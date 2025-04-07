@@ -4,9 +4,9 @@ import { SchemaDefault } from 'src/shared/shema';
 import { Company } from '../company/company.schema';
 import { CompanyUnit } from '../company-unit/company-unit.schema';
 import { DisplayLogStatus } from './display-logs.interface';
-import { DisplayType } from '../advertisement/display/display.interface';
 import { News } from '../news/news.schema';
 import { Advertisement } from '../advertisement/advertisement.schema';
+import { DisplayType } from '../display/unit/display.interface';
 
 @Schema({ ...SchemaDefault, collection: 'display_logs' })
 export class DisplayLog {

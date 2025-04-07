@@ -21,10 +21,7 @@ import { DateTime } from 'luxon';
 import { RESULT } from 'src/shared/result.enum';
 import { RedisKeysEnum } from 'src/shared/redis/redis.keys';
 import { RedisService } from 'src/shared/redis/redis.service';
-import {
-  DisplayType,
-  IDisplayAdvertisementUnit,
-} from 'src/modules/advertisement/display/display.interface';
+
 import { ICheckExist } from 'src/shared/interfaces/paginate.dto';
 import { DisplayLog, DisplayLogDocument } from '../display-logs.schema';
 import { CalculateTimeDifferenceInSeconds } from 'src/shared/general';
@@ -33,6 +30,10 @@ import { QueuesEnum } from 'src/modules/queue/queue.interface';
 import { Processor, Process } from '@nestjs/bull';
 import { Job } from 'bull';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
+import {
+  DisplayType,
+  IDisplayAdvertisementUnit,
+} from 'src/modules/display/unit/display.interface';
 
 @Processor(QueuesEnum.DISPLAY_LOG_CREATE)
 @Injectable()

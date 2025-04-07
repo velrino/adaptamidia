@@ -5,7 +5,6 @@ import { AdvertisementController } from './advertisement.controller';
 import { CreateAdvertisementService } from './create/create.service';
 import { AdvertisementService } from './advertisement.service';
 import { ListAdvertisementService } from './list/list.service';
-import { DisplayAdvertisementService } from './display/display.service';
 
 @Module({
   imports: [
@@ -21,7 +20,6 @@ import { DisplayAdvertisementService } from './display/display.service';
     AdvertisementService,
     CreateAdvertisementService,
     ListAdvertisementService,
-    DisplayAdvertisementService,
   ],
 })
 export class AdvertisementModule {}

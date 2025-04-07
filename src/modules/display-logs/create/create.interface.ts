@@ -1,4 +1,3 @@
-import { DisplayType } from 'src/modules/advertisement/display/display.interface';
 import { DisplayLogStatus } from '../display-logs.interface';
 import {
   IsDate,
@@ -13,6 +12,7 @@ import { Types } from 'mongoose';
 import { DateTime } from 'luxon';
 import { AdvertisementStatus } from 'src/modules/advertisement/advertisement.interface';
 import { CompanyUnitStatus } from 'src/modules/company-unit/company-unit.interface';
+import { DisplayType } from 'src/modules/display/unit/display.interface';
 
 export class ICreateDisplayLogDto {
   @Transform(({ value }) => (value ? value : String()))

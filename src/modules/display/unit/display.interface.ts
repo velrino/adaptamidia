@@ -1,10 +1,10 @@
 import { IsMongoId, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { Types } from 'mongoose';
 import { PaginateDto } from 'src/shared/interfaces/paginate.dto';
-import { AdvertisementStatus } from '../advertisement.interface';
 import { NewsDocument } from 'src/modules/news/news.schema';
-import { Advertisement } from '../advertisement.schema';
 import { Transform } from 'class-transformer';
+import { AdvertisementStatus } from 'src/modules/advertisement/advertisement.interface';
+import { Advertisement } from 'src/modules/advertisement/advertisement.schema';
 
 export class DisplayAdvertisementPaginateDto extends PaginateDto {
   @IsOptional()

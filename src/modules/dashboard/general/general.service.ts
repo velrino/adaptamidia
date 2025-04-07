@@ -17,12 +17,12 @@ import { AuthenticatedRequest } from 'src/shared/request';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { FromEnum } from 'src/shared/interfaces/paginate.dto';
 import { RedisKeysEnum } from 'src/shared/redis/redis.keys';
-import { DisplayType } from 'src/modules/advertisement/display/display.interface';
 import { News, NewsDocument } from 'src/modules/news/news.schema';
 import {
   Advertisement,
   AdvertisementDocument,
 } from 'src/modules/advertisement/advertisement.schema';
+import { DisplayType } from 'src/modules/display/unit/display.interface';
 
 @Injectable()
 export class DashboardGeneralService {
