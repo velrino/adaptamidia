@@ -5,6 +5,8 @@ import {
   IApiDisplayRequest,
   IApiDisplayResponse,
   IApiDisplayResponseItem,
+  IApiDisplayUnitInfoRequest,
+  IApiDisplayUnitInfoResponse,
   IApiPaginateAdvertisement,
   IApiPaginateAdvertisementPreview,
 } from "@/backend/api/api.interface";
@@ -18,7 +20,7 @@ import { GetErrorMessage, ShuffleArray } from "@/utils/generic";
 import { AdsCurrentType, DisplayThemes, IDisplayTheme } from "@/interfaces/ads";
 import { useSearchParams } from "next/navigation";
 import { Display } from "./Display";
-import { IToastType } from "@/interfaces/general";
+import { FromEnum, IToastType } from "@/interfaces/general";
 import { useToast } from "@/context/ToastContext";
 import { API } from "@/backend/api/api.endpoints";
 import { useLoading } from "@/context/LoadingContext";
@@ -139,12 +141,46 @@ export default function AdsComponent() {
     [showToast, setApiDisplayResponse, currentUnit]
   );
 
+  const [apiUnitInfoResponse, setApiUnitInfoResponse] =
+    useState<IApiDisplayUnitInfoResponse | null>(null);
+  const getUnitInfo = useCallback(
+    async (apiQuery: IApiDisplayUnitInfoRequest) => {
+      if (!currentUnit) {
+        console.log({ getDisplayByUnit: currentUnit });
+        return;
+      }
+
+      try {
+        const query: IApiDisplayUnitInfoRequest = apiQuery
+          ? apiQuery
+          : {
+              from: FromEnum.CACHE,
+            };
+
+        const response = await API.display.unitInfo(currentUnit, query);
+
+        const data = await response.json();
+
+        if (data?.error) {
+          showToast(GetErrorMessage(data.error), IToastType.ERROR);
+        } else if (response.ok) {
+          setApiUnitInfoResponse(data);
+        }
+      } catch (error) {
+        showToast(GetErrorMessage(error), IToastType.ERROR);
+      } finally {
+      }
+    },
+    [showToast, setApiUnitInfoResponse, currentUnit]
+  );
+
   useEffect(() => {
     if (adsIdForPreview) {
       getPreview({
         id: adsIdForPreview,
       });
     } else if (currentUnit) {
+      getUnitInfo({ from: FromEnum.CACHE });
       getDisplayByUnit({ page: 1 });
     } else {
       getResponse({});
@@ -180,7 +216,14 @@ export default function AdsComponent() {
   return (
     <>
       {list.length > 0 && (
-        <Display list={list} theme={theme} preview={false} unit={currentUnit} />
+        <Display
+          list={list}
+          theme={theme}
+          preview={false}
+          unit={currentUnit}
+          currency={apiUnitInfoResponse?.currency}
+          weather={apiUnitInfoResponse?.weather}
+        />
       )}
     </>
   );

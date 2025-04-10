@@ -5,14 +5,19 @@ import React, { useState, useEffect, useCallback } from "react";
 import { DateHelper, DateHelperFormat } from "@/utils/date";
 import {
   IApiAdvertisementItem,
+  IApiCurrencyResponse,
   IApiDisplayResponseItem,
   IApiNewsResponseItem,
+  IApiWeatherResponse,
 } from "@/backend/api/api.interface";
-import { CiCloud } from "react-icons/ci";
+// import { CiCloud } from "react-icons/ci";
 import Image from "next/image";
+import { faker } from "@faker-js/faker";
 
 export interface IDisplayResources {
-  dolar: number;
+  // dolar: number;
+  currency?: IApiCurrencyResponse;
+  weather?: IApiWeatherResponse;
   theme: IDisplayTheme;
 }
 
@@ -27,7 +32,7 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
   resources,
   advertisement,
 }) => {
-  const { dolar } = resources;
+  const { currency, weather } = resources;
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Update the exchange rate and time every second
@@ -145,11 +150,24 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
               style: "currency",
               currency: "USD",
               currencyDisplay: "narrowSymbol",
-            }).format(dolar)}
+            }).format(
+              currency?.bid ||
+                faker.number.float({ min: 5.7, max: 5.9, fractionDigits: 2 })
+            )}
           </div>
           <div className="px-4 py-2 flex gap-2 items-center">
-            <CiCloud size={30} />
-            <span>Hoje 31º / 19º</span>
+            {/* <CiCloud size={30} /> */}
+            {weather && (
+              <>
+                <Image
+                  width={30}
+                  height={30}
+                  src={`https:${weather?.icon}`}
+                  alt="Weather icon"
+                />
+                <span>Hoje {weather?.temperature_c || "31"}º</span>
+              </>
+            )}
           </div>
           <div className="px-4 py-2">
             {`${DateHelper.format(

@@ -703,3 +703,59 @@ export interface IApiDashboardAdvertisementByCompanyResponse {
 }
 
 // END DASHBOARD ADVERTISEMENT_BY_COMPANY
+
+// START DISPLAY INFO
+export interface IApiDisplayUnitInfoRequest {
+  from: FromEnum;
+}
+
+export interface IApiCurrencyResponse {
+  _id: string;
+  name: string;
+  bid: number;
+  created_at: string;
+  high: number;
+  last_provided_at: string;
+  low: number;
+  pctChange: number;
+  provider: string;
+  updated_at: string;
+}
+
+export interface IApiWeatherResponse {
+  _id: string;
+  country: string;
+  created_at: string;
+  icon: string;
+  last_provided_at: string;
+  latitude: number;
+  longitude: number;
+  provider: string;
+  region: string;
+  temperature_c: number;
+  temperature_f: number;
+  text: string;
+  timezone: string;
+  updated_at: string;
+}
+
+export interface IApiDisplayUnitInfoResponse {
+  from: FromEnum;
+  unit: {
+    _id: string;
+    company: {
+      _id: string;
+      name: string;
+      status: string;
+    };
+    name: string;
+    city: string;
+    state: string;
+    country: string;
+    status: string;
+  };
+  currency: IApiCurrencyResponse;
+  weather: IApiWeatherResponse;
+}
+
+// END DISPLAY INFO

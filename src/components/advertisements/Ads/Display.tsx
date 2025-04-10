@@ -2,12 +2,13 @@
 
 import {
   IApiCreateDisplayLogRequest,
+  IApiCurrencyResponse,
   IApiDisplayResponseItem,
+  IApiWeatherResponse,
 } from "@/backend/api/api.interface";
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { DisplayContent } from "./DisplayContent";
 import { AdsCurrentType, IDisplayTheme } from "@/interfaces/ads";
-import { faker } from "@faker-js/faker";
 import { addLogToQueue } from "@/backend/queue/display_logs_create";
 import { DisplayLogStatus, DisplayType } from "@/interfaces/display-logs";
 import { DateHelper } from "@/utils/date";
@@ -23,6 +24,8 @@ interface IDisplay {
   list: IApiDisplayResponseItem[];
   theme: IDisplayTheme;
   preview: boolean;
+  currency?: IApiCurrencyResponse;
+  weather?: IApiWeatherResponse;
   unit?: string | null;
   style?: {
     container?: string;
@@ -32,7 +35,6 @@ interface IDisplay {
 const DEFAULT_AD_SECONDS = 20;
 const DEFAULT_NEWS_SECONDS = 5;
 const LOG_TIMEOUT_MS = 100;
-const DOLAR_RANGE = { min: 5.7, max: 5.9, fractionDigits: 2 };
 
 const updateAdStats = (adIndex: number): void => {
   const stats: AdStat[] = JSON.parse(
@@ -56,10 +58,17 @@ const updateAdStats = (adIndex: number): void => {
   localStorage.setItem("adStats", JSON.stringify(stats));
 };
 
-export function Display({ list, theme, preview, style, unit }: IDisplay) {
+export function Display({
+  list,
+  theme,
+  preview,
+  style,
+  unit,
+  currency,
+  weather,
+}: IDisplay) {
   useDisplayLogsQueue();
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
-  const [dolar, setDolar] = useState<number>(0);
   const [currentDisplay, setCurrentDisplay] =
     useState<IApiDisplayResponseItem>();
 
@@ -68,11 +77,6 @@ export function Display({ list, theme, preview, style, unit }: IDisplay) {
     () => list[currentAdIndex],
     [list, currentAdIndex]
   );
-
-  // Generate random dolar value once on mount
-  useEffect(() => {
-    setDolar(faker.number.float(DOLAR_RANGE));
-  }, []);
 
   const sendLog = useCallback(
     async (item: IApiDisplayResponseItem, displaySeconds: number) => {
@@ -142,7 +146,8 @@ export function Display({ list, theme, preview, style, unit }: IDisplay) {
         item={currentDisplay}
         advertisement={false}
         resources={{
-          dolar,
+          currency,
+          weather,
           theme,
         }}
       />

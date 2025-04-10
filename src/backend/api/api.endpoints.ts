@@ -7,6 +7,7 @@ import {
   IApiDashboardDisplayLogRequest,
   IApiDashboardResumeRequest,
   IApiDisplayRequest,
+  IApiDisplayUnitInfoRequest,
   IApiGroupCompanyUnitsRequest,
   IApiPaginateAdvertisement,
   IApiPaginateAdvertisementPreview,
@@ -164,6 +165,13 @@ export const API = {
       return ApiResources.request({
         method: IApiRequestMethod.GET,
         path: `/display/unit/${id}`,
+        data,
+      });
+    },
+    async unitInfo(id: string, data: IApiDisplayUnitInfoRequest) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: `/display/unit/${id}/info`,
         data,
       });
     },
