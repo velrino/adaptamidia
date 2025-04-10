@@ -165,7 +165,7 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
                   src={`https:${weather?.icon}`}
                   alt="Weather icon"
                 />
-                <span>Hoje {weather?.temperature_c || "31"}º</span>
+                <span>Hoje {Math.floor(weather?.temperature_c || 31)}º</span>
               </>
             )}
           </div>
