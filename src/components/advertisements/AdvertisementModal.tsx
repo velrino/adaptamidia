@@ -196,7 +196,11 @@ export default function AdvertisementModal({
             }`}
           </div>
           <div>
-            <AdvertisementModalTab data={data} onUpdate={handleUpdate} />
+            <AdvertisementModalTab
+              data={data}
+              onUpdate={handleUpdate}
+              action={action}
+            />
           </div>
         </div>
         <div className="fixed bottom-0 left-0 right-0 flex items-center justify-end w-full gap-3 bg-white dark:bg-gray-900 px-6 pb-6">

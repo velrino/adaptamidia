@@ -33,14 +33,14 @@ import {
 import Spinner from "@/components/ui/spinner/Spinner";
 import { PiEye, PiUsersLight } from "react-icons/pi";
 import {
-  FormatCurrency,
+  // FormatCurrency,
   FormatThousand,
   GenerateNumberRangeAsOptions,
   GetErrorMessage,
   SumUnitPeriodNative,
 } from "@/utils/generic";
 import { AdPeriod, AdPeriodText } from "@/interfaces/ads";
-import { BsCashCoin } from "react-icons/bs";
+// import { BsCashCoin } from "react-icons/bs";
 import { IAdvertisementModalCommonProps } from "./interface";
 import Select from "@/components/form/Select";
 import { useSession } from "next-auth/react";
@@ -67,8 +67,12 @@ const defaultFormReport: IDefaultFormReport = {
   end_date: String(),
 };
 
+interface IAdvertisementModalLocal extends IAdvertisementModalCommonProps {
+  default_units: IApiUnitItemResponse[];
+}
+
 const AdvertisementModalLocal = memo(
-  ({ data, onUpdate }: IAdvertisementModalCommonProps) => {
+  ({ data, onUpdate, default_units }: IAdvertisementModalLocal) => {
     const { data: session } = useSession();
     const { showFullScreenLoading, hideFullScreenLoading } = useLoading();
     const { showToast } = useToast();
@@ -101,6 +105,8 @@ const AdvertisementModalLocal = memo(
         setStartDate(DateHelper.dayjs(tomorrow).add(7, "day").toDate());
         setEndDate(DateHelper.dayjs(tomorrow).add(14, "day").toDate());
       }
+
+      console.log({ AdvertisementModalLocal: data.units });
     }, [data, tomorrow]);
 
     const [formReport, setFormReport] =
@@ -126,7 +132,9 @@ const AdvertisementModalLocal = memo(
       setShowUnits((prev) => !prev);
     }, []);
 
-    const [units, setUnits] = useState<IApiUnitItemResponse[]>([]);
+    const [units, setUnits] = useState<IApiUnitItemResponse[]>(
+      default_units || []
+    );
 
     const getUnits = useCallback(
       async (apiQuery: IApiPaginateCompanyUnits) => {
@@ -241,14 +249,14 @@ const AdvertisementModalLocal = memo(
       }
     }, [startDate, endDate, classifyPeriod]);
 
-    const [investmentText, setInvestmentText] = useState<string>("");
+    // const [investmentText, setInvestmentText] = useState<string>("");
 
     useEffect(() => {
       setCurrentPeriodText(AdPeriodText[currentPeriod]);
-      const result = FormatCurrency(
-        SumUnitPeriodNative(units, currentPeriod, "price_total")
-      );
-      setInvestmentText(result);
+      // const result = FormatCurrency(
+      //   SumUnitPeriodNative(units, currentPeriod, "price_total")
+      // );
+      // setInvestmentText(result);
       updateForm(
         "units",
         units.map((unit) => unit._id)
@@ -509,11 +517,11 @@ const AdvertisementModalLocal = memo(
                             )}
                             icon={<PiEye size={15} />}
                           />
-                          <MetricItem
+                          {/* <MetricItem
                             label={`Investimento (${currentPeriodText})`}
                             value={investmentText}
                             icon={<BsCashCoin size={15} />}
-                          />
+                          /> */}
                         </div>
                       </div>
                     </div>

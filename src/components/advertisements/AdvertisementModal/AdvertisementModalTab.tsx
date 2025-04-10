@@ -1,5 +1,5 @@
 import { Tabs } from "@/components/ui/tabs/Principal";
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import AdvertisementModalLocal from "./AdvertisementModalLocal";
 import AdvertisementModalAbout from "./AdvertisementModalAbout";
 import { IAdvertisementModalCommonProps } from "./interface";
@@ -7,13 +7,85 @@ import { Display } from "../Ads/Display";
 import { AdsCurrentType, DisplayThemes } from "@/interfaces/ads";
 import { AdvertisementComponent } from "./AdvertisementModalItems";
 import { useSession } from "next-auth/react";
-import { IApiDisplayResponseItem } from "@/backend/api/api.interface";
+import {
+  IApiDisplayResponseItem,
+  IApiPaginateCompanyUnits,
+  IApiUnitItemResponse,
+} from "@/backend/api/api.interface";
+import { useLoading } from "@/context/LoadingContext";
+import { API } from "@/backend/api/api.endpoints";
+import { useToast } from "@/context/ToastContext";
+import { GetErrorMessage } from "@/utils/generic";
+import { ContentAction, IToastType } from "@/interfaces/general";
 
 const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
+  action,
   data,
   onUpdate,
 }: IAdvertisementModalCommonProps) => {
   const { data: session } = useSession();
+  const { showFullScreenLoading, hideFullScreenLoading } = useLoading();
+  const { showToast } = useToast();
+
+  const [advertisementModalLocalAlready, setAdvertisementModalLocalAlready] =
+    useState<boolean>(action === ContentAction.UPDATE ? false : true);
+  const [defaultUnits, setDefaultUnits] = useState<IApiUnitItemResponse[]>([]);
+
+  const getDefaultUnits = useCallback(
+    async (apiQuery: IApiPaginateCompanyUnits) => {
+      if (!session?.api_session) {
+        return;
+      }
+      console.log({ apiQuery });
+      showFullScreenLoading();
+      try {
+        const query: IApiPaginateCompanyUnits = {
+          limit: 100,
+          ...apiQuery,
+        };
+
+        const response = await API.company_units.paginatePost(
+          session.api_session.access_token,
+          query
+        );
+
+        const responseData = await response.json();
+
+        if (responseData?.error) {
+          showToast(GetErrorMessage(responseData.error), IToastType.ERROR);
+        } else if (response.ok) {
+          setDefaultUnits((prevUnits) => {
+            const existingIds = new Set(
+              prevUnits.map((unit: IApiUnitItemResponse) => unit._id)
+            );
+            const newUnits = responseData.data.filter(
+              (unit: IApiUnitItemResponse) => !existingIds.has(unit._id)
+            );
+            return [...prevUnits, ...newUnits]; // Adiciona apenas os novos
+          });
+          showToast("Carregado com sucesso", IToastType.SUCCESS);
+          setAdvertisementModalLocalAlready(() => true);
+        }
+      } catch (error) {
+        showToast(GetErrorMessage(error), IToastType.ERROR);
+      } finally {
+        hideFullScreenLoading();
+      }
+    },
+    [
+      session?.api_session,
+      showToast,
+      showFullScreenLoading,
+      hideFullScreenLoading,
+    ]
+  );
+
+  useEffect(() => {
+    if (action === ContentAction.UPDATE && data.units.length) {
+      setAdvertisementModalLocalAlready(() => false);
+      getDefaultUnits({ units: data.units });
+    }
+  }, []);
 
   const openPreview = () => {
     if (!session?.api_session || !data._id) {
@@ -27,12 +99,29 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
     {
       id: "ABOUT",
       label: "Sobre",
-      content: <AdvertisementModalAbout data={data} onUpdate={onUpdate} />,
+      content: (
+        <AdvertisementModalAbout
+          action={action}
+          data={data}
+          onUpdate={onUpdate}
+        />
+      ),
     },
     {
       id: "LOCAL",
-      label: "Locais",
-      content: <AdvertisementModalLocal data={data} onUpdate={onUpdate} />,
+      label: `Estabelecimentos`,
+      content: (
+        <>
+          {advertisementModalLocalAlready === true && (
+            <AdvertisementModalLocal
+              action={action}
+              data={data}
+              onUpdate={onUpdate}
+              default_units={defaultUnits}
+            />
+          )}
+        </>
+      ),
     },
     {
       id: "ADS",

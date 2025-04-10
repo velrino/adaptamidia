@@ -107,6 +107,14 @@ export const API = {
         access_token,
       });
     },
+    async paginatePost(access_token: string, data: IApiPaginateCompanyUnits) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/company/unit/list",
+        data,
+        access_token,
+      });
+    },
     async create(access_token: string, data: IApiCreateCompanyUnitRequest) {
       return ApiResources.request({
         method: IApiRequestMethod.POST,

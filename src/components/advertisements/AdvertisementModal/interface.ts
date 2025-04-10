@@ -8,6 +8,7 @@ export interface AdvertisementModalCommonProps {
 }
 
 export interface IAdvertisementModalCommonProps {
+  action: ContentAction;
   data: IApiAdvertisementItem;
   onUpdate: (data: Partial<IApiAdvertisementItem>) => void;
 }
