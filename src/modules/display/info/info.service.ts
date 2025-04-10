@@ -3,10 +3,6 @@ import { DisplayService } from '../display.service';
 import { RedisService } from 'src/shared/redis/redis.service';
 import { RESULT } from 'src/shared/result.enum';
 import { IDisplayUnitInfo } from './info.interface';
-import {
-  FindByIdParamsDto,
-  FromEnum,
-} from 'src/shared/interfaces/paginate.dto';
 import { IDisplayAdvertisementUnit } from '../unit/unit.interface';
 import { Types } from 'mongoose';
 import { GetWeatherService } from 'src/modules/weather/get/get.service';
@@ -22,7 +18,7 @@ export class DisplayUnitInfoService {
     private readonly getWeatherService: GetWeatherService,
   ) {}
 
-  executeFromRequest(parameters: FindByIdParamsDto) {
+  executeFromRequest(parameters: IDisplayUnitInfo) {
     try {
       //   VerifyUserCanProced({
       //     need_company: parameters.company_id,
@@ -56,17 +52,18 @@ export class DisplayUnitInfoService {
         ]);
 
       const getWeather = await this.getWeatherService.execute({
-        from: FromEnum.CACHE,
+        from: parameters.from,
         city: currentUnit.state,
         country: currentUnit.country,
       });
 
       const getCurrency = await this.getCurrencyService.execute({
-        from: FromEnum.CACHE,
+        from: parameters.from,
         name: ICurrencyName.USD,
       });
 
       const result = {
+        from: parameters.from,
         unit: currentUnit,
         currency: getCurrency,
         weather: getWeather,

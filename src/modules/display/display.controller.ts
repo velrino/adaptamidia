@@ -3,6 +3,7 @@ import { FindByIdParamsDto } from 'src/shared/interfaces/paginate.dto';
 import { DisplayByUnitService } from './unit/unit.service';
 import { DisplayAdvertisementPaginateDto } from './unit/unit.interface';
 import { DisplayUnitInfoService } from './info/info.service';
+import { DisplayUnitInfoDto } from './info/info.interface';
 
 @Controller('display')
 export class DisplayController {
@@ -12,10 +13,7 @@ export class DisplayController {
   ) {}
 
   @Get('unit/:id/info')
-  info(
-    @Param() params: FindByIdParamsDto,
-    @Query() query: DisplayAdvertisementPaginateDto,
-  ) {
+  info(@Param() params: FindByIdParamsDto, @Query() query: DisplayUnitInfoDto) {
     return this.displayUnitInfoService.executeFromRequest({
       ...query,
       id: params.id,

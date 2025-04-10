@@ -32,10 +32,10 @@ export class SyncNewsService {
   //   await this.execute();
   // }
 
-  // @Cron(CronExpression.EVERY_3_HOURS)
-  // async handleCron() {
-  //   await this.execute();
-  // }
+  @Cron(CronExpression.EVERY_3_HOURS)
+  async handleCron() {
+    await this.execute();
+  }
 
   async getNewsEverythingAbout(q: string): Promise<INewsApiResponse> {
     try {
