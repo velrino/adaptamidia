@@ -130,3 +130,15 @@ export const GetExtensionFromMimeType = (mime: string): string => {
 
   return map[mime] || "bin";
 };
+
+export function Milliseconds({
+  minutes = 0,
+  seconds = 0,
+  hours = 0,
+}: {
+  minutes?: number;
+  seconds?: number;
+  hours?: number;
+}): number {
+  return ((hours * 60 + minutes) * 60 + seconds) * 1000;
+}

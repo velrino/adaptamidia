@@ -7,16 +7,11 @@ import {
   IApiDisplayResponseItem,
   IApiDisplayUnitInfoRequest,
   IApiDisplayUnitInfoResponse,
-  IApiPaginateAdvertisement,
   IApiPaginateAdvertisementPreview,
 } from "@/backend/api/api.interface";
-// import {
-//   AdvertisementsMock,
-//   AdvertisementsMockData,
-// } from "@/backend/mock/advertisements";
 import React, { useState, useEffect, useCallback } from "react";
 import { newsMockData } from "@/backend/mock/news";
-import { GetErrorMessage, ShuffleArray } from "@/utils/generic";
+import { GetErrorMessage, Milliseconds, ShuffleArray } from "@/utils/generic";
 import { AdsCurrentType, DisplayThemes, IDisplayTheme } from "@/interfaces/ads";
 import { useSearchParams } from "next/navigation";
 import { Display } from "./Display";
@@ -51,36 +46,6 @@ export default function AdsComponent() {
 
   const [responseAdvertisement, setResponseAdvertisement] =
     useState<IApiAdvertisementResponse>();
-
-  const getResponse = useCallback(
-    async (apiQuery: IApiPaginateAdvertisement) => {
-      if (!accessToken) {
-        showToast("Informe o Access Token", IToastType.ERROR);
-        return;
-      }
-
-      try {
-        const query: IApiPaginateAdvertisement = {
-          page: 1,
-          limit: 100,
-          ...apiQuery,
-        };
-
-        const response = await API.advertisement.paginate(accessToken, query);
-
-        const data = await response.json();
-
-        if (data?.error) {
-          showToast(GetErrorMessage(data.error), IToastType.ERROR);
-        } else if (response.ok) {
-          setResponseAdvertisement(data);
-        }
-      } catch (error) {
-        showToast(GetErrorMessage(error), IToastType.ERROR);
-      }
-    },
-    [accessToken, showToast, setResponseAdvertisement]
-  );
 
   const getPreview = useCallback(
     async (apiQuery: IApiPaginateAdvertisementPreview) => {
@@ -176,16 +141,24 @@ export default function AdsComponent() {
 
   useEffect(() => {
     if (adsIdForPreview) {
+      // INICIO DO PREVIEW
       getPreview({
         id: adsIdForPreview,
       });
+      // FINAL DO PREVIEW
     } else if (currentUnit) {
+      // INICIO DO DISPLAY REAL - UNIDADE
       getUnitInfo({ from: FromEnum.CACHE });
       getDisplayByUnit({ page: 1 });
-    } else {
-      getResponse({});
+
+      const interval = setInterval(() => {
+        getUnitInfo({ from: FromEnum.CACHE });
+      }, Milliseconds({ minutes: 5 }));
+
+      return () => clearInterval(interval);
+      // FINAL DO DISPLAY REAL - UNIDADE
     }
-  }, [getResponse, getPreview, adsIdForPreview, currentUnit, getDisplayByUnit]);
+  }, [getPreview, getUnitInfo, adsIdForPreview, currentUnit, getDisplayByUnit]);
 
   useEffect(() => {
     if (!responseAdvertisement) return;
@@ -205,7 +178,7 @@ export default function AdsComponent() {
       setList([...adsForPreview, ...news] as IApiDisplayResponseItem[]);
       // setList(news);
     }
-  }, [responseAdvertisement]);
+  }, [responseAdvertisement, adsIdForPreview]);
 
   useEffect(() => {
     if (apiDisplayResponse) {
