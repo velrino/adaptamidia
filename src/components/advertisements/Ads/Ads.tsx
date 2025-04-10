@@ -180,8 +180,40 @@ export default function AdsComponent() {
     }
   }, [responseAdvertisement, adsIdForPreview]);
 
+  const cacheAssets = async (urls: string[]) => {
+    const cache = await caches.open("ads-cache");
+
+    for (const url of urls) {
+      const fullUrl = `/api/proxy?url=${encodeURIComponent(url)}`;
+      const match = await cache.match(fullUrl);
+
+      if (!match) {
+        try {
+          const response = await fetch(fullUrl);
+          if (response.ok) {
+            await cache.put(fullUrl, response.clone());
+          }
+        } catch (err) {
+          console.warn(`Erro ao cachear: ${url}`, err);
+        }
+      }
+    }
+  };
+
   useEffect(() => {
     if (apiDisplayResponse) {
+      const assetsURLs: string[] = apiDisplayResponse.data
+        .map((item) => {
+          if (item.news) {
+            return item.news.image;
+          } else if (item.ads) {
+            return item.ads.items[0].source;
+          }
+        })
+        .filter((item) => typeof item === "string")
+        .filter((item) => item !== "/images/ads/clients/1.png");
+      cacheAssets(assetsURLs);
+      // console.log({ assetsURLs });
       setList(() => apiDisplayResponse.data);
     }
   }, [apiDisplayResponse]);
