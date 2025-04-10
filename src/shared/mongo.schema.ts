@@ -23,6 +23,7 @@ import {
   AdvertisementMetricsSchema,
 } from 'src/modules/advertisement-metrics/advertisement-metrics.schema';
 import { Weather, WeatherSchema } from 'src/modules/weather/weather.schema';
+import { Currency, CurrencySchema } from 'src/modules/currency/currency.schema';
 
 export const MongoCollection = {
   advertisement: { name: Advertisement.name, schema: AdvertisementSchema },
@@ -36,6 +37,7 @@ export const MongoCollection = {
     name: CompanyUnitPopularTime.name,
     schema: CompanyUnitPopularTimeSchema,
   },
+  currency: { name: Currency.name, schema: CurrencySchema },
   display_logs: { name: DisplayLog.name, schema: DisplayLogSchema },
   files: { name: Files.name, schema: FilesSchema },
   news: { name: News.name, schema: NewsSchema },

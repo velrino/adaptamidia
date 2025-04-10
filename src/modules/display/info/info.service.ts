@@ -10,12 +10,15 @@ import {
 import { IDisplayAdvertisementUnit } from '../unit/unit.interface';
 import { Types } from 'mongoose';
 import { GetWeatherService } from 'src/modules/weather/get/get.service';
+import { GetCurrencyService } from 'src/modules/currency/get/get.service';
+import { ICurrencyName } from 'src/modules/currency/currency.interface';
 
 @Injectable()
 export class DisplayUnitInfoService {
   constructor(
     private readonly displayService: DisplayService,
     private readonly redisService: RedisService,
+    private readonly getCurrencyService: GetCurrencyService,
     private readonly getWeatherService: GetWeatherService,
   ) {}
 
@@ -42,7 +45,15 @@ export class DisplayUnitInfoService {
       const unitId = new Types.ObjectId(parameters.id);
 
       const currentUnit: IDisplayAdvertisementUnit =
-        await this.displayService.getUnit(unitId);
+        await this.displayService.getUnit(unitId, [
+          '_id',
+          'name',
+          'state',
+          'status',
+          'company',
+          'city',
+          'country',
+        ]);
 
       const getWeather = await this.getWeatherService.execute({
         from: FromEnum.CACHE,
@@ -50,7 +61,16 @@ export class DisplayUnitInfoService {
         country: currentUnit.country,
       });
 
-      const result = { unit: currentUnit, weather: getWeather };
+      const getCurrency = await this.getCurrencyService.execute({
+        from: FromEnum.CACHE,
+        name: ICurrencyName.USD,
+      });
+
+      const result = {
+        unit: currentUnit,
+        currency: getCurrency,
+        weather: getWeather,
+      };
 
       return result;
     } catch (error) {

@@ -21,11 +21,33 @@ export class DisplayService {
     private readonly redisService: RedisService,
   ) {}
 
-  async getUnit(id: Types.ObjectId): Promise<IDisplayAdvertisementUnit> {
-    const cacheKey = `${RedisKeysEnum.DISPLAY_GET_COMPANY_UNIT}:${id.toString()}`;
+  async getUnit(
+    id: Types.ObjectId,
+    select: string[] = [],
+  ): Promise<IDisplayAdvertisementUnit> {
+    const selectColumns: string[] = select.length
+      ? select
+      : [
+          '_id',
+          'name',
+          'state',
+          'status',
+          'company',
+          'preferences',
+          'city',
+          'country',
+        ];
+
+    const cacheKey = this.redisService.createKeyByObject(
+      RedisKeysEnum.DISPLAY_GET_COMPANY_UNIT,
+      {
+        id: id.toString(),
+        selectColumns,
+      },
+    );
 
     const dataCached: IDisplayAdvertisementUnit | null =
-      await this.redisService.get(cacheKey);
+      await this.redisService.get(cacheKey.name);
 
     if (dataCached) {
       return dataCached;
@@ -33,16 +55,7 @@ export class DisplayService {
 
     const record = await this.companyUnitModel
       .findOne({ _id: id, company: { $exists: true, $ne: null } })
-      .select([
-        '_id',
-        'name',
-        'state',
-        'status',
-        'company',
-        'preferences',
-        'city',
-        'country',
-      ])
+      .select(selectColumns)
       .populate<{
         company: NonNullable<IDisplayAdvertisementUnit['company']>;
       }>({
@@ -65,7 +78,11 @@ export class DisplayService {
       );
     }
 
-    await this.redisService.set(cacheKey, record, Milliseconds({ minutes: 5 }));
+    await this.redisService.set(
+      cacheKey.name,
+      record,
+      Milliseconds({ minutes: 5 }),
+    );
 
     return record;
   }

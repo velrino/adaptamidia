@@ -6,6 +6,7 @@ import { DisplayController } from './display.controller';
 import { DisplayByUnitService } from './unit/unit.service';
 import { DisplayService } from './display.service';
 import { DisplayUnitInfoService } from './info/info.service';
+import { CurrencyModule } from '../currency/currency.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { DisplayUnitInfoService } from './info/info.service';
       MongoCollection.company_units,
       MongoCollection.news,
     ]),
+    CurrencyModule,
     WeatherModule,
   ],
   controllers: [DisplayController],
