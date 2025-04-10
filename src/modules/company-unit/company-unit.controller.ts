@@ -51,6 +51,16 @@ export class CompanyUnitController {
     return this.listCompanyUnitService.executeFromRequest(req, query);
   }
 
+  @Post('company/unit/list')
+  @UseGuards(AuthJwtGuard, PermissionsGuard)
+  @PermissionsAllowed()
+  listPost(
+    @Req() req: AuthenticatedRequest,
+    @Body() body: ListCompanyUnitPaginateDto,
+  ) {
+    return this.listCompanyUnitService.executeFromRequest(req, body);
+  }
+
   @Post('company/unit')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
   @PermissionsAllowed()

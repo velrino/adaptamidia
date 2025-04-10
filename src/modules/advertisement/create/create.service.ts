@@ -191,7 +191,7 @@ export class CreateAdvertisementService extends AdvertisementService {
       await this.validate(parameters);
 
       this.allItemsIsSameType(parameters.items);
-
+      // console.log({ parameters, advertisement });
       const documentData: any = {
         ...parameters,
         company,

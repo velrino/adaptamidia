@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 // import * as querystring from 'querystring';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, QueryOptions } from 'mongoose';
+import { Model, QueryOptions, Types } from 'mongoose';
 import { CompanyUnit, CompanyUnitDocument } from '../company-unit.schema';
 import { AuthenticatedRequest } from 'src/shared/request';
 // import { GetCompanyService } from 'src/modules/company/get/get.service';
@@ -113,6 +113,10 @@ export class ListCompanyUnitService {
           ],
         },
       };
+    }
+
+    if (parameters.units) {
+      query._id = { $in: parameters.units.map((id) => new Types.ObjectId(id)) };
     }
 
     const total = await this.companyUnitModel.countDocuments(query);

@@ -33,4 +33,8 @@ export class ListCompanyUnitPaginateDto extends PaginateDto {
   @IsOptional()
   @IsString({ each: true })
   neighborhood?: string[];
+
+  @IsOptional()
+  @IsString({ each: true })
+  units?: string[];
 }

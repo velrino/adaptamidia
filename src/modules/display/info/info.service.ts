@@ -41,15 +41,7 @@ export class DisplayUnitInfoService {
       const unitId = new Types.ObjectId(parameters.id);
 
       const currentUnit: IDisplayAdvertisementUnit =
-        await this.displayService.getUnit(unitId, [
-          '_id',
-          'name',
-          'state',
-          'status',
-          'company',
-          'city',
-          'country',
-        ]);
+        await this.displayService.getUnit(unitId);
 
       const getWeather = await this.getWeatherService.execute({
         from: parameters.from,
