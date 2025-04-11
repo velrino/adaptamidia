@@ -1,6 +1,6 @@
 import AcquisitionChannelChart from "@/components/analytics/AcquisitionChannelChart";
 import ActiveUsersChart from "@/components/analytics/ActiveUsersChart";
-import AnalyticsBarChart from "@/components/analytics/AnalyticsBarChart";
+import DisplayLogsChart from "@/components/analytics/DisplayLogsChart";
 import AnalyticsMetrics from "@/components/analytics/AnalyticsMetrics";
 import RecentOrderAnalytics from "@/components/analytics/RecentOrderAnalytics";
 import SessionChart from "@/components/analytics/SessionChart";
@@ -23,7 +23,7 @@ export default function Analytics() {
         <AnalyticsMetrics />
       </div>
       <div className="col-span-12">
-        <AnalyticsBarChart />
+        <DisplayLogsChart customQuery={{}} />
       </div>
       <div className="col-span-12 xl:col-span-7">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

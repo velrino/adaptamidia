@@ -105,8 +105,6 @@ const AdvertisementModalLocal = memo(
         setStartDate(DateHelper.dayjs(tomorrow).add(7, "day").toDate());
         setEndDate(DateHelper.dayjs(tomorrow).add(14, "day").toDate());
       }
-
-      console.log({ AdvertisementModalLocal: data.units });
     }, [data, tomorrow]);
 
     const [formReport, setFormReport] =

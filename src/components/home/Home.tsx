@@ -9,7 +9,7 @@ import StatisticsChart from "@/components/ecommerce/StatisticsChart";
 import RecentOrders from "@/components/ecommerce/RecentOrders";
 import DemographicCard from "@/components/ecommerce/DemographicCard";
 import AnalyticsMetrics from "@/components/analytics/AnalyticsMetrics";
-import AnalyticsBarChart from "@/components/analytics/AnalyticsBarChart";
+import DisplayLogsChart from "@/components/analytics/DisplayLogsChart";
 import TopChannel from "../analytics/TopChannel";
 import TopPages from "../analytics/TopPages";
 import ActiveUsersChart from "../analytics/ActiveUsersChart";
@@ -29,7 +29,7 @@ export default function HomeComponent() {
       </div>
 
       <div className="col-span-12">
-        <AnalyticsBarChart />
+        <DisplayLogsChart customQuery={{}} />
       </div>
 
       <div className="col-span-12">

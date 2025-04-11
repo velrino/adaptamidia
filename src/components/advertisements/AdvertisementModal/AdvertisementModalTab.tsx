@@ -17,6 +17,7 @@ import { API } from "@/backend/api/api.endpoints";
 import { useToast } from "@/context/ToastContext";
 import { GetErrorMessage } from "@/utils/generic";
 import { ContentAction, IToastType } from "@/interfaces/general";
+import { AdvertisementMetricsTab } from "./Metrics/Tab";
 
 const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
   action,
@@ -162,6 +163,16 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
         </div>
       ),
     },
+    ...(data?._id
+      ? [
+          {
+            id: "METRICS",
+            label: "Metricas",
+            content: <AdvertisementMetricsTab id={data._id} />,
+          },
+        ]
+      : []),
+
     // {
     //   id: "Three",
     //   label: "Three",
@@ -173,7 +184,7 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
     <div>
       <Tabs
         tabs={tabs}
-        defaultTabId="ABOUT"
+        defaultTabId="METRICS"
         styles={{
           nav: "p-0",
           navMenu: "mx-auto",

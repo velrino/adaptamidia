@@ -7,7 +7,7 @@ import { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/context/ToastContext";
-import { GetErrorMessage } from "@/utils/generic";
+import { GetErrorMessage, MissingDatesForChart } from "@/utils/generic";
 import { FromEnum, IToastType } from "@/interfaces/general";
 import { API } from "@/backend/api/api.endpoints";
 import {
@@ -17,6 +17,7 @@ import {
 } from "@/backend/api/api.interface";
 import { IApiDashboardDisplayLogType } from "@/interfaces/display-logs";
 import { DateHelper, DateHelperFormat } from "@/utils/date";
+import { AdsCurrentType } from "@/interfaces/ads";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -27,7 +28,11 @@ interface IChartValues {
   data: number[];
 }
 
-export default function AnalyticsBarChart() {
+interface IDisplayLogsChart {
+  customQuery: Partial<IApiDashboardDisplayLogRequest>;
+}
+
+export default function DisplayLogsChart({ customQuery }: IDisplayLogsChart) {
   const [chartOptions, setChartOptions] = useState<ApexOptions>({
     colors: ["#465fff", "#e4e7ec"],
     chart: {
@@ -94,10 +99,33 @@ export default function AnalyticsBarChart() {
   const { data: session } = useSession();
   const { showToast } = useToast();
   const [response, setResponse] = useState<IApiDashboardDisplayLogResponse>();
+  const [apiQueryForm] = useState<Partial<IApiDashboardDisplayLogRequest>>({
+    start_at: DateHelper.subtractDays(new Date(), 1, "year").toDate(),
+    end_at: DateHelper.addDays(new Date(), 1, "year").toDate(),
+    ...customQuery,
+  });
 
   useEffect(() => {
     const normalizeChartData = (records: IApiDashboardDisplayLogRecord[]) => {
-      const grouped = records.reduce(
+      const diffDays =
+        apiQueryForm.end_at && apiQueryForm.start_at
+          ? Math.abs(
+              DateHelper.diff(apiQueryForm.end_at, apiQueryForm.start_at) || 0
+            )
+          : 0;
+
+      const fullRecords = MissingDatesForChart(
+        records,
+        diffDays > 15 ? 15 : diffDays,
+        AdsCurrentType.ADVERTISEMENT,
+        "day"
+      ).sort((a, b) => {
+        return DateHelper.dayjs(a._id.start_at).diff(
+          DateHelper.dayjs(b._id.start_at)
+        );
+      });
+
+      const grouped = fullRecords.reduce(
         (acc, { _id: { start_at, type }, total }) => {
           const date = DateHelper.format(start_at, DateHelperFormat.SHORT);
           acc[date] = acc[date] || {};
@@ -106,8 +134,9 @@ export default function AnalyticsBarChart() {
         },
         {} as Record<string, Record<string, number>>
       );
+      console.log({ fullRecords, grouped });
 
-      const sortedDates = Object.keys(grouped).sort();
+      const sortedDates = Object.keys(grouped);
       const types = [...new Set(records.map((r) => r._id.type))];
 
       return {
@@ -129,10 +158,6 @@ export default function AnalyticsBarChart() {
     }
   }, [response]);
 
-  const [apiQueryForm] = useState({
-    start_at: DateHelper.subtractDays(new Date(), 1, "year").toDate(),
-    end_at: DateHelper.addDays(new Date(), 1, "year").toDate(),
-  });
   const getResponse = useCallback(
     async (apiQuery: Partial<IApiDashboardDisplayLogRequest>) => {
       if (!session?.api_session) {
@@ -151,7 +176,8 @@ export default function AnalyticsBarChart() {
           },
           ...apiQueryForm,
           ...apiQuery,
-        };
+          ...customQuery,
+        } as IApiDashboardDisplayLogRequest;
 
         const response = await API.dashboard.displayLogs(
           session.api_session.access_token,
@@ -196,15 +222,20 @@ export default function AnalyticsBarChart() {
           <h3 className="mb-1 text-lg font-semibold text-gray-800 dark:text-white/90">
             Analytics
           </h3>
+
           <span className="block text-gray-500 text-theme-sm dark:text-gray-400">
-            Exibições entre{" "}
-            {`${DateHelper.format(
-              apiQueryForm.start_at,
-              DateHelperFormat.SHORT
-            )} e ${DateHelper.format(
-              apiQueryForm.end_at,
-              DateHelperFormat.SHORT
-            )}`}
+            {apiQueryForm.start_at && apiQueryForm.end_at && (
+              <>
+                Exibições entre{" "}
+                {`${DateHelper.format(
+                  apiQueryForm.start_at,
+                  DateHelperFormat.SHORT
+                )} e ${DateHelper.format(
+                  apiQueryForm.end_at,
+                  DateHelperFormat.SHORT
+                )}`}
+              </>
+            )}
           </span>
         </div>
         {/* <ChartTab /> */}

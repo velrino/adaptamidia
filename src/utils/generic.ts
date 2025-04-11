@@ -1,7 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { IApiUnitItemResponse } from "@/backend/api/api.interface";
-import { AdPeriod } from "@/interfaces/ads";
+import {
+  IApiDashboardDisplayLogRecord,
+  IApiUnitItemResponse,
+} from "@/backend/api/api.interface";
+import { AdPeriod, AdsCurrentType } from "@/interfaces/ads";
+import { DateHelper } from "./date";
 
 export function ShuffleArray(array: any[]) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -141,4 +145,47 @@ export function Milliseconds({
   hours?: number;
 }): number {
   return ((hours * 60 + minutes) * 60 + seconds) * 1000;
+}
+
+export function MissingDatesForChart(
+  records: IApiDashboardDisplayLogRecord[],
+  count: number,
+  type: AdsCurrentType,
+  unit: "day" | "month" = "day"
+): IApiDashboardDisplayLogRecord[] {
+  const format = unit === "month" ? "YYYY-MM" : "YYYY-MM-DD";
+
+  // Mapa para acesso rápido aos existentes
+  const existingMap = new Map(
+    records.map((item) => [
+      DateHelper.dayjs(item._id.start_at).format(format),
+      item,
+    ])
+  );
+
+  // Encontra a data mais recente nos registros existentes
+  const mostRecentDate =
+    records
+      .map((r) => DateHelper.dayjs(r._id.start_at))
+      .sort((a, b) => b.diff(a))?.[0] ?? DateHelper.dayjs();
+
+  const fullList: IApiDashboardDisplayLogRecord[] = [];
+
+  for (let i = count - 1; i >= 0; i--) {
+    const date = mostRecentDate.subtract(i, unit).format(format);
+
+    if (existingMap.has(date)) {
+      fullList.push(existingMap.get(date)!);
+    } else {
+      fullList.push({
+        _id: {
+          type,
+          start_at: date,
+        },
+        total: 0,
+      });
+    }
+  }
+
+  return fullList;
 }
