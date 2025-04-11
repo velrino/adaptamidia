@@ -660,6 +660,7 @@ export interface IApiDashboardDisplayByUnitRequest
   extends IApiDashboardResumeRequest {
   page: number;
   limit: number;
+  advertisement?: string[];
   sort: {
     column: "total";
     value: -1 | 1;

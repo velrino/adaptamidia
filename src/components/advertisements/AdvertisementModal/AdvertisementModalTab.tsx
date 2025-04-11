@@ -37,7 +37,6 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
       if (!session?.api_session) {
         return;
       }
-      console.log({ apiQuery });
       showFullScreenLoading();
       try {
         const query: IApiPaginateCompanyUnits = {
@@ -184,7 +183,7 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
     <div>
       <Tabs
         tabs={tabs}
-        defaultTabId="METRICS"
+        defaultTabId="ABOUT"
         styles={{
           nav: "p-0",
           navMenu: "mx-auto",
