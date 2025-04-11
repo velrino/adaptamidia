@@ -90,7 +90,10 @@ export function AdvertisementMetricsTab({ id }: { id: string }) {
   return (
     <div className="overflow-y-auto min-h-[75vh] max-h-[75vh] px-6">
       <div>
-        <DisplayLogsChart customQuery={{ advertisement: [id] }} />
+        <DisplayLogsChart
+          customQuery={{ advertisement: [id] }}
+          useFullRecords={true}
+        />
       </div>
       <div className="grid gap-6 sm:grid-cols-3 mt-5">
         <div>

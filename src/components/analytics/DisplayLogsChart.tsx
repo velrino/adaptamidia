@@ -30,9 +30,13 @@ interface IChartValues {
 
 interface IDisplayLogsChart {
   customQuery: Partial<IApiDashboardDisplayLogRequest>;
+  useFullRecords: boolean;
 }
 
-export default function DisplayLogsChart({ customQuery }: IDisplayLogsChart) {
+export default function DisplayLogsChart({
+  customQuery,
+  useFullRecords,
+}: IDisplayLogsChart) {
   const [chartOptions, setChartOptions] = useState<ApexOptions>({
     colors: ["#465fff", "#e4e7ec"],
     chart: {
@@ -114,27 +118,27 @@ export default function DisplayLogsChart({ customQuery }: IDisplayLogsChart) {
             )
           : 0;
 
-      const fullRecords = MissingDatesForChart(
-        records,
-        diffDays > 15 ? 15 : diffDays,
-        AdsCurrentType.ADVERTISEMENT,
-        "day"
-      ).sort((a, b) => {
-        return DateHelper.dayjs(a._id.start_at).diff(
-          DateHelper.dayjs(b._id.start_at)
-        );
-      });
+      let list = records;
 
-      const grouped = fullRecords.reduce(
-        (acc, { _id: { start_at, type }, total }) => {
-          const date = DateHelper.format(start_at, DateHelperFormat.SHORT);
-          acc[date] = acc[date] || {};
-          acc[date][type] = (acc[date][type] || 0) + total;
-          return acc;
-        },
-        {} as Record<string, Record<string, number>>
-      );
-      console.log({ fullRecords, grouped });
+      if (useFullRecords) {
+        list = MissingDatesForChart(
+          records,
+          diffDays > 10 ? 10 : diffDays,
+          AdsCurrentType.ADVERTISEMENT,
+          "day"
+        ).sort((a, b) => {
+          return DateHelper.dayjs(a._id.start_at).diff(
+            DateHelper.dayjs(b._id.start_at)
+          );
+        });
+      }
+
+      const grouped = list.reduce((acc, { _id: { start_at, type }, total }) => {
+        const date = DateHelper.format(start_at, DateHelperFormat.SHORT);
+        acc[date] = acc[date] || {};
+        acc[date][type] = (acc[date][type] || 0) + total;
+        return acc;
+      }, {} as Record<string, Record<string, number>>);
 
       const sortedDates = Object.keys(grouped);
       const types = [...new Set(records.map((r) => r._id.type))];
