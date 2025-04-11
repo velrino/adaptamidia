@@ -391,6 +391,10 @@ export class DashboardGeneralService {
         queryBuilder['local'] = { $in: parameters.company };
       }
 
+      if (parameters.advertisement?.length) {
+        queryBuilder['advertisement'] = { $in: parameters.advertisement };
+      }
+
       const page = parameters.page || 1;
       const limit = parameters.limit || 10;
       const skip = (page - 1) * limit;

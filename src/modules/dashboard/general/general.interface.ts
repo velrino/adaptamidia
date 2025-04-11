@@ -63,6 +63,14 @@ export class IDashboardGeneralDto {
   company?: Types.ObjectId[];
 
   @IsOptional()
+  @Transform(({ value }) =>
+    Array.isArray(value)
+      ? value.map((v) => new Types.ObjectId(v))
+      : [new Types.ObjectId(value)],
+  )
+  advertisement?: Types.ObjectId[];
+
+  @IsOptional()
   @IsInt()
   @Min(1)
   @Type(() => Number)
@@ -102,6 +110,7 @@ export interface IDashboardGeneral {
   end_at: Date;
   is_admin: boolean;
   company?: Types.ObjectId[];
+  advertisement?: Types.ObjectId[];
   permissions: PermissionsEnum[];
   news_page: number;
   news_limit: number;
