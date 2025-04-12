@@ -43,7 +43,7 @@ const navItems: NavItem[] = [
     name: "Publicidade",
     subItems: [
       { name: "Anúncios", path: "/advertisements", pro: false },
-      { name: "Métricas", path: "/analytics", pro: true },
+      // { name: "Métricas", path: "/analytics", pro: true },
     ],
   },
   {
@@ -52,7 +52,7 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "Empresas", path: "/companies", pro: false },
       { name: "Unidades", path: "/units", pro: true },
-      { name: "Métricas", path: "/companies-metrics", pro: true },
+      // { name: "Métricas", path: "/companies-metrics", pro: true },
     ],
   },
   ...(!Environment.isProduction

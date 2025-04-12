@@ -166,7 +166,7 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
       ? [
           {
             id: "METRICS",
-            label: "Metricas",
+            label: "Métricas",
             content: <AdvertisementMetricsTab id={data._id} />,
           },
         ]
