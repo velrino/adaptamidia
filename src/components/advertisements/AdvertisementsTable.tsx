@@ -18,7 +18,6 @@ import {
 import { AdSortKey, AdType } from "@/interfaces/ads";
 import { ContentAction, IToastType, SortOrder } from "@/interfaces/general";
 import { AdsRecordDefault } from "@/backend/mock/advertisements";
-import { faker } from "@faker-js/faker";
 import { DateHelper } from "@/utils/date";
 import AdvertisementModal from "./AdvertisementModal";
 import Button from "../ui/button/Button";
