@@ -395,6 +395,10 @@ export class DashboardGeneralService {
         queryBuilder['advertisement'] = { $in: parameters.advertisement };
       }
 
+      if (parameters.local_unit?.length) {
+        queryBuilder['local_unit'] = { $in: parameters.local_unit };
+      }
+
       const page = parameters.page || 1;
       const limit = parameters.limit || 10;
       const skip = (page - 1) * limit;
@@ -578,6 +582,10 @@ export class DashboardGeneralService {
 
       if (parameters.company?.length) {
         queryBuilder['advertiser'] = { $in: parameters.company };
+      }
+
+      if (parameters.local_unit?.length) {
+        queryBuilder['local_unit'] = { $in: parameters.local_unit };
       }
 
       const page = parameters.page || 1;
