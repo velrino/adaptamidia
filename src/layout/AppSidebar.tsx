@@ -418,7 +418,7 @@ const AppSidebar: React.FC = () => {
       <div
         className={`py-8 flex  ${
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-center"
-        }`}
+        } hidden sm:block`}
       >
         <Link href="/">
           {isExpanded || isHovered || isMobileOpen ? (

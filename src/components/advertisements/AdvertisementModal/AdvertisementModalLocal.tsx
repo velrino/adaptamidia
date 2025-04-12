@@ -411,7 +411,7 @@ const AdvertisementModalLocal = memo(
       []
     );
 
-    const options = GenerateNumberRangeAsOptions(20, 40);
+    const options = GenerateNumberRangeAsOptions(10, 60);
 
     return (
       <>
