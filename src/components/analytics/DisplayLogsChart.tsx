@@ -18,6 +18,7 @@ import {
 import { IApiDashboardDisplayLogType } from "@/interfaces/display-logs";
 import { DateHelper, DateHelperFormat } from "@/utils/date";
 import { AdsCurrentType } from "@/interfaces/ads";
+import { useTheme } from "@/context/ThemeContext";
 
 const ReactApexChart = dynamic(() => import("react-apexcharts"), {
   ssr: false,
@@ -37,8 +38,9 @@ export default function DisplayLogsChart({
   customQuery,
   useFullRecords,
 }: IDisplayLogsChart) {
+  const { theme } = useTheme();
+
   const [chartOptions, setChartOptions] = useState<ApexOptions>({
-    colors: ["#465fff", "#e4e7ec"],
     chart: {
       fontFamily: "Outfit, sans-serif",
       type: "bar",
@@ -98,6 +100,13 @@ export default function DisplayLogsChart({
       },
     },
   });
+
+  useEffect(() => {
+    setChartOptions((prev) => ({
+      ...prev,
+      colors: ["#465fff", theme === "dark" ? "#fff" : "#000"],
+    }));
+  }, [theme]);
   const [chartValues, setChartValues] = useState<IChartValues[]>([]);
 
   const { data: session } = useSession();
