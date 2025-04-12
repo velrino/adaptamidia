@@ -96,7 +96,7 @@ export function CompanyUnitMetricsTab({ id }: { id: string }) {
             subtitle={subtitle}
             loading={loadingDisplayByUnit}
             list={{
-              title: "Estabelecimento",
+              title: "Anúncio",
               valueHeader: "Exibições",
               items: (currentResponse?.records || []).map((item) => {
                 return {
