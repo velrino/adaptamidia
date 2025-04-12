@@ -5,9 +5,9 @@ import Link from "next/link";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Next.js Error 500 | TailAdmin - Next.js Dashboard Template",
+  title: "Next.js Error 500 | XMP Midia - Next.js Dashboard Template",
   description:
-    "This is Next.js Error 500 page for TailAdmin - Next.js Tailwind CSS Admin Dashboard Template",
+    "This is Next.js Error 500 page for XMP Midia - Next.js Tailwind CSS Admin Dashboard Template",
 };
 
 export default function Error500() {
@@ -49,7 +49,7 @@ export default function Error500() {
 
       {/* <!-- Footer --> */}
       <p className="absolute text-sm text-center text-gray-500 -translate-x-1/2 bottom-6 left-1/2 dark:text-gray-400">
-        &copy; {new Date().getFullYear()} - TailAdmin
+        &copy; {new Date().getFullYear()} - XMP Midia
       </p>
     </div>
   );
