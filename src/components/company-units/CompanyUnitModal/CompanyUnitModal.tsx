@@ -282,7 +282,7 @@ export default function CompanyUnitModal({
           <div>
             <Tabs
               tabs={tabs}
-              defaultTabId={CompanyUnitModalTabs.METRICS}
+              defaultTabId={CompanyUnitModalTabs.INFO}
               styles={{
                 nav: "p-0",
                 navMenu: "mx-auto",

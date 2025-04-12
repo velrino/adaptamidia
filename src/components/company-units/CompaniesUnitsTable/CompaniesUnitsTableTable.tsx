@@ -59,8 +59,8 @@ export default function CompanieUnitsTable() {
     });
 
     const tempList = Array.from(map.values());
-    setContentAction(() => ContentAction.UPDATE);
-    setCurrentSelected(tempList[0]);
+    // setContentAction(() => ContentAction.UPDATE);
+    // setCurrentSelected(tempList[0]);
     setList(tempList);
   }, [response]);
 
