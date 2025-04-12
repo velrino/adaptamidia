@@ -9,7 +9,7 @@ import {
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { AdvertisementType } from '../advertisement.interface';
 
 export class CreateAdvertisementItemDto {
@@ -60,11 +60,13 @@ export class CreateAdvertisementDto {
   @IsNotEmpty()
   @IsDate()
   @Type(() => Date)
+  @Transform(({ value }) => new Date(value))
   start_date: Date;
 
   @IsNotEmpty()
   @IsDate()
   @Type(() => Date)
+  @Transform(({ value }) => new Date(value))
   end_date: Date;
 
   @IsOptional()

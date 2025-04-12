@@ -19,6 +19,7 @@ import {
 import { Company } from 'src/modules/company/company.schema';
 import { ActionType } from 'src/shared/interfaces/paginate.dto';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
+import { DateTime } from 'luxon';
 // import { DateTime } from 'luxon';
 
 @Injectable()
@@ -151,8 +152,12 @@ export class CreateAdvertisementService extends AdvertisementService {
 
       let record = await this.model.create({
         ...document,
-        start_date: new Date(parameters.start_date),
-        end_date: new Date(parameters.end_date),
+        start_date: DateTime.fromJSDate(parameters.start_date)
+          .startOf('day')
+          .toJSDate(),
+        end_date: DateTime.fromJSDate(parameters.end_date)
+          .endOf('day')
+          .toJSDate(),
       });
 
       record = await record.populate<{ company: Company }>('company');
@@ -203,8 +208,12 @@ export class CreateAdvertisementService extends AdvertisementService {
           { _id: advertisementId },
           {
             ...documentData,
-            start_date: new Date(parameters.start_date),
-            end_date: new Date(parameters.end_date),
+            start_date: DateTime.fromJSDate(parameters.start_date)
+              .startOf('day')
+              .toJSDate(),
+            end_date: DateTime.fromJSDate(parameters.end_date)
+              .endOf('day')
+              .toJSDate(),
           },
           { new: true },
         )
