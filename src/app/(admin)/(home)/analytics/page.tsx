@@ -23,7 +23,11 @@ export default function Analytics() {
         <AnalyticsMetrics />
       </div>
       <div className="col-span-12">
-        <DisplayLogsChart customQuery={{}} useFullRecords={false} />
+        <DisplayLogsChart
+          title="Example"
+          customQuery={{}}
+          useFullRecords={false}
+        />
       </div>
       <div className="col-span-12 xl:col-span-7">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

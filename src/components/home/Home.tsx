@@ -29,7 +29,11 @@ export default function HomeComponent() {
       </div>
 
       <div className="col-span-12">
-        <DisplayLogsChart customQuery={{}} useFullRecords={false} />
+        <DisplayLogsChart
+          title="Distribuição Diária de Exibições"
+          customQuery={{}}
+          useFullRecords={false}
+        />
       </div>
 
       <div className="col-span-12">

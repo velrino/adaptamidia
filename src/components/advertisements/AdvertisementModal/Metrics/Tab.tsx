@@ -110,6 +110,7 @@ export function AdvertisementMetricsTab({ id }: { id: string }) {
         </div>
         <div className="col-span-3">
           <DisplayLogsChart
+            title="Distribuição Diária de Exibições"
             customQuery={{ advertisement: [id] }}
             useFullRecords={true}
           />

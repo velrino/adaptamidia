@@ -110,6 +110,7 @@ export function CompanyUnitMetricsTab({ id }: { id: string }) {
         </div>
         <div className="col-span-3">
           <DisplayLogsChart
+            title="Distribuição Diária de Exibições"
             customQuery={{ local_unit: [id] }}
             useFullRecords={true}
           />

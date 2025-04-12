@@ -30,11 +30,13 @@ interface IChartValues {
 }
 
 interface IDisplayLogsChart {
+  title: string;
   customQuery: Partial<IApiDashboardDisplayLogRequest>;
   useFullRecords: boolean;
 }
 
 export default function DisplayLogsChart({
+  title,
   customQuery,
   useFullRecords,
 }: IDisplayLogsChart) {
@@ -233,7 +235,7 @@ export default function DisplayLogsChart({
       <div className="flex flex-wrap items-start justify-between gap-5">
         <div>
           <h3 className="mb-1 text-lg font-semibold text-gray-800 dark:text-white/90">
-            Analytics
+            {title}
           </h3>
 
           <span className="block text-gray-500 text-theme-sm dark:text-gray-400">
