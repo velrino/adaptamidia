@@ -23,6 +23,7 @@ import { API } from "@/backend/api/api.endpoints";
 import { useSession } from "next-auth/react";
 import { GetErrorMessage } from "@/utils/generic";
 import Spinner from "@/components/ui/spinner/Spinner";
+import { CompanyUnitMetricsTab } from "./Metrics/Tab";
 
 interface ICompanyUnitModalProps {
   action: ContentAction;
@@ -38,7 +39,7 @@ interface ICompanyUnitModalProps {
 
 export enum CompanyUnitModalTabs {
   INFO = "INFO",
-  // PRICES = "PRICES",
+  METRICS = "METRICS",
   POPULAR_TIMES = "POPULAR_TIMES",
 }
 
@@ -210,7 +211,7 @@ export default function CompanyUnitModal({
         />
       ),
     },
-    ...(action === ContentAction.UPDATE
+    ...(action === ContentAction.UPDATE && data?._id
       ? [
           // {
           //   id: CompanyUnitModalTabs.PRICES,
@@ -237,6 +238,11 @@ export default function CompanyUnitModal({
                 setFormReport={setFormReport}
               />
             ),
+          },
+          {
+            id: CompanyUnitModalTabs.METRICS,
+            label: "Métricas",
+            content: <CompanyUnitMetricsTab id={data._id} />,
           },
         ]
       : []),
@@ -276,7 +282,7 @@ export default function CompanyUnitModal({
           <div>
             <Tabs
               tabs={tabs}
-              defaultTabId={CompanyUnitModalTabs.INFO}
+              defaultTabId={CompanyUnitModalTabs.METRICS}
               styles={{
                 nav: "p-0",
                 navMenu: "mx-auto",

@@ -633,6 +633,7 @@ export interface IApiDashboardDisplayByAdvertisementRequest
   extends IApiDashboardResumeRequest {
   page: number;
   limit: number;
+  local_unit?: string[];
   sort: {
     column: "total";
     value: -1 | 1;
