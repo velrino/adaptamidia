@@ -31,6 +31,15 @@ export const API = {
       });
     },
   },
+  user: {
+    async me(access_token: string) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: "/user/me",
+        access_token,
+      });
+    },
+  },
   advertisement: {
     async paginate(access_token: string, data: IApiPaginateAdvertisement) {
       return ApiResources.request({

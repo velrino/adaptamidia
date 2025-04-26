@@ -130,7 +130,8 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
       {/* Mídia (vídeo ou imagem) */}
       {assetURL && item.ads && item.ads.type === AdType.VIDEO ? (
         <video
-          src={`/api/proxy?url=${encodeURIComponent(assetURL)}`}
+          // src={`/api/proxy?url=${encodeURIComponent(assetURL)}`}
+          src={assetURL}
           autoPlay
           loop
           muted
@@ -139,7 +140,8 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
       ) : (
         assetURL && (
           <img
-            src={`/api/proxy?url=${encodeURIComponent(assetURL)}`}
+            // src={`/api/proxy?url=${encodeURIComponent(assetURL)}`}
+            src={assetURL}
             alt={""}
             className="h-full w-full object-cover"
           />

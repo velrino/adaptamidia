@@ -184,7 +184,7 @@ export default function AdsComponent() {
     const cache = await caches.open("ads-cache");
 
     for (const url of urls) {
-      const fullUrl = `/api/proxy?url=${encodeURIComponent(url)}`;
+      const fullUrl = url; //`/api/proxy?url=${encodeURIComponent(url)}`;
       const match = await cache.match(fullUrl);
 
       if (!match) {

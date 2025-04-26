@@ -268,9 +268,10 @@ export default function AdvertisementsTable() {
                           )}
                           {item.type === AdType.VIDEO && (
                             <video
-                              src={`/api/proxy?url=${encodeURIComponent(
-                                item.items[0]?.source || "/placeholder.svg"
-                              )}`}
+                              // src={`/api/proxy?url=${encodeURIComponent(
+                              //   item.items[0]?.source || "/placeholder.svg"
+                              // )}`}
+                              src={item.items[0]?.source || "/placeholder.svg"}
                               // autoPlay
                               loop
                               muted
