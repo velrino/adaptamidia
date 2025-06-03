@@ -2,7 +2,7 @@ import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import { IUseModal } from "@/hooks/useModal";
 import { AdType } from "@/interfaces/ads";
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import Cropper from "react-easy-crop";
 import { LuImageUp } from "react-icons/lu";
 
@@ -87,12 +87,17 @@ interface MediaCropperModalProps {
   open: boolean;
   currentModal: IUseModal;
   onCropComplete: (croppedMedia: Blob, type: AdType) => void;
+  file?: {
+    source: string;
+    type: "image" | "video";
+  };
 }
 
 export const MediaCropperModal: React.FC<MediaCropperModalProps> = ({
   open,
   currentModal,
   onCropComplete,
+  file,
 }) => {
   const [fileSrc, setFileSrc] = useState<string | null>(null);
   const [fileType, setFileType] = useState<"image" | "video" | null>(null);
@@ -150,6 +155,14 @@ export const MediaCropperModal: React.FC<MediaCropperModalProps> = ({
       setFileSrc(null);
     }
   };
+
+  useEffect(() => {
+    if (file?.source && file?.type) {
+      setFileSrc(() => file.source);
+      setFileType(() => file.type);
+      currentModal.openModal();
+    }
+  }, [file, currentModal]);
 
   return (
     <>

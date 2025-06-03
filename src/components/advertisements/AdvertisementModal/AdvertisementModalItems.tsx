@@ -11,6 +11,7 @@ import { useSession } from "next-auth/react";
 import { useToast } from "@/context/ToastContext";
 import { IToastType } from "@/interfaces/general";
 import { useLoading } from "@/context/LoadingContext";
+import { GenerateAdvertisementModal } from "./Ads/GenerateModal";
 
 export function AdvertisementComponent({
   data,
@@ -77,20 +78,40 @@ export function AdvertisementComponent({
   const modalMediaCropper = useModal();
 
   return (
-    <div className="flex items-center justify-center min-h-full text-white text-center">
-      {!data.company?._id && (
-        <div>
-          Selecione um <strong>Anúnciante</strong> antes de fazer upload
-        </div>
-      )}
+    <>
+      <div className="flex items-center justify-center min-h-full text-white text-center">
+        {!data.company?._id && (
+          <div>
+            Selecione um <strong>Anúnciante</strong> antes de fazer upload
+          </div>
+        )}
 
-      {data.company?._id && (
-        <MediaCropperModal
-          open={modalMediaCropper.isOpen}
-          currentModal={modalMediaCropper}
-          onCropComplete={handleCroppedImage}
-        />
-      )}
-    </div>
+        {data.company?._id && (
+          <>
+            <div className="grid grid-cols-12 gap-4 md:gap-6">
+              <div className="col-span-6">
+                <GenerateAdvertisementModal
+                  open={modalMediaCropper.isOpen}
+                  currentModal={modalMediaCropper}
+                  onCropComplete={handleCroppedImage}
+                />
+              </div>
+              <div className="col-span-6">
+                <MediaCropperModal
+                  open={modalMediaCropper.isOpen}
+                  currentModal={modalMediaCropper}
+                  onCropComplete={handleCroppedImage}
+                  // file={{
+                  //   source:
+                  //     "https://storage.googleapis.com/xmp-midia/ads/67f9c0e21d68c92defe72f87/24a361d3-5a76-47ec-b157-8d078dc3d99d",
+                  //   type: "video",
+                  // }}
+                />
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </>
   );
 }
