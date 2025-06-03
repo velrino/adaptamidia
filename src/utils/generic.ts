@@ -189,3 +189,6 @@ export function MissingDatesForChart(
 
   return fullList;
 }
+
+export const Delay = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));

@@ -75,7 +75,42 @@ export function AdvertisementComponent({
     }
   };
 
+  const handleGenerated = async (fileUrl: string) => {
+    if (!session?.api_session) {
+      return;
+    }
+
+    if (!data?.company) {
+      showToast("Escolha um Anunciante!", IToastType.INFO);
+      return;
+    }
+
+    try {
+      showFullScreenLoading();
+
+      showToast(`Upload feito com sucesso!`, IToastType.SUCCESS);
+
+      const newItem: IApiAdvertisementItemItem = {
+        id: new Date().getTime().toString(),
+        description: String(),
+        seconds: 30,
+        source: fileUrl,
+        title: String(),
+        type: AdType.VIDEO,
+      };
+
+      const updatedData = { items: [newItem], type: AdType.VIDEO };
+
+      onUpdate(updatedData);
+    } catch (error) {
+      showToast(GetErrorMessage(error), IToastType.ERROR);
+    } finally {
+      hideFullScreenLoading();
+    }
+  };
+
   const modalMediaCropper = useModal();
+  const modalGenerate = useModal();
 
   return (
     <>
@@ -91,9 +126,9 @@ export function AdvertisementComponent({
             <div className="grid grid-cols-12 gap-4 md:gap-6">
               <div className="col-span-6">
                 <GenerateAdvertisementModal
-                  open={modalMediaCropper.isOpen}
-                  currentModal={modalMediaCropper}
-                  onCropComplete={handleCroppedImage}
+                  open={modalGenerate.isOpen}
+                  currentModal={modalGenerate}
+                  onCropComplete={handleGenerated}
                 />
               </div>
               <div className="col-span-6">
