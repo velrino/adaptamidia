@@ -6,7 +6,7 @@ import React from "react";
 
 export const metadata: Metadata = {
   title:
-    "Task Kanban Dashboard | XMP Midia - Tailwind CSS Admin Dashboard Template",
+    "Task Kanban Dashboard | Alpha Midia - Tailwind CSS Admin Dashboard Template",
   description: "Tailwind Admin Dashboard",
 };
 

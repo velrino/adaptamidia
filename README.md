@@ -1,6 +1,6 @@
-# XMP Midia Pro - Next.js (v2.0)
+# Alpha Midia Pro - Next.js (v2.0)
 
-[XMP Midia](https://tailadmin.com) is a modern, responsive, and customizable admin dashboard template built using Tailwind CSS and Next.js. It is designed to help developers build beautiful and functional dashboards quickly and easily.
+[Alpha Midia](https://tailadmin.com) is a modern, responsive, and customizable admin dashboard template built using Tailwind CSS and Next.js. It is designed to help developers build beautiful and functional dashboards quickly and easily.
 
 ## Quick Links
 
@@ -13,7 +13,7 @@
 
 ### Prerequisites
 
-To get started with XMP Midia, ensure you have the following prerequisites installed and set up:
+To get started with Alpha Midia, ensure you have the following prerequisites installed and set up:
 
 - Node.js 18.x or later (recommended to use Node.js 20.x or later)
 

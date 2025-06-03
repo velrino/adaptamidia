@@ -17,8 +17,8 @@ import TopRecords from "../analytics/TopRecords";
 
 export const metadata: Metadata = {
   title:
-    "Next.js E-commerce Dashboard | XMP Midia - Next.js Dashboard Template",
-  description: "This is Next.js Home for XMP Midia Dashboard Template",
+    "Next.js E-commerce Dashboard | Alpha Midia - Next.js Dashboard Template",
+  description: "This is Next.js Home for Alpha Midia Dashboard Template",
 };
 
 export default function HomeComponent() {

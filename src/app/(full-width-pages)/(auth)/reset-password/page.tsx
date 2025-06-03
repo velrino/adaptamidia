@@ -4,9 +4,9 @@ import { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Next.js Reset Password | XMP Midia - Next.js Dashboard Template",
+  title: "Next.js Reset Password | Alpha Midia - Next.js Dashboard Template",
   description:
-    "This is Next.js Password Reset page for XMP Midia Dashboard Template",
+    "This is Next.js Password Reset page for Alpha Midia Dashboard Template",
   // other metadata
 };
 

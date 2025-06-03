@@ -8,9 +8,10 @@ import { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Next.js Advanced Data Table | XMP Midia - Next.js Dashboard Template",
+  title:
+    "Next.js Advanced Data Table | Alpha Midia - Next.js Dashboard Template",
   description:
-    "This is Next.js Advanced Data Table page for XMP Midia - Next.js Tailwind CSS Admin Dashboard Template",
+    "This is Next.js Advanced Data Table page for Alpha Midia - Next.js Tailwind CSS Admin Dashboard Template",
 };
 
 export default function DataTables() {

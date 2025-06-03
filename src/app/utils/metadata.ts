@@ -1,3 +1,3 @@
 export const SetMetadataTitle = (page: string) => {
-  return `XMP Media - ${page}`;
+  return `Alpha Mídia - ${page}`;
 };

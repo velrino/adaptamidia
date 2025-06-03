@@ -7,9 +7,9 @@ import { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Next.js Link | XMP Midia - Next.js Dashboard Template",
+  title: "Next.js Link | Alpha Midia - Next.js Dashboard Template",
   description:
-    "This is Next.js Link page for XMP Midia - Next.js Tailwind CSS Admin Dashboard Template",
+    "This is Next.js Link page for Alpha Midia - Next.js Tailwind CSS Admin Dashboard Template",
 };
 
 export default function Links() {
