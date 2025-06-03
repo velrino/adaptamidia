@@ -3,9 +3,12 @@ import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { AllExceptionsFilter } from './exception.filter';
+import { DateTime } from 'luxon';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  process.env.LAST_DEPLOY = DateTime.now().toString();
 
   const configService = app.get(ConfigService);
 
@@ -31,4 +34,5 @@ async function bootstrap() {
     new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }),
   );
 }
+
 bootstrap();

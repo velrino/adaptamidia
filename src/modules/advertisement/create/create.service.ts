@@ -20,7 +20,6 @@ import { Company } from 'src/modules/company/company.schema';
 import { ActionType } from 'src/shared/interfaces/paginate.dto';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { DateTime } from 'luxon';
-// import { DateTime } from 'luxon';
 
 @Injectable()
 export class CreateAdvertisementService extends AdvertisementService {

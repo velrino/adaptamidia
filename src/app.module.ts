@@ -1,6 +1,5 @@
 import { MiddlewareConsumer, Module, RequestMethod } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -22,6 +21,7 @@ import { QueueModule } from './modules/queue/queue.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { WeatherModule } from './modules/weather/weather.module';
 import { DisplayModule } from './modules/display/display.module';
+import { HealthCheckService } from './app.service';
 
 @Module({
   imports: [
@@ -79,7 +79,7 @@ import { DisplayModule } from './modules/display/display.module';
     WeatherModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [HealthCheckService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
