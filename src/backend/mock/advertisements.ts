@@ -47,15 +47,15 @@ export const AdsRecordDefault: IApiAdvertisementItem = {
   },
   title: String(),
   description: String(),
-  type: AdType.IMAGE,
+  type: AdType.VIDEO,
   spotlight: false,
   items: [
     {
       title: String(),
       description: String(),
       seconds: 0,
-      source: "/images/ads/clients/1.png",
-      type: AdType.IMAGE,
+      source: "/videos/demo/0.mp4",
+      type: AdType.VIDEO,
     },
   ],
   seconds: 20,
