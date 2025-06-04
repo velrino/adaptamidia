@@ -58,7 +58,7 @@ export const AdsRecordDefault: IApiAdvertisementItem = {
       type: AdType.VIDEO,
     },
   ],
-  seconds: 20,
+  seconds: 8,
   status: AdStatus.REVIEW,
   start_date: DateHelper.addDays(new Date(), 1, "days").toISOString(),
   end_date: DateHelper.addDays(new Date(), 1, "month").toISOString(),
