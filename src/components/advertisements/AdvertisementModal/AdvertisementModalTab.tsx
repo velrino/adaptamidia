@@ -97,33 +97,6 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
 
   const tabs = [
     {
-      id: "ABOUT",
-      label: "Sobre",
-      content: (
-        <AdvertisementModalAbout
-          action={action}
-          data={data}
-          onUpdate={onUpdate}
-        />
-      ),
-    },
-    {
-      id: "LOCAL",
-      label: `Estabelecimentos`,
-      content: (
-        <>
-          {advertisementModalLocalAlready === true && (
-            <AdvertisementModalLocal
-              action={action}
-              data={data}
-              onUpdate={onUpdate}
-              default_units={defaultUnits}
-            />
-          )}
-        </>
-      ),
-    },
-    {
       id: "ADS",
       label: "Anúncio",
       content: (
@@ -131,7 +104,7 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
           <div className="text-black dark:text-white text-center">
             {data._id && (
               <div className="cursor-pointer">
-                <div className="h-10" onClick={openPreview}>
+                <div className="h-10 cursor-pointer" onClick={openPreview}>
                   Abrir no Display
                 </div>
               </div>
@@ -162,6 +135,34 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
         </div>
       ),
     },
+    {
+      id: "ABOUT",
+      label: "Sobre",
+      content: (
+        <AdvertisementModalAbout
+          action={action}
+          data={data}
+          onUpdate={onUpdate}
+        />
+      ),
+    },
+    {
+      id: "LOCAL",
+      label: `Estabelecimentos`,
+      content: (
+        <>
+          {advertisementModalLocalAlready === true && (
+            <AdvertisementModalLocal
+              action={action}
+              data={data}
+              onUpdate={onUpdate}
+              default_units={defaultUnits}
+            />
+          )}
+        </>
+      ),
+    },
+
     ...(data?._id
       ? [
           {
