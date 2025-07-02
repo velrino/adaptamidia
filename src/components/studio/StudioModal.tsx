@@ -34,17 +34,8 @@ export default function StudioModal({ currentModal }: IStudioModal) {
       isFullscreen={true}
     >
       <div className="fixed top-0 left-0 flex flex-col w-full h-screen overflow-x-hidden overflow-y-auto bg-white dark:bg-gray-900 p-0">
-        <div className="flex-grow mb-20">
-          {/* <div className="font-semibold text-gray-800 m-0 text-title-sm dark:text-white/90 px-5 py-2">
-            TESTE
-          </div>
-          <div>
-            <StudioComponent />
-          </div> */}
-          <StudioComponent />
-        </div>
-
-        <div className="fixed bottom-0 left-0 right-0 flex items-center justify-end w-full gap-3 bg-white dark:bg-gray-900 px-6 pb-6">
+        <StudioComponent />
+        {/* <div className="fixed bottom-0 left-0 right-0 flex items-center justify-end w-full gap-3 bg-white dark:bg-gray-900 px-6 pb-6">
           <Button size="sm" variant="outline" onClick={handleClose}>
             Fechar
           </Button>
@@ -53,7 +44,7 @@ export default function StudioModal({ currentModal }: IStudioModal) {
           ) : (
             <Button size="sm">Salvar</Button>
           )}
-        </div>
+        </div> */}
       </div>
     </Modal>
   );
