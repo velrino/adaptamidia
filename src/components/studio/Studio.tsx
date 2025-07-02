@@ -16,26 +16,33 @@ import {
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 
+interface StudioScene {
+  id: number;
+  thumbnail: string;
+  duration: string;
+}
+
+const mockScenes = [
+  {
+    id: 1,
+    thumbnail: "/videos/example/frames/frame_0:03_1f.jpeg",
+    duration: "3s",
+  },
+  {
+    id: 2,
+    thumbnail: "/videos/example/frames/frame_0:07_4f.jpeg",
+    duration: "2s",
+  },
+];
 export default function StudioComponent() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(45);
-  const [selectedScene, setSelectedScene] = useState(0);
+  const [selectedScene, setSelectedScene] = useState<StudioScene | null>(null);
   const videoRef = useRef(null);
 
-  const [scenes, setScenes] = useState([
-    {
-      id: 1,
-      thumbnail: "/videos/example/frames/frame_0:03_1f.jpeg",
-      duration: "3s",
-    },
-    {
-      id: 2,
-      thumbnail: "/videos/example/frames/frame_0:07_4f.jpeg",
-      duration: "2s",
-    },
-  ]);
+  const [scenes, setScenes] = useState<StudioScene[]>(mockScenes);
 
   const [scriptLines, setScriptLines] = useState([
     {
@@ -92,8 +99,8 @@ export default function StudioComponent() {
   const removeScene = (id: number) => {
     if (scenes.length > 1) {
       setScenes((prev) => prev.filter((scene) => scene.id !== id));
-      if (selectedScene >= scenes.length - 1) {
-        setSelectedScene(0);
+      if (selectedScene && selectedScene?.id >= scenes.length - 1) {
+        setSelectedScene(null);
       }
     }
   };
@@ -144,6 +151,10 @@ export default function StudioComponent() {
       prev.map((line) => (line.id === id ? { ...line, dropdown: false } : line))
     );
   };
+
+  useEffect(() => {
+    setSelectedScene(() => mockScenes[0]);
+  }, []);
 
   return (
     <div className="h-screen bg-gray-50 dark:bg-gray-900 p-4 overflow-hidden">
@@ -296,7 +307,7 @@ export default function StudioComponent() {
               {/* Video Player */}
               <div className="relative flex-1 bg-gradient-to-br from-blue-400 via-cyan-400 to-blue-500">
                 <img
-                  src="/api/placeholder/800/450"
+                  src="/videos/example/full_without_subtitles.mp4"
                   alt="Video preview"
                   className="w-full h-full object-cover"
                 />
@@ -388,15 +399,15 @@ export default function StudioComponent() {
                 </div>
 
                 <div className="flex space-x-2 overflow-x-auto">
-                  {scenes.map((scene, index) => (
+                  {scenes.map((scene) => (
                     <div
                       key={scene.id}
                       className={`relative border-2 rounded-lg overflow-hidden cursor-pointer transition-all flex-shrink-0 group ${
-                        selectedScene === index
+                        selectedScene?.id === scene.id
                           ? "border-blue-500 dark:border-blue-400"
                           : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                       }`}
-                      onClick={() => setSelectedScene(index)}
+                      onClick={() => setSelectedScene(scene)}
                     >
                       <img
                         src={scene.thumbnail}
@@ -406,7 +417,7 @@ export default function StudioComponent() {
                       <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 text-white text-xs px-1 py-0.5">
                         {scene.duration}
                       </div>
-                      {selectedScene === index && (
+                      {selectedScene?.id === scene.id && (
                         <div className="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
                       )}
                       {scenes.length > 1 && (
