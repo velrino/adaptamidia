@@ -11,6 +11,8 @@ import {
 } from "react-icons/pi";
 import Select, { components } from "react-select";
 import { ThemeToggleButton } from "../common/ThemeToggleButton";
+import Label from "../form/Label";
+import Input from "../form/input/InputField";
 
 interface IStudioScene {
   id: number;
@@ -41,15 +43,15 @@ const speakers: IStudioSpeaker[] = [
 const mockScenes: IStudioScene[] = [
   {
     id: 1,
-    thumbnail: "/videos/example/frames/frame_0:03_1f.jpeg",
-    duration: "3s",
-    video: "/videos/example/full_without_subtitles.mp4",
+    thumbnail: "/videos/example/frames/ezgif-frame-006.jpg",
+    duration: "4s",
+    video: "/videos/example/result.mp4",
   },
   {
     id: 2,
-    thumbnail: "/videos/example/frames/frame_0:07_4f.jpeg",
-    duration: "2s",
-    video: "/videos/example/full_without_subtitles.mp4",
+    thumbnail: "/videos/example/frames/ezgif-frame-019.jpg",
+    duration: "4s",
+    video: "/videos/example/result.mp4",
   },
 ];
 
@@ -100,7 +102,7 @@ const mockScripts: IStudioScript[] = [
   {
     id: 2,
     text: "Crie com Adapta Midia!",
-    speaker: speakers[1],
+    speaker: speakers[0],
     dropdown: false,
     model: models[0].value,
   },
@@ -111,6 +113,7 @@ export default function StudioComponent() {
   //   const videoRef = useRef(null);
 
   const [scenes, setScenes] = useState<IStudioScene[]>(mockScenes);
+  const [title, setTitle] = useState<string>(String());
 
   const [scriptLines, setScriptLines] = useState<IStudioScript[]>(mockScripts);
 
@@ -272,9 +275,19 @@ export default function StudioComponent() {
             {/* Left Sidebar - Script */}
             <div className="col-span-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-4 overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-medium text-gray-900 dark:text-white">
+                {/* <h3 className="font-medium text-gray-900 dark:text-white">
                   Adapta Mídia
-                </h3>
+                </h3> */}
+                <div className="w-full">
+                  <Input
+                    type="text"
+                    placeholder="Informe o título"
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    maxLength={100}
+                  />
+                </div>
                 {/* <button
                   onClick={addScriptLine}
                   className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -291,7 +304,7 @@ export default function StudioComponent() {
                   >
                     <div className="grid grid-cols-12 gap-4 flex-1 min-h-0">
                       <div className="col-span-1 dark:text-white">
-                        <div className="mt-1.5">{index + 1}</div>
+                        <div className="mt-1.5 text-center">{index + 1}</div>
                       </div>
                       <div className="col-span-11">
                         <div className="flex items-center mb-2 gap-3">
