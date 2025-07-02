@@ -20,18 +20,21 @@ interface StudioScene {
   id: number;
   thumbnail: string;
   duration: string;
+  video: string;
 }
 
-const mockScenes = [
+const mockScenes: StudioScene[] = [
   {
     id: 1,
     thumbnail: "/videos/example/frames/frame_0:03_1f.jpeg",
     duration: "3s",
+    video: "/videos/example/full_without_subtitles.mp4",
   },
   {
     id: 2,
     thumbnail: "/videos/example/frames/frame_0:07_4f.jpeg",
     duration: "2s",
+    video: "/videos/example/full_without_subtitles.mp4",
   },
 ];
 export default function StudioComponent() {
@@ -90,8 +93,9 @@ export default function StudioComponent() {
       ...prev,
       {
         id: newId,
-        thumbnail: "/api/placeholder/100/60",
-        duration: "2s",
+        thumbnail: String("/videos/default.jpeg"),
+        duration: String(),
+        video: String(),
       },
     ]);
   };
@@ -135,8 +139,6 @@ export default function StudioComponent() {
     }
     return () => clearInterval(interval);
   }, [isPlaying, duration]);
-
-  //   const [isOpen, setIsOpen] = useState(true);
 
   function toggleDropdown(id: number) {
     setScriptLines((prev) =>
@@ -301,18 +303,16 @@ export default function StudioComponent() {
             </div>
           </div>
 
-          {/* Main Video Area */}
           <div className="col-span-6 flex flex-col min-h-0">
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden flex-1 flex flex-col">
-              {/* Video Player */}
+              {/* Main Video Area 
               <div className="relative flex-1 bg-gradient-to-br from-blue-400 via-cyan-400 to-blue-500">
                 <img
-                  src="/videos/example/full_without_subtitles.mp4"
+                  src={selectedScene?.thumbnail}
                   alt="Video preview"
                   className="w-full h-full object-cover"
                 />
 
-                {/* Play overlay */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <button
                     onClick={togglePlay}
@@ -326,7 +326,6 @@ export default function StudioComponent() {
                   </button>
                 </div>
 
-                {/* Top controls */}
                 <div className="absolute top-4 right-4 flex space-x-2">
                   <button className="p-2 bg-black bg-opacity-50 hover:bg-opacity-70 rounded-lg transition-all">
                     <Share2 className="w-4 h-4 text-white" />
@@ -336,7 +335,6 @@ export default function StudioComponent() {
                   </button>
                 </div>
 
-                {/* Bottom controls */}
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
                   <div className="flex items-center space-x-3">
                     <button
@@ -376,6 +374,17 @@ export default function StudioComponent() {
                       )}
                     </button>
                   </div>
+                </div>
+              </div>
+              */}
+              <div className="relative bg-gradient-to-br from-blue-400 via-cyan-400 to-blue-500 aspect-video max-h-[80vh] w-full max-w-full">
+                <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
+                  <video
+                    src={selectedScene?.video}
+                    className="min-h-full min-w-full object-cover"
+                    controls
+                    poster={selectedScene?.thumbnail}
+                  ></video>
                 </div>
               </div>
 
