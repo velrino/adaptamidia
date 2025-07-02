@@ -1,5 +1,6 @@
 "use client";
 
+import StudioComponent from "@/components/studio/Studio";
 import { LoadingProvider } from "@/context/LoadingContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { ToastProvider } from "@/context/ToastContext";
