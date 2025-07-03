@@ -1,5 +1,12 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
-import { Play, RotateCcw, Settings, Plus, ChevronDown } from "lucide-react";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+  useCallback,
+} from "react";
+import { Play, RotateCcw, Settings, Plus } from "lucide-react";
 import { RiDeleteBin6Line, RiVoiceprintFill } from "react-icons/ri";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
@@ -11,8 +18,12 @@ import {
 } from "react-icons/pi";
 import Select, { components } from "react-select";
 import { ThemeToggleButton } from "../common/ThemeToggleButton";
-import Label from "../form/Label";
 import Input from "../form/input/InputField";
+import { Delay } from "@/utils/generic";
+
+const demo = {
+  title: "Adapta Mídia",
+};
 
 interface IStudioScene {
   id: number;
@@ -57,14 +68,14 @@ const mockScenes: IStudioScene[] = [
 
 const models = [
   {
-    value: "model1",
-    label: "Ana",
-    image: "/videos/example/model/1.png",
-  },
-  {
     value: "model2",
     label: "Thaís",
     image: "/videos/example/model/2.png",
+  },
+  {
+    value: "model1",
+    label: "Ana",
+    image: "/videos/example/model/1.png",
   },
   {
     value: "model3",
@@ -111,11 +122,19 @@ const mockScripts: IStudioScript[] = [
 export default function StudioComponent() {
   const [selectedScene, setSelectedScene] = useState<IStudioScene | null>(null);
   //   const videoRef = useRef(null);
+  const selectModelRefs = useRef<any[]>([]);
 
-  const [scenes, setScenes] = useState<IStudioScene[]>(mockScenes);
-  const [title, setTitle] = useState<string>(String());
+  const [scenes, setScenes] = useState<IStudioScene[]>([]);
 
-  const [scriptLines, setScriptLines] = useState<IStudioScript[]>(mockScripts);
+  const [scriptLines, setScriptLines] = useState<IStudioScript[]>([
+    {
+      id: 1,
+      text: String(),
+      speaker: speakers[0],
+      dropdown: false,
+      model: models[0].value,
+    },
+  ]);
 
   const updateScriptText = (id: number, newText: string) => {
     setScriptLines((prev) =>
@@ -137,7 +156,7 @@ export default function StudioComponent() {
     ]);
   };
 
-  const removeScriptLine = (id) => {
+  const removeScriptLine = (id: number) => {
     if (scriptLines.length > 1) {
       setScriptLines((prev) => prev.filter((line) => line.id !== id));
     }
@@ -238,6 +257,170 @@ export default function StudioComponent() {
 
   const speakerOptions = useMemo(() => speakers, [speakers]);
 
+  const [title, setTitle] = useState<string>(String());
+
+  /* START DEMO */
+
+  const [openSelect, setOpenSelect] = useState<boolean>(false);
+  const openAndSelectVitoria = () => {
+    const targetIndex = 1;
+    // 1. Foca no Select do índice 1
+    if (selectModelRefs.current[targetIndex]) {
+      setOpenSelect(true);
+
+      selectModelRefs.current[targetIndex]?.focus();
+      // 2. Aguarda o menu abrir
+      setTimeout(() => {
+        const selectElement = selectModelRefs.current[targetIndex];
+        if (selectElement) {
+          // Simula pressionar seta para baixo 2 vezes
+          const downArrowEvent = new KeyboardEvent("keydown", {
+            key: "ArrowDown",
+            code: "ArrowDown",
+            keyCode: 40,
+            bubbles: true,
+          });
+
+          // Primeira seta para baixo
+          selectElement.controlRef?.dispatchEvent(downArrowEvent);
+
+          setTimeout(() => {
+            // Segunda seta para baixo
+            selectElement.controlRef?.dispatchEvent(downArrowEvent);
+
+            setTimeout(() => {
+              // Pressiona Enter para selecionar
+              const enterEvent = new KeyboardEvent("keydown", {
+                key: "Enter",
+                code: "Enter",
+                keyCode: 13,
+                bubbles: true,
+              });
+              selectElement.controlRef?.dispatchEvent(enterEvent);
+
+              setScenes(() => [mockScenes[0], mockScenes[1]]);
+              setSelectedScene(mockScenes[1]);
+              setOpenSelect(false);
+            }, 200);
+          }, 500);
+        }
+      }, 100);
+
+      // 2. Seleciona Vitória após um delay
+      // setTimeout(() => {
+      //   const vitoria = options.find(option => option.value === 'vitoria');
+      //   if (vitoria) {
+      //     setSelectedOptions(prev =>
+      //       prev.map((option, index) =>
+      //         index === targetIndex ? vitoria : option
+      //       )
+      //     );
+
+      //     // 3. Remove o foco (fecha o menu)
+      //     if (selectModelRefs.current[targetIndex]) {
+      //       selectModelRefs.current[targetIndex]?.blur();
+      //     }
+      //   }
+      // }, 100);
+    }
+  };
+
+  const [demoTitleIndex, setDemoTitleIndex] = useState<number>(0);
+  const [demoScriptOneIndex, setDemoScriptOneIndex] = useState<number>(0);
+  const [demoScriptTwoIndex, setDemoScriptTwoIndex] = useState<number>(0);
+
+  const afterDemoScriptDone = useCallback(async () => {
+    await Delay(500);
+    setScenes((prev) => [...prev, { ...mockScenes[0], id: 99 }]);
+    setScriptLines((prev) => [
+      ...prev,
+      {
+        id: 2,
+        text: String(),
+        speaker: speakers[0],
+        dropdown: false,
+        model: models[0].value,
+      },
+    ]);
+
+    setDemoScriptTwoIndex(0);
+  }, [title, speakers, models, mockScenes]);
+
+  useEffect(() => {
+    if (demoScriptTwoIndex < mockScripts[1].text.length) {
+      const timeout = setTimeout(() => {
+        setDemoScriptTwoIndex((prev) => prev + 1);
+        setScriptLines((prev) =>
+          prev.map((line) =>
+            line.id === 2
+              ? {
+                  ...line,
+                  text: line.text + mockScripts[1].text[demoScriptTwoIndex],
+                }
+              : line
+          )
+        );
+      }, 100);
+
+      return () => clearTimeout(timeout);
+    } else if (scriptLines?.[1]?.text.length === mockScripts[1].text.length) {
+      openAndSelectVitoria();
+    }
+  }, [demoScriptTwoIndex, mockScripts]);
+
+  const afterDemoTitleDone = useCallback(() => {
+    setScenes(() => [mockScenes[0]]);
+    setScriptLines(() => [
+      {
+        id: 1,
+        text: String(),
+        speaker: speakers[0],
+        dropdown: false,
+        model: models[0].value,
+      },
+    ]);
+
+    setDemoScriptOneIndex(0);
+  }, [title, speakers, models, mockScenes]);
+
+  useEffect(() => {
+    if (title.length === demo.title.length) {
+      if (demoScriptOneIndex < mockScripts[0].text.length) {
+        const timeout = setTimeout(() => {
+          setDemoScriptOneIndex((prev) => prev + 1);
+          setScriptLines((prev) =>
+            prev.map((line) =>
+              line.id === 1
+                ? {
+                    ...line,
+                    text: line.text + mockScripts[0].text[demoScriptOneIndex],
+                  }
+                : line
+            )
+          );
+        }, 100);
+
+        return () => clearTimeout(timeout);
+      } else if (scriptLines[0].text.length === mockScripts[0].text.length) {
+        afterDemoScriptDone();
+      }
+    }
+  }, [demoScriptOneIndex, mockScripts, title]);
+
+  useEffect(() => {
+    if (demoTitleIndex < demo.title.length) {
+      const timeout = setTimeout(() => {
+        setTitle((prev) => prev + demo.title[demoTitleIndex]);
+        setDemoTitleIndex((prev) => prev + 1);
+      }, 200);
+
+      return () => clearTimeout(timeout);
+    } else if (title.length === demo.title.length) {
+      afterDemoTitleDone();
+    }
+  }, [demoTitleIndex, title, afterDemoTitleDone]);
+  /* END DEMO */
+
   return (
     <>
       <div className=" dark:bg-gray-900 border border-gray-100 dark:border-gray-700">
@@ -310,6 +493,10 @@ export default function StudioComponent() {
                         <div className="flex items-center mb-2 gap-3">
                           <div>
                             <Select
+                              ref={(el) => {
+                                selectModelRefs.current[index] = el;
+                              }}
+                              menuIsOpen={index === 1 ? openSelect : false}
                               placeholder={`Modelo`}
                               className="text-sm"
                               value={
