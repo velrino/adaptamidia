@@ -255,14 +255,15 @@ export default function StudioComponent() {
     );
   };
 
-  const speakerOptions = useMemo(() => speakers, [speakers]);
+  const speakerOptions = useMemo(() => speakers, []);
 
   const [title, setTitle] = useState<string>(String());
 
   /* START DEMO */
 
   const [openSelect, setOpenSelect] = useState<boolean>(false);
-  const openAndSelectVitoria = () => {
+  const openAndSelectVitoria = async () => {
+    await Delay(500);
     const targetIndex = 1;
     // 1. Foca no Select do índice 1
     if (selectModelRefs.current[targetIndex]) {

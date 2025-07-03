@@ -1,12 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import Button from "../ui/button/Button";
+import React from "react";
 import { Modal } from "../ui/modal";
-import { useToast } from "@/context/ToastContext";
-import { useSession } from "next-auth/react";
-import { useLoading } from "@/context/LoadingContext";
-import Spinner from "../ui/spinner/Spinner";
+
 import { IUseModal } from "@/hooks/useModal";
 import StudioComponent from "./Studio";
 
@@ -16,15 +12,15 @@ interface IStudioModal {
 }
 
 export default function StudioModal({ currentModal }: IStudioModal) {
-  const { showToast } = useToast();
-  const { data: session } = useSession();
-  const { showFullScreenLoading, hideFullScreenLoading } = useLoading();
+  // const { showToast } = useToast();
+  // const { data: session } = useSession();
+  // const { showFullScreenLoading, hideFullScreenLoading } = useLoading();
 
   const handleClose = () => {
     currentModal.closeModal();
   };
 
-  const [loadingSave] = useState(false);
+  // const [loadingSave] = useState(false);
 
   return (
     <Modal
