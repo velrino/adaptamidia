@@ -6,7 +6,7 @@ import React, {
   useMemo,
   useCallback,
 } from "react";
-import { Play, RotateCcw, Settings, Plus } from "lucide-react";
+import { Play, RotateCcw, Settings, Plus, X } from "lucide-react";
 import { RiDeleteBin6Line, RiVoiceprintFill } from "react-icons/ri";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
@@ -20,6 +20,7 @@ import Select, { components } from "react-select";
 import { ThemeToggleButton } from "../common/ThemeToggleButton";
 import Input from "../form/input/InputField";
 import { Delay } from "@/utils/generic";
+import Spinner from "../ui/spinner/Spinner";
 
 const demo = {
   title: "Adapta Mídia",
@@ -422,6 +423,20 @@ export default function StudioComponent() {
   }, [demoTitleIndex, title, afterDemoTitleDone]);
   /* END DEMO */
 
+  const [showPreview, setShowPreview] = useState(false);
+  const [lodadingPreview, setLodadingPreview] = useState(false);
+
+  const openPreview = async () => {
+    setLodadingPreview(true);
+
+    await Delay(1000)
+      .then(() => {
+        setShowPreview(true);
+      })
+      .finally(() => setLodadingPreview(false));
+  };
+  const closePreview = () => setShowPreview(false);
+
   return (
     <>
       <div className=" dark:bg-gray-900 border border-gray-100 dark:border-gray-700">
@@ -439,8 +454,15 @@ export default function StudioComponent() {
               <span className="font-light">Feedback</span>
             </Button>
             <ThemeToggleButton />
-            <Button size="xs" variant="primary" startIcon={<PiPlayLight />}>
+            <Button
+              size="xs"
+              variant="primary"
+              startIcon={<PiPlayLight />}
+              onClick={openPreview}
+              disabled={lodadingPreview}
+            >
               <span className="font-light">Preview</span>
+              {lodadingPreview && <Spinner color="#fff" size={15} />}
             </Button>
             <Button
               size="xs"
@@ -810,6 +832,26 @@ export default function StudioComponent() {
           </div>
         </div>
       </div>
+      {showPreview && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <button
+            onClick={closePreview}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
+          >
+            <X size={32} />
+          </button>
+
+          <div className="w-full h-full max-w-6xl max-h-full p-8 flex items-center justify-center">
+            <video
+              src={"/videos/example/result.mp4"}
+              className="max-w-full max-h-full object-contain"
+              controls
+              poster={selectedScene?.thumbnail}
+              autoPlay
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }
