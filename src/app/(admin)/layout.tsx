@@ -1,13 +1,16 @@
 "use client";
 
+import StudioModal from "@/components/studio/StudioModal";
 import { LoadingProvider } from "@/context/LoadingContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { ToastProvider } from "@/context/ToastContext";
+import { useModal } from "@/hooks/useModal";
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
 import { SessionProvider } from "next-auth/react";
-import React from "react";
+import { useSearchParams } from "next/navigation";
+import React, { useEffect } from "react";
 
 export default function AdminLayout({
   children,
@@ -22,6 +25,17 @@ export default function AdminLayout({
     : isExpanded || isHovered
     ? "lg:ml-[290px]"
     : "lg:ml-[90px]";
+
+  const searchParams = useSearchParams();
+  const enableStudio = searchParams.get("studio") || null;
+
+  const modalStudio = useModal();
+
+  useEffect(() => {
+    if (enableStudio) {
+      modalStudio.openModal();
+    }
+  }, []);
 
   return (
     <SessionProvider>
@@ -40,6 +54,7 @@ export default function AdminLayout({
               {/* Page Content */}
               <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
                 {children}
+                <StudioModal currentModal={modalStudio} />
               </div>
             </div>
           </div>
