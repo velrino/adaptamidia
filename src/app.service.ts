@@ -113,7 +113,7 @@ export class HealthCheckService {
         [HealthCheckServiceName.DATABASE]: {
           response_time: `0ms`,
           status: HealthCheckStatus.DOWN,
-          message: 'DB connection not established',
+          message: 'CONNECTION_NOT_ESTABLISHED',
         },
       };
     }
