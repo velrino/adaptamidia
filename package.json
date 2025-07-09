@@ -33,6 +33,7 @@
     "dayjs": "^1.11.13",
     "flatpickr": "^4.6.13",
     "globby": "^14.1.0",
+    "inferencejs": "^1.0.21",
     "leaflet": "^1.9.4",
     "leaflet-defaulticon-compatibility": "^0.1.2",
     "lodash": "^4.17.21",

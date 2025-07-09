@@ -1,5 +1,6 @@
 "use client";
 
+import PersonDetector from "@/components/detect/Detect";
 import StudioModal from "@/components/studio/StudioModal";
 import { LoadingProvider } from "@/context/LoadingContext";
 import { useSidebar } from "@/context/SidebarContext";
@@ -54,6 +55,7 @@ export default function AdminLayout({
               {/* Page Content */}
               <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
                 {children}
+                {/* <PersonDetector /> */}
                 <StudioModal currentModal={modalStudio} />
               </div>
             </div>
