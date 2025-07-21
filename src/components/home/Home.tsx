@@ -2,7 +2,7 @@
 
 import type { Metadata } from "next";
 import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
-import React, { useEffect } from "react";
+import React from "react";
 import MonthlyTarget from "@/components/ecommerce/MonthlyTarget";
 import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
 import StatisticsChart from "@/components/ecommerce/StatisticsChart";
@@ -14,8 +14,6 @@ import TopChannel from "../analytics/TopChannel";
 import TopPages from "../analytics/TopPages";
 import ActiveUsersChart from "../analytics/ActiveUsersChart";
 import TopRecords from "../analytics/TopRecords";
-import { useModal } from "@/hooks/useModal";
-import StudioModal from "../studio/StudioModal";
 
 export const metadata: Metadata = {
   title:
