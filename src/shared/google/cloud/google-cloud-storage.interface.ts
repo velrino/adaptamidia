@@ -1,3 +1,3 @@
 export enum IGoogleStorageBucket {
-  XMP_MIDIA = 'xmp-midia',
+  ADAPTA_MIDIA = 'adapta-midia',
 }

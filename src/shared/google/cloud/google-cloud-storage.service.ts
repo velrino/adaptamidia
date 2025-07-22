@@ -16,35 +16,35 @@ export class GoogleCloudStorageService {
     const keyFilename = join(
       process.cwd(),
       'resources',
-      'central-segment-453616-h3-5b42a666a6a6.json',
+      'rare-tape-466414-f4-a4a31231b9e1.json',
     );
 
     this.storage = new Storage({
-      projectId: this.configService.get<string>('GCS_PROJECT_ID'),
+      // projectId: 'rare-tape-466414-f4', //|| this.configService.get<string>('GCS_PROJECT_ID'),
       keyFilename,
     });
   }
 
-  // async onApplicationBootstrap() {
-  //   try {
-  //     const healt_check = await this.healthCheck();
-  //     Log(
-  //       LogType.INFO,
-  //       GoogleCloudStorageService.name,
-  //       this.onApplicationBootstrap.name,
-  //       LogAction.FAILED,
-  //       { healt_check },
-  //     );
-  //   } catch (error) {
-  //     Log(
-  //       LogType.ERROR,
-  //       GoogleCloudStorageService.name,
-  //       this.onApplicationBootstrap.name,
-  //       LogAction.FAILED,
-  //       { error },
-  //     );
-  //   }
-  // }
+  async onApplicationBootstrap() {
+    try {
+      const healt_check = await this.healthCheck();
+      Log(
+        LogType.INFO,
+        GoogleCloudStorageService.name,
+        this.onApplicationBootstrap.name,
+        LogAction.SUCCESS,
+        { healt_check },
+      );
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        GoogleCloudStorageService.name,
+        this.onApplicationBootstrap.name,
+        LogAction.FAILED,
+        { error },
+      );
+    }
+  }
 
   async healthCheck() {
     const startTime = Date.now(); // Record the start time
@@ -84,7 +84,7 @@ export class GoogleCloudStorageService {
         folderName,
         fileName,
         file,
-        IGoogleStorageBucket.XMP_MIDIA,
+        IGoogleStorageBucket.ADAPTA_MIDIA,
       );
       const uploadEndTime = Date.now();
 
@@ -92,7 +92,7 @@ export class GoogleCloudStorageService {
       const signedUrlStartTime = Date.now();
       const signedUrl = await this.getSignedUrl(
         uploadResult.path,
-        IGoogleStorageBucket.XMP_MIDIA,
+        IGoogleStorageBucket.ADAPTA_MIDIA,
       );
       const signedUrlEndTime = Date.now();
 
