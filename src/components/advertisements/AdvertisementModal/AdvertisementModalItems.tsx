@@ -42,7 +42,7 @@ export function AdvertisementComponent({
           file: croppedBlob,
           company_id: data.company._id,
           foldername: "ads",
-          bucket: "xmp-midia",
+          bucket: "adapta-midia",
         }
       );
 
