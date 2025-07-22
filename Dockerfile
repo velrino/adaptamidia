@@ -15,6 +15,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --only=production
 
+COPY resources/ ./resources/
+
 COPY --from=builder /app/dist ./dist
 
 # Opcional: copiar arquivos estáticos, se necessário
