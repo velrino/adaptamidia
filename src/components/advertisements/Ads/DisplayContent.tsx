@@ -87,7 +87,7 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
                     <Image
                       width={100}
                       height={20}
-                      src="/images/logo/icon-light.png"
+                      src="/logo/white.png"
                       alt="Logo"
                     />
                   </div>
