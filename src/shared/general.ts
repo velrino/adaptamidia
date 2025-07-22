@@ -1,3 +1,5 @@
+import { join, resolve } from 'path';
+import { readdirSync, statSync, existsSync } from 'fs';
 import { PermissionsEnum } from 'src/modules/permissions/permissions.enum';
 import { AuthenticatedRequest } from './request';
 import { Types } from 'mongoose';
@@ -109,4 +111,40 @@ export function CalculateTimeBetweenDates(start: DateTime, end: DateTime) {
     minutes: Math.floor(diff.minutes),
     seconds: Math.floor(diff.seconds),
   };
+}
+
+export function FindFileInDirs(
+  dirs: string[],
+  fileName: string,
+): string | null {
+  for (const dir of dirs) {
+    const basePath = resolve(process.cwd(), dir);
+    if (!existsSync(basePath)) continue;
+
+    const foundPath = FindFileRecursively(basePath, fileName);
+    if (foundPath) return foundPath;
+  }
+
+  return null;
+}
+
+export function FindFileRecursively(
+  basePath: string,
+  fileName: string,
+): string | null {
+  const entries = readdirSync(basePath);
+
+  for (const entry of entries) {
+    const fullPath = join(basePath, entry);
+    const stats = statSync(fullPath);
+
+    if (stats.isDirectory()) {
+      const result = FindFileRecursively(fullPath, fileName);
+      if (result) return result;
+    } else if (entry === fileName) {
+      return fullPath;
+    }
+  }
+
+  return null;
 }
