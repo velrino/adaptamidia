@@ -9,9 +9,9 @@ import { Metadata } from "next";
 import SpinnerOne from "./SpinnerOne";
 
 export const metadata: Metadata = {
-  title: "Next.js Spinners | Alpha Midia - Next.js Dashboard Template",
+  title: "Next.js Spinners | Adapta Midia - Next.js Dashboard Template",
   description:
-    "This is Next.js Spinners page for Alpha Midia - Next.js Tailwind CSS Admin Dashboard Template",
+    "This is Next.js Spinners page for Adapta Midia - Next.js Tailwind CSS Admin Dashboard Template",
 };
 
 export default function Spinners() {

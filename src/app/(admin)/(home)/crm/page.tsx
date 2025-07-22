@@ -8,9 +8,9 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title:
-    "Next.js CRM Dashboard | Alpha Midia - Next.js Admin Dashboard Template",
+    "Next.js CRM Dashboard | Adapta Midia - Next.js Admin Dashboard Template",
   description:
-    "This is Next.js CRM Dashboard page for Alpha Midia - Next.js Tailwind CSS Admin Dashboard Template",
+    "This is Next.js CRM Dashboard page for Adapta Midia - Next.js Tailwind CSS Admin Dashboard Template",
 };
 
 export default function Crm() {

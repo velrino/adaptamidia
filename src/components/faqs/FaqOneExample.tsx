@@ -14,7 +14,7 @@ const accordionData = [
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis magna ac nibh malesuada consectetur at vitae ipsum orem ipsum dolor sit amet, consectetur adipiscing elit nam fermentum, leo et lacinia accumsan.",
   },
   {
-    title: "Can I Customize Alpha Midia to suit my needs?",
+    title: "Can I Customize Adapta Midia to suit my needs?",
     content:
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec quis magna ac nibh malesuada consectetur at vitae ipsum orem ipsum dolor sit amet, consectetur adipiscing elit nam fermentum, leo et lacinia accumsan.",
   },

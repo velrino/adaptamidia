@@ -7,9 +7,9 @@ import { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Next.js Form Layout | Alpha Midia - Next.js Dashboard Template",
+  title: "Next.js Form Layout | Adapta Midia - Next.js Dashboard Template",
   description:
-    "This is Next.js Form Layout page for Alpha Midia - Next.js Tailwind CSS Admin Dashboard Template",
+    "This is Next.js Form Layout page for Adapta Midia - Next.js Tailwind CSS Admin Dashboard Template",
 };
 
 export default function FormLayout() {
