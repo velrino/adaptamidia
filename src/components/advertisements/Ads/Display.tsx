@@ -13,6 +13,7 @@ import { addLogToQueue } from "@/backend/queue/display_logs_create";
 import { DisplayLogStatus, DisplayType } from "@/interfaces/display-logs";
 import { DateHelper } from "@/utils/date";
 import useDisplayLogsQueue from "@/hooks/useDisplayLogsQueue";
+import { WebCamComponent } from "@/components/webcam/Webcam";
 
 interface AdStat {
   index: number;
@@ -27,6 +28,7 @@ interface IDisplay {
   currency?: IApiCurrencyResponse;
   weather?: IApiWeatherResponse;
   unit?: string | null;
+  useWebcam?: boolean;
   style?: {
     container?: string;
   };
@@ -66,6 +68,7 @@ export function Display({
   unit,
   currency,
   weather,
+  useWebcam,
 }: IDisplay) {
   useDisplayLogsQueue();
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
@@ -151,6 +154,9 @@ export function Display({
           theme,
         }}
       />
+      <div className="bg-gray-950 fixed m-4 right-0">
+        <WebCamComponent showWebcam={useWebcam || false} />
+      </div>
     </div>
   );
 }

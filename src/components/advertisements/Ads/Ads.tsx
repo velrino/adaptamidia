@@ -31,6 +31,9 @@ export default function AdsComponent() {
   const preview = searchParams.get("preview") || null;
   const currentUnit = searchParams.get("unit") || null;
   const themeInformed = searchParams.get("theme") || "green";
+  const showWebcam =
+    Boolean(searchParams.get("webcam")) &&
+    searchParams.get("webcam") !== "false";
 
   useEffect(() => {
     if (DisplayThemes[themeInformed]) {
@@ -228,6 +231,7 @@ export default function AdsComponent() {
           unit={currentUnit}
           currency={apiUnitInfoResponse?.currency}
           weather={apiUnitInfoResponse?.weather}
+          useWebcam={showWebcam}
         />
       )}
     </>
