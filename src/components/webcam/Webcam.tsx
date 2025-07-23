@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, {
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import {
   ObjectDetector,
   FilesetResolver,
@@ -135,10 +142,17 @@ function drawBoundingBoxes(
 }
 
 interface IWebCamComponent {
-  showWebcam: boolean;
+  preview: boolean;
 }
 
-export function WebCamComponent({ showWebcam }: IWebCamComponent) {
+export interface WebCamComponentHandle {
+  captureFrame: () => Promise<Blob | null>;
+}
+
+const WebCamComponentInner = (
+  { preview }: IWebCamComponent,
+  ref: React.ForwardedRef<WebCamComponentHandle>
+) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -305,103 +319,121 @@ export function WebCamComponent({ showWebcam }: IWebCamComponent) {
     };
   }, [initialize, state.videoConfig]);
 
-  if (state.error && showWebcam) {
-    return (
-      <div className="w-full max-w-2xl mx-auto p-4">
-        <div
-          className="flex flex-col items-center justify-center bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center p-6"
-          style={{
-            minHeight: state.isMobile ? "280px" : "360px",
-          }}
-        >
-          <div className="space-y-4">
-            <div className="text-4xl">❌</div>
-            <p className="text-red-600 text-sm md:text-base font-medium px-2">
-              {state.error}
-            </p>
-            <button
-              onClick={initialize}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors touch-manipulation"
-            >
-              Tentar novamente
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  useImperativeHandle(ref, () => ({
+    captureFrame: async () => {
+      const video = videoRef.current;
+      if (!video) return null;
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+      return new Promise<Blob | null>((resolve) => {
+        canvas.toBlob((blob) => resolve(blob), "image/png");
+      });
+    },
+  }));
 
   return (
     <>
-      {showWebcam && (
+      {/* Video/canvas always mounted, only hidden if !preview */}
+      <div
+        ref={containerRef}
+        className="relative rounded-xl overflow-hidden shadow-lg bg-black"
+        style={{
+          width: "100%",
+          maxWidth: `${state.videoConfig.width}px`,
+          aspectRatio: "4/3",
+          display: preview ? "block" : "none",
+        }}
+        aria-hidden={!preview}
+        tabIndex={-1}
+      >
+        {/* Contador de pessoas */}
+        <div className="absolute top-3 left-3 z-30 bg-black/80 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-semibold">
+          <span className="mr-1">👥</span>
+          <span className="hidden sm:inline">
+            {state.personCount} {state.personCount === 1 ? "pessoa" : "pessoas"}
+          </span>
+          <span className="sm:hidden">{state.personCount}</span>
+        </div>
+        {/* Loading indicator */}
+        {state.isLoading && (
+          <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 text-white">
+            <div className="text-center space-y-3">
+              <div className="animate-spin text-3xl">🔄</div>
+              <p className="text-sm md:text-base">
+                <span className="hidden sm:inline">Carregando detector...</span>
+                <span className="sm:hidden">Carregando...</span>
+              </p>
+            </div>
+          </div>
+        )}
+        {/* Performance indicator para mobile */}
+        {state.isMobile && !state.isLoading && (
+          <div className="absolute top-3 right-3 z-30 bg-blue-500/20 backdrop-blur-sm text-blue-200 px-2 py-1 rounded text-xs">
+            📱 Mobile Mode
+          </div>
+        )}
+        <video
+          ref={videoRef}
+          width={state.videoConfig.width}
+          height={state.videoConfig.height}
+          className="absolute inset-0 w-full h-full object-cover"
+          playsInline
+          muted
+          autoPlay
+          style={{ display: preview ? "block" : "none" }}
+          aria-hidden={!preview}
+          tabIndex={-1}
+        />
+        <canvas
+          ref={canvasRef}
+          width={state.videoConfig.width}
+          height={state.videoConfig.height}
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{ display: preview ? "block" : "none" }}
+          aria-hidden={!preview}
+          tabIndex={-1}
+        />
+      </div>
+      {/* Informações adicionais, só mostra se preview ativo */}
+      {preview && (
+        <div className="mt-4 text-center text-sm text-gray-600">
+          <p className="hidden sm:block">
+            Dimensões: {state.videoConfig.width}x{state.videoConfig.height} •
+            {state.isMobile ? " CPU" : " WebGL"} •
+            {state.isMobile ? " Baixo FPS" : " Alto FPS"}
+          </p>
+          <p className="sm:hidden">
+            {state.videoConfig.width}x{state.videoConfig.height}
+          </p>
+        </div>
+      )}
+      {/* Error UI, só mostra se preview ativo */}
+      {state.error && preview && (
         <div className="w-full max-w-2xl mx-auto p-4">
           <div
-            ref={containerRef}
-            className="relative rounded-xl overflow-hidden shadow-lg bg-black"
-            style={{
-              width: "100%",
-              maxWidth: `${state.videoConfig.width}px`,
-              aspectRatio: "4/3",
-            }}
+            className="flex flex-col items-center justify-center bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center p-6"
+            style={{ minHeight: state.isMobile ? "280px" : "360px" }}
           >
-            {/* Contador de pessoas */}
-            <div className="absolute top-3 left-3 z-30 bg-black/80 backdrop-blur-sm text-white px-3 py-1.5 rounded-lg text-sm md:text-base font-semibold">
-              <span className="mr-1">👥</span>
-              <span className="hidden sm:inline">
-                {state.personCount}{" "}
-                {state.personCount === 1 ? "pessoa" : "pessoas"}
-              </span>
-              <span className="sm:hidden">{state.personCount}</span>
+            <div className="space-y-4">
+              <div className="text-4xl">❌</div>
+              <p className="text-red-600 text-sm md:text-base font-medium px-2">
+                {state.error}
+              </p>
+              <button
+                onClick={initialize}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors touch-manipulation"
+              >
+                Tentar novamente
+              </button>
             </div>
-            {/* Loading indicator */}
-            {state.isLoading && (
-              <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 text-white">
-                <div className="text-center space-y-3">
-                  <div className="animate-spin text-3xl">🔄</div>
-                  <p className="text-sm md:text-base">
-                    <span className="hidden sm:inline">
-                      Carregando detector...
-                    </span>
-                    <span className="sm:hidden">Carregando...</span>
-                  </p>
-                </div>
-              </div>
-            )}
-            {/* Performance indicator para mobile */}
-            {state.isMobile && !state.isLoading && (
-              <div className="absolute top-3 right-3 z-30 bg-blue-500/20 backdrop-blur-sm text-blue-200 px-2 py-1 rounded text-xs">
-                📱 Mobile Mode
-              </div>
-            )}
-            <video
-              ref={videoRef}
-              width={state.videoConfig.width}
-              height={state.videoConfig.height}
-              className="absolute inset-0 w-full h-full object-cover"
-              playsInline
-              muted
-              autoPlay
-            />
-            <canvas
-              ref={canvasRef}
-              width={state.videoConfig.width}
-              height={state.videoConfig.height}
-              className="absolute inset-0 w-full h-full pointer-events-none"
-            />
-          </div>
-          {/* Informações adicionais */}
-          <div className="mt-4 text-center text-sm text-gray-600">
-            <p className="hidden sm:block">
-              Dimensões: {state.videoConfig.width}x{state.videoConfig.height} •
-              {state.isMobile ? " CPU" : " WebGL"} •
-              {state.isMobile ? " Baixo FPS" : " Alto FPS"}
-            </p>
-            <p className="sm:hidden">
-              {state.videoConfig.width}x{state.videoConfig.height}
-            </p>
           </div>
         </div>
       )}
     </>
   );
-}
+};
+
+export const WebCamComponent = forwardRef(WebCamComponentInner);

@@ -12,11 +12,9 @@ import React, {
   useCallback,
   useMemo,
   useRef,
-  useImperativeHandle,
-  forwardRef,
 } from "react";
 import { DisplayContent } from "./DisplayContent";
-import { AdsCurrentType, IDisplayTheme } from "@/interfaces/ads";
+import { IDisplayTheme } from "@/interfaces/ads";
 import { addLogToQueue } from "@/backend/queue/display_logs_create";
 import { DisplayLogStatus, DisplayType } from "@/interfaces/display-logs";
 import { DateHelper } from "@/utils/date";
@@ -45,8 +43,6 @@ interface IDisplay {
   };
 }
 
-const DEFAULT_AD_SECONDS = 20;
-const DEFAULT_NEWS_SECONDS = 5;
 const LOG_TIMEOUT_MS = 100;
 
 const updateAdStats = (adIndex: number): void => {
@@ -86,17 +82,46 @@ export function Display({
   const [currentDisplay, setCurrentDisplay] =
     useState<IApiDisplayResponseItem>();
 
-  const webcamRef = useRef<WebCamComponentHandle>(null);
-
   // Memoized current item to avoid recalculations
   const currentItem = useMemo(
     () => list[currentAdIndex],
     [list, currentAdIndex]
   );
 
+  const webcamRef = useRef<WebCamComponentHandle>(null);
+
   const sendLog = useCallback(
     async (item: IApiDisplayResponseItem, displaySeconds: number) => {
       const currentId = item.ads?._id || item.news?._id;
+
+      // Captura o frame do webcam
+      let frame = null;
+      if (
+        webcamRef.current &&
+        typeof webcamRef.current.captureFrame === "function"
+      ) {
+        frame = await webcamRef.current.captureFrame();
+        if (frame) {
+          const formData = new FormData();
+          formData.append("file", frame, "webcam.png");
+          console.log("Frame capturado:", frame);
+
+          // Criar URL blob para a imagem
+          const blobUrl = URL.createObjectURL(frame);
+          console.log("Blob URL:", blobUrl);
+
+          // Você pode usar essa URL para exibir a imagem em um elemento <img>, por exemplo:
+          // imgElement.src = blobUrl;
+
+          // Lembre-se de revogar a URL quando não for mais necessária para liberar memória
+          // URL.revokeObjectURL(blobUrl);
+
+          // await fetch("/files", {
+          //   method: "POST",
+          //   body: formData,
+          // });
+        }
+      }
 
       if (preview === false && unit && currentId) {
         const body: IApiCreateDisplayLogRequest = {
@@ -137,32 +162,11 @@ export function Display({
     setCurrentDisplay(currentItem);
     updateAdStats(currentAdIndex);
 
-    const isAd =
-      currentItem.ads && currentItem.type === AdsCurrentType.ADVERTISEMENT;
-    const displaySeconds = 3; //isAd ? currentItem.ads?.seconds || DEFAULT_AD_SECONDS : DEFAULT_NEWS_SECONDS;
+    const displaySeconds = 3; // tempo fixo para exibição
 
     const timer = setTimeout(async () => {
       if (!preview) {
         await sendLog(currentItem, displaySeconds);
-      }
-
-      // Captura o frame do webcam
-      console.log({ webcam: webcamRef.current });
-      if (
-        webcamRef.current &&
-        typeof webcamRef.current.captureFrame === "function"
-      ) {
-        const frameBlob = await webcamRef.current.captureFrame();
-        if (frameBlob) {
-          const formData = new FormData();
-          formData.append("file", frameBlob, "webcam.png");
-          console.log("Frame capturado:", frameBlob);
-
-          // await fetch("/files", {
-          //   method: "POST",
-          //   body: formData,
-          // });
-        }
       }
 
       setCurrentAdIndex((prevIndex) => (prevIndex + 1) % list.length);
@@ -185,7 +189,8 @@ export function Display({
         }}
       />
       <div className="bg-gray-950 fixed m-4 right-0">
-        <WebCamComponent ref={webcamRef} showWebcam={useWebcam || false} />
+        {/* Passa preview para controlar a visualização, mas webcam sempre ativa */}
+        <WebCamComponent ref={webcamRef} preview={useWebcam || false} />
       </div>
     </div>
   );
