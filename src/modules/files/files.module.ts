@@ -5,10 +5,16 @@ import { GoogleCloudStorageService } from 'src/shared/google/cloud/google-cloud-
 import { FilesController } from './files.controller';
 import { UploadFileService } from './upload/upload.service';
 import { DeleteFileService } from './delete/delete.service';
+import { UplodadCameraFileService } from './camera/camera.service';
 
 @Module({
   imports: [MongooseModule.forFeature([MongoCollection.files])],
   controllers: [FilesController],
-  providers: [GoogleCloudStorageService, UploadFileService, DeleteFileService],
+  providers: [
+    GoogleCloudStorageService,
+    UploadFileService,
+    DeleteFileService,
+    UplodadCameraFileService,
+  ],
 })
 export class FilesModule {}
