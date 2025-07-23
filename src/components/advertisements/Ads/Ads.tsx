@@ -183,25 +183,25 @@ export default function AdsComponent() {
     }
   }, [responseAdvertisement, adsIdForPreview]);
 
-  const cacheAssets = async (urls: string[]) => {
-    const cache = await caches.open("ads-cache");
+  // const cacheAssets = async (urls: string[]) => {
+  //   const cache = await caches.open("ads-cache");
 
-    for (const url of urls) {
-      const fullUrl = url; //`/api/proxy?url=${encodeURIComponent(url)}`;
-      const match = await cache.match(fullUrl);
+  //   for (const url of urls) {
+  //     const fullUrl = url; //`/api/proxy?url=${encodeURIComponent(url)}`;
+  //     const match = await cache.match(fullUrl);
 
-      if (!match) {
-        try {
-          const response = await fetch(fullUrl);
-          if (response.ok) {
-            await cache.put(fullUrl, response.clone());
-          }
-        } catch (err) {
-          console.warn(`Erro ao cachear: ${url}`, err);
-        }
-      }
-    }
-  };
+  //     if (!match) {
+  //       try {
+  //         const response = await fetch(fullUrl);
+  //         if (response.ok) {
+  //           await cache.put(fullUrl, response.clone());
+  //         }
+  //       } catch (err) {
+  //         console.warn(`Erro ao cachear: ${url}`, err);
+  //       }
+  //     }
+  //   }
+  // };
 
   useEffect(() => {
     if (apiDisplayResponse) {
