@@ -18,6 +18,7 @@ import {
   IApiUpdateCompanyRequest,
   IApiUpdateCompanyUnitRequest,
   IApiUploadFileRequest,
+  IApiUplodadCameraFileRequest,
 } from "./api.interface";
 import { ApiResources } from "./api.service";
 
@@ -220,6 +221,24 @@ export const API = {
         path: "/files",
         data: formData,
         access_token,
+      });
+    },
+    async uploadCamera(data: IApiUplodadCameraFileRequest) {
+      const formData = new FormData();
+      const mimeType = data.file.type;
+      const fileExtension = GetExtensionFromMimeType(mimeType);
+      const filename = `file.${fileExtension}`;
+
+      formData.append("file", data.file, filename);
+      formData.append("record", data.record);
+      formData.append("type", data.type);
+      formData.append("unit", data.unit);
+      formData.append("timestamp", data.timestamp);
+
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/files/camera",
+        data: formData,
       });
     },
   },

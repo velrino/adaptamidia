@@ -414,6 +414,14 @@ export interface IApiUploadFileRequest {
   bucket: string;
 }
 
+export interface IApiUplodadCameraFileRequest {
+  file: Blob;
+  timestamp: string;
+  type: string;
+  unit: string;
+  record: string;
+}
+
 // DISPLAY
 
 export interface IApiDisplayRequest extends IApiPaginateParameters {

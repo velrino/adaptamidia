@@ -23,6 +23,7 @@ import {
   WebCamComponent,
   WebCamComponentHandle,
 } from "@/components/webcam/Webcam";
+import { API } from "@/backend/api/api.endpoints";
 
 interface AdStat {
   index: number;
@@ -93,39 +94,13 @@ export function Display({
   const sendLog = useCallback(
     async (item: IApiDisplayResponseItem, displaySeconds: number) => {
       const currentId = item.ads?._id || item.news?._id;
-
-      // Captura o frame do webcam
-      let frame = null;
-      if (
-        webcamRef.current &&
-        typeof webcamRef.current.captureFrame === "function"
-      ) {
-        frame = await webcamRef.current.captureFrame();
-        if (frame) {
-          const formData = new FormData();
-          formData.append("file", frame, "webcam.png");
-          console.log("Frame capturado:", frame);
-
-          // Criar URL blob para a imagem
-          const blobUrl = URL.createObjectURL(frame);
-          console.log("Blob URL:", blobUrl);
-
-          // Você pode usar essa URL para exibir a imagem em um elemento <img>, por exemplo:
-          // imgElement.src = blobUrl;
-
-          // Lembre-se de revogar a URL quando não for mais necessária para liberar memória
-          // URL.revokeObjectURL(blobUrl);
-
-          // await fetch("/files", {
-          //   method: "POST",
-          //   body: formData,
-          // });
-        }
-      }
+      console.log({ preview, unit, currentId });
 
       if (preview === false && unit && currentId) {
+        const captureId: string = Date.now().toString();
+
         const body: IApiCreateDisplayLogRequest = {
-          identifier: "",
+          identifier: captureId,
           id: currentId,
           local: unit,
           type: currentItem.ads ? DisplayType.ADVERTISEMENT : DisplayType.NEWS,
@@ -147,6 +122,24 @@ export function Display({
               )
             ),
           ]);
+
+          // Captura o frame do webcam
+          let frame = null;
+          if (
+            webcamRef.current &&
+            typeof webcamRef.current.captureFrame === "function"
+          ) {
+            frame = await webcamRef.current.captureFrame();
+            if (frame) {
+              await API.files.uploadCamera({
+                file: frame,
+                type: item.type,
+                record: String(currentId),
+                unit: String(unit),
+                timestamp: captureId,
+              });
+            }
+          }
         } catch (error) {
           console.error("Failed to send log:", error);
         }
