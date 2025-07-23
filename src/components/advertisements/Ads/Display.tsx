@@ -6,14 +6,25 @@ import {
   IApiDisplayResponseItem,
   IApiWeatherResponse,
 } from "@/backend/api/api.interface";
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import { DisplayContent } from "./DisplayContent";
 import { AdsCurrentType, IDisplayTheme } from "@/interfaces/ads";
 import { addLogToQueue } from "@/backend/queue/display_logs_create";
 import { DisplayLogStatus, DisplayType } from "@/interfaces/display-logs";
 import { DateHelper } from "@/utils/date";
 import useDisplayLogsQueue from "@/hooks/useDisplayLogsQueue";
-import { WebCamComponent } from "@/components/webcam/Webcam";
+import {
+  WebCamComponent,
+  WebCamComponentHandle,
+} from "@/components/webcam/Webcam";
 
 interface AdStat {
   index: number;
@@ -75,6 +86,8 @@ export function Display({
   const [currentDisplay, setCurrentDisplay] =
     useState<IApiDisplayResponseItem>();
 
+  const webcamRef = useRef<WebCamComponentHandle>(null);
+
   // Memoized current item to avoid recalculations
   const currentItem = useMemo(
     () => list[currentAdIndex],
@@ -126,13 +139,30 @@ export function Display({
 
     const isAd =
       currentItem.ads && currentItem.type === AdsCurrentType.ADVERTISEMENT;
-    const displaySeconds = isAd
-      ? currentItem.ads?.seconds || DEFAULT_AD_SECONDS
-      : DEFAULT_NEWS_SECONDS;
+    const displaySeconds = 3; //isAd ? currentItem.ads?.seconds || DEFAULT_AD_SECONDS : DEFAULT_NEWS_SECONDS;
 
     const timer = setTimeout(async () => {
       if (!preview) {
         await sendLog(currentItem, displaySeconds);
+      }
+
+      // Captura o frame do webcam
+      console.log({ webcam: webcamRef.current });
+      if (
+        webcamRef.current &&
+        typeof webcamRef.current.captureFrame === "function"
+      ) {
+        const frameBlob = await webcamRef.current.captureFrame();
+        if (frameBlob) {
+          const formData = new FormData();
+          formData.append("file", frameBlob, "webcam.png");
+          console.log("Frame capturado:", frameBlob);
+
+          // await fetch("/files", {
+          //   method: "POST",
+          //   body: formData,
+          // });
+        }
       }
 
       setCurrentAdIndex((prevIndex) => (prevIndex + 1) % list.length);
@@ -155,7 +185,7 @@ export function Display({
         }}
       />
       <div className="bg-gray-950 fixed m-4 right-0">
-        <WebCamComponent showWebcam={useWebcam || false} />
+        <WebCamComponent ref={webcamRef} showWebcam={useWebcam || false} />
       </div>
     </div>
   );
