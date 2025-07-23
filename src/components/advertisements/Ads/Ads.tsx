@@ -205,17 +205,17 @@ export default function AdsComponent() {
 
   useEffect(() => {
     if (apiDisplayResponse) {
-      const assetsURLs: string[] = apiDisplayResponse.data
-        .map((item) => {
-          if (item.news) {
-            return item.news.image;
-          } else if (item.ads) {
-            return item.ads.items[0].source;
-          }
-        })
-        .filter((item) => typeof item === "string")
-        .filter((item) => item !== "/images/ads/clients/1.png");
-      cacheAssets(assetsURLs);
+      // const assetsURLs: string[] = apiDisplayResponse.data
+      //   .map((item) => {
+      //     if (item.news) {
+      //       return item.news.image;
+      //     } else if (item.ads) {
+      //       return item.ads.items[0].source;
+      //     }
+      //   })
+      //   .filter((item) => typeof item === "string")
+      //   .filter((item) => item !== "/images/ads/clients/1.png");
+      // cacheAssets(assetsURLs);
       // console.log({ assetsURLs });
       setList(() => apiDisplayResponse.data);
     }

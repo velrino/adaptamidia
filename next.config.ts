@@ -18,14 +18,14 @@ const nextConfig: NextConfig = {
     return config;
   },
 
-  async rewrites() {
-    return [
-      {
-        source: "/api/comfy/:path*",
-        destination: "http://localhost:8188/:path*", // Proxy para a API do ComfyUI
-      },
-    ];
-  },
+  // async rewrites() {
+  //   return [
+  //     {
+  //       source: "/api/comfy/:path*",
+  //       destination: "http://localhost:8188/:path*", // Proxy para a API do ComfyUI
+  //     },
+  //   ];
+  // },
 };
 
 export default nextConfig;
