@@ -19,10 +19,9 @@ import { addLogToQueue } from "@/backend/queue/display_logs_create";
 import { DisplayLogStatus, DisplayType } from "@/interfaces/display-logs";
 import { DateHelper } from "@/utils/date";
 import useDisplayLogsQueue from "@/hooks/useDisplayLogsQueue";
-import {
-  WebCamComponent,
-  WebCamComponentHandle,
-} from "@/components/webcam/Webcam";
+import HiddenWebcam, {
+  HiddenWebcamHandle,
+} from "@/components/webcam/HiddenWebcam";
 import { API } from "@/backend/api/api.endpoints";
 
 interface AdStat {
@@ -76,7 +75,6 @@ export function Display({
   unit,
   currency,
   weather,
-  useWebcam,
 }: IDisplay) {
   useDisplayLogsQueue();
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
@@ -89,7 +87,7 @@ export function Display({
     [list, currentAdIndex]
   );
 
-  const webcamRef = useRef<WebCamComponentHandle>(null);
+  const webcamRef = useRef<HiddenWebcamHandle>(null);
 
   const sendLog = useCallback(
     async (item: IApiDisplayResponseItem, displaySeconds: number) => {
@@ -181,10 +179,8 @@ export function Display({
           theme,
         }}
       />
-      <div className="bg-gray-950 fixed m-4 right-0">
-        {/* Passa preview para controlar a visualização, mas webcam sempre ativa */}
-        <WebCamComponent ref={webcamRef} preview={useWebcam || false} />
-      </div>
+      {/* Webcam invisível, apenas para captura de frame */}
+      <HiddenWebcam ref={webcamRef} />
     </div>
   );
 }
