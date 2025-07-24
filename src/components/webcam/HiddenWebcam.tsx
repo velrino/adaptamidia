@@ -21,7 +21,7 @@ const HiddenWebcam = forwardRef<HiddenWebcamHandle>((_, ref) => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           // Aguarda o evento canplay antes de chamar play()
-          await new Promise((resolve, reject) => {
+          await new Promise((resolve) => {
             const video = videoRef.current!;
             const onCanPlay = () => {
               video.removeEventListener("canplay", onCanPlay);
@@ -80,5 +80,7 @@ const HiddenWebcam = forwardRef<HiddenWebcamHandle>((_, ref) => {
     />
   );
 });
+
+HiddenWebcam.displayName = "HiddenWebcam";
 
 export default HiddenWebcam;
