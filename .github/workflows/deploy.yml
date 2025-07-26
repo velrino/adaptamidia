@@ -66,13 +66,13 @@ jobs:
               exit 0
             fi
           done
-          
+
           # Fallback to CPU if GPU fails
           echo "GPU unavailable, using CPU-only"
           gcloud compute instances create $INSTANCE_NAME \
             --zone=$ZONE \
-            --machine-type=e2-highcpu-16 \
-            --boot-disk-size=200GB \
+            --machine-type=c2-standard-8 \
+            --boot-disk-size=20GB \
             --image-family=cos-stable \
             --image-project=cos-cloud \
             --tags=http-server,https-server \
@@ -133,9 +133,21 @@ jobs:
 
       - name: Update instance in Load Balancer
         run: |
-          # Ensure instance is in the instance group
-          gcloud compute instance-groups unmanaged add-instances api-instance-group \
-            --instances=$INSTANCE_NAME --zone=${ACTUAL_ZONE:-$ZONE} || true
+          ZONE_TO_USE=${ACTUAL_ZONE:-$ZONE}
+
+          # Remove old backends and instance groups
+          gcloud compute backend-services remove-backend api-backend-service --instance-group=api-instance-group --instance-group-zone=us-central1-a --global || true
+          gcloud compute instance-groups unmanaged delete api-instance-group --zone=us-central1-a --quiet || true
+
+          # Create new instance group in correct zone
+          gcloud compute instance-groups unmanaged create api-instance-group --zone=$ZONE_TO_USE || true
+          gcloud compute instance-groups unmanaged set-named-ports api-instance-group --named-ports=http:8000 --zone=$ZONE_TO_USE
+
+          # Add instance to group
+          gcloud compute instance-groups unmanaged add-instances api-instance-group --instances=$INSTANCE_NAME --zone=$ZONE_TO_USE
+
+          # Add to backend service
+          gcloud compute backend-services add-backend api-backend-service --instance-group=api-instance-group --instance-group-zone=$ZONE_TO_USE --global
 
           # Update backend service to use correct port name
           gcloud compute backend-services update api-backend-service --global --port-name=http
