@@ -1,4 +1,4 @@
-name: Deploy to Google Cloud with GPU
+name: Deploy to Google Cloud Run
 
 on:
   push:
@@ -7,8 +7,8 @@ on:
 
 env:
   PROJECT_ID: rare-tape-466414-f4
-  INSTANCE_NAME: api-vision
-  ZONE: us-central1-f
+  SERVICE_NAME: api-vision
+  REGION: us-central1
   IMAGE_NAME: api-vision
 
 jobs:
@@ -40,142 +40,29 @@ jobs:
         run: |
           docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
 
-      - name: Create health check
+      - name: Deploy to Cloud Run
         run: |
-          # Create health check if it doesn't exist
-          if ! gcloud compute health-checks describe api-health-check --quiet 2>/dev/null; then
-            gcloud compute health-checks create http api-health-check \
-              --port=8000 \
-              --request-path=/ \
-              --check-interval=30s \
-              --timeout=10s \
-              --healthy-threshold=2 \
-              --unhealthy-threshold=3
-          fi
+          gcloud run deploy $SERVICE_NAME \
+            --image gcr.io/$PROJECT_ID/$IMAGE_NAME:latest \
+            --platform managed \
+            --region $REGION \
+            --allow-unauthenticated \
+            --memory 4Gi \
+            --cpu 2 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --timeout 3600s \
+            --concurrency 10
 
-      - name: Create instance template
+      - name: Get Service URL
+        id: get-url
         run: |
-          # Delete existing template
-          gcloud compute instance-templates delete api-template --quiet || true
-          
-          # Create startup script for container deployment
-          cat > startup-script.sh << 'EOF'
-          #!/bin/bash
-          # Configure Docker
-          docker-credential-gcr configure-docker
-          
-          # Stop any existing containers
-          docker stop $(docker ps -q) 2>/dev/null || true
-          docker rm $(docker ps -aq) 2>/dev/null || true
-          
-          # Pull and run the latest image
-          docker pull gcr.io/rare-tape-466414-f4/api-vision:latest
-          docker run -d -p 8000:8000 --restart=always --name api-app gcr.io/rare-tape-466414-f4/api-vision:latest
-          EOF
-          
-          # Create instance template
-          gcloud compute instance-templates create api-template \
-            --machine-type=e2-standard-4 \
-            --boot-disk-size=30GB \
-            --image-family=cos-stable \
-            --image-project=cos-cloud \
-            --tags=http-server,https-server \
-            --scopes=https://www.googleapis.com/auth/cloud-platform \
-            --service-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com \
-            --metadata-from-file=startup-script=startup-script.sh
+          SERVICE_URL=$(gcloud run services describe $SERVICE_NAME --region=$REGION --format='value(status.url)')
+          echo "SERVICE_URL=$SERVICE_URL" >> $GITHUB_OUTPUT
+          echo "🌐 Cloud Run Service: $SERVICE_URL"
 
-      - name: Create or update Managed Instance Group
+      - name: Test Service endpoint
         run: |
-          # Delete existing MIG
-          gcloud compute instance-groups managed delete api-mig --zone=$ZONE --quiet || true
-          
-          # Create new MIG
-          gcloud compute instance-groups managed create api-mig \
-            --template=api-template \
-            --size=1 \
-            --zone=$ZONE
-          
-          # Set named ports for load balancer
-          gcloud compute instance-groups managed set-named-ports api-mig \
-            --named-ports=http:8000 \
-            --zone=$ZONE
-          
-          echo "ACTUAL_ZONE=$ZONE" >> $GITHUB_ENV
-
-      - name: Create firewall rules (if not exist)
-        run: |
-          # Check and create allow-fastapi rule
-          if ! gcloud compute firewall-rules describe allow-fastapi --quiet 2>/dev/null; then
-            gcloud compute firewall-rules create allow-fastapi \
-              --allow tcp:8000 \
-              --source-ranges 0.0.0.0/0 \
-              --target-tags http-server
-          fi
-
-          # Check and create allow-http rule
-          if ! gcloud compute firewall-rules describe allow-http --quiet 2>/dev/null; then
-            gcloud compute firewall-rules create allow-http \
-              --allow tcp:80 \
-              --source-ranges 0.0.0.0/0 \
-              --target-tags http-server
-          fi
-
-          # Check and create allow-https rule
-          if ! gcloud compute firewall-rules describe allow-https --quiet 2>/dev/null; then
-            gcloud compute firewall-rules create allow-https \
-              --allow tcp:443 \
-              --source-ranges 0.0.0.0/0 \
-              --target-tags https-server
-          fi
-
-      - name: Configure Auto Scaler
-        run: |
-          # Create auto scaler for the MIG
-          gcloud compute instance-groups managed set-autoscaling api-mig \
-            --zone=$ZONE \
-            --min-num-replicas=1 \
-            --max-num-replicas=5 \
-            --target-cpu-utilization=0.7 \
-            --cool-down-period=300s
-
-      - name: Wait for MIG to be ready
-        run: |
-          echo "Waiting for Managed Instance Group to be ready..."
-          sleep 120
-
-      - name: Update Load Balancer to use MIG
-        run: |
-          # Remove old unmanaged instance groups from all zones
-          for cleanup_zone in us-central1-a us-central1-c us-central1-f; do
-            gcloud compute backend-services remove-backend api-backend-service \
-              --instance-group=api-instance-group \
-              --instance-group-zone=$cleanup_zone \
-              --global --quiet 2>/dev/null || true
-            gcloud compute instance-groups unmanaged delete api-instance-group \
-              --zone=$cleanup_zone --quiet 2>/dev/null || true
-          done
-
-          # Add MIG to backend service
-          gcloud compute backend-services add-backend api-backend-service \
-            --instance-group=api-mig \
-            --instance-group-zone=$ZONE \
-            --global
-
-          # Update backend service to use correct port name and health check
-          gcloud compute backend-services update api-backend-service \
-            --global \
-            --port-name=http \
-            --health-checks=api-health-check
-
-      - name: Get Load Balancer IP
-        id: get-lb-ip
-        run: |
-          LB_IP=$(gcloud compute forwarding-rules describe api-http-forwarding-rule --global --format="value(IPAddress)")
-          echo "LB_IP=$LB_IP" >> $GITHUB_OUTPUT
-          echo "🌐 Load Balancer HTTP: http://$LB_IP"
-
-      - name: Test Load Balancer endpoint
-        run: |
-          echo "Aguardando Load Balancer ficar ativo..."
-          sleep 60
-          curl -f http://${{ steps.get-lb-ip.outputs.LB_IP }}/docs || echo "Load Balancer ainda não está ativo, pode levar alguns minutos"
+          echo "Testing service endpoint..."
+          sleep 30
+          curl -f ${{ steps.get-url.outputs.SERVICE_URL }}/ || echo "Service may still be warming up"

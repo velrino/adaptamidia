@@ -20,7 +20,15 @@ Uma API FastAPI para detecção de pessoas em imagens usando YOLO e análise fac
 
 ## 🛠️ Instalação
 
-### Usando Docker (Recomendado)
+### Google Cloud Run (Produção)
+
+Deployment automático via GitHub Actions para Cloud Run:
+- **Auto scaling**: 0-10 instâncias conforme demanda
+- **Serverless**: Pay-per-request, $0 quando sem tráfego
+- **HTTPS nativo**: SSL automático
+- **4GB RAM + 2 CPUs** por instância
+
+### Usando Docker (Local)
 
 ```bash
 docker build -t yolo-api .
@@ -144,10 +152,18 @@ curl -X POST "http://localhost:8000/detect-people-bbox" \
 
 ### Documentação Interativa
 
-Acesse `http://localhost:8000/docs` para a documentação automática do Swagger UI.
+- **Produção**: `https://api-vision-xxxx-uc.a.run.app/docs`
+- **Local**: `http://localhost:8000/docs`
 
 ## 🏗️ Arquitetura
 
+### Cloud Run (Produção)
+- **Serverless**: Auto scaling 0-10 instâncias
+- **Container**: Docker com YOLO + DeepFace
+- **Pay-per-request**: Custo apenas durante uso
+- **Cold start**: ~3-5 segundos para primeira requisição
+
+### Aplicação
 - **FastAPI**: Framework web assíncrono
 - **YOLO**: Detecção de objetos em tempo real
 - **DeepFace**: Análise facial com múltiplas características
@@ -156,10 +172,10 @@ Acesse `http://localhost:8000/docs` para a documentação automática do Swagger
 
 ## ⚡ Performance
 
-- Modelos são carregados uma única vez no startup
-- Cache de modelos em memória
-- Processamento otimizado de imagens
-- Fallbacks para casos de erro
+- **Produção**: Auto scaling baseado em demanda
+- **Modelos em memória**: Cache durante vida da instância
+- **Processamento otimizado**: 4GB RAM + 2 CPUs por instância
+- **Fallbacks**: Respostas consistentes mesmo com erros
 
 ## 📝 Notas
 
