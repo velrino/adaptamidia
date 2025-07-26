@@ -48,7 +48,7 @@ jobs:
       run: |
         gcloud compute instances create $INSTANCE_NAME \
           --zone=$ZONE \
-          --machine-type=e2-standard-2 \
+          --machine-type=c2-standard-8 \
           --boot-disk-size=20GB \
           --image-family=cos-stable \
           --image-project=cos-cloud \
