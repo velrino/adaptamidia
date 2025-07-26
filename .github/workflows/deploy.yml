@@ -59,20 +59,29 @@ jobs:
 
     - name: Create firewall rules (if not exist)
       run: |
-        gcloud compute firewall-rules create allow-fastapi \
-          --allow tcp:8000 \
-          --source-ranges 0.0.0.0/0 \
-          --target-tags http-server || true
+        # Check and create allow-fastapi rule
+        if ! gcloud compute firewall-rules describe allow-fastapi --quiet 2>/dev/null; then
+          gcloud compute firewall-rules create allow-fastapi \
+            --allow tcp:8000 \
+            --source-ranges 0.0.0.0/0 \
+            --target-tags http-server
+        fi
         
-        gcloud compute firewall-rules create allow-http \
-          --allow tcp:80 \
-          --source-ranges 0.0.0.0/0 \
-          --target-tags http-server || true
+        # Check and create allow-http rule
+        if ! gcloud compute firewall-rules describe allow-http --quiet 2>/dev/null; then
+          gcloud compute firewall-rules create allow-http \
+            --allow tcp:80 \
+            --source-ranges 0.0.0.0/0 \
+            --target-tags http-server
+        fi
         
-        gcloud compute firewall-rules create allow-https \
-          --allow tcp:443 \
-          --source-ranges 0.0.0.0/0 \
-          --target-tags https-server || true
+        # Check and create allow-https rule
+        if ! gcloud compute firewall-rules describe allow-https --quiet 2>/dev/null; then
+          gcloud compute firewall-rules create allow-https \
+            --allow tcp:443 \
+            --source-ranges 0.0.0.0/0 \
+            --target-tags https-server
+        fi
 
     - name: Wait for instance to be ready
       run: |
