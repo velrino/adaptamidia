@@ -12,27 +12,30 @@ app = FastAPI(title="YOLO People Detection API", version="1.0.0")
 # Inicializar modelo como None, será carregado no primeiro uso
 model = None
 
+
 @app.on_event("startup")
 async def startup_event():
     """Carrega os modelos durante o startup para evitar delay no primeiro request"""
     print("🚀 Carregando modelos...")
-    
+
     # Pré-carrega YOLO
     get_model()
     print("✅ YOLO carregado")
-    
+
     # Pré-carrega DeepFace com uma imagem dummy
     try:
         import tempfile
         import cv2
+
         # Cria uma imagem dummy pequena
         dummy_img = np.zeros((100, 100, 3), dtype=np.uint8)
-        DeepFace.analyze(dummy_img, actions=['age'], enforce_detection=False)
+        DeepFace.analyze(dummy_img, actions=["age"], enforce_detection=False)
         print("✅ DeepFace carregado")
     except:
         print("⚠️ DeepFace warm-up falhou, mas continuando...")
-    
+
     print("🎯 API pronta para receber requests!")
+
 
 def get_model():
     """Carrega o modelo YOLO de forma lazy"""
@@ -42,60 +45,76 @@ def get_model():
         model = YOLO("yolov8n.pt")
     return model
 
+
 def analyze_faces_deepface(image):
     """Analisa faces com DeepFace e retorna estatísticas agregadas"""
     try:
         # Converter PIL para numpy array
         img_array = np.array(image)
-        
+
         # Analisar todas as faces na imagem
         results = DeepFace.analyze(
             img_path=img_array,
-            actions=['age', 'gender', 'race', 'emotion'],
-            enforce_detection=False
+            actions=["age", "gender", "race", "emotion"],
+            enforce_detection=False,
         )
-        
+
         # Se não é lista, transformar em lista
         if not isinstance(results, list):
             results = [results]
-        
+
         # Inicializar contadores
         gender_counts = {"Woman": 0, "Man": 0}
-        race_counts = {"asian": 0, "indian": 0, "black": 0, "white": 0, "middle eastern": 0, "latino hispanic": 0}
-        emotion_counts = {"angry": 0, "disgust": 0, "fear": 0, "happy": 0, "sad": 0, "surprise": 0, "neutral": 0}
+        race_counts = {
+            "asian": 0,
+            "indian": 0,
+            "black": 0,
+            "white": 0,
+            "middle eastern": 0,
+            "latino hispanic": 0,
+        }
+        emotion_counts = {
+            "angry": 0,
+            "disgust": 0,
+            "fear": 0,
+            "happy": 0,
+            "sad": 0,
+            "surprise": 0,
+            "neutral": 0,
+        }
         ages = []
-        
+
         # Processar cada face detectada
         for face in results:
             # Gênero
-            dominant_gender = face['dominant_gender']
+            dominant_gender = face["dominant_gender"]
             if dominant_gender in gender_counts:
                 gender_counts[dominant_gender] += 1
-            
+
             # Raça
-            dominant_race = face['dominant_race']
+            dominant_race = face["dominant_race"]
             if dominant_race in race_counts:
                 race_counts[dominant_race] += 1
-            
+
             # Emoção
-            dominant_emotion = face['dominant_emotion']
+            dominant_emotion = face["dominant_emotion"]
             if dominant_emotion in emotion_counts:
                 emotion_counts[dominant_emotion] += 1
-            
+
             # Idade
-            ages.append(int(face['age']))
-        
+            ages.append(int(face["age"]))
+
         # Calcular estatísticas de idade
         age_stats = {}
         if ages:
             age_stats = {
                 "max": max(ages),
                 "min": min(ages),
-                "average": round(sum(ages) / len(ages))
+                "average": round(sum(ages) / len(ages)),
             }
-        
+
         total_faces = len(results)
-        
+
         return {
             "gender": gender_counts,
             "race": race_counts,
@@ -103,20 +122,35 @@ def analyze_faces_deepface(image):
             "men": gender_counts["Man"],
             "women": gender_counts["Woman"],
             "total": total_faces,
-            "age": age_stats
+            "age": age_stats,
         }
-        
+
     except Exception as e:
         # Se DeepFace falhar, retornar estrutura vazia
         return {
             "gender": {"Woman": 0, "Man": 0},
-            "race": {"asian": 0, "indian": 0, "black": 0, "white": 0, "middle eastern": 0, "latino hispanic": 0},
-            "emotion": {"angry": 0, "disgust": 0, "fear": 0, "happy": 0, "sad": 0, "surprise": 0, "neutral": 0},
+            "race": {
+                "asian": 0,
+                "indian": 0,
+                "black": 0,
+                "white": 0,
+                "middle eastern": 0,
+                "latino hispanic": 0,
+            },
+            "emotion": {
+                "angry": 0,
+                "disgust": 0,
+                "fear": 0,
+                "happy": 0,
+                "sad": 0,
+                "surprise": 0,
+                "neutral": 0,
+            },
             "men": 0,
             "women": 0,
             "total": 0,
             "age": {"max": 0, "min": 0, "average": 0},
-            "error": str(e)
+            "error": str(e),
         }
 
 
@@ -125,24 +159,24 @@ def read_root():
     return {"message": "YOLO People Detection API", "version": "1.0.0"}
 
 
-@app.post("/detect-people")
-async def detect_people(file: UploadFile = File(...)):
+@app.post("/detect-yolo")
+async def detect_yolo(file: UploadFile = File(...)):
     """
-    Detecta pessoas em uma imagem usando YOLO11
+    Detecta pessoas em uma imagem usando YOLO
     """
     # Verificar se é uma imagem
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Arquivo deve ser uma imagem")
-    
+
     try:
         # Ler e processar a imagem
         image_data = await file.read()
         image = Image.open(io.BytesIO(image_data))
-        
+
         # Executar detecção YOLO
         yolo_model = get_model()
         results = yolo_model(image)
-        
+
         # Filtrar apenas pessoas (classe 0 no COCO dataset)
         people_detections = []
         for result in results:
@@ -153,24 +187,46 @@ async def detect_people(file: UploadFile = File(...)):
                     if int(box.cls[0]) == 0:
                         confidence = float(box.conf[0])
                         people_detections.append(confidence)
-        
+
         # Calcular estatísticas YOLO
         people_count = len(people_detections)
-        avg_confidence = sum(people_detections) / len(people_detections) if people_detections else 0.0
-        
+        avg_confidence = (
+            sum(people_detections) / len(people_detections)
+            if people_detections
+            else 0.0
+        )
+
+        return {"people": people_count, "confidence": avg_confidence}
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao processar imagem: {str(e)}"
+        )
+
+
+@app.post("/detect-deepface")
+async def detect_deepface(file: UploadFile = File(...)):
+    """
+    Analisa faces em uma imagem usando DeepFace
+    """
+    # Verificar se é uma imagem
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Arquivo deve ser uma imagem")
+
+    try:
+        # Ler e processar a imagem
+        image_data = await file.read()
+        image = Image.open(io.BytesIO(image_data))
+
         # Analisar faces com DeepFace
         deepface_results = analyze_faces_deepface(image)
-        
-        return {
-            "yolo": {
-                "people_count": people_count,
-                "confidence": avg_confidence
-            },
-            "deepface": deepface_results
-        }
-        
+
+        return deepface_results
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao processar imagem: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao processar imagem: {str(e)}"
+        )
 
 
 @app.post("/detect-people-bbox")
@@ -181,19 +237,19 @@ async def detect_people_bbox(file: UploadFile = File(...)):
     # Verificar se é uma imagem
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Arquivo deve ser uma imagem")
-    
+
     try:
         # Ler e processar a imagem
         image_data = await file.read()
         image = Image.open(io.BytesIO(image_data))
-        
+
         # Executar detecção YOLO
         yolo_model = get_model()
         results = yolo_model(image)
-        
+
         # Converter PIL para numpy para desenhar
         img_array = np.array(image)
-        
+
         # Desenhar bounding boxes nas pessoas detectadas
         for result in results:
             boxes = result.boxes
@@ -204,38 +260,49 @@ async def detect_people_bbox(file: UploadFile = File(...)):
                         # Obter coordenadas da bbox
                         x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
                         confidence = float(box.conf[0])
-                        
+
                         # Desenhar retângulo
-                        cv2.rectangle(img_array, 
-                                    (int(x1), int(y1)), 
-                                    (int(x2), int(y2)), 
-                                    (0, 255, 0), 2)
-                        
+                        cv2.rectangle(
+                            img_array,
+                            (int(x1), int(y1)),
+                            (int(x2), int(y2)),
+                            (0, 255, 0),
+                            2,
+                        )
+
                         # Adicionar texto com confiança
                         label = f"Person {confidence:.2f}"
-                        cv2.putText(img_array, label, 
-                                  (int(x1), int(y1-10)), 
-                                  cv2.FONT_HERSHEY_SIMPLEX, 
-                                  0.5, (0, 255, 0), 2)
-        
+                        cv2.putText(
+                            img_array,
+                            label,
+                            (int(x1), int(y1 - 10)),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.5,
+                            (0, 255, 0),
+                            2,
+                        )
+
         # Converter de volta para PIL
         result_image = Image.fromarray(img_array)
-        
+
         # Salvar em buffer para retornar
         img_buffer = io.BytesIO()
-        result_image.save(img_buffer, format='JPEG')
+        result_image.save(img_buffer, format="JPEG")
         img_buffer.seek(0)
-        
+
         return StreamingResponse(
-            io.BytesIO(img_buffer.read()), 
+            io.BytesIO(img_buffer.read()),
             media_type="image/jpeg",
-            headers={"Content-Disposition": "inline; filename=detected_people.jpg"}
+            headers={"Content-Disposition": "inline; filename=detected_people.jpg"},
         )
-        
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erro ao processar imagem: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao processar imagem: {str(e)}"
+        )
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)

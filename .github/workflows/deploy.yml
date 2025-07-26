@@ -127,7 +127,15 @@ jobs:
             # Pull and run the latest image
             docker pull gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
             if [ \"$GPU_ENABLED\" = \"true\" ]; then
-              docker run --gpus all -d -p 8000:8000 --restart=always --name api-app gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
+              # Install nvidia-container-runtime if not present
+              if ! docker info | grep -q nvidia; then
+                curl -s -L https://nvidia.github.io/nvidia-container-runtime/gpgkey | sudo apt-key add -
+                distribution=\$(. /etc/os-release;echo \$ID\$VERSION_ID)
+                curl -s -L https://nvidia.github.io/nvidia-container-runtime/\$distribution/nvidia-container-runtime.list | sudo tee /etc/apt/sources.list.d/nvidia-container-runtime.list
+                sudo apt-get update && sudo apt-get install -y nvidia-container-runtime
+                sudo systemctl restart docker
+              fi
+              docker run --runtime=nvidia -d -p 8000:8000 --restart=always --name api-app gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
             else
               docker run -d -p 8000:8000 --restart=always --name api-app gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
             fi
