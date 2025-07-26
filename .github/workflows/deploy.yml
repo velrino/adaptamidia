@@ -102,14 +102,22 @@ jobs:
           docker run -d -p 8000:8000 --restart=always --name api-app gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
         "
 
-    - name: Get instance external IP
-      id: get-ip
+    - name: Update instance in Load Balancer
       run: |
-        EXTERNAL_IP=$(gcloud compute instances describe $INSTANCE_NAME --zone=$ZONE --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
-        echo "EXTERNAL_IP=$EXTERNAL_IP" >> $GITHUB_OUTPUT
-        echo "API disponível em: http://$EXTERNAL_IP:8000"
+        # Ensure instance is in the instance group
+        gcloud compute instance-groups unmanaged add-instances api-instance-group \
+          --instances=$INSTANCE_NAME --zone=$ZONE || true
 
-    - name: Test API endpoint
+    - name: Get Load Balancer IP
+      id: get-lb-ip
       run: |
-        sleep 10
-        curl -f http://${{ steps.get-ip.outputs.EXTERNAL_IP }}:8000 || echo "API ainda não está respondendo, pode levar alguns minutos"
+        LB_IP=$(gcloud compute forwarding-rules describe api-http-forwarding-rule --global --format="value(IPAddress)")
+        echo "LB_IP=$LB_IP" >> $GITHUB_OUTPUT
+        echo "🌐 Load Balancer HTTP: http://$LB_IP"
+        echo "🔒 Load Balancer HTTPS: https://api.velrino.com (quando DNS estiver configurado)"
+
+    - name: Test Load Balancer endpoint
+      run: |
+        echo "Aguardando Load Balancer ficar ativo..."
+        sleep 60
+        curl -f http://${{ steps.get-lb-ip.outputs.LB_IP }} || echo "Load Balancer ainda não está ativo, pode levar alguns minutos"
