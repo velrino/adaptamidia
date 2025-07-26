@@ -8,7 +8,7 @@ on:
 env:
   PROJECT_ID: rare-tape-466414-f4
   INSTANCE_NAME: api-vision
-  ZONE: us-central1-a
+  ZONE: us-central1-b
   IMAGE_NAME: api-vision
 
 jobs:
