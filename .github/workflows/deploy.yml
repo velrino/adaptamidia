@@ -107,6 +107,9 @@ jobs:
         # Ensure instance is in the instance group
         gcloud compute instance-groups unmanaged add-instances api-instance-group \
           --instances=$INSTANCE_NAME --zone=$ZONE || true
+        
+        # Update backend service to use correct port name
+        gcloud compute backend-services update api-backend-service --global --port-name=http
 
     - name: Get Load Balancer IP
       id: get-lb-ip
