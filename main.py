@@ -1,9 +1,11 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.responses import StreamingResponse
 from ultralytics import YOLO
-from PIL import Image
+from PIL import Image, ImageDraw
 from deepface import DeepFace
 import numpy as np
 import io
+import cv2
 
 app = FastAPI(title="YOLO People Detection API", version="1.0.0")
 
@@ -166,6 +168,69 @@ async def detect_people(file: UploadFile = File(...)):
             },
             "deepface": deepface_results
         }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao processar imagem: {str(e)}")
+
+
+@app.post("/detect-people-bbox")
+async def detect_people_bbox(file: UploadFile = File(...)):
+    """
+    Detecta pessoas em uma imagem usando YOLO e retorna a imagem com bounding boxes
+    """
+    # Verificar se é uma imagem
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Arquivo deve ser uma imagem")
+    
+    try:
+        # Ler e processar a imagem
+        image_data = await file.read()
+        image = Image.open(io.BytesIO(image_data))
+        
+        # Executar detecção YOLO
+        yolo_model = get_model()
+        results = yolo_model(image)
+        
+        # Converter PIL para numpy para desenhar
+        img_array = np.array(image)
+        
+        # Desenhar bounding boxes nas pessoas detectadas
+        for result in results:
+            boxes = result.boxes
+            if boxes is not None:
+                for box in boxes:
+                    # Classe 0 = pessoa no dataset COCO
+                    if int(box.cls[0]) == 0:
+                        # Obter coordenadas da bbox
+                        x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
+                        confidence = float(box.conf[0])
+                        
+                        # Desenhar retângulo
+                        cv2.rectangle(img_array, 
+                                    (int(x1), int(y1)), 
+                                    (int(x2), int(y2)), 
+                                    (0, 255, 0), 2)
+                        
+                        # Adicionar texto com confiança
+                        label = f"Person {confidence:.2f}"
+                        cv2.putText(img_array, label, 
+                                  (int(x1), int(y1-10)), 
+                                  cv2.FONT_HERSHEY_SIMPLEX, 
+                                  0.5, (0, 255, 0), 2)
+        
+        # Converter de volta para PIL
+        result_image = Image.fromarray(img_array)
+        
+        # Salvar em buffer para retornar
+        img_buffer = io.BytesIO()
+        result_image.save(img_buffer, format='JPEG')
+        img_buffer.seek(0)
+        
+        return StreamingResponse(
+            io.BytesIO(img_buffer.read()), 
+            media_type="image/jpeg",
+            headers={"Content-Disposition": "inline; filename=detected_people.jpg"}
+        )
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao processar imagem: {str(e)}")
