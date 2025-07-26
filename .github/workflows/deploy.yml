@@ -1,0 +1,88 @@
+name: Deploy to Google Cloud
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: rare-tape-466414-f4
+  INSTANCE_NAME: api-vision
+  ZONE: us-central1-a
+  IMAGE_NAME: api-vision
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Google Cloud CLI
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        service_account_key: ${{ secrets.GCP_SA_KEY }}
+        project_id: ${{ env.PROJECT_ID }}
+
+    - name: Configure Docker to use gcloud as credential helper
+      run: gcloud auth configure-docker
+
+    - name: Build Docker image
+      run: |
+        docker build -t gcr.io/$PROJECT_ID/$IMAGE_NAME:latest .
+
+    - name: Push Docker image to GCR
+      run: |
+        docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
+
+    - name: Delete existing instance (if exists)
+      run: |
+        gcloud compute instances delete $INSTANCE_NAME --zone=$ZONE --quiet || true
+
+    - name: Create new Compute Engine instance
+      run: |
+        gcloud compute instances create $INSTANCE_NAME \
+          --zone=$ZONE \
+          --machine-type=e2-micro \
+          --boot-disk-size=20GB \
+          --image-family=cos-stable \
+          --image-project=cos-cloud \
+          --tags=http-server,https-server \
+          --metadata=startup-script='#!/bin/bash
+            docker pull gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
+            docker run -d -p 8000:8000 gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest'
+
+    - name: Create firewall rules (if not exist)
+      run: |
+        gcloud compute firewall-rules create allow-fastapi \
+          --allow tcp:8000 \
+          --source-ranges 0.0.0.0/0 \
+          --target-tags http-server || true
+        
+        gcloud compute firewall-rules create allow-http \
+          --allow tcp:80 \
+          --source-ranges 0.0.0.0/0 \
+          --target-tags http-server || true
+        
+        gcloud compute firewall-rules create allow-https \
+          --allow tcp:443 \
+          --source-ranges 0.0.0.0/0 \
+          --target-tags https-server || true
+
+    - name: Wait for instance to be ready
+      run: |
+        echo "Aguardando instância ficar pronta..."
+        sleep 30
+
+    - name: Get instance external IP
+      id: get-ip
+      run: |
+        EXTERNAL_IP=$(gcloud compute instances describe $INSTANCE_NAME --zone=$ZONE --format='get(networkInterfaces[0].accessConfigs[0].natIP)')
+        echo "EXTERNAL_IP=$EXTERNAL_IP" >> $GITHUB_OUTPUT
+        echo "API disponível em: http://$EXTERNAL_IP:8000"
+
+    - name: Test API endpoint
+      run: |
+        sleep 10
+        curl -f http://${{ steps.get-ip.outputs.EXTERNAL_IP }}:8000 || echo "API ainda não está respondendo, pode levar alguns minutos"
