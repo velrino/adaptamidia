@@ -6,11 +6,16 @@ from deepface import DeepFace
 import numpy as np
 import io
 import cv2
+from datetime import datetime, timezone
+import os
 
 app = FastAPI(title="YOLO People Detection API", version="1.0.0")
 
 # Inicializar modelo como None, será carregado no primeiro uso
 model = None
+
+# Tempo de início do deploy (quando o app inicia)
+DEPLOY_START_TIME = datetime.now(timezone.utc)
 
 
 @app.on_event("startup")
@@ -156,7 +161,31 @@ def analyze_faces_deepface(image):
 
 @app.get("/")
 def read_root():
-    return {"message": "YOLO People Detection API", "version": "1.0.0"}
+    current_time = datetime.now(timezone.utc)
+    time_diff = current_time - DEPLOY_START_TIME
+
+    # Calcular diferenças em anos, meses, dias, horas, minutos, segundos
+    total_seconds = int(time_diff.total_seconds())
+    years = total_seconds // (365 * 24 * 3600)
+    months = (total_seconds % (365 * 24 * 3600)) // (30 * 24 * 3600)
+    days = time_diff.days % 30
+    hours = (total_seconds % (24 * 3600)) // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+
+    return {
+        "message": "Detection API",
+        "time": {
+            "start": DEPLOY_START_TIME.isoformat(),
+            "end": current_time.isoformat(),
+            "years": years,
+            "months": months,
+            "days": days,
+            "hours": hours,
+            "minutes": minutes,
+            "seconds": seconds,
+        },
+    }
 
 
 @app.post("/detect-yolo")

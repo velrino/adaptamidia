@@ -37,13 +37,22 @@ python main.py
 ## 📚 API Routes
 
 ### `GET /`
-Endpoint de status da API.
+Endpoint de status da API com informações de deploy.
 
 **Resposta:**
 ```json
 {
-  "message": "YOLO People Detection API",
-  "version": "1.0.0"
+  "message": "Detection API",
+  "time": {
+    "start": "2025-07-26T01:21:30.140+00:00",
+    "end": "2025-07-26T22:24:03.137+00:00",
+    "years": 0,
+    "months": 0,
+    "days": 0,
+    "hours": 21,
+    "minutes": 2,
+    "seconds": 32
+  }
 }
 ```
 
