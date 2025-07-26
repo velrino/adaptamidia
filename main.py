@@ -1,6 +1,8 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from ultralytics import YOLO
 from PIL import Image
+from deepface import DeepFace
+import numpy as np
 import io
 
 app = FastAPI(title="YOLO People Detection API", version="1.0.0")
@@ -15,6 +17,83 @@ def get_model():
         # Usa yolov8n.pt que é mais estável
         model = YOLO("yolov8n.pt")
     return model
+
+def analyze_faces_deepface(image):
+    """Analisa faces com DeepFace e retorna estatísticas agregadas"""
+    try:
+        # Converter PIL para numpy array
+        img_array = np.array(image)
+        
+        # Analisar todas as faces na imagem
+        results = DeepFace.analyze(
+            img_path=img_array,
+            actions=['age', 'gender', 'race', 'emotion'],
+            enforce_detection=False
+        )
+        
+        # Se não é lista, transformar em lista
+        if not isinstance(results, list):
+            results = [results]
+        
+        # Inicializar contadores
+        gender_counts = {"Woman": 0, "Man": 0}
+        race_counts = {"asian": 0, "indian": 0, "black": 0, "white": 0, "middle eastern": 0, "latino hispanic": 0}
+        emotion_counts = {"angry": 0, "disgust": 0, "fear": 0, "happy": 0, "sad": 0, "surprise": 0, "neutral": 0}
+        ages = []
+        
+        # Processar cada face detectada
+        for face in results:
+            # Gênero
+            dominant_gender = face['dominant_gender']
+            if dominant_gender in gender_counts:
+                gender_counts[dominant_gender] += 1
+            
+            # Raça
+            dominant_race = face['dominant_race']
+            if dominant_race in race_counts:
+                race_counts[dominant_race] += 1
+            
+            # Emoção
+            dominant_emotion = face['dominant_emotion']
+            if dominant_emotion in emotion_counts:
+                emotion_counts[dominant_emotion] += 1
+            
+            # Idade
+            ages.append(int(face['age']))
+        
+        # Calcular estatísticas de idade
+        age_stats = {}
+        if ages:
+            age_stats = {
+                "max": max(ages),
+                "min": min(ages),
+                "average": round(sum(ages) / len(ages))
+            }
+        
+        total_faces = len(results)
+        
+        return {
+            "gender": gender_counts,
+            "race": race_counts,
+            "emotion": emotion_counts,
+            "men": gender_counts["Man"],
+            "women": gender_counts["Woman"],
+            "total": total_faces,
+            "age": age_stats
+        }
+        
+    except Exception as e:
+        # Se DeepFace falhar, retornar estrutura vazia
+        return {
+            "gender": {"Woman": 0, "Man": 0},
+            "race": {"asian": 0, "indian": 0, "black": 0, "white": 0, "middle eastern": 0, "latino hispanic": 0},
+            "emotion": {"angry": 0, "disgust": 0, "fear": 0, "happy": 0, "sad": 0, "surprise": 0, "neutral": 0},
+            "men": 0,
+            "women": 0,
+            "total": 0,
+            "age": {"max": 0, "min": 0, "average": 0},
+            "error": str(e)
+        }
 
 
 @app.get("/")
@@ -51,16 +130,19 @@ async def detect_people(file: UploadFile = File(...)):
                         confidence = float(box.conf[0])
                         people_detections.append(confidence)
         
-        # Calcular estatísticas
+        # Calcular estatísticas YOLO
         people_count = len(people_detections)
         avg_confidence = sum(people_detections) / len(people_detections) if people_detections else 0.0
+        
+        # Analisar faces com DeepFace
+        deepface_results = analyze_faces_deepface(image)
         
         return {
             "yolo": {
                 "people_count": people_count,
-                "confidence": avg_confidence,
-                "detections": people_detections
-            }
+                "confidence": avg_confidence
+            },
+            "deepface": deepface_results
         }
         
     except Exception as e:
