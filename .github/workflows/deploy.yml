@@ -58,6 +58,7 @@ jobs:
               --image-project=cos-cloud \
               --metadata=install-gpu-driver=True \
               --maintenance-policy=TERMINATE \
+              --preemptible \
               --tags=http-server,https-server \
               --scopes=https://www.googleapis.com/auth/cloud-platform \
               --service-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com 2>/dev/null; then
@@ -71,10 +72,11 @@ jobs:
           echo "GPU unavailable, using CPU-only"
           gcloud compute instances create $INSTANCE_NAME \
             --zone=$ZONE \
-            --machine-type=c2-standard-8 \
-            --boot-disk-size=20GB \
+            --machine-type=e2-highcpu-16 \
+            --boot-disk-size=200GB \
             --image-family=cos-stable \
             --image-project=cos-cloud \
+            --preemptible \
             --tags=http-server,https-server \
             --scopes=https://www.googleapis.com/auth/cloud-platform \
             --service-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com
@@ -135,12 +137,14 @@ jobs:
         run: |
           ZONE_TO_USE=${ACTUAL_ZONE:-$ZONE}
 
-          # Remove old backends and instance groups
-          gcloud compute backend-services remove-backend api-backend-service --instance-group=api-instance-group --instance-group-zone=us-central1-a --global || true
-          gcloud compute instance-groups unmanaged delete api-instance-group --zone=us-central1-a --quiet || true
+          # Remove old backends and instance groups from all possible zones
+          for cleanup_zone in us-central1-a us-central1-c us-central1-f; do
+            gcloud compute backend-services remove-backend api-backend-service --instance-group=api-instance-group --instance-group-zone=$cleanup_zone --global 2>/dev/null || true
+            gcloud compute instance-groups unmanaged delete api-instance-group --zone=$cleanup_zone --quiet 2>/dev/null || true
+          done
 
           # Create new instance group in correct zone
-          gcloud compute instance-groups unmanaged create api-instance-group --zone=$ZONE_TO_USE || true
+          gcloud compute instance-groups unmanaged create api-instance-group --zone=$ZONE_TO_USE
           gcloud compute instance-groups unmanaged set-named-ports api-instance-group --named-ports=http:8000 --zone=$ZONE_TO_USE
 
           # Add instance to group
