@@ -1,8 +1,8 @@
-name: Deploy to Google Cloud
+name: Deploy to Google Cloud with GPU
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 env:
@@ -14,113 +14,115 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Authenticate to Google Cloud
-      uses: google-github-actions/auth@v2
-      with:
-        credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-    - name: Setup Google Cloud CLI
-      uses: google-github-actions/setup-gcloud@v2
-      with:
-        project_id: ${{ env.PROJECT_ID }}
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
 
-    - name: Configure Docker to use gcloud as credential helper
-      run: gcloud auth configure-docker gcr.io
+      - name: Configure Docker to use gcloud as credential helper
+        run: gcloud auth configure-docker gcr.io
 
-    - name: Build Docker image
-      run: |
-        docker build -t gcr.io/$PROJECT_ID/$IMAGE_NAME:latest .
+      - name: Build Docker image
+        run: |
+          docker build -t gcr.io/$PROJECT_ID/$IMAGE_NAME:latest .
 
-    - name: Push Docker image to GCR
-      run: |
-        docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
+      - name: Push Docker image to GCR
+        run: |
+          docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
 
-    - name: Delete existing instance (if exists)
-      run: |
-        gcloud compute instances delete $INSTANCE_NAME --zone=$ZONE --quiet || true
+      - name: Delete existing instance (if exists)
+        run: |
+          gcloud compute instances delete $INSTANCE_NAME --zone=$ZONE --quiet || true
 
-    - name: Create new Compute Engine instance
-      run: |
-        gcloud compute instances create $INSTANCE_NAME \
-          --zone=$ZONE \
-          --machine-type=c2-standard-16 \
-          --boot-disk-size=20GB \
-          --image-family=cos-stable \
-          --image-project=cos-cloud \
-          --tags=http-server,https-server \
-          --scopes=https://www.googleapis.com/auth/cloud-platform \
-          --service-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com
+      - name: Create new Compute Engine instance with GPU
+        run: |
+          gcloud compute instances create $INSTANCE_NAME \
+            --zone=$ZONE \
+            --machine-type=g2-standard-8 \
+            --accelerator=type=nvidia-l4,count=1 \
+            --boot-disk-size=50GB \
+            --image-family=cos-stable \
+            --image-project=cos-cloud \
+            --metadata=install-gpu-driver=True \
+            --maintenance-policy=TERMINATE \
+            --tags=http-server,https-server \
+            --scopes=https://www.googleapis.com/auth/cloud-platform \
+            --service-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com
 
-    - name: Create firewall rules (if not exist)
-      run: |
-        # Check and create allow-fastapi rule
-        if ! gcloud compute firewall-rules describe allow-fastapi --quiet 2>/dev/null; then
-          gcloud compute firewall-rules create allow-fastapi \
-            --allow tcp:8000 \
-            --source-ranges 0.0.0.0/0 \
-            --target-tags http-server
-        fi
-        
-        # Check and create allow-http rule
-        if ! gcloud compute firewall-rules describe allow-http --quiet 2>/dev/null; then
-          gcloud compute firewall-rules create allow-http \
-            --allow tcp:80 \
-            --source-ranges 0.0.0.0/0 \
-            --target-tags http-server
-        fi
-        
-        # Check and create allow-https rule
-        if ! gcloud compute firewall-rules describe allow-https --quiet 2>/dev/null; then
-          gcloud compute firewall-rules create allow-https \
-            --allow tcp:443 \
-            --source-ranges 0.0.0.0/0 \
-            --target-tags https-server
-        fi
+      - name: Create firewall rules (if not exist)
+        run: |
+          # Check and create allow-fastapi rule
+          if ! gcloud compute firewall-rules describe allow-fastapi --quiet 2>/dev/null; then
+            gcloud compute firewall-rules create allow-fastapi \
+              --allow tcp:8000 \
+              --source-ranges 0.0.0.0/0 \
+              --target-tags http-server
+          fi
 
-    - name: Wait for instance to be ready
-      run: |
-        echo "Aguardando instância ficar pronta..."
-        sleep 30
+          # Check and create allow-http rule
+          if ! gcloud compute firewall-rules describe allow-http --quiet 2>/dev/null; then
+            gcloud compute firewall-rules create allow-http \
+              --allow tcp:80 \
+              --source-ranges 0.0.0.0/0 \
+              --target-tags http-server
+          fi
 
-    - name: Deploy application to instance
-      run: |
-        gcloud compute ssh $INSTANCE_NAME --zone=$ZONE --command="
-          # Configure Docker to use gcloud auth (now available with service account)
-          docker-credential-gcr configure-docker
-          
-          # Stop any existing containers
-          docker stop \$(docker ps -q) 2>/dev/null || true
-          docker rm \$(docker ps -aq) 2>/dev/null || true
-          
-          # Pull and run the latest image
-          docker pull gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
-          docker run -d -p 8000:8000 --restart=always --name api-app gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
-        "
+          # Check and create allow-https rule
+          if ! gcloud compute firewall-rules describe allow-https --quiet 2>/dev/null; then
+            gcloud compute firewall-rules create allow-https \
+              --allow tcp:443 \
+              --source-ranges 0.0.0.0/0 \
+              --target-tags https-server
+          fi
 
-    - name: Update instance in Load Balancer
-      run: |
-        # Ensure instance is in the instance group
-        gcloud compute instance-groups unmanaged add-instances api-instance-group \
-          --instances=$INSTANCE_NAME --zone=$ZONE || true
-        
-        # Update backend service to use correct port name
-        gcloud compute backend-services update api-backend-service --global --port-name=http
+      - name: Wait for instance to be ready
+        run: |
+          echo "Aguardando instância e drivers de GPU ficarem prontos..."
+          sleep 180
 
-    - name: Get Load Balancer IP
-      id: get-lb-ip
-      run: |
-        LB_IP=$(gcloud compute forwarding-rules describe api-http-forwarding-rule --global --format="value(IPAddress)")
-        echo "LB_IP=$LB_IP" >> $GITHUB_OUTPUT
-        echo "🌐 Load Balancer HTTP: http://$LB_IP"
-        echo "🔒 Load Balancer HTTPS: https://api.velrino.com (quando DNS estiver configurado)"
+      - name: Deploy application to instance
+        run: |
+          gcloud compute ssh $INSTANCE_NAME --zone=$ZONE --command="
+            # Configure Docker to use gcloud auth (now available with service account)
+            docker-credential-gcr configure-docker
+            
+            # Stop any existing containers
+            docker stop \$(docker ps -q) 2>/dev/null || true
+            docker rm \$(docker ps -aq) 2>/dev/null || true
+            
+            # Pull and run the latest image with GPU support
+            docker pull gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
+            docker run --gpus all -d -p 8000:8000 --restart=always --name api-app gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
+          "
 
-    - name: Test Load Balancer endpoint
-      run: |
-        echo "Aguardando Load Balancer ficar ativo..."
-        sleep 60
-        curl -f http://${{ steps.get-lb-ip.outputs.LB_IP }} || echo "Load Balancer ainda não está ativo, pode levar alguns minutos"
+      - name: Update instance in Load Balancer
+        run: |
+          # Ensure instance is in the instance group
+          gcloud compute instance-groups unmanaged add-instances api-instance-group \
+            --instances=$INSTANCE_NAME --zone=$ZONE || true
+
+          # Update backend service to use correct port name
+          gcloud compute backend-services update api-backend-service --global --port-name=http
+
+      - name: Get Load Balancer IP
+        id: get-lb-ip
+        run: |
+          LB_IP=$(gcloud compute forwarding-rules describe api-http-forwarding-rule --global --format="value(IPAddress)")
+          echo "LB_IP=$LB_IP" >> $GITHUB_OUTPUT
+          echo "🌐 Load Balancer HTTP: http://$LB_IP"
+
+      - name: Test Load Balancer endpoint
+        run: |
+          echo "Aguardando Load Balancer ficar ativo..."
+          sleep 60
+          curl -f http://${{ steps.get-lb-ip.outputs.LB_IP }}/docs || echo "Load Balancer ainda não está ativo, pode levar alguns minutos"
