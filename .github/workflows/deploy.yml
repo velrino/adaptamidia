@@ -47,27 +47,6 @@ jobs:
       - name: Create new Compute Engine instance
         run: |
           # Try GPU first, fallback to CPU if unavailable
-          for zone in us-central1-f us-central1-c us-central1-a; do
-            echo "Trying GPU in zone: $zone"
-            if gcloud compute instances create $INSTANCE_NAME \
-              --zone=$zone \
-              --machine-type=n1-standard-8 \
-              --accelerator=type=nvidia-tesla-t4,count=1 \
-              --boot-disk-size=200GB \
-              --image-family=cos-stable \
-              --image-project=cos-cloud \
-              --metadata=install-gpu-driver=True \
-              --maintenance-policy=TERMINATE \
-              --preemptible \
-              --tags=http-server,https-server \
-              --scopes=https://www.googleapis.com/auth/cloud-platform \
-              --service-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com 2>/dev/null; then
-              echo "GPU_ENABLED=true" >> $GITHUB_ENV
-              echo "ACTUAL_ZONE=$zone" >> $GITHUB_ENV
-              exit 0
-            fi
-          done
-
           # Fallback to CPU if GPU fails
           echo "GPU unavailable, using CPU-only"
           gcloud compute instances create $INSTANCE_NAME \
@@ -76,7 +55,6 @@ jobs:
             --boot-disk-size=200GB \
             --image-family=cos-stable \
             --image-project=cos-cloud \
-            --preemptible \
             --tags=http-server,https-server \
             --scopes=https://www.googleapis.com/auth/cloud-platform \
             --service-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com
@@ -127,15 +105,7 @@ jobs:
             # Pull and run the latest image
             docker pull gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
             if [ \"$GPU_ENABLED\" = \"true\" ]; then
-              # Install nvidia-container-runtime if not present
-              if ! docker info | grep -q nvidia; then
-                curl -s -L https://nvidia.github.io/nvidia-container-runtime/gpgkey | sudo apt-key add -
-                distribution=\$(. /etc/os-release;echo \$ID\$VERSION_ID)
-                curl -s -L https://nvidia.github.io/nvidia-container-runtime/\$distribution/nvidia-container-runtime.list | sudo tee /etc/apt/sources.list.d/nvidia-container-runtime.list
-                sudo apt-get update && sudo apt-get install -y nvidia-container-runtime
-                sudo systemctl restart docker
-              fi
-              docker run --runtime=nvidia -d -p 8000:8000 --restart=always --name api-app gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
+              docker run --gpus all -d -p 8000:8000 --restart=always --name api-app gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
             else
               docker run -d -p 8000:8000 --restart=always --name api-app gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
             fi
@@ -143,23 +113,9 @@ jobs:
 
       - name: Update instance in Load Balancer
         run: |
-          ZONE_TO_USE=${ACTUAL_ZONE:-$ZONE}
-
-          # Remove old backends and instance groups from all possible zones
-          for cleanup_zone in us-central1-a us-central1-c us-central1-f; do
-            gcloud compute backend-services remove-backend api-backend-service --instance-group=api-instance-group --instance-group-zone=$cleanup_zone --global 2>/dev/null || true
-            gcloud compute instance-groups unmanaged delete api-instance-group --zone=$cleanup_zone --quiet 2>/dev/null || true
-          done
-
-          # Create new instance group in correct zone
-          gcloud compute instance-groups unmanaged create api-instance-group --zone=$ZONE_TO_USE
-          gcloud compute instance-groups unmanaged set-named-ports api-instance-group --named-ports=http:8000 --zone=$ZONE_TO_USE
-
-          # Add instance to group
-          gcloud compute instance-groups unmanaged add-instances api-instance-group --instances=$INSTANCE_NAME --zone=$ZONE_TO_USE
-
-          # Add to backend service
-          gcloud compute backend-services add-backend api-backend-service --instance-group=api-instance-group --instance-group-zone=$ZONE_TO_USE --global
+          # Ensure instance is in the instance group
+          gcloud compute instance-groups unmanaged add-instances api-instance-group \
+            --instances=$INSTANCE_NAME --zone=${ACTUAL_ZONE:-$ZONE} || true
 
           # Update backend service to use correct port name
           gcloud compute backend-services update api-backend-service --global --port-name=http
