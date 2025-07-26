@@ -10,6 +10,28 @@ app = FastAPI(title="YOLO People Detection API", version="1.0.0")
 # Inicializar modelo como None, será carregado no primeiro uso
 model = None
 
+@app.on_event("startup")
+async def startup_event():
+    """Carrega os modelos durante o startup para evitar delay no primeiro request"""
+    print("🚀 Carregando modelos...")
+    
+    # Pré-carrega YOLO
+    get_model()
+    print("✅ YOLO carregado")
+    
+    # Pré-carrega DeepFace com uma imagem dummy
+    try:
+        import tempfile
+        import cv2
+        # Cria uma imagem dummy pequena
+        dummy_img = np.zeros((100, 100, 3), dtype=np.uint8)
+        DeepFace.analyze(dummy_img, actions=['age'], enforce_detection=False)
+        print("✅ DeepFace carregado")
+    except:
+        print("⚠️ DeepFace warm-up falhou, mas continuando...")
+    
+    print("🎯 API pronta para receber requests!")
+
 def get_model():
     """Carrega o modelo YOLO de forma lazy"""
     global model
