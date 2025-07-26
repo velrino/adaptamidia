@@ -53,12 +53,8 @@ jobs:
           --image-family=cos-stable \
           --image-project=cos-cloud \
           --tags=http-server,https-server \
-          --metadata=startup-script='#!/bin/bash
-            # Configure Docker to use gcloud auth
-            gcloud auth configure-docker
-            # Pull and run the container
-            docker pull gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
-            docker run -d -p 8000:8000 --restart=always gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest'
+          --scopes=https://www.googleapis.com/auth/cloud-platform \
+          --service-account=github-actions@$PROJECT_ID.iam.gserviceaccount.com
 
     - name: Create firewall rules (if not exist)
       run: |
@@ -91,14 +87,20 @@ jobs:
         echo "Aguardando instância ficar pronta..."
         sleep 30
 
-    - name: Start container manually (if startup script failed)
+    - name: Deploy application to instance
       run: |
         gcloud compute ssh $INSTANCE_NAME --zone=$ZONE --command="
-          gcloud auth configure-docker
-          docker pull gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
+          # Configure Docker to use gcloud auth (now available with service account)
+          docker-credential-gcr configure-docker
+          
+          # Stop any existing containers
           docker stop \$(docker ps -q) 2>/dev/null || true
-          docker run -d -p 8000:8000 --restart=always gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
-        " || true
+          docker rm \$(docker ps -aq) 2>/dev/null || true
+          
+          # Pull and run the latest image
+          docker pull gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
+          docker run -d -p 8000:8000 --restart=always --name api-app gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
+        "
 
     - name: Get instance external IP
       id: get-ip
