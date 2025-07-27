@@ -65,7 +65,8 @@ jobs:
             --min-instances 1 \
             --max-instances 3 \
             --timeout 3600s \
-            --concurrency 5
+            --concurrency 5 \
+            --startup-timeout 600s
 
       - name: Set IAM policy for public access
         run: |
