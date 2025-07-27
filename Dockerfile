@@ -14,10 +14,6 @@ RUN apt-get update && apt-get install -y \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Create symlink for python
-RUN ln -s /usr/bin/python3 /usr/bin/python
-RUN ln -s /usr/bin/pip3 /usr/bin/pip
-
 WORKDIR /app
 
 COPY requirements.txt .
@@ -28,4 +24,4 @@ COPY . .
 ENV PORT=8080
 EXPOSE 8080
 
-CMD exec uvicorn main:app --host 0.0.0.0 --port $PORT
+CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port $PORT"]
