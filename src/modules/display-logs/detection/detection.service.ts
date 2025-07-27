@@ -75,7 +75,7 @@ export class DetectionDisplayLogService {
       let status = displayLog.status;
       // Enviar para detecção YOLO
       let yolo: IApiYoloResult = ApiYoloResultDefault;
-      let deepface: IApiDeepFaceAnalysisResult = ApiDeepFaceAnalysisResult;
+      const deepface: IApiDeepFaceAnalysisResult = ApiDeepFaceAnalysisResult;
       let insightface: IApiDetectInsightface = ApiDetectInsightfaceDefault;
       let detectPeopleBbox: Buffer | null = null;
 
@@ -88,8 +88,8 @@ export class DetectionDisplayLogService {
         insightface = await this.detectionService.detectInsightface(imageFile);
         status = DisplayLogStatus.DETECTION_INSIGHTFACE;
 
-        deepface = await this.detectionService.detectDeepFace(imageFile);
-        status = DisplayLogStatus.DETECTION_DEEPFACE;
+        // deepface = await this.detectionService.detectDeepFace(imageFile);
+        // status = DisplayLogStatus.DETECTION_DEEPFACE;
       } catch (error) {
         Log(
           LogType.ERROR,
