@@ -1,6 +1,7 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import {
   IApiDeepFaceAnalysisResult,
+  IApiDetectInsightface,
   IApiYoloResult,
 } from './detection.interface';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
@@ -182,8 +183,19 @@ export class DetectionService {
       'POST',
       '/detect-people-bbox',
       file,
-      45000, // 45 seconds timeout (imagem pode demorar mais)
+      30000, // 30 seconds timeout (imagem pode demorar mais)
       'buffer',
+    );
+  }
+
+  async detectInsightface(
+    file: Express.Multer.File,
+  ): Promise<IApiDetectInsightface> {
+    return await this.makeRequest<IApiDetectInsightface>(
+      'POST',
+      '/detect-insightface',
+      file,
+      30000, // 30 seconds timeout
     );
   }
 
@@ -194,7 +206,7 @@ export class DetectionService {
       'POST',
       '/detect-deepface',
       file,
-      60000, // 60 seconds timeout (análise facial pode ser mais demorada)
+      30000, // 30 seconds timeout (análise facial pode ser mais demorada)
     );
   }
 }

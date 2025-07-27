@@ -16,8 +16,10 @@ import { GoogleCloudStorageService } from 'src/shared/google/cloud/google-cloud-
 import { IGoogleStorageBucket } from 'src/shared/google/cloud/google-cloud-storage.interface';
 import {
   ApiDeepFaceAnalysisResult,
+  ApiDetectInsightfaceDefault,
   ApiYoloResultDefault,
   IApiDeepFaceAnalysisResult,
+  IApiDetectInsightface,
   IApiYoloResult,
 } from 'src/shared/detection/detection.interface';
 import { DisplayLogStatus } from '../display-logs.interface';
@@ -74,16 +76,20 @@ export class DetectionDisplayLogService {
       // Enviar para detecção YOLO
       let yolo: IApiYoloResult = ApiYoloResultDefault;
       let deepface: IApiDeepFaceAnalysisResult = ApiDeepFaceAnalysisResult;
+      let insightface: IApiDetectInsightface = ApiDetectInsightfaceDefault;
       let detectPeopleBbox: Buffer | null = null;
 
       try {
         yolo = await this.detectionService.detectYolo(imageFile);
         detectPeopleBbox =
           await this.detectionService.detectPeopleBbox(imageFile);
-        status = DisplayLogStatus.DETECTION_STARTED;
+        status = DisplayLogStatus.DETECTION_YOLO;
+
+        insightface = await this.detectionService.detectInsightface(imageFile);
+        status = DisplayLogStatus.DETECTION_INSIGHTFACE;
 
         deepface = await this.detectionService.detectDeepFace(imageFile);
-        status = DisplayLogStatus.DETECTION_ENRICHED;
+        status = DisplayLogStatus.DETECTION_DEEPFACE;
       } catch (error) {
         Log(
           LogType.ERROR,
@@ -92,13 +98,19 @@ export class DetectionDisplayLogService {
           LogAction.FAILED,
           { displayLogId: payload.id, status, error },
         );
+      } finally {
+        // Limpar memória do imageFile
+        if (imageFile?.buffer) {
+          imageFile.buffer = Buffer.alloc(0);
+        }
       }
 
       let bboxPath: string | null = null;
 
       if (detectPeopleBbox) {
+        let bboxFile: Express.Multer.File | null = null;
         try {
-          const bboxFile = this.googleCloudStorageService.bufferToMulterFile(
+          bboxFile = this.googleCloudStorageService.bufferToMulterFile(
             detectPeopleBbox,
             `${displayLog.identifier}_bbox.jpg`,
             'image/jpeg',
@@ -119,18 +131,30 @@ export class DetectionDisplayLogService {
             LogAction.FAILED,
             { error },
           );
+        } finally {
+          // Limpar memória do bboxFile
+          if (bboxFile?.buffer) {
+            bboxFile.buffer = Buffer.alloc(0);
+          }
         }
       }
 
       const updateQuery: Partial<
         Pick<
           DisplayLog,
-          'status' | 'yolo' | 'deepface' | 'capture' | 'capture_bbox' | 'bucket'
+          | 'status'
+          | 'yolo'
+          | 'deepface'
+          | 'capture'
+          | 'capture_bbox'
+          | 'insightface'
+          | 'bucket'
         >
       > = {
         status,
         yolo,
         deepface,
+        insightface,
         capture: `${filePath}/${displayLog.identifier}`,
         capture_bbox: bboxPath ?? undefined,
         bucket: currentBucket,

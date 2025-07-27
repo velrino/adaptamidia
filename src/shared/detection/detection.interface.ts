@@ -79,3 +79,34 @@ export const ApiDeepFaceAnalysisResult: IApiDeepFaceAnalysisResult = {
     average: 0,
   },
 };
+
+export interface IApiDetectInsightface {
+  gender: {
+    Woman: number;
+    Man: number;
+  };
+  men: number;
+  women: number;
+  total: number;
+  age: {
+    max: number;
+    min: number;
+    average: number;
+  };
+  method?: string;
+}
+
+export const ApiDetectInsightfaceDefault: IApiDetectInsightface = {
+  gender: {
+    Woman: 0,
+    Man: 0,
+  },
+  men: 0,
+  women: 0,
+  total: 0,
+  age: {
+    max: 0,
+    min: 0,
+    average: 0,
+  },
+};
