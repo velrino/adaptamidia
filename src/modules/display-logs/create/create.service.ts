@@ -77,7 +77,7 @@ export class CreateDisplayLogService {
     return body;
   }
 
-  @Process({ concurrency: 5 })
+  @Process({ concurrency: 1 })
   async processJob(job: Job<ICreateDisplayLogProcessor>) {
     try {
       await this.execute(job.data.parameters);
@@ -96,7 +96,7 @@ export class CreateDisplayLogService {
   }
 
   // async onApplicationBootstrap() {
-  //    Debug
+  //   //  Debug
   //   await this.queueService.addQueueDetectImage({
   //     id: new Types.ObjectId('6881c38478913214f5aca561'),
   //     // id: new Types.ObjectId('68837ac478913214f5aca84d'),

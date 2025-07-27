@@ -42,6 +42,7 @@ export class DetectionService {
   ): Promise<T> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
+    const fullUrl = `${this.baseUrl}${endpoint}`;
 
     try {
       Log(
@@ -50,6 +51,7 @@ export class DetectionService {
         this.makeRequest.name,
         LogAction.STARTED,
         {
+          fullUrl,
           endpoint,
           method,
           fileName: file?.originalname,
@@ -68,7 +70,7 @@ export class DetectionService {
         body = formData;
       }
 
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const response = await fetch(fullUrl, {
         method,
         body,
         signal: controller.signal,
