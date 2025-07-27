@@ -20,25 +20,8 @@ DEPLOY_START_TIME = datetime.now(timezone.utc)
 
 @app.on_event("startup")
 async def startup_event():
-    """Carrega os modelos durante o startup para evitar delay no primeiro request"""
-    print("🚀 Carregando modelos...")
-
-    # Pré-carrega YOLO
-    get_model()
-    print("✅ YOLO carregado")
-
-    # Pré-carrega DeepFace com GPU para performance máxima
-    try:
-        import tempfile
-        import cv2
-
-        # Cria uma imagem dummy pequena
-        dummy_img = np.zeros((100, 100, 3), dtype=np.uint8)
-        DeepFace.analyze(dummy_img, actions=["age"], enforce_detection=False)
-        print("✅ DeepFace carregado com GPU")
-    except Exception as e:
-        print(f"⚠️ DeepFace warm-up falhou: {e}, mas continuando...")
-
+    """Startup rápido - modelos serão carregados sob demanda"""
+    print("🚀 API iniciando...")
     print("🎯 API pronta para receber requests!")
 
 
@@ -186,6 +169,12 @@ def read_root():
             "seconds": seconds,
         },
     }
+
+
+@app.get("/health")
+def health_check():
+    """Health check endpoint for Cloud Run startup probes"""
+    return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
 @app.post("/detect-yolo")
