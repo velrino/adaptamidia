@@ -1,7 +1,10 @@
-FROM python:3.9
+FROM nvidia/cuda:11.8-runtime-ubuntu22.04
 
-# Instalar dependências do sistema
+# Install Python and dependencies
 RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-dev \
     libgl1-mesa-glx \
     libglib2.0-0 \
     libsm6 \
@@ -10,6 +13,10 @@ RUN apt-get update && apt-get install -y \
     libgomp1 \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
+
+# Create symlink for python
+RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN ln -s /usr/bin/pip3 /usr/bin/pip
 
 WORKDIR /app
 

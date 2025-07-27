@@ -27,7 +27,7 @@ async def startup_event():
     get_model()
     print("✅ YOLO carregado")
 
-    # Pré-carrega DeepFace com uma imagem dummy
+    # Pré-carrega DeepFace com GPU para performance máxima
     try:
         import tempfile
         import cv2
@@ -35,9 +35,9 @@ async def startup_event():
         # Cria uma imagem dummy pequena
         dummy_img = np.zeros((100, 100, 3), dtype=np.uint8)
         DeepFace.analyze(dummy_img, actions=["age"], enforce_detection=False)
-        print("✅ DeepFace carregado")
-    except:
-        print("⚠️ DeepFace warm-up falhou, mas continuando...")
+        print("✅ DeepFace carregado com GPU")
+    except Exception as e:
+        print(f"⚠️ DeepFace warm-up falhou: {e}, mas continuando...")
 
     print("🎯 API pronta para receber requests!")
 

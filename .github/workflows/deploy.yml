@@ -47,12 +47,21 @@ jobs:
             --platform managed \
             --region $REGION \
             --allow-unauthenticated \
-            --memory 4Gi \
-            --cpu 2 \
+            --memory 8Gi \
+            --cpu 4 \
+            --gpu 1 \
+            --gpu-type nvidia-l4 \
             --min-instances 1 \
-            --max-instances 10 \
+            --max-instances 5 \
             --timeout 3600s \
-            --concurrency 10
+            --concurrency 5
+
+      - name: Set IAM policy for public access
+        run: |
+          gcloud run services add-iam-policy-binding $SERVICE_NAME \
+            --region=$REGION \
+            --member="allUsers" \
+            --role="roles/run.invoker"
 
       - name: Get Service URL
         id: get-url
