@@ -2,18 +2,9 @@ import { Process, Processor } from '@nestjs/bull';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { QueuesEnum } from 'src/modules/queue/queue.interface';
-import {
-  Advertisement,
-  AdvertisementDocument,
-} from 'src/modules/advertisement/advertisement.schema';
-import {
-  CompanyUnit,
-  CompanyUnitDocument,
-} from 'src/modules/company-unit/company-unit.schema';
 import { News, NewsDocument } from 'src/modules/news/news.schema';
 import { Model } from 'mongoose';
 import { RedisService } from 'src/shared/redis/redis.service';
-import { QueueService } from 'src/modules/queue/queue.service';
 import {
   IDetectionDisplayLog,
   IDetectionDisplayLogProcessor,
@@ -37,11 +28,6 @@ import { DisplayLog } from '../display-logs.schema';
 @Injectable()
 export class DetectionDisplayLogService {
   constructor(
-    private readonly queueService: QueueService,
-    @InjectModel(Advertisement.name)
-    private readonly advertisementModel: Model<AdvertisementDocument>,
-    @InjectModel(CompanyUnit.name)
-    private readonly companyUnitModel: Model<CompanyUnitDocument>,
     @InjectModel(News.name)
     readonly newsModel: Model<NewsDocument>,
     private readonly redisService: RedisService,
@@ -169,9 +155,6 @@ export class DetectionDisplayLogService {
           updateQuery,
         },
       );
-
-      // Aqui você pode salvar o resultado da detecção no banco ou processar conforme necessário
-      //   console.log({ displayLog, yolo });
     } catch (error) {
       Log(
         LogType.ERROR,
