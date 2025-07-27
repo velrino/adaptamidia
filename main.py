@@ -9,8 +9,10 @@ import os
 
 app = FastAPI(title="AI Vision Detection API", version="2.0.0")
 
-# Inicializar modelo como None, será carregado no primeiro uso
+# Inicializar modelos como None, serão carregados na inicialização
 model = None
+deepface_loaded = False
+insightface_app = None
 
 # Tempo de início do deploy (quando o app inicia)
 DEPLOY_START_TIME = datetime.now(timezone.utc)
@@ -18,8 +20,34 @@ DEPLOY_START_TIME = datetime.now(timezone.utc)
 
 @app.on_event("startup")
 async def startup_event():
-    """Startup rápido - modelos serão carregados sob demanda"""
+    """Carrega modelos na inicialização para evitar cold starts"""
     print("🚀 API iniciando...")
+    print("📦 Carregando modelos...")
+    
+    # Pré-carregar YOLO
+    try:
+        print("⚡ Carregando YOLO...")
+        get_model()
+        print("✅ YOLO carregado com sucesso")
+    except Exception as e:
+        print(f"❌ Erro ao carregar YOLO: {e}")
+    
+    # Pré-carregar DeepFace
+    try:
+        print("⚡ Carregando DeepFace...")
+        preload_deepface()
+        print("✅ DeepFace carregado com sucesso")
+    except Exception as e:
+        print(f"❌ Erro ao carregar DeepFace: {e}")
+    
+    # Pré-carregar InsightFace
+    try:
+        print("⚡ Carregando InsightFace...")
+        preload_insightface()
+        print("✅ InsightFace carregado com sucesso")
+    except Exception as e:
+        print(f"❌ Erro ao carregar InsightFace: {e}")
+    
     print("🎯 API pronta para receber requests!")
 
 
@@ -34,13 +62,56 @@ def get_model():
     return model
 
 
+def preload_deepface():
+    """Pré-carrega DeepFace para evitar cold start"""
+    global deepface_loaded
+    if not deepface_loaded:
+        import sys
+        import os
+        sys.setrecursionlimit(3000)
+        os.environ['TF_USE_LEGACY_KERAS'] = '1'
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+        
+        from deepface import DeepFace
+        
+        # Fazer uma análise dummy para carregar todos os modelos
+        import numpy as np
+        dummy_image = np.zeros((224, 224, 3), dtype=np.uint8)
+        
+        try:
+            DeepFace.analyze(
+                img_path=dummy_image,
+                actions=["age", "gender", "race", "emotion"],
+                enforce_detection=False,
+                silent=True
+            )
+        except:
+            pass  # Ignorar erros da imagem dummy
+        
+        deepface_loaded = True
+
+
+def preload_insightface():
+    """Pré-carrega InsightFace para evitar cold start"""
+    global insightface_app
+    if insightface_app is None:
+        import insightface
+        insightface_app = insightface.app.FaceAnalysis(
+            providers=['CUDAExecutionProvider', 'CPUExecutionProvider']
+        )
+        insightface_app.prepare(ctx_id=0, det_size=(640, 640))
+
+
 
 
 def analyze_faces_insightface(image):
     """Analisa faces com InsightFace - análise de idade e gênero"""
     try:
-        # Import InsightFace only when needed
-        import insightface
+        global insightface_app
+        
+        # Se não foi pré-carregado, carregar agora
+        if insightface_app is None:
+            preload_insightface()
         
         # Converter PIL para numpy array
         img_array = np.array(image)
@@ -49,12 +120,8 @@ def analyze_faces_insightface(image):
         if len(img_array.shape) == 3 and img_array.shape[2] == 3:
             img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
         
-        # Initialize InsightFace app
-        app = insightface.app.FaceAnalysis(providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
-        app.prepare(ctx_id=0, det_size=(640, 640))
-        
-        # Analyze faces
-        faces = app.get(img_array)
+        # Analyze faces usando o modelo pré-carregado
+        faces = insightface_app.get(img_array)
         
         if not faces:
             return {
@@ -293,6 +360,32 @@ def health_check():
 def readiness_check():
     """Readiness check endpoint"""
     return {"status": "ready", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+
+@app.get("/warmup")
+def warmup():
+    """Endpoint para fazer warmup dos modelos"""
+    try:
+        # Força carregamento dos modelos se ainda não carregados
+        get_model()
+        preload_deepface()
+        preload_insightface()
+        
+        return {
+            "status": "warmed_up",
+            "models": {
+                "yolo": model is not None,
+                "deepface": deepface_loaded,
+                "insightface": insightface_app is not None
+            },
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+    except Exception as e:
+        return {
+            "status": "warmup_error",
+            "error": str(e),
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
 
 
 @app.post("/detect-yolo")
