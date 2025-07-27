@@ -58,7 +58,7 @@ jobs:
             --platform managed \
             --region $REGION \
             --allow-unauthenticated \
-            --memory 8Gi \
+            --memory 16Gi \
             --cpu 4 \
             --gpu 1 \
             --gpu-type nvidia-l4 \

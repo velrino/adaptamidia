@@ -23,10 +23,11 @@ Uma API FastAPI para detecção de pessoas em imagens usando YOLO e análise fac
 ### Google Cloud Run (Produção)
 
 Deployment automático via GitHub Actions para Cloud Run:
+
 - **Auto scaling**: 0-10 instâncias conforme demanda
 - **Serverless**: Pay-per-request, $0 quando sem tráfego
 - **HTTPS nativo**: SSL automático
-- **4GB RAM + 2 CPUs** por instância
+- **16Gi RAM + 4 CPUs + 1 GPU (NVIDIA L4)** por instância
 
 ### Usando Docker (Local)
 
@@ -45,9 +46,11 @@ python main.py
 ## 📚 API Routes
 
 ### `GET /`
+
 Endpoint de status da API com informações de deploy.
 
 **Resposta:**
+
 ```json
 {
   "message": "Detection API",
@@ -65,12 +68,15 @@ Endpoint de status da API com informações de deploy.
 ```
 
 ### `POST /detect-yolo`
+
 Detecta pessoas em uma imagem usando YOLO.
 
 **Parâmetros:**
+
 - `file`: Arquivo de imagem (multipart/form-data)
 
 **Resposta:**
+
 ```json
 {
   "people": 3,
@@ -79,15 +85,18 @@ Detecta pessoas em uma imagem usando YOLO.
 ```
 
 ### `POST /detect-deepface`
+
 Analisa faces em uma imagem usando DeepFace.
 
 **Parâmetros:**
+
 - `file`: Arquivo de imagem (multipart/form-data)
 
 **Resposta:**
+
 ```json
 {
-  "gender": {"Woman": 2, "Man": 1},
+  "gender": { "Woman": 2, "Man": 1 },
   "race": {
     "asian": 0,
     "indian": 0,
@@ -117,12 +126,15 @@ Analisa faces em uma imagem usando DeepFace.
 ```
 
 ### `POST /detect-people-bbox`
+
 Detecta pessoas e retorna a imagem com bounding boxes desenhados.
 
 **Parâmetros:**
+
 - `file`: Arquivo de imagem (multipart/form-data)
 
 **Resposta:**
+
 - Imagem JPEG com bounding boxes das pessoas detectadas
 
 ## 🔧 Como Usar
@@ -158,12 +170,14 @@ curl -X POST "http://localhost:8000/detect-people-bbox" \
 ## 🏗️ Arquitetura
 
 ### Cloud Run (Produção)
+
 - **Serverless**: Auto scaling 0-10 instâncias
 - **Container**: Docker com YOLO + DeepFace
 - **Pay-per-request**: Custo apenas durante uso
 - **Cold start**: ~3-5 segundos para primeira requisição
 
 ### Aplicação
+
 - **FastAPI**: Framework web assíncrono
 - **YOLO**: Detecção de objetos em tempo real
 - **DeepFace**: Análise facial com múltiplas características
