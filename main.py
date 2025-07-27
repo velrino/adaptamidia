@@ -1,8 +1,6 @@
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.responses import StreamingResponse
-from ultralytics import YOLO
 from PIL import Image, ImageDraw
-from deepface import DeepFace
 import numpy as np
 import io
 import cv2
@@ -29,6 +27,8 @@ def get_model():
     """Carrega o modelo YOLO de forma lazy"""
     global model
     if model is None:
+        # Import YOLO only when needed
+        from ultralytics import YOLO
         # Usa yolov8n.pt que é mais estável
         model = YOLO("yolov8n.pt")
     return model
@@ -37,6 +37,9 @@ def get_model():
 def analyze_faces_deepface(image):
     """Analisa faces com DeepFace e retorna estatísticas agregadas"""
     try:
+        # Import DeepFace only when needed
+        from deepface import DeepFace
+        
         # Converter PIL para numpy array
         img_array = np.array(image)
 
