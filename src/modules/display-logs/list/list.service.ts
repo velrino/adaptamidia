@@ -70,6 +70,24 @@ export class ListDisplayLogService {
       query._id = { $in: parameters.id.map((id) => new Types.ObjectId(id)) };
     }
 
+    if (parameters.local_unit) {
+      query.local_unit = {
+        $in: parameters.local_unit.map((id) => new Types.ObjectId(id)),
+      };
+    }
+
+    if (parameters.news) {
+      query.news = {
+        $in: parameters.news.map((id) => new Types.ObjectId(id)),
+      };
+    }
+
+    if (parameters.advertisement) {
+      query.advertisement = {
+        $in: parameters.advertisement.map((id) => new Types.ObjectId(id)),
+      };
+    }
+
     const total = await this.model.countDocuments(query);
 
     const queryBuilder = this.model

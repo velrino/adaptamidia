@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { AuthenticatedRequest, CustomRequest } from 'src/shared/request';
 import { CreateDisplayLogService } from './create/create.service';
@@ -24,15 +16,15 @@ export class DisplayLogController {
     private readonly listDisplayLogService: ListDisplayLogService,
   ) {}
 
-  @Get('display/logs')
+  @Post('display/logs/paginate')
   @SkipThrottle()
   @UseGuards(AuthJwtGuard, PermissionsGuard)
   @PermissionsAllowed()
   paginate(
     @Req() req: AuthenticatedRequest,
-    @Query() query: ListDisplayLogsPaginateDto,
+    @Body() body: ListDisplayLogsPaginateDto,
   ) {
-    return this.listDisplayLogService.executeFromRequest(req, query);
+    return this.listDisplayLogService.executeFromRequest(req, body);
   }
 
   @Post('display/log')

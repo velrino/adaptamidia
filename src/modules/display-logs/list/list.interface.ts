@@ -9,4 +9,28 @@ export class ListDisplayLogsPaginateDto extends PaginateDto {
   @IsArray()
   @IsMongoId({ each: true, message: 'INVALID_ID_FORMAT' })
   id?: string[];
+
+  @IsOptional()
+  @Transform(({ value }) => NormalizeToArray(value))
+  @IsArray()
+  @IsMongoId({ each: true, message: 'INVALID_ID_FORMAT' })
+  local_unit?: string[];
+
+  @IsOptional()
+  @Transform(({ value }) => NormalizeToArray(value))
+  @IsArray()
+  @IsMongoId({ each: true, message: 'INVALID_ID_FORMAT' })
+  news?: string[];
+
+  @IsOptional()
+  @Transform(({ value }) => NormalizeToArray(value))
+  @IsArray()
+  @IsMongoId({ each: true, message: 'INVALID_ID_FORMAT' })
+  advertisement?: string[];
+
+  @IsOptional()
+  @Transform(({ value }) => NormalizeToArray(value))
+  @IsArray()
+  @IsMongoId({ each: true, message: 'INVALID_ID_FORMAT' })
+  advertiser?: string[];
 }
