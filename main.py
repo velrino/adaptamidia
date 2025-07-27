@@ -177,6 +177,12 @@ def health_check():
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
+@app.get("/ready")
+def readiness_check():
+    """Readiness check endpoint"""
+    return {"status": "ready", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+
 @app.post("/detect-yolo")
 async def detect_yolo(file: UploadFile = File(...)):
     """
@@ -323,5 +329,5 @@ async def detect_people_bbox(file: UploadFile = File(...)):
 if __name__ == "__main__":
     import uvicorn
 
-    port = int(os.getenv("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port, reload=True)
+    port = int(os.getenv("PORT", 8080))
+    uvicorn.run(app, host="0.0.0.0", port=port, workers=1)
