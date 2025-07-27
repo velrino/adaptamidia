@@ -62,7 +62,7 @@ jobs:
             --cpu 4 \
             --gpu 1 \
             --gpu-type nvidia-l4 \
-            --no-gpu-redundancy \
+            --no-gpu-zonal-redundancy \
             --min-instances 0 \
             --max-instances 3 \
             --timeout 3600s \
