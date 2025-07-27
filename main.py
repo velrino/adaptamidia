@@ -8,17 +8,13 @@ from datetime import datetime, timezone
 import os
 import sys
 
-# Configurações globais para evitar problemas de recursão e TensorFlow
-sys.setrecursionlimit(5000)
-os.environ['TF_USE_LEGACY_KERAS'] = '1'
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+# Configurações globais
+sys.setrecursionlimit(3000)
 
 app = FastAPI(title="AI Vision Detection API", version="2.0.0")
 
 # Inicializar modelos como None, serão carregados na inicialização
 model = None
-deepface_loaded = False
 insightface_app = None
 
 # Tempo de início do deploy (quando o app inicia)
@@ -39,8 +35,6 @@ async def startup_event():
     except Exception as e:
         print(f"❌ Erro ao carregar YOLO: {e}")
     
-    # DeepFace será carregado apenas sob demanda (consome muita memória)
-    print("⏳ DeepFace será carregado sob demanda para otimizar memória")
     
     # Pré-carregar InsightFace
     try:
@@ -63,38 +57,6 @@ def get_model():
         model = YOLO("yolov8n.pt")
     return model
 
-
-def load_deepface_lazy():
-    """Carrega DeepFace apenas quando necessário (lazy loading)"""
-    global deepface_loaded
-    if not deepface_loaded:
-        print("🔄 Carregando DeepFace sob demanda...")
-        
-        try:
-            # Import gradual para evitar conflitos
-            import tensorflow as tf
-            
-            # Configurar GPU memory growth se disponível
-            gpus = tf.config.list_physical_devices('GPU')
-            if gpus:
-                try:
-                    tf.config.experimental.set_memory_growth(gpus[0], True)
-                    print("🎯 GPU memory growth configurado")
-                except:
-                    pass
-        except:
-            pass
-        
-        try:
-            from deepface import DeepFace
-            print("✅ DeepFace carregado com sucesso")
-            deepface_loaded = True
-            return True
-        except Exception as e:
-            print(f"❌ Erro ao carregar DeepFace: {e}")
-            deepface_loaded = False
-            return False
-    return True
 
 
 def preload_insightface():
@@ -185,134 +147,6 @@ def analyze_faces_insightface(image):
         }
 
 
-def analyze_faces_deepface(image):
-    """Analisa faces com DeepFace e retorna estatísticas agregadas"""
-    try:
-        # Carregar DeepFace sob demanda
-        if not load_deepface_lazy():
-            raise Exception("Falha ao carregar DeepFace")
-        
-        from deepface import DeepFace
-        
-        # Converter PIL para numpy array
-        img_array = np.array(image)
-        
-        # Ensure image is in BGR format for DeepFace
-        if len(img_array.shape) == 3 and img_array.shape[2] == 3:
-            img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
-
-        # Analisar todas as faces na imagem
-        results = DeepFace.analyze(
-            img_path=img_array,
-            actions=["age", "gender", "race", "emotion"],
-            enforce_detection=False,
-            silent=True
-        )
-
-        # Se não é lista, transformar em lista
-        if not isinstance(results, list):
-            results = [results]
-
-        # Inicializar contadores
-        gender_counts = {"Woman": 0, "Man": 0}
-        race_counts = {
-            "asian": 0,
-            "indian": 0,
-            "black": 0,
-            "white": 0,
-            "middle eastern": 0,
-            "latino hispanic": 0,
-        }
-        emotion_counts = {
-            "angry": 0,
-            "disgust": 0,
-            "fear": 0,
-            "happy": 0,
-            "sad": 0,
-            "surprise": 0,
-            "neutral": 0,
-        }
-        ages = []
-
-        # Processar cada face detectada
-        for face in results:
-            # Gênero
-            dominant_gender = face["dominant_gender"]
-            if dominant_gender in gender_counts:
-                gender_counts[dominant_gender] += 1
-
-            # Raça
-            dominant_race = face["dominant_race"]
-            if dominant_race in race_counts:
-                race_counts[dominant_race] += 1
-
-            # Emoção
-            dominant_emotion = face["dominant_emotion"]
-            if dominant_emotion in emotion_counts:
-                emotion_counts[dominant_emotion] += 1
-
-            # Idade
-            ages.append(int(face["age"]))
-
-        # Calcular estatísticas de idade
-        age_stats = {}
-        if ages:
-            age_stats = {
-                "max": max(ages),
-                "min": min(ages),
-                "average": round(sum(ages) / len(ages)),
-            }
-        else:
-            age_stats = {"max": 0, "min": 0, "average": 0}
-
-        total_faces = len(results)
-
-        return {
-            "gender": gender_counts,
-            "race": race_counts,
-            "emotion": emotion_counts,
-            "men": gender_counts["Man"],
-            "women": gender_counts["Woman"],
-            "total": total_faces,
-            "age": age_stats,
-            "method": "DeepFace"
-        }
-
-    except Exception as e:
-        import traceback
-        error_details = {
-            "error_type": type(e).__name__,
-            "error_message": str(e),
-            "traceback": traceback.format_exc()[-500:]  # Last 500 chars of traceback
-        }
-        
-        # Se DeepFace falhar, retornar estrutura vazia com detalhes do erro
-        return {
-            "gender": {"Woman": 0, "Man": 0},
-            "race": {
-                "asian": 0,
-                "indian": 0,
-                "black": 0,
-                "white": 0,
-                "middle eastern": 0,
-                "latino hispanic": 0,
-            },
-            "emotion": {
-                "angry": 0,
-                "disgust": 0,
-                "fear": 0,
-                "happy": 0,
-                "sad": 0,
-                "surprise": 0,
-                "neutral": 0,
-            },
-            "men": 0,
-            "women": 0,
-            "total": 0,
-            "age": {"max": 0, "min": 0, "average": 0},
-            "method": "DeepFace",
-            "error": error_details,
-        }
 
 
 @app.get("/")
@@ -335,7 +169,6 @@ def read_root():
         "endpoints": {
             "yolo": "/detect-yolo - People detection using YOLO",
             "insightface": "/detect-insightface - Face analysis (age, gender) with ONNX",
-            "deepface": "/detect-deepface - Complete face analysis (age, gender, race, emotion)",
             "bbox": "/detect-people-bbox - People detection with bounding boxes"
         },
         "time": {
@@ -369,14 +202,12 @@ def warmup():
     try:
         # Força carregamento dos modelos se ainda não carregados
         get_model()
-        load_deepface_lazy()  # DeepFace sob demanda
         preload_insightface()
         
         return {
             "status": "warmed_up",
             "models": {
                 "yolo": model is not None,
-                "deepface": deepface_loaded,
                 "insightface": insightface_app is not None
             },
             "timestamp": datetime.now(timezone.utc).isoformat()
@@ -461,29 +292,6 @@ async def detect_insightface(file: UploadFile = File(...)):
         )
 
 
-@app.post("/detect-deepface")
-async def detect_deepface(file: UploadFile = File(...)):
-    """
-    Analisa faces usando DeepFace - análise completa (idade, gênero, raça, emoção)
-    """
-    # Verificar se é uma imagem
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Arquivo deve ser uma imagem")
-
-    try:
-        # Ler e processar a imagem
-        image_data = await file.read()
-        image = Image.open(io.BytesIO(image_data))
-
-        # Analisar faces com DeepFace
-        deepface_results = analyze_faces_deepface(image)
-
-        return deepface_results
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Erro ao processar imagem: {str(e)}"
-        )
 
 
 @app.post("/detect-people-bbox")
