@@ -4,7 +4,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { QueuesEnum } from 'src/modules/queue/queue.interface';
 import { News, NewsDocument } from 'src/modules/news/news.schema';
 import { Model } from 'mongoose';
-import { RedisService } from 'src/shared/redis/redis.service';
 import {
   IDetectionDisplayLog,
   IDetectionDisplayLogProcessor,
