@@ -7,7 +7,7 @@ import cv2
 from datetime import datetime, timezone
 import os
 
-app = FastAPI(title="YOLO People Detection API", version="1.0.0")
+app = FastAPI(title="AI Vision Detection API", version="2.0.0")
 
 # Inicializar modelo como None, será carregado no primeiro uso
 model = None
@@ -34,6 +34,84 @@ def get_model():
     return model
 
 
+
+
+def analyze_faces_insightface(image):
+    """Analisa faces com InsightFace - análise de idade e gênero"""
+    try:
+        # Import InsightFace only when needed
+        import insightface
+        
+        # Converter PIL para numpy array
+        img_array = np.array(image)
+        
+        # Ensure image is in BGR format for InsightFace
+        if len(img_array.shape) == 3 and img_array.shape[2] == 3:
+            img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+        
+        # Initialize InsightFace app
+        app = insightface.app.FaceAnalysis(providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+        app.prepare(ctx_id=0, det_size=(640, 640))
+        
+        # Analyze faces
+        faces = app.get(img_array)
+        
+        if not faces:
+            return {
+                "total": 0,
+                "method": "InsightFace"
+            }
+        
+        # Process results
+        gender_counts = {"Woman": 0, "Man": 0}
+        ages = []
+        
+        for face in faces:
+            # Age
+            age = int(face.age)
+            ages.append(age)
+            
+            # Gender (InsightFace returns 0=female, 1=male)
+            if face.gender == 0:
+                gender_counts["Woman"] += 1
+            else:
+                gender_counts["Man"] += 1
+        
+        # Calculate age statistics
+        age_stats = {}
+        if ages:
+            age_stats = {
+                "max": max(ages),
+                "min": min(ages),
+                "average": round(sum(ages) / len(ages)),
+            }
+        
+        total_faces = len(faces)
+        
+        return {
+            "gender": gender_counts,
+            "men": gender_counts["Man"],
+            "women": gender_counts["Woman"],
+            "total": total_faces,
+            "age": age_stats,
+            "method": "InsightFace"
+        }
+
+    except Exception as e:
+        import traceback
+        error_details = {
+            "error_type": type(e).__name__,
+            "error_message": str(e),
+            "traceback": traceback.format_exc()[-500:]
+        }
+        
+        return {
+            "total": 0,
+            "method": "InsightFace",
+            "error": error_details,
+        }
+
+
 def analyze_faces_deepface(image):
     """Analisa faces com DeepFace e retorna estatísticas agregadas"""
     try:
@@ -51,29 +129,17 @@ def analyze_faces_deepface(image):
         # Converter PIL para numpy array
         img_array = np.array(image)
         
-        # Ensure image is in RGB format
+        # Ensure image is in BGR format for DeepFace
         if len(img_array.shape) == 3 and img_array.shape[2] == 3:
-            # Convert from RGB to BGR for DeepFace
             img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
 
-        # Analisar todas as faces na imagem com timeout protection
-        import signal
-        
-        def timeout_handler(signum, frame):
-            raise TimeoutError("DeepFace analysis timeout")
-        
-        signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(30)  # 30 second timeout
-        
-        try:
-            results = DeepFace.analyze(
-                img_path=img_array,
-                actions=["age", "gender", "race", "emotion"],
-                enforce_detection=False,
-                silent=True
-            )
-        finally:
-            signal.alarm(0)  # Cancel the alarm
+        # Analisar todas as faces na imagem
+        results = DeepFace.analyze(
+            img_path=img_array,
+            actions=["age", "gender", "race", "emotion"],
+            enforce_detection=False,
+            silent=True
+        )
 
         # Se não é lista, transformar em lista
         if not isinstance(results, list):
@@ -128,6 +194,8 @@ def analyze_faces_deepface(image):
                 "min": min(ages),
                 "average": round(sum(ages) / len(ages)),
             }
+        else:
+            age_stats = {"max": 0, "min": 0, "average": 0}
 
         total_faces = len(results)
 
@@ -139,9 +207,10 @@ def analyze_faces_deepface(image):
             "women": gender_counts["Woman"],
             "total": total_faces,
             "age": age_stats,
+            "method": "DeepFace"
         }
 
-    except (RecursionError, TimeoutError, Exception) as e:
+    except Exception as e:
         import traceback
         error_details = {
             "error_type": type(e).__name__,
@@ -173,6 +242,7 @@ def analyze_faces_deepface(image):
             "women": 0,
             "total": 0,
             "age": {"max": 0, "min": 0, "average": 0},
+            "method": "DeepFace",
             "error": error_details,
         }
 
@@ -192,7 +262,14 @@ def read_root():
     seconds = total_seconds % 60
 
     return {
-        "message": "Detection API",
+        "message": "AI Vision Detection API",
+        "version": "2.0.0",
+        "endpoints": {
+            "yolo": "/detect-yolo - People detection using YOLO",
+            "insightface": "/detect-insightface - Face analysis (age, gender) with ONNX",
+            "deepface": "/detect-deepface - Complete face analysis (age, gender, race, emotion)",
+            "bbox": "/detect-people-bbox - People detection with bounding boxes"
+        },
         "time": {
             "start": DEPLOY_START_TIME.isoformat(),
             "end": current_time.isoformat(),
@@ -263,10 +340,37 @@ async def detect_yolo(file: UploadFile = File(...)):
         )
 
 
+
+
+@app.post("/detect-insightface")
+async def detect_insightface(file: UploadFile = File(...)):
+    """
+    Analisa faces usando InsightFace - completo (idade, gênero)
+    """
+    # Verificar se é uma imagem
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Arquivo deve ser uma imagem")
+
+    try:
+        # Ler e processar a imagem
+        image_data = await file.read()
+        image = Image.open(io.BytesIO(image_data))
+
+        # Analisar faces com InsightFace
+        insightface_results = analyze_faces_insightface(image)
+
+        return insightface_results
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao processar imagem: {str(e)}"
+        )
+
+
 @app.post("/detect-deepface")
 async def detect_deepface(file: UploadFile = File(...)):
     """
-    Analisa faces em uma imagem usando DeepFace
+    Analisa faces usando DeepFace - análise completa (idade, gênero, raça, emoção)
     """
     # Verificar se é uma imagem
     if not file.content_type.startswith("image/"):
