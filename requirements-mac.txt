@@ -6,8 +6,7 @@ python-multipart==0.0.9
 insightface==0.7.3
 onnxruntime==1.17.1
 deepface==0.0.92
-tensorflow==2.16.1
-tf_keras==2.16.0
+tensorflow==2.15.0
 opencv-python
 torch
 torchvision
