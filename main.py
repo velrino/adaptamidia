@@ -39,13 +39,8 @@ async def startup_event():
     except Exception as e:
         print(f"❌ Erro ao carregar YOLO: {e}")
     
-    # Pré-carregar DeepFace
-    try:
-        print("⚡ Carregando DeepFace...")
-        preload_deepface()
-        print("✅ DeepFace carregado com sucesso")
-    except Exception as e:
-        print(f"❌ Erro ao carregar DeepFace: {e}")
+    # DeepFace será carregado apenas sob demanda (consome muita memória)
+    print("⏳ DeepFace será carregado sob demanda para otimizar memória")
     
     # Pré-carregar InsightFace
     try:
@@ -69,34 +64,37 @@ def get_model():
     return model
 
 
-def preload_deepface():
-    """Pré-carrega DeepFace para evitar cold start"""
+def load_deepface_lazy():
+    """Carrega DeepFace apenas quando necessário (lazy loading)"""
     global deepface_loaded
     if not deepface_loaded:
-        import sys
-        import os
-        
-        # Configurações mais agressivas para evitar recursão
-        sys.setrecursionlimit(5000)
-        os.environ['TF_USE_LEGACY_KERAS'] = '1'
-        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Mais silencioso
-        os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
-        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
+        print("🔄 Carregando DeepFace sob demanda...")
         
         try:
             # Import gradual para evitar conflitos
             import tensorflow as tf
-            tf.config.experimental.set_memory_growth(tf.config.list_physical_devices('GPU')[0], True)
+            
+            # Configurar GPU memory growth se disponível
+            gpus = tf.config.list_physical_devices('GPU')
+            if gpus:
+                try:
+                    tf.config.experimental.set_memory_growth(gpus[0], True)
+                    print("🎯 GPU memory growth configurado")
+                except:
+                    pass
         except:
             pass
         
         try:
             from deepface import DeepFace
-            print("✅ DeepFace importado com sucesso")
+            print("✅ DeepFace carregado com sucesso")
             deepface_loaded = True
+            return True
         except Exception as e:
-            print(f"❌ Erro ao importar DeepFace: {e}")
+            print(f"❌ Erro ao carregar DeepFace: {e}")
             deepface_loaded = False
+            return False
+    return True
 
 
 def preload_insightface():
@@ -190,19 +188,9 @@ def analyze_faces_insightface(image):
 def analyze_faces_deepface(image):
     """Analisa faces com DeepFace e retorna estatísticas agregadas"""
     try:
-        # Garantir que DeepFace foi pré-carregado
-        global deepface_loaded
-        if not deepface_loaded:
-            preload_deepface()
-            
-        # Se ainda não carregou, tentar configuração manual
-        if not deepface_loaded:
-            import sys
-            import os
-            sys.setrecursionlimit(5000)
-            os.environ['TF_USE_LEGACY_KERAS'] = '1'
-            os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-            os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+        # Carregar DeepFace sob demanda
+        if not load_deepface_lazy():
+            raise Exception("Falha ao carregar DeepFace")
         
         from deepface import DeepFace
         
@@ -381,7 +369,7 @@ def warmup():
     try:
         # Força carregamento dos modelos se ainda não carregados
         get_model()
-        preload_deepface()
+        load_deepface_lazy()  # DeepFace sob demanda
         preload_insightface()
         
         return {
