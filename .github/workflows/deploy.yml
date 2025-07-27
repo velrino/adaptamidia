@@ -68,8 +68,7 @@ jobs:
             --timeout 3600s \
             --concurrency 1 \
             --cpu-boost \
-            --port 8080 \
-            --set-env-vars PORT=8080
+            --port 8080
 
       - name: Set IAM policy for public access
         run: |
