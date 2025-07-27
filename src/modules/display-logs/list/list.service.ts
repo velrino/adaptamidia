@@ -1,12 +1,15 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, QueryOptions, Types } from 'mongoose';
+import { Model, QueryOptions, Types, SortOrder } from 'mongoose';
 
 import { AuthenticatedRequest } from 'src/shared/request';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { RESULT } from 'src/shared/result.enum';
 import { MongoDbDateQuery } from 'src/shared/mongo.schema';
-import { PaginatedResponseDto } from 'src/shared/interfaces/paginate.dto';
+import {
+  PaginatedResponseDto,
+  SortEnum,
+} from 'src/shared/interfaces/paginate.dto';
 import { RedisService } from 'src/shared/redis/redis.service';
 import { DisplayLog, DisplayLogDocument } from '../display-logs.schema';
 import { ListDisplayLogsPaginateDto } from './list.interface';
@@ -105,8 +108,16 @@ export class ListDisplayLogService {
         select: ['_id', 'full_address', 'type', 'name'],
       });
 
+    const sortObject: Record<string, SortOrder> = parameters.sort_by
+      ? {
+          [parameters.sort_by]: (parameters.sort === SortEnum.ASC
+            ? 1
+            : -1) as SortOrder,
+        }
+      : { updated_at: -1 as SortOrder };
+
     const data = await queryBuilder
-      .sort({ updated_at: -1 })
+      .sort(sortObject)
       .select(['-data'])
       .skip(skip)
       .limit(parameters.limit)
