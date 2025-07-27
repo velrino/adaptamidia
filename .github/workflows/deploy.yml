@@ -62,11 +62,19 @@ jobs:
             --cpu 4 \
             --gpu 1 \
             --gpu-type nvidia-l4 \
-            --min-instances 1 \
+            --min-instances 0 \
             --max-instances 3 \
             --timeout 3600s \
-            --concurrency 5 \
-            --cpu-boost
+            --concurrency 1 \
+            --cpu-boost \
+            --port 8080
+
+      - name: Set IAM policy for public access
+        run: |
+          gcloud run services add-iam-policy-binding $SERVICE_NAME \
+            --region=$REGION \
+            --member="allUsers" \
+            --role="roles/run.invoker"
 
       - name: Get Service URL
         id: get-url

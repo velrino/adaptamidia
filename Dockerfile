@@ -25,4 +25,5 @@ COPY . .
 ENV PORT=8080
 EXPOSE 8080
 
-CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port $PORT"]
+# Use uvicorn with faster startup settings
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1", "--timeout-keep-alive", "60"]
