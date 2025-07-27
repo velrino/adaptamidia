@@ -6,6 +6,13 @@ import io
 import cv2
 from datetime import datetime, timezone
 import os
+import sys
+
+# Configurações globais para evitar problemas de recursão e TensorFlow
+sys.setrecursionlimit(5000)
+os.environ['TF_USE_LEGACY_KERAS'] = '1'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
 app = FastAPI(title="AI Vision Detection API", version="2.0.0")
 
@@ -68,27 +75,28 @@ def preload_deepface():
     if not deepface_loaded:
         import sys
         import os
-        sys.setrecursionlimit(3000)
+        
+        # Configurações mais agressivas para evitar recursão
+        sys.setrecursionlimit(5000)
         os.environ['TF_USE_LEGACY_KERAS'] = '1'
-        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-        
-        from deepface import DeepFace
-        
-        # Fazer uma análise dummy para carregar todos os modelos
-        import numpy as np
-        dummy_image = np.zeros((224, 224, 3), dtype=np.uint8)
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # Mais silencioso
+        os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
         
         try:
-            DeepFace.analyze(
-                img_path=dummy_image,
-                actions=["age", "gender", "race", "emotion"],
-                enforce_detection=False,
-                silent=True
-            )
+            # Import gradual para evitar conflitos
+            import tensorflow as tf
+            tf.config.experimental.set_memory_growth(tf.config.list_physical_devices('GPU')[0], True)
         except:
-            pass  # Ignorar erros da imagem dummy
+            pass
         
-        deepface_loaded = True
+        try:
+            from deepface import DeepFace
+            print("✅ DeepFace importado com sucesso")
+            deepface_loaded = True
+        except Exception as e:
+            print(f"❌ Erro ao importar DeepFace: {e}")
+            deepface_loaded = False
 
 
 def preload_insightface():
@@ -182,14 +190,19 @@ def analyze_faces_insightface(image):
 def analyze_faces_deepface(image):
     """Analisa faces com DeepFace e retorna estatísticas agregadas"""
     try:
-        # Import DeepFace only when needed
-        import sys
-        import os
-        sys.setrecursionlimit(3000)  # Increase recursion limit
-        
-        # Configure TensorFlow environment
-        os.environ['TF_USE_LEGACY_KERAS'] = '1'
-        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Reduce TF logging
+        # Garantir que DeepFace foi pré-carregado
+        global deepface_loaded
+        if not deepface_loaded:
+            preload_deepface()
+            
+        # Se ainda não carregou, tentar configuração manual
+        if not deepface_loaded:
+            import sys
+            import os
+            sys.setrecursionlimit(5000)
+            os.environ['TF_USE_LEGACY_KERAS'] = '1'
+            os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+            os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
         
         from deepface import DeepFace
         
