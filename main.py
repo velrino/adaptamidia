@@ -233,6 +233,14 @@ async def detect_yolo(file: UploadFile = File(...)):
         # Ler e processar a imagem
         image_data = await file.read()
         image = Image.open(io.BytesIO(image_data))
+        
+        # Converter RGBA para RGB se necessário
+        if image.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', image.size, (255, 255, 255))
+            if image.mode == 'P':
+                image = image.convert('RGBA')
+            background.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
+            image = background
 
         # Executar detecção YOLO
         yolo_model = get_model()
@@ -280,6 +288,14 @@ async def detect_insightface(file: UploadFile = File(...)):
         # Ler e processar a imagem
         image_data = await file.read()
         image = Image.open(io.BytesIO(image_data))
+        
+        # Converter RGBA para RGB se necessário
+        if image.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', image.size, (255, 255, 255))
+            if image.mode == 'P':
+                image = image.convert('RGBA')
+            background.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
+            image = background
 
         # Analisar faces com InsightFace
         insightface_results = analyze_faces_insightface(image)
@@ -307,6 +323,23 @@ async def detect_people_bbox(file: UploadFile = File(...)):
         # Ler e processar a imagem
         image_data = await file.read()
         image = Image.open(io.BytesIO(image_data))
+        
+        # Converter RGBA para RGB se necessário
+        if image.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', image.size, (255, 255, 255))
+            if image.mode == 'P':
+                image = image.convert('RGBA')
+            background.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
+            image = background
+        
+        # Converter RGBA para RGB se necessário (para compatibilidade com JPEG)
+        if image.mode in ('RGBA', 'LA', 'P'):
+            # Criar fundo branco para transparência
+            background = Image.new('RGB', image.size, (255, 255, 255))
+            if image.mode == 'P':
+                image = image.convert('RGBA')
+            background.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
+            image = background
 
         # Executar detecção YOLO
         yolo_model = get_model()
