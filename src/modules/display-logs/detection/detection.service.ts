@@ -79,8 +79,6 @@ export class DetectionDisplayLogService {
 
       try {
         yolo = await this.detectionService.detectYolo(imageFile);
-        detectPeopleBbox =
-          await this.detectionService.detectPeopleBbox(imageFile);
         status = DisplayLogStatus.DETECTION_YOLO;
 
         insightface = await this.detectionService.detectInsightface(imageFile);
@@ -88,6 +86,8 @@ export class DetectionDisplayLogService {
 
         // deepface = await this.detectionService.detectDeepFace(imageFile);
         // status = DisplayLogStatus.DETECTION_DEEPFACE;
+        detectPeopleBbox =
+          await this.detectionService.detectPeopleBbox(imageFile);
       } catch (error) {
         Log(
           LogType.ERROR,
