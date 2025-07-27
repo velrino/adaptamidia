@@ -125,6 +125,7 @@ const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
                   }
                   theme={DisplayThemes.brand}
                   preview={true}
+                  useWebcam={false}
                 />
               </div>
             </div>

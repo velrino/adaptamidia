@@ -75,6 +75,7 @@ export function Display({
   unit,
   currency,
   weather,
+  useWebcam,
 }: IDisplay) {
   useDisplayLogsQueue();
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
@@ -124,6 +125,7 @@ export function Display({
           // Captura o frame do webcam
           let frame = null;
           if (
+            useWebcam &&
             webcamRef.current &&
             typeof webcamRef.current.captureFrame === "function"
           ) {
@@ -180,7 +182,7 @@ export function Display({
         }}
       />
       {/* Webcam invisível, apenas para captura de frame */}
-      <HiddenWebcam ref={webcamRef} />
+      {useWebcam && <HiddenWebcam ref={webcamRef} />}
     </div>
   );
 }

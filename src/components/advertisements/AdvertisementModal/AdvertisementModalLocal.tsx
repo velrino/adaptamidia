@@ -344,26 +344,31 @@ const AdvertisementModalLocal = memo(
         if (selectedDates.length === 0) return;
         const newStartDate = selectedDates[0];
 
-        if (
-          DateHelper.dayjs(newStartDate).isSameOrAfter(tomorrow, "day") &&
-          DateHelper.dayjs(newStartDate).isBefore(endDate, "day")
-        ) {
-          setStartDate(newStartDate);
-          setEndDate(DateHelper.dayjs(newStartDate).add(7, "day").toDate());
-          updateFormReport("start_date");
-          updateForm("start_date", newStartDate.toISOString());
-        } else {
-          updateFormReport(
-            "start_date",
-            `A data deve ser maior ou igual a ${DateHelper.format(
-              tomorrow,
-              DateHelperFormat.SHORT
-            )} e menor que ${DateHelper.format(
-              endDate as Date,
-              DateHelperFormat.SHORT
-            )}.`
-          );
-        }
+        //  TODO
+        // if (
+        //   DateHelper.dayjs(newStartDate).isSameOrAfter(tomorrow, "day") &&
+        //   DateHelper.dayjs(newStartDate).isBefore(endDate, "day")
+        // ) {
+        //   setStartDate(newStartDate);
+        //   setEndDate(DateHelper.dayjs(newStartDate).add(7, "day").toDate());
+        //   updateFormReport("start_date");
+        //   updateForm("start_date", newStartDate.toISOString());
+        // } else {
+        //   updateFormReport(
+        //     "start_date",
+        //     `A data deve ser maior ou igual a ${DateHelper.format(
+        //       tomorrow,
+        //       DateHelperFormat.SHORT
+        //     )} e menor que ${DateHelper.format(
+        //       endDate as Date,
+        //       DateHelperFormat.SHORT
+        //     )}.`
+        //   );
+        // }
+        setStartDate(newStartDate);
+        setEndDate(DateHelper.dayjs(newStartDate).add(7, "day").toDate());
+        updateFormReport("start_date");
+        updateForm("start_date", newStartDate.toISOString());
       },
       [endDate, tomorrow, updateForm, updateFormReport]
     );
@@ -411,7 +416,7 @@ const AdvertisementModalLocal = memo(
       []
     );
 
-    const options = GenerateNumberRangeAsOptions(10, 60);
+    const options = GenerateNumberRangeAsOptions(10, 30);
 
     return (
       <>

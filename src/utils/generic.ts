@@ -79,7 +79,7 @@ export function GenerateNumberRange(
 export function GenerateNumberRangeAsOptions(
   min: number,
   max: number,
-  interval: number = 5
+  interval: number = 1
 ) {
   return GenerateNumberRange(min, max, interval).map((value) => ({
     value: value.toString(),
