@@ -30,7 +30,6 @@ export class DetectionDisplayLogService {
   constructor(
     @InjectModel(News.name)
     readonly newsModel: Model<NewsDocument>,
-    private readonly redisService: RedisService,
     private readonly displayLogService: GetDisplayLogService,
     private readonly detectionService: DetectionService,
     private readonly googleCloudStorageService: GoogleCloudStorageService,
