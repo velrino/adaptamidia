@@ -24,7 +24,7 @@ Uma API FastAPI para detecção de pessoas em imagens usando YOLO e análise fac
 
 Deployment automático via GitHub Actions para Cloud Run:
 
-- **Auto scaling**: 0-10 instâncias conforme demanda
+- **Auto scaling**: 1-3 instâncias conforme demanda
 - **Serverless**: Pay-per-request, $0 quando sem tráfego
 - **HTTPS nativo**: SSL automático
 - **16Gi RAM + 4 CPUs + 1 GPU (NVIDIA L4)** por instância
@@ -171,7 +171,7 @@ curl -X POST "http://localhost:8000/detect-people-bbox" \
 
 ### Cloud Run (Produção)
 
-- **Serverless**: Auto scaling 0-10 instâncias
+- **Serverless**: Auto scaling 1-3 instâncias
 - **Container**: Docker com YOLO + DeepFace
 - **Pay-per-request**: Custo apenas durante uso
 - **Cold start**: ~3-5 segundos para primeira requisição
