@@ -95,12 +95,13 @@ export class CreateDisplayLogService {
     }
   }
 
-  async onApplicationBootstrap() {
-    await this.queueService.addQueueDetectImage({
-      id: new Types.ObjectId('6881c38478913214f5aca561'),
-      // id: new Types.ObjectId('68837ac478913214f5aca84d'),
-    });
-  }
+  // async onApplicationBootstrap() {
+  //    Debug
+  //   await this.queueService.addQueueDetectImage({
+  //     id: new Types.ObjectId('6881c38478913214f5aca561'),
+  //     // id: new Types.ObjectId('68837ac478913214f5aca84d'),
+  //   });
+  // }
 
   async executeFromGuestRequest(
     currentRequest: CustomRequest,
@@ -300,6 +301,10 @@ export class CreateDisplayLogService {
         data: parameters.data,
         type: parameters.type,
         status: parameters.status,
+      });
+
+      await this.queueService.addQueueDetectImage({
+        id: record._id as Types.ObjectId,
       });
 
       return record;

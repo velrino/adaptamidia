@@ -1,6 +1,6 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import {
-  IApiDeepFaceAnalysisResult,
+  // IApiDeepFaceAnalysisResult,
   IApiDetectInsightface,
   IApiYoloResult,
 } from './detection.interface';
@@ -199,14 +199,14 @@ export class DetectionService {
     );
   }
 
-  async detectDeepFace(
-    file: Express.Multer.File,
-  ): Promise<IApiDeepFaceAnalysisResult> {
-    return await this.makeRequest<IApiDeepFaceAnalysisResult>(
-      'POST',
-      '/detect-deepface',
-      file,
-      30000, // 30 seconds timeout (análise facial pode ser mais demorada)
-    );
-  }
+  // async detectDeepFace(
+  //   file: Express.Multer.File,
+  // ): Promise<IApiDeepFaceAnalysisResult> {
+  //   return await this.makeRequest<IApiDeepFaceAnalysisResult>(
+  //     'POST',
+  //     '/detect-deepface',
+  //     file,
+  //     30000, // 30 seconds timeout (análise facial pode ser mais demorada)
+  //   );
+  // }
 }

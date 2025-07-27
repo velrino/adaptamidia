@@ -15,10 +15,8 @@ import { DetectionService } from 'src/shared/detection/detection.service';
 import { GoogleCloudStorageService } from 'src/shared/google/cloud/google-cloud-storage.service';
 import { IGoogleStorageBucket } from 'src/shared/google/cloud/google-cloud-storage.interface';
 import {
-  ApiDeepFaceAnalysisResult,
   ApiDetectInsightfaceDefault,
   ApiYoloResultDefault,
-  IApiDeepFaceAnalysisResult,
   IApiDetectInsightface,
   IApiYoloResult,
 } from 'src/shared/detection/detection.interface';
@@ -75,7 +73,7 @@ export class DetectionDisplayLogService {
       let status = displayLog.status;
       // Enviar para detecção YOLO
       let yolo: IApiYoloResult = ApiYoloResultDefault;
-      const deepface: IApiDeepFaceAnalysisResult = ApiDeepFaceAnalysisResult;
+      // const deepface: IApiDeepFaceAnalysisResult = ApiDeepFaceAnalysisResult;
       let insightface: IApiDetectInsightface = ApiDetectInsightfaceDefault;
       let detectPeopleBbox: Buffer | null = null;
 
@@ -144,7 +142,6 @@ export class DetectionDisplayLogService {
           DisplayLog,
           | 'status'
           | 'yolo'
-          | 'deepface'
           | 'capture'
           | 'capture_bbox'
           | 'insightface'
@@ -153,7 +150,6 @@ export class DetectionDisplayLogService {
       > = {
         status,
         yolo,
-        deepface,
         insightface,
         capture: `${filePath}/${displayLog.identifier}`,
         capture_bbox: bboxPath ?? undefined,
