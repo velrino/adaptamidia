@@ -264,6 +264,53 @@ export class GoogleCloudStorageService {
     }
   }
 
+  async getSignedUrlSafe(
+    filename: string,
+    bucket: IGoogleStorageBucket,
+    isPublic: boolean = false,
+    expiresInMs?: number,
+  ): Promise<string | null> {
+    try {
+      const file = this.storage.bucket(bucket).file(filename);
+
+      // Verifica se o arquivo existe antes de tentar gerar a URL
+      const [exists] = await file.exists();
+      if (!exists) {
+        Log(
+          LogType.ERROR,
+          GoogleCloudStorageService.name,
+          this.getSignedUrlSafe.name,
+          LogAction.FAILED,
+          { filename, bucket, message: 'File does not exist' },
+        );
+        return null;
+      }
+
+      // Se o arquivo for público e a URL pública for solicitada, retorne a URL pública
+      if (isPublic) {
+        await file.makePublic();
+        return `https://storage.googleapis.com/${bucket}/${filename}`;
+      }
+
+      // Caso contrário, gere uma URL assinada
+      const [url] = await file.getSignedUrl({
+        action: 'read',
+        expires: Date.now() + (expiresInMs || 7 * 24 * 60 * 60 * 1000),
+      });
+
+      return url;
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        GoogleCloudStorageService.name,
+        this.getSignedUrlSafe.name,
+        LogAction.FAILED,
+        { filename, bucket, error },
+      );
+      return null;
+    }
+  }
+
   async getRecordFile(
     recordId: string,
     newsId: string,

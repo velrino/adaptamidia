@@ -13,6 +13,8 @@ import {
 import { RedisService } from 'src/shared/redis/redis.service';
 import { DisplayLog, DisplayLogDocument } from '../display-logs.schema';
 import { ListDisplayLogsPaginateDto } from './list.interface';
+import { GoogleCloudStorageService } from 'src/shared/google/cloud/google-cloud-storage.service';
+import { IGoogleStorageBucket } from 'src/shared/google/cloud/google-cloud-storage.interface';
 
 @Injectable()
 export class ListDisplayLogService {
@@ -20,6 +22,7 @@ export class ListDisplayLogService {
     @InjectModel(DisplayLog.name)
     public readonly model: Model<DisplayLogDocument>,
     private readonly redisService: RedisService,
+    private readonly googleCloudStorageService: GoogleCloudStorageService,
   ) {}
 
   executeFromRequest(
@@ -116,7 +119,7 @@ export class ListDisplayLogService {
         }
       : { updated_at: -1 as SortOrder };
 
-    const data = await queryBuilder
+    let data = await queryBuilder
       .sort(sortObject)
       .select(['-data'])
       .skip(skip)
@@ -125,6 +128,45 @@ export class ListDisplayLogService {
       .exec();
 
     const pages = Math.ceil(total / parameters.limit);
+
+    if (parameters.get_signed_url === true) {
+      const expiresInMs = 60 * 60 * 1000; // 1 hour
+      data = await Promise.all(
+        data.map(async (item) => {
+          // Inicializa as URLs como string vazia por padrão
+          let capturePublicUrl: string | null = null;
+          let captureBboxPublicUrl: string | null = null;
+
+          // Obtém URL assinada apenas se item.capture existir
+          if (item.capture) {
+            capturePublicUrl =
+              await this.googleCloudStorageService.getSignedUrlSafe(
+                item.capture,
+                item.bucket as IGoogleStorageBucket,
+                false,
+                expiresInMs,
+              );
+          }
+
+          // Obtém URL assinada apenas se item.capture_bbox existir
+          if (item.capture_bbox) {
+            captureBboxPublicUrl =
+              await this.googleCloudStorageService.getSignedUrlSafe(
+                item.capture_bbox,
+                item.bucket as IGoogleStorageBucket,
+                false,
+                expiresInMs,
+              );
+          }
+
+          return {
+            ...item,
+            capture: capturePublicUrl || null,
+            capture_bbox: captureBboxPublicUrl || null,
+          } as any;
+        }),
+      );
+    }
 
     return {
       pages,

@@ -1,5 +1,11 @@
 import { Transform } from 'class-transformer';
-import { IsArray, IsMongoId, IsOptional, IsIn } from 'class-validator';
+import {
+  IsArray,
+  IsMongoId,
+  IsOptional,
+  IsIn,
+  IsBoolean,
+} from 'class-validator';
 import { NormalizeToArray } from 'src/shared/general';
 import { PaginateDto } from 'src/shared/interfaces/paginate.dto';
 
@@ -53,4 +59,8 @@ export class ListDisplayLogsPaginateDto extends PaginateDto {
     'updated_at',
   ])
   sort_by?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  get_signed_url: boolean = false;
 }
