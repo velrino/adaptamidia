@@ -12,6 +12,8 @@ export class DetectionService {
     process.env.DETECTION_API_URL || 'http://localhost:8000';
 
   async onApplicationBootstrap() {
+    if (!process.env.DETECTION_API_URL) return;
+
     try {
       const response = await this.check();
       Log(
