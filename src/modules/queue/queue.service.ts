@@ -7,12 +7,18 @@ import {
   ICreateDisplayLog,
   ICreateDisplayLogProcessor,
 } from '../display-logs/create/create.interface';
+import {
+  IDetectionDisplayLog,
+  IDetectionDisplayLogProcessor,
+} from '../display-logs/detection/detection.interface';
 
 @Injectable()
 export class QueueService {
   constructor(
     @InjectQueue(QueuesEnum.DISPLAY_LOG_CREATE)
     readonly displayLogCreateQueue: Queue<ICreateDisplayLogProcessor>,
+    @InjectQueue(QueuesEnum.DETECT_IMAGE)
+    readonly detectImageQueue: Queue<IDetectionDisplayLogProcessor>,
   ) {}
 
   defaultQueueOptions: Bull.JobOptions = {
@@ -33,6 +39,25 @@ export class QueueService {
     const currentEvent = this.addDisplayLogCreateQueue.name;
 
     return await this.displayLogCreateQueue
+      .add({ parameters }, this.defaultQueueOptions)
+      .then((result) => {
+        Log(LogType.INFO, QueueService.name, currentEvent, LogAction.SUCCESS, {
+          result: result.id,
+        });
+        return result;
+      })
+      .catch((error) => {
+        Log(LogType.ERROR, QueueService.name, currentEvent, LogAction.FAILED, {
+          error,
+        });
+        return error;
+      });
+  }
+
+  async addQueueDetectImage(parameters: IDetectionDisplayLog) {
+    const currentEvent = this.addQueueDetectImage.name;
+
+    return await this.detectImageQueue
       .add({ parameters }, this.defaultQueueOptions)
       .then((result) => {
         Log(LogType.INFO, QueueService.name, currentEvent, LogAction.SUCCESS, {

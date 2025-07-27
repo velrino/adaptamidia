@@ -1,0 +1,200 @@
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  IApiDeepFaceAnalysisResult,
+  IApiYoloResult,
+} from './detection.interface';
+import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
+
+@Injectable()
+export class DetectionService {
+  private readonly baseUrl =
+    process.env.DETECTION_API_URL || 'http://localhost:8000';
+
+  async onApplicationBootstrap() {
+    try {
+      const response = await this.makeRequest<any>('GET', '/');
+      Log(
+        LogType.INFO,
+        DetectionService.name,
+        this.onApplicationBootstrap.name,
+        LogAction.STARTED,
+        { response },
+      );
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        DetectionService.name,
+        this.onApplicationBootstrap.name,
+        LogAction.FAILED,
+        { error },
+      );
+    }
+  }
+
+  // Função reutilizável para requests com fetch
+  private async makeRequest<T>(
+    method: 'GET' | 'POST' = 'POST',
+    endpoint: string,
+    file?: Express.Multer.File,
+    timeout: number = 30000,
+    responseType: 'json' | 'buffer' = 'json',
+  ): Promise<T> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    try {
+      Log(
+        LogType.INFO,
+        DetectionService.name,
+        this.makeRequest.name,
+        LogAction.STARTED,
+        {
+          endpoint,
+          method,
+          fileName: file?.originalname,
+          fileSize: file?.size,
+          mimeType: file?.mimetype,
+          bufferLength: file?.buffer?.length,
+        },
+      );
+
+      let body: FormData | undefined;
+      if (file && method === 'POST') {
+        const formData = new FormData();
+        const filename = file.originalname.split('/').pop() || 'image.jpg';
+        const blob = new Blob([file.buffer], { type: file.mimetype });
+        formData.append('file', blob, filename);
+        body = formData;
+      }
+
+      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+        method,
+        body,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        Log(
+          LogType.ERROR,
+          DetectionService.name,
+          this.makeRequest.name,
+          LogAction.FAILED,
+          {
+            endpoint,
+            status: response.status,
+            statusText: response.statusText,
+            errorBody,
+          },
+        );
+        throw new HttpException(
+          `Erro request ${endpoint}: ${response.status} - ${errorBody}`,
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      Log(
+        LogType.INFO,
+        DetectionService.name,
+        this.makeRequest.name,
+        LogAction.SUCCESS,
+        {
+          endpoint,
+          status: response.status,
+          statusText: response.statusText,
+        },
+      );
+
+      // Liberar memória do buffer após o uso
+      if (file) {
+        this.clearFileMemory(file);
+      }
+
+      if (responseType === 'buffer') {
+        const arrayBuffer = await response.arrayBuffer();
+        return Buffer.from(arrayBuffer) as T;
+      } else {
+        const data = await response.json();
+        return data as T;
+      }
+    } catch (error) {
+      clearTimeout(timeoutId);
+
+      // Liberar memória mesmo em caso de erro
+      if (file) {
+        this.clearFileMemory(file);
+      }
+
+      if (error.name === 'AbortError') {
+        throw new HttpException(
+          `Request timeout para ${endpoint}`,
+          HttpStatus.REQUEST_TIMEOUT,
+        );
+      }
+
+      throw new HttpException(
+        `Erro ao fazer request para ${endpoint}: ${error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  private clearFileMemory(file: Express.Multer.File): void {
+    try {
+      // Liberar buffer
+      if (file.buffer) {
+        file.buffer.fill(0);
+        delete (file as any).buffer;
+      }
+      // Fechar stream se existir
+      if (file.stream && typeof file.stream.destroy === 'function') {
+        file.stream.destroy();
+      }
+
+      // Forçar garbage collection se disponível
+      if (global.gc) {
+        global.gc();
+      }
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        DetectionService.name,
+        this.clearFileMemory.name,
+        LogAction.FAILED,
+        { error: error.message },
+      );
+    }
+  }
+
+  async detectYolo(file: Express.Multer.File): Promise<IApiYoloResult> {
+    return await this.makeRequest<IApiYoloResult>(
+      'POST',
+      '/detect-yolo',
+      file,
+      30000, // 30 seconds timeout
+    );
+  }
+
+  async detectPeopleBbox(file: Express.Multer.File): Promise<Buffer> {
+    return await this.makeRequest<Buffer>(
+      'POST',
+      '/detect-people-bbox',
+      file,
+      45000, // 45 seconds timeout (imagem pode demorar mais)
+      'buffer',
+    );
+  }
+
+  async detectDeepFace(
+    file: Express.Multer.File,
+  ): Promise<IApiDeepFaceAnalysisResult> {
+    return await this.makeRequest<IApiDeepFaceAnalysisResult>(
+      'POST',
+      '/detect-deepface',
+      file,
+      60000, // 60 seconds timeout (análise facial pode ser mais demorada)
+    );
+  }
+}

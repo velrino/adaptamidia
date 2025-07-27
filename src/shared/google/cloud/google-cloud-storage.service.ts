@@ -26,7 +26,7 @@ export class GoogleCloudStorageService {
     Log(
       LogType.INFO,
       GoogleCloudStorageService.name,
-      this.onApplicationBootstrap.name,
+      'constructor',
       LogAction.STARTED,
       { keyFilename },
     );
@@ -40,26 +40,26 @@ export class GoogleCloudStorageService {
     );
   }
 
-  async onApplicationBootstrap() {
-    try {
-      const healt_check = await this.healthCheck();
-      Log(
-        LogType.INFO,
-        GoogleCloudStorageService.name,
-        this.onApplicationBootstrap.name,
-        LogAction.SUCCESS,
-        { healt_check },
-      );
-    } catch (error) {
-      Log(
-        LogType.ERROR,
-        GoogleCloudStorageService.name,
-        this.onApplicationBootstrap.name,
-        LogAction.FAILED,
-        { error },
-      );
-    }
-  }
+  // async onApplicationBootstrap() {
+  //   try {
+  //     const healt_check = await this.healthCheck();
+  //     Log(
+  //       LogType.INFO,
+  //       GoogleCloudStorageService.name,
+  //       this.onApplicationBootstrap.name,
+  //       LogAction.SUCCESS,
+  //       { healt_check },
+  //     );
+  //   } catch (error) {
+  //     Log(
+  //       LogType.ERROR,
+  //       GoogleCloudStorageService.name,
+  //       this.onApplicationBootstrap.name,
+  //       LogAction.FAILED,
+  //       { error },
+  //     );
+  //   }
+  // }
 
   async healthCheck() {
     const startTime = Date.now(); // Record the start time
@@ -262,5 +262,75 @@ export class GoogleCloudStorageService {
         RESULT.GOOGLE_STORAGE_SIGNED_FAILED,
       );
     }
+  }
+
+  async getRecordFile(
+    recordId: string,
+    newsId: string,
+    timestamp: string,
+    bucket: IGoogleStorageBucket = IGoogleStorageBucket.ADAPTA_MIDIA,
+    isPublic: boolean = false,
+    expiresInMs?: number,
+  ): Promise<string> {
+    const filePath = `adapta-midia-record/logs/${recordId}/news/${newsId}/${timestamp}`;
+    return this.getSignedUrl(filePath, bucket, isPublic, expiresInMs);
+  }
+
+  async downloadRecordFile(
+    bucket: IGoogleStorageBucket,
+    filePath: string,
+  ): Promise<Buffer> {
+    // const filePath = `/logs/${unitId}/${type}/${recordId}/${identifier}`;
+    console.log({ bucket, filePath });
+    try {
+      const file = this.storage.bucket(bucket).file(filePath);
+      const [buffer] = await file.download();
+      return buffer;
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        GoogleCloudStorageService.name,
+        this.downloadRecordFile.name,
+        LogAction.FAILED,
+        { filePath, bucket, error },
+      );
+      throw new InternalServerErrorException(
+        RESULT.GOOGLE_STORAGE_DOWNLOAD_FAILED,
+      );
+    }
+  }
+
+  bufferToMulterFile(
+    buffer: Buffer,
+    originalname: string,
+    mimetype: string = 'image/jpeg',
+  ): Express.Multer.File {
+    const stream = new Readable();
+    stream.push(buffer);
+    stream.push(null);
+
+    return {
+      fieldname: 'file',
+      originalname,
+      encoding: '7bit',
+      mimetype,
+      size: buffer.length,
+      buffer: Buffer.from(buffer), // Cria uma cópia para evitar compartilhamento
+      stream,
+      destination: '',
+      filename: '',
+      path: '',
+    };
+  }
+
+  async downloadRecordFileAsMulter(
+    bucket: IGoogleStorageBucket,
+    filePath: string,
+  ): Promise<Express.Multer.File> {
+    const buffer = await this.downloadRecordFile(bucket, filePath);
+    const filename = `${filePath}.jpg`;
+    const multerFile = this.bufferToMulterFile(buffer, filename, 'image/jpeg');
+
+    return multerFile;
   }
 }

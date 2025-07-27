@@ -95,6 +95,13 @@ export class CreateDisplayLogService {
     }
   }
 
+  async onApplicationBootstrap() {
+    await this.queueService.addQueueDetectImage({
+      id: new Types.ObjectId('6881c38478913214f5aca561'),
+      // id: new Types.ObjectId('68837ac478913214f5aca84d'),
+    });
+  }
+
   async executeFromGuestRequest(
     currentRequest: CustomRequest,
     parameters: ICreateDisplayLogDto,

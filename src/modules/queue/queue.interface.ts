@@ -1,5 +1,6 @@
 export enum QueuesEnum {
   DISPLAY_LOG_CREATE = 'DISPLAY_LOG_CREATE',
+  DETECT_IMAGE = 'DETECT_IMAGE',
 }
 
 export enum QueueStatus {
