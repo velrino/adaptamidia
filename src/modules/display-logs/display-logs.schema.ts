@@ -7,6 +7,7 @@ import { DisplayLogStatus } from './display-logs.interface';
 import { News } from '../news/news.schema';
 import { Advertisement } from '../advertisement/advertisement.schema';
 import { DisplayType } from '../display/unit/unit.interface';
+import { IApiYoloResult, IApiDeepFaceAnalysisResult } from 'src/shared/detection/detection.interface';
 
 @Schema({ ...SchemaDefault, collection: 'display_logs' })
 export class DisplayLog {
@@ -86,6 +87,21 @@ export class DisplayLog {
     index: true,
   })
   status: DisplayLogStatus;
+
+  @Prop({ type: String, required: false, default: null })
+  capture: string;
+
+  @Prop({ type: String, required: false, default: null })
+  capture_bbox: string;
+
+  @Prop({ type: String, required: false, default: null })
+  bucket: string;
+
+  @Prop({ type: mongoose.Schema.Types.Mixed, required: false, default: null })
+  yolo: IApiYoloResult;
+
+  @Prop({ type: mongoose.Schema.Types.Mixed, required: false, default: null })
+  deepface: IApiDeepFaceAnalysisResult;
 }
 
 export type DisplayLogDocument = DisplayLog & Document;

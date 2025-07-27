@@ -30,6 +30,8 @@ import {
   IApiDeepFaceAnalysisResult,
   IApiYoloResult,
 } from 'src/shared/detection/detection.interface';
+import { DisplayLogStatus } from '../display-logs.interface';
+import { DisplayLog } from '../display-logs.schema';
 
 @Processor(QueuesEnum.DETECT_IMAGE)
 @Injectable()
@@ -75,14 +77,16 @@ export class DetectionDisplayLogService {
         displayLog?.news?._id.toString() ||
         displayLog?.advertisement?._id.toString();
 
+      const currentBucket = IGoogleStorageBucket.ADAPTA_MIDIA_RECORD;
       const filePath = `logs/${displayLog.local_unit._id.toString()}/${displayLog.type.toLowerCase()}/${recordId}`;
 
       const imageFile =
         await this.googleCloudStorageService.downloadRecordFileAsMulter(
-          IGoogleStorageBucket.ADAPTA_MIDIA_RECORD,
+          currentBucket,
           `${filePath}/${displayLog.identifier}`,
         );
 
+      let status = displayLog.status;
       // Enviar para detecção YOLO
       let yolo: IApiYoloResult = ApiYoloResultDefault;
       let deepface: IApiDeepFaceAnalysisResult = ApiDeepFaceAnalysisResult;
@@ -92,14 +96,17 @@ export class DetectionDisplayLogService {
         yolo = await this.detectionService.detectYolo(imageFile);
         detectPeopleBbox =
           await this.detectionService.detectPeopleBbox(imageFile);
+        status = DisplayLogStatus.DETECTION_STARTED;
+
         deepface = await this.detectionService.detectDeepFace(imageFile);
+        status = DisplayLogStatus.DETECTION_ENRICHED;
       } catch (error) {
         Log(
           LogType.ERROR,
           DetectionDisplayLogService.name,
           this.execute.name,
           LogAction.FAILED,
-          { displayLogId: payload.id, error },
+          { displayLogId: payload.id, status, error },
         );
       }
 
@@ -116,7 +123,7 @@ export class DetectionDisplayLogService {
             filePath,
             `${displayLog.identifier}_bbox`,
             bboxFile,
-            IGoogleStorageBucket.ADAPTA_MIDIA_RECORD,
+            currentBucket,
           );
 
           bboxPath = bboxResult.path;
@@ -130,19 +137,36 @@ export class DetectionDisplayLogService {
           );
         }
       }
-      console.log({ bboxPath, yolo, deepface });
+
+      const updateQuery: Partial<
+        Pick<
+          DisplayLog,
+          'status' | 'yolo' | 'deepface' | 'capture' | 'capture_bbox' | 'bucket'
+        >
+      > = {
+        status,
+        yolo,
+        deepface,
+        capture: `${filePath}/${displayLog.identifier}`,
+        capture_bbox: bboxPath ?? undefined,
+        bucket: currentBucket,
+      };
+
+      const filter = { _id: displayLog._id };
+
+      await this.displayLogService.displayLogModel.updateOne(
+        filter,
+        updateQuery,
+      );
+
       Log(
         LogType.INFO,
         DetectionDisplayLogService.name,
         this.execute.name,
         LogAction.SUCCESS,
         {
-          displayLogId: payload.id,
-          filePath,
-          bboxPath,
-          yolo,
-          deepface,
-          detectPeopleBbox,
+          filter,
+          updateQuery,
         },
       );
 

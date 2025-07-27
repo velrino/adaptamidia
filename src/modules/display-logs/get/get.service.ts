@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { DisplayLog, DisplayLogDocument } from '../display-logs.schema';
 
 import { News, NewsDocument } from 'src/modules/news/news.schema';
-import { Model, Types, FilterQuery } from 'mongoose';
+import { Model, FilterQuery } from 'mongoose';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { RESULT } from 'src/shared/result.enum';
 import { IPopulatedDisplayLog } from './get.interface';
@@ -12,7 +12,7 @@ import { IPopulatedDisplayLog } from './get.interface';
 export class GetDisplayLogService {
   constructor(
     @InjectModel(DisplayLog.name)
-    private readonly displayLogModel: Model<DisplayLogDocument>,
+    public readonly displayLogModel: Model<DisplayLogDocument>,
     @InjectModel(News.name)
     readonly newsModel: Model<NewsDocument>,
   ) {}
