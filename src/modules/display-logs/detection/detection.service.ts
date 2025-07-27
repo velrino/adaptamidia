@@ -75,20 +75,23 @@ export class DetectionDisplayLogService {
         displayLog?.news?._id.toString() ||
         displayLog?.advertisement?._id.toString();
 
-      const filePath = `logs/${displayLog.local_unit._id.toString()}/${displayLog.type.toLowerCase()}/${recordId}/${displayLog.identifier}`;
+      const filePath = `logs/${displayLog.local_unit._id.toString()}/${displayLog.type.toLowerCase()}/${recordId}`;
 
       const imageFile =
         await this.googleCloudStorageService.downloadRecordFileAsMulter(
           IGoogleStorageBucket.ADAPTA_MIDIA_RECORD,
-          filePath,
+          `${filePath}/${displayLog.identifier}`,
         );
 
       // Enviar para detecção YOLO
       let yolo: IApiYoloResult = ApiYoloResultDefault;
       let deepface: IApiDeepFaceAnalysisResult = ApiDeepFaceAnalysisResult;
+      let detectPeopleBbox: Buffer | null = null;
 
       try {
         yolo = await this.detectionService.detectYolo(imageFile);
+        detectPeopleBbox =
+          await this.detectionService.detectPeopleBbox(imageFile);
         deepface = await this.detectionService.detectDeepFace(imageFile);
       } catch (error) {
         Log(
@@ -99,17 +102,49 @@ export class DetectionDisplayLogService {
           { displayLogId: payload.id, error },
         );
       }
-      // await this.detectionService.detectYolo(imageFile);
 
-      //   const yolo = await this.detectionService.detectYolo(imageFile);
+      let bboxPath: string | null = null;
 
-      //   Log(
-      //     LogType.INFO,
-      //     DetectionDisplayLogService.name,
-      //     this.execute.name,
-      //     LogAction.SUCCESS,
-      //     { displayLogId: payload.id, filePath, yolo, deepface },
-      //   );
+      if (detectPeopleBbox) {
+        try {
+          const bboxFile = this.googleCloudStorageService.bufferToMulterFile(
+            detectPeopleBbox,
+            `${displayLog.identifier}_bbox.jpg`,
+            'image/jpeg',
+          );
+          const bboxResult = await this.googleCloudStorageService.uploadFile(
+            filePath,
+            `${displayLog.identifier}_bbox`,
+            bboxFile,
+            IGoogleStorageBucket.ADAPTA_MIDIA_RECORD,
+          );
+
+          bboxPath = bboxResult.path;
+        } catch (error) {
+          Log(
+            LogType.ERROR,
+            DetectionDisplayLogService.name,
+            'bboxResult_uploadFile',
+            LogAction.FAILED,
+            { error },
+          );
+        }
+      }
+      console.log({ bboxPath, yolo, deepface });
+      Log(
+        LogType.INFO,
+        DetectionDisplayLogService.name,
+        this.execute.name,
+        LogAction.SUCCESS,
+        {
+          displayLogId: payload.id,
+          filePath,
+          bboxPath,
+          yolo,
+          deepface,
+          detectPeopleBbox,
+        },
+      );
 
       // Aqui você pode salvar o resultado da detecção no banco ou processar conforme necessário
       //   console.log({ displayLog, yolo });

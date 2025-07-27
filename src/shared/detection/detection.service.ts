@@ -95,22 +95,22 @@ export class DetectionService {
         );
       }
 
-      Log(
-        LogType.INFO,
-        DetectionService.name,
-        this.makeRequest.name,
-        LogAction.SUCCESS,
-        {
-          endpoint,
-          status: response.status,
-          statusText: response.statusText,
-        },
-      );
+      // Log(
+      //   LogType.INFO,
+      //   DetectionService.name,
+      //   this.makeRequest.name,
+      //   LogAction.SUCCESS,
+      //   {
+      //     endpoint,
+      //     status: response.status,
+      //     statusText: response.statusText,
+      //   },
+      // );
 
       // Liberar memória do buffer após o uso
-      if (file) {
-        this.clearFileMemory(file);
-      }
+      // if (file) {
+      //   this.clearFileMemory(file);
+      // }
 
       if (responseType === 'buffer') {
         const arrayBuffer = await response.arrayBuffer();
