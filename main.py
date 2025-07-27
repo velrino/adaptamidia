@@ -38,17 +38,42 @@ def analyze_faces_deepface(image):
     """Analisa faces com DeepFace e retorna estatísticas agregadas"""
     try:
         # Import DeepFace only when needed
+        import sys
+        import os
+        sys.setrecursionlimit(3000)  # Increase recursion limit
+        
+        # Configure TensorFlow environment
+        os.environ['TF_USE_LEGACY_KERAS'] = '1'
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Reduce TF logging
+        
         from deepface import DeepFace
         
         # Converter PIL para numpy array
         img_array = np.array(image)
+        
+        # Ensure image is in RGB format
+        if len(img_array.shape) == 3 and img_array.shape[2] == 3:
+            # Convert from RGB to BGR for DeepFace
+            img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
 
-        # Analisar todas as faces na imagem
-        results = DeepFace.analyze(
-            img_path=img_array,
-            actions=["age", "gender", "race", "emotion"],
-            enforce_detection=False,
-        )
+        # Analisar todas as faces na imagem com timeout protection
+        import signal
+        
+        def timeout_handler(signum, frame):
+            raise TimeoutError("DeepFace analysis timeout")
+        
+        signal.signal(signal.SIGALRM, timeout_handler)
+        signal.alarm(30)  # 30 second timeout
+        
+        try:
+            results = DeepFace.analyze(
+                img_path=img_array,
+                actions=["age", "gender", "race", "emotion"],
+                enforce_detection=False,
+                silent=True
+            )
+        finally:
+            signal.alarm(0)  # Cancel the alarm
 
         # Se não é lista, transformar em lista
         if not isinstance(results, list):
@@ -116,8 +141,15 @@ def analyze_faces_deepface(image):
             "age": age_stats,
         }
 
-    except Exception as e:
-        # Se DeepFace falhar, retornar estrutura vazia
+    except (RecursionError, TimeoutError, Exception) as e:
+        import traceback
+        error_details = {
+            "error_type": type(e).__name__,
+            "error_message": str(e),
+            "traceback": traceback.format_exc()[-500:]  # Last 500 chars of traceback
+        }
+        
+        # Se DeepFace falhar, retornar estrutura vazia com detalhes do erro
         return {
             "gender": {"Woman": 0, "Man": 0},
             "race": {
@@ -141,7 +173,7 @@ def analyze_faces_deepface(image):
             "women": 0,
             "total": 0,
             "age": {"max": 0, "min": 0, "average": 0},
-            "error": str(e),
+            "error": error_details,
         }
 
 
