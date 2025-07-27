@@ -13,12 +13,14 @@ import {
 import { CalculateTimeBetweenDates } from './shared/general';
 import { RESULT } from './shared/result.enum';
 import { Log, LogAction, LogType } from './modules/logs/log.helper';
+import { DetectionService } from './shared/detection/detection.service';
 
 @Injectable()
 export class HealthCheckService {
   constructor(
     @InjectConnection() private readonly mongoConnection: Connection,
     private readonly redisService: RedisService,
+    private readonly detectionService: DetectionService,
   ) {}
 
   async execute(parameters: IHealthCheck) {
@@ -34,7 +36,11 @@ export class HealthCheckService {
       result = cache;
       resultIsCache = true;
     } else {
-      result = [await this.checkMongoDB(), await this.checkRedis()];
+      result = [
+        await this.checkMongoDB(),
+        await this.checkRedis(),
+        await this.checkVision(),
+      ];
 
       await this.redisService.set(cacheKey, result, 60000); // Cache de 1 minuto
 
@@ -126,6 +132,12 @@ export class HealthCheckService {
   private async checkRedis(): Promise<IHealthCheckResult> {
     return this.checkService(HealthCheckServiceName.CACHE_MANAGER, () =>
       this.redisService.ping(),
+    );
+  }
+
+  private async checkVision(): Promise<IHealthCheckResult> {
+    return this.checkService(HealthCheckServiceName.VISION, () =>
+      this.detectionService.check(),
     );
   }
 

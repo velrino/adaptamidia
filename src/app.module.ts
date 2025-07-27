@@ -22,6 +22,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { WeatherModule } from './modules/weather/weather.module';
 import { DisplayModule } from './modules/display/display.module';
 import { HealthCheckService } from './app.service';
+import { DetectionService } from './shared/detection/detection.service';
 
 @Module({
   imports: [
@@ -79,7 +80,7 @@ import { HealthCheckService } from './app.service';
     WeatherModule,
   ],
   controllers: [AppController],
-  providers: [HealthCheckService],
+  providers: [HealthCheckService, DetectionService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

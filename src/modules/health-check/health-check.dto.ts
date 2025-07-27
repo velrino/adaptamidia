@@ -5,6 +5,7 @@ export enum HealthCheckServiceName {
   GATEWAY_2 = 'GATEWAY_2', // CRYPTOMUS
   GATEWAY_3 = 'GATEWAY_3', // STRIPE
   DATA_BREACH_MONITORING_PROVIDER_1 = 'DATA_BREACH_MONITORING_PROVIDER_1', // HIBP
+  VISION = 'VISION', // HIBP
 }
 
 export enum HealthCheckStatus {

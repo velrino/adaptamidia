@@ -13,7 +13,7 @@ export class DetectionService {
 
   async onApplicationBootstrap() {
     try {
-      const response = await this.makeRequest<any>('GET', '/');
+      const response = await this.check();
       Log(
         LogType.INFO,
         DetectionService.name,
@@ -30,6 +30,10 @@ export class DetectionService {
         { error },
       );
     }
+  }
+
+  async check() {
+    return this.makeRequest<any>('GET', '/');
   }
 
   // Função reutilizável para requests com fetch
