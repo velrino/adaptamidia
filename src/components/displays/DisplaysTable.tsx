@@ -316,10 +316,24 @@ export default function DisplaysTable() {
                         {item.status}
                       </TableCell>
                       <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
-                        {DateHelper.format(item?.created_at)}
+                        <div className="flex flex-col text-theme-sm">
+                          <span className="text-gray-800 dark:text-gray-200 font-medium">
+                            {DateHelper.format(item.created_at)}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {DateHelper.timeAgo(item.created_at)}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
-                        {DateHelper.format(item?.updated_at)}
+                        <div className="flex flex-col text-theme-sm">
+                          <span className="text-gray-800 dark:text-gray-200 font-medium">
+                            {DateHelper.format(item.updated_at)}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {DateHelper.timeAgo(item.updated_at)}
+                          </span>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
