@@ -193,6 +193,14 @@ export const API = {
         data,
       });
     },
+    async paginate(access_token: string, data: IApiPaginateCompanyUnits) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/display/logs/paginate",
+        data,
+        access_token,
+      });
+    },
   },
   display_logs: {
     async create(data: IApiCreateDisplayLogRequest) {

@@ -43,6 +43,7 @@ const navItems: NavItem[] = [
     name: "Publicidade",
     subItems: [
       { name: "Anúncios", path: "/advertisements", pro: false },
+      { name: "Exibições", path: "/displays", pro: false },
       // { name: "Métricas", path: "/analytics", pro: true },
     ],
   },

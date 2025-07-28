@@ -12,3 +12,11 @@ export enum DisplayLogStatus {
 export enum IApiDashboardDisplayLogType {
   TOTAL_BY_TYPE = "TOTAL_BY_TYPE",
 }
+
+export enum DisplayLogSortKey {
+  local_unit_name = "local_unit.name",
+  type = "type",
+  status = "status",
+  created_at = "created_at",
+  updated_at = "updated_at",
+}

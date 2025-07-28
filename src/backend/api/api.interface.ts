@@ -770,3 +770,91 @@ export interface IApiDisplayUnitInfoResponse {
 }
 
 // END DISPLAY INFO
+
+// START DISPLAY LOGS
+export interface IApiPaginateDisplayLogs extends IApiPaginateParameters {
+  id?: string[];
+  local_unit?: string[];
+  news?: string[];
+  advertisement?: string[];
+  advertiser?: string[];
+  sort_by?: string;
+  get_signed_url?: boolean;
+  search?: string;
+  start_date?: string;
+  end_date?: boolean;
+}
+
+export interface IApiDisplayLogItem {
+  _id: string;
+  news?: {
+    _id: string;
+    source_name: string;
+    author: string;
+    title: string;
+    description: string;
+    image: string;
+    url: string;
+  };
+  advertisement?: {
+    _id: string;
+    title: string;
+    description: string;
+    items: [
+      {
+        description: string;
+        seconds: number;
+        source: string;
+        title: string;
+        type: string;
+      }
+    ];
+  };
+  advertiser?: string;
+  local: string;
+  local_unit: {
+    _id: string;
+    name: string;
+    full_address: string;
+    type: string;
+  };
+  seconds: number;
+  start_at: string;
+  end_at: string;
+  identifier: string;
+  ip: string;
+  user_agent: string;
+  type: string;
+  status: string;
+  capture?: string | null;
+  capture_bbox?: unknown | null;
+  bucket?: string | null;
+  yolo?: {
+    people: number;
+    confidence: number;
+  } | null;
+  deepface?: unknown | null;
+  insightface?: {
+    gender: {
+      Woman: number;
+      Man: number;
+    };
+    men: number;
+    women: number;
+    total: number;
+    age: {
+      max: number;
+      min: number;
+      average: number;
+    };
+    method?: string;
+  } | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface IApiDisplayLogResponse {
+  pages: number;
+  total: number;
+  data: IApiDisplayLogItem[];
+}
