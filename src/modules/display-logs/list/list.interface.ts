@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsIn,
   IsBoolean,
+  IsString,
 } from 'class-validator';
 import { NormalizeToArray } from 'src/shared/general';
 import { PaginateDto } from 'src/shared/interfaces/paginate.dto';
@@ -63,4 +64,9 @@ export class ListDisplayLogsPaginateDto extends PaginateDto {
   @IsBoolean()
   @IsOptional()
   get_signed_url: boolean = false;
+
+  @IsOptional()
+  @IsString()
+  @Transform(({ value }) => value?.trim())
+  search?: string;
 }

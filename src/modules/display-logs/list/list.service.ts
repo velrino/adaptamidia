@@ -94,6 +94,16 @@ export class ListDisplayLogService {
       };
     }
 
+    if (parameters.search) {
+      query.$or = [
+        { identifier: { $regex: parameters.search, $options: 'i' } },
+        { ip: { $regex: parameters.search, $options: 'i' } },
+        { user_agent: { $regex: parameters.search, $options: 'i' } },
+        { type: { $regex: parameters.search, $options: 'i' } },
+        { status: { $regex: parameters.search, $options: 'i' } },
+      ];
+    }
+
     const total = await this.model.countDocuments(query);
 
     const queryBuilder = this.model

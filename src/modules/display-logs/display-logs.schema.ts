@@ -114,3 +114,24 @@ export class DisplayLog {
 export type DisplayLogDocument = DisplayLog & Document;
 
 export const DisplayLogSchema = SchemaFactory.createForClass(DisplayLog);
+
+// Compound indexes for better query performance
+DisplayLogSchema.index({ local_unit: 1, created_at: -1 });
+DisplayLogSchema.index({ type: 1, status: 1, created_at: -1 });
+DisplayLogSchema.index({ news: 1, created_at: -1 });
+DisplayLogSchema.index({ advertisement: 1, created_at: -1 });
+DisplayLogSchema.index({ start_at: 1, end_at: 1 });
+
+// Text search index for full-text search
+DisplayLogSchema.index({
+  identifier: 'text',
+  ip: 'text',
+  user_agent: 'text'
+}, {
+  name: 'search_text_index',
+  weights: {
+    identifier: 10,
+    ip: 5,
+    user_agent: 1
+  }
+});
