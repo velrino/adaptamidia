@@ -827,7 +827,7 @@ export interface IApiDisplayLogItem {
   type: string;
   status: string;
   capture?: string | null;
-  capture_bbox?: unknown | null;
+  capture_bbox?: string | null;
   bucket?: string | null;
   yolo?: {
     people: number;

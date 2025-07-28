@@ -27,6 +27,7 @@ import { GetErrorMessage } from "@/utils/generic";
 import { API } from "@/backend/api/api.endpoints";
 import PaginationWithIcon from "../ui/pagination/PaginationWitIcon";
 import Spinner from "../ui/spinner/Spinner";
+import DisplayLogModal from "./DisplayLogModal/DisplayLogModal";
 
 export default function DisplaysTable() {
   const { data: session } = useSession();
@@ -76,6 +77,7 @@ export default function DisplaysTable() {
         const query: IApiPaginateDisplayLogs = {
           page: currentPage,
           limit: 20,
+          get_signed_url: true,
           ...apiQuery,
         };
 
@@ -90,6 +92,7 @@ export default function DisplaysTable() {
           showToast(GetErrorMessage(data.error), IToastType.ERROR);
         } else if (response.ok) {
           setResponse(data);
+          setCurrentSelected(data?.data?.[0]);
         }
       } catch (error) {
         showToast(GetErrorMessage(error), IToastType.ERROR);
@@ -358,27 +361,23 @@ export default function DisplaysTable() {
         </div>
       </div>
       {currentSelected && (
-        // <CompanyUnitModal
-        //   action={contentAction}
-        //   setContentAction={setContentAction}
-        //   // setCurrentSelected={setCurrentSelected}
-        //   record={currentSelected}
-        //   refresh={async (refresh: boolean) => {
-        //     if (refresh) {
-        //       getResponse({
-        //         cache: false,
-        //       });
-        //     }
-        //   }}
-        //   onCloseCallback={(record?: IApiUnitItemResponse | undefined) => {
-        //     if (record?._id) {
-        //       setCurrentSelected(record);
-        //     } else {
-        //       setCurrentSelected(null);
-        //     }
-        //   }}
-        // />
-        <div></div>
+        <DisplayLogModal
+          record={currentSelected}
+          refresh={async (refresh: boolean) => {
+            if (refresh) {
+              getResponse({
+                cache: false,
+              });
+            }
+          }}
+          onCloseCallback={(record?: IApiDisplayLogItem | undefined) => {
+            if (record?._id) {
+              setCurrentSelected(record);
+            } else {
+              setCurrentSelected(null);
+            }
+          }}
+        />
       )}
     </>
   );
