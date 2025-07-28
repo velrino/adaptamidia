@@ -110,11 +110,19 @@ export class ListDisplayLogService {
       .find(query)
       .populate({
         path: 'news',
-        select: ['_id', 'description', 'title', 'source_name', 'author'],
+        select: [
+          '_id',
+          'description',
+          'title',
+          'source_name',
+          'author',
+          'image',
+          'url',
+        ],
       })
       .populate({
         path: 'advertisement',
-        select: ['_id', 'description', 'title'],
+        select: ['_id', 'description', 'title', 'items'],
       })
       .populate({
         path: 'local_unit',
