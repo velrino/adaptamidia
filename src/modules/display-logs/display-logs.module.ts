@@ -8,6 +8,7 @@ import { GetDisplayLogService } from './get/get.service';
 import { DetectionService } from 'src/shared/detection/detection.service';
 import { GoogleCloudStorageService } from 'src/shared/google/cloud/google-cloud-storage.service';
 import { ListDisplayLogService } from './list/list.service';
+import { GoogleGenAiProvider } from 'src/shared/google/llm/llm.service';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { ListDisplayLogService } from './list/list.service';
     DetectionService,
     GoogleCloudStorageService,
     ListDisplayLogService,
+    GoogleGenAiProvider,
   ],
 })
 export class DisplayLogsModule {}
