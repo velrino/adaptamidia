@@ -21,6 +21,7 @@ import { GroupCompanyUnitPaginateDto } from './group/group.interface';
 import { GroupCompanyUnitService } from './group/group.service';
 import { UpdateCompanyUnitService } from './update/update.service';
 import { UpdateCompanyUnitValidator } from './update/update.interface';
+import { SkipThrottle } from '@nestjs/throttler';
 
 @Controller()
 export class CompanyUnitController {
@@ -43,6 +44,7 @@ export class CompanyUnitController {
 
   @Get('company/unit')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
+  @SkipThrottle()
   @PermissionsAllowed()
   list(
     @Req() req: AuthenticatedRequest,
@@ -53,6 +55,7 @@ export class CompanyUnitController {
 
   @Post('company/unit/list')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
+  @SkipThrottle()
   @PermissionsAllowed()
   listPost(
     @Req() req: AuthenticatedRequest,

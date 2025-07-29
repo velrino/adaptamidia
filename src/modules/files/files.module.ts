@@ -8,7 +8,10 @@ import { DeleteFileService } from './delete/delete.service';
 import { UplodadCameraFileService } from './camera/camera.service';
 
 @Module({
-  imports: [MongooseModule.forFeature([MongoCollection.files])],
+  imports: [
+    MongooseModule.forFeature([MongoCollection.files]),
+    MongooseModule.forFeature([MongoCollection.display_logs]),
+  ],
   controllers: [FilesController],
   providers: [
     GoogleCloudStorageService,

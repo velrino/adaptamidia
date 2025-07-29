@@ -123,15 +123,18 @@ DisplayLogSchema.index({ advertisement: 1, created_at: -1 });
 DisplayLogSchema.index({ start_at: 1, end_at: 1 });
 
 // Text search index for full-text search
-DisplayLogSchema.index({
-  identifier: 'text',
-  ip: 'text',
-  user_agent: 'text'
-}, {
-  name: 'search_text_index',
-  weights: {
-    identifier: 10,
-    ip: 5,
-    user_agent: 1
-  }
-});
+DisplayLogSchema.index(
+  {
+    identifier: 'text',
+    ip: 'text',
+    user_agent: 'text',
+  },
+  {
+    name: 'search_text_index',
+    weights: {
+      identifier: 10,
+      ip: 5,
+      user_agent: 1,
+    },
+  },
+);

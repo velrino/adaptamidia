@@ -227,6 +227,26 @@ export class DetectionDisplayLogService {
       const result = await this.displayLogService.displayLogModel
         .findOneAndUpdate(filter, updateQuery, { new: true })
         .select(['-data'])
+        .populate({
+          path: 'news',
+          select: [
+            '_id',
+            'description',
+            'title',
+            'source_name',
+            'author',
+            'image',
+            'url',
+          ],
+        })
+        .populate({
+          path: 'advertisement',
+          select: ['_id', 'description', 'title', 'items'],
+        })
+        .populate({
+          path: 'local_unit',
+          select: ['_id', 'full_address', 'type', 'name'],
+        })
         .lean();
 
       if (!result) {
