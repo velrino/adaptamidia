@@ -9,6 +9,7 @@ import { DetectionService } from 'src/shared/detection/detection.service';
 import { GoogleCloudStorageService } from 'src/shared/google/cloud/google-cloud-storage.service';
 import { ListDisplayLogService } from './list/list.service';
 import { GoogleGenAiProvider } from 'src/shared/google/llm/llm.service';
+import { InsightDisplayLogService } from './insights/insights.service';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { GoogleGenAiProvider } from 'src/shared/google/llm/llm.service';
     GoogleCloudStorageService,
     ListDisplayLogService,
     GoogleGenAiProvider,
+    InsightDisplayLogService,
   ],
 })
 export class DisplayLogsModule {}
