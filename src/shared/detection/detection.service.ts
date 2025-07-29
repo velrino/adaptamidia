@@ -60,10 +60,10 @@ export class DetectionService {
           fullUrl,
           endpoint,
           method,
-          fileName: file?.originalname,
-          fileSize: file?.size,
-          mimeType: file?.mimetype,
-          bufferLength: file?.buffer?.length,
+          ...(file?.originalname && { fileName: file.originalname }),
+          ...(file?.size && { fileSize: file.size }),
+          ...(file?.mimetype && { mimeType: file.mimetype }),
+          ...(file?.buffer?.length && { bufferLength: file.buffer.length }),
         },
       );
 

@@ -1,11 +1,12 @@
 import { Process, Processor } from '@nestjs/bull';
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { QueuesEnum } from 'src/modules/queue/queue.interface';
 import { News, NewsDocument } from 'src/modules/news/news.schema';
 import { Model } from 'mongoose';
 import {
   IDetectionDisplayLog,
+  IDetectionDisplayLogDto,
   IDetectionDisplayLogProcessor,
 } from './detection.interface';
 import { Job } from 'bull';
@@ -22,6 +23,9 @@ import {
 } from 'src/shared/detection/detection.interface';
 import { DisplayLogStatus } from '../display-logs.interface';
 import { DisplayLog } from '../display-logs.schema';
+import { RESULT } from 'src/shared/result.enum';
+import { AuthenticatedRequest } from 'src/shared/request';
+import { ConvertToObjectId } from 'src/shared/general';
 
 @Processor(QueuesEnum.DETECT_IMAGE)
 @Injectable()
@@ -52,8 +56,30 @@ export class DetectionDisplayLogService {
     }
   }
 
+  executeFromAuthenticatedRequest(
+    currentRequest: AuthenticatedRequest,
+    parameters: IDetectionDisplayLogDto,
+  ) {
+    try {
+      //   VerifyUserCanProced({
+      //     need_company: parameters.company_id,
+      //     user_permissions: currentRequest.user.user.permissions,
+      //     user_companies: currentRequest.user.user.companies,
+      //     need_permissions: [],
+      //   });
+
+      return this.execute({ id: ConvertToObjectId(parameters.id) });
+    } catch (error) {
+      throw new HttpException(
+        error?.message || RESULT.DISPLAY_LOG_DETECTION_FAILED,
+        error?.status || HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+  }
+
   async execute(payload: IDetectionDisplayLog) {
     try {
+      let errorMessage: string | null = null;
       const displayLog = await this.displayLogService.get({ _id: payload.id });
 
       // Baixar imagem do Google Cloud Storage
@@ -96,6 +122,7 @@ export class DetectionDisplayLogService {
           LogAction.FAILED,
           { displayLogId: payload.id, status, error },
         );
+        errorMessage = error.message || String(error);
       } finally {
         // Limpar memória do imageFile
         if (imageFile?.buffer) {
@@ -129,6 +156,7 @@ export class DetectionDisplayLogService {
             LogAction.FAILED,
             { error },
           );
+          errorMessage = error.message || String(error);
         } finally {
           // Limpar memória do bboxFile
           if (bboxFile?.buffer) {
@@ -158,10 +186,10 @@ export class DetectionDisplayLogService {
 
       const filter = { _id: displayLog._id };
 
-      await this.displayLogService.displayLogModel.updateOne(
-        filter,
-        updateQuery,
-      );
+      const result = await this.displayLogService.displayLogModel
+        .findOneAndUpdate(filter, updateQuery, { new: true })
+        .select(['-data'])
+        .lean();
 
       Log(
         LogType.INFO,
@@ -173,6 +201,8 @@ export class DetectionDisplayLogService {
           updateQuery,
         },
       );
+
+      return { result, error: errorMessage };
     } catch (error) {
       Log(
         LogType.ERROR,

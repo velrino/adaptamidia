@@ -148,3 +148,23 @@ export function FindFileRecursively(
 
   return null;
 }
+
+/**
+ * Tenta converter um valor para ObjectId. Lança HttpException se inválido.
+ * @param value Valor a ser convertido
+ * @param fieldName Nome do campo para mensagem de erro (opcional)
+ * @returns Types.ObjectId
+ */
+export function ConvertToObjectId(
+  value: string,
+  fieldName = 'id',
+): Types.ObjectId {
+  if (!Types.ObjectId.isValid(value)) {
+    throw new HttpException(
+      `${fieldName} deve ser um ObjectId válido do MongoDB`,
+      HttpStatus.BAD_REQUEST,
+    );
+  }
+
+  return new Types.ObjectId(value);
+}
