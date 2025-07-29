@@ -17,10 +17,7 @@ import {
 import { IToastType, SortOrder } from "@/interfaces/general";
 import { DateHelper } from "@/utils/date";
 import { AngleDownIcon, AngleUpIcon } from "@/icons";
-// import Button from "@/components/ui/button/Button";
-// import { CompanyUnitRecordDefault } from "@/backend/mock/units";
 import { DisplayLogSortKey } from "@/interfaces/display-logs";
-// import CompanyUnitModal from "../CompanyUnitModal/CompanyUnitModal";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/context/ToastContext";
 import { GetErrorMessage } from "@/utils/generic";
@@ -78,6 +75,8 @@ export default function DisplaysTable() {
           page: currentPage,
           limit: 20,
           get_signed_url: true,
+          sort_by: "created_at",
+          sort: SortOrder.DESC,
           ...apiQuery,
         };
 

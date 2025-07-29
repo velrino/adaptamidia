@@ -12,7 +12,7 @@ import {
   ICompanyStatus,
   ICompanyType,
 } from "@/interfaces/company";
-import { FromEnum, IDay } from "@/interfaces/general";
+import { FromEnum, IDay, SortOrder } from "@/interfaces/general";
 import { EnumApiCompanyType } from "./api.enum";
 import {
   DisplayLogStatus,
@@ -45,6 +45,7 @@ export interface IApiPaginateParameters {
   page?: number;
   limit?: number;
   cache?: boolean;
+  sort?: SortOrder;
 }
 
 export interface IApiToken {
