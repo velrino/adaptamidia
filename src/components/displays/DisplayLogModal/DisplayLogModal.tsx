@@ -43,7 +43,7 @@ export default function DisplayLogModal({
     >
       <div className="px-6 pb-24">
         <div className="mx-auto">
-          <DisplayLogModalInfo record={record} />
+          <DisplayLogModalInfo recordInformed={record} />
         </div>
       </div>
     </Modal>

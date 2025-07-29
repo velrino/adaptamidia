@@ -858,3 +858,8 @@ export interface IApiDisplayLogResponse {
   total: number;
   data: IApiDisplayLogItem[];
 }
+
+// DETEC
+export interface IApiDetectionDisplayLogDto {
+  id: string;
+}

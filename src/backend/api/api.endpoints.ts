@@ -6,6 +6,7 @@ import {
   IApiCreateDisplayLogRequest,
   IApiDashboardDisplayLogRequest,
   IApiDashboardResumeRequest,
+  IApiDetectionDisplayLogDto,
   IApiDisplayRequest,
   IApiDisplayUnitInfoRequest,
   IApiGroupCompanyUnitsRequest,
@@ -209,6 +210,14 @@ export const API = {
         path: "/display/log",
         data,
         // access_token,
+      });
+    },
+    async detect(access_token: string, data: IApiDetectionDisplayLogDto) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/display/log/detect",
+        data,
+        access_token,
       });
     },
   },

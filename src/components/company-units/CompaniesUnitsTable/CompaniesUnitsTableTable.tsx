@@ -332,7 +332,6 @@ export default function CompanieUnitsTable() {
         <CompanyUnitModal
           action={contentAction}
           setContentAction={setContentAction}
-          // setCurrentSelected={setCurrentSelected}
           record={currentSelected}
           refresh={async (refresh: boolean) => {
             if (refresh) {

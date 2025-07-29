@@ -10,7 +10,6 @@ import {
   Image as ImageIcon,
   Brain,
   Cpu,
-  Loader2,
   Activity,
   BarChart3,
   FileText,
@@ -22,9 +21,15 @@ import {
 } from "lucide-react";
 import { IApiDisplayLogItem } from "@/backend/api/api.interface";
 import { DateHelper } from "@/utils/date";
+import { API } from "@/backend/api/api.endpoints";
+import { useSession } from "next-auth/react";
+import { useToast } from "@/context/ToastContext";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { IToastType } from "@/interfaces/general";
+import { GetErrorMessage } from "@/utils/generic";
 
 interface DisplayLogModalInfoProps {
-  record: IApiDisplayLogItem;
+  recordInformed: IApiDisplayLogItem;
 }
 
 type TabType = "overview" | "analytics" | "content" | "insights";
@@ -62,49 +67,13 @@ function CaptureDisplay({ capture, title }: { capture?: any; title?: string }) {
   );
 }
 
-function LoadingButton({
-  onClick,
-  loading,
-  icon: Icon,
-  children,
-  variant = "primary",
-}: {
-  onClick: () => void;
-  loading: boolean;
-  icon: any;
-  children: React.ReactNode;
-  variant?: "primary" | "secondary";
-}) {
-  const baseClasses =
-    "flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 font-medium text-sm";
-  const variants = {
-    primary:
-      "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl",
-    secondary:
-      "bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300",
-  };
-
-  return (
-    <button
-      onClick={onClick}
-      disabled={loading}
-      className={`${baseClasses} ${variants[variant]} ${
-        loading ? "opacity-75 cursor-not-allowed" : "hover:scale-105"
-      }`}
-    >
-      {loading ? (
-        <Loader2 className="w-4 h-4 animate-spin" />
-      ) : (
-        <Icon className="w-4 h-4" />
-      )}
-      <span>{children}</span>
-    </button>
-  );
-}
-
 export default function DisplayLogModalInfo({
-  record,
+  recordInformed,
 }: DisplayLogModalInfoProps) {
+  const [record, setRecord] = useState<IApiDisplayLogItem>(recordInformed);
+
+  const { showToast } = useToast();
+  const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [loadingVisual, setLoadingVisual] = useState(false);
   const [loadingLLM, setLoadingLLM] = useState(false);
@@ -131,17 +100,43 @@ export default function DisplayLogModalInfo({
   };
 
   const handleVisualComputation = async () => {
+    if (!session?.api_session) {
+      return;
+    }
+
     setLoadingVisual(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setLoadingVisual(false);
+
+    try {
+      const response = await API.display_logs.detect(
+        session.api_session.access_token,
+        {
+          id: record._id,
+        }
+      );
+
+      const currentData = await response.json();
+
+      if (currentData?.error && currentData?.message) {
+        showToast(GetErrorMessage(currentData.message), IToastType.ERROR);
+      } else if (response.ok && currentData?.result._id) {
+        showToast(`Detecção visual concluída com sucesso!`, IToastType.SUCCESS);
+        setRecord(currentData.result);
+      } else {
+        showToast("FAILED", IToastType.ERROR);
+      }
+    } catch (error) {
+      showToast(GetErrorMessage(error), IToastType.ERROR);
+    } finally {
+      setLoadingVisual(false);
+    }
   };
 
   const handleLLMInsights = async () => {
     setLoadingLLM(true);
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     setLoadingLLM(false);
+    showToast("EM DEV", IToastType.INFO);
   };
 
   const isAdvertisement =
@@ -185,9 +180,11 @@ export default function DisplayLogModalInfo({
                   </p>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-blue-100 text-sm">ID</div>
-                <div className="font-mono text-lg">#{record.identifier}</div>
+              <div className="text-right mt-5">
+                <div className="font-mono text-lg">
+                  Identifier: {record.identifier}
+                </div>
+                <div className="font-mono text-sm">ID: {record._id}</div>
               </div>
             </div>
 
@@ -349,14 +346,6 @@ export default function DisplayLogModalInfo({
                   </h3>
                   <div className="flex flex-wrap gap-4">
                     <LoadingButton
-                      onClick={handleVisualComputation}
-                      loading={loadingVisual}
-                      icon={Cpu}
-                      variant="primary"
-                    >
-                      Rodar Computação Visual
-                    </LoadingButton>
-                    <LoadingButton
                       onClick={handleLLMInsights}
                       loading={loadingLLM}
                       icon={Brain}
@@ -497,119 +486,132 @@ export default function DisplayLogModalInfo({
           )}
 
           {activeTab === "analytics" && (
-            <div className="grid lg:grid-cols-2 gap-6">
-              {/* Audience Analytics */}
-              <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700/50 dark:to-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-600">
-                <div className="flex items-center space-x-3 mb-6">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Análise de Audiência
-                  </h3>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
-                    <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                      {record.insightface?.total || 0}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Pessoas Detectadas
-                    </div>
-                  </div>
-                  <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
-                    <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                      {record.insightface?.age?.average || 0}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Idade Média
-                    </div>
-                  </div>
-                  <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
-                    <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-                      {record.yolo?.confidence
-                        ? Math.round(record.yolo.confidence * 100)
-                        : 0}
-                      %
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Confiança YOLO
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Homens
-                    </span>
-                    <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                      {record.insightface?.men || 0}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Mulheres
-                    </span>
-                    <span className="text-lg font-bold text-pink-600 dark:text-pink-400">
-                      {record.insightface?.women || 0}
-                    </span>
-                  </div>
-                  {record.insightface?.age && (
-                    <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Faixa Etária
-                      </div>
-                      <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
-                        <span>Min: {record.insightface.age.min}</span>
-                        <span>Máx: {record.insightface.age.max}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
+            <>
+              <div className="flex items-center justify-center my-10">
+                <LoadingButton
+                  onClick={handleVisualComputation}
+                  loading={loadingVisual}
+                  icon={Cpu}
+                  variant="primary"
+                >
+                  Rodar Computação Visual
+                </LoadingButton>
               </div>
 
-              {/* Capture Preview */}
-              <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700/50 dark:to-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-600">
-                <div className="flex items-center space-x-3 mb-6">
-                  <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                    <Eye className="w-5 h-5 text-green-600 dark:text-green-400" />
+              <div className="grid lg:grid-cols-2 gap-6">
+                {/* Audience Analytics */}
+                <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700/50 dark:to-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-600">
+                  <div className="flex items-center space-x-3 mb-6">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                      <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Análise de Audiência
+                    </h3>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    Capturas da Exibição
-                  </h3>
+
+                  <div className="grid grid-cols-3 gap-4 mb-6">
+                    <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
+                      <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                        {record.insightface?.total || 0}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Pessoas Detectadas
+                      </div>
+                    </div>
+                    <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
+                      <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                        {record.insightface?.age?.average || 0}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Idade Média
+                      </div>
+                    </div>
+                    <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
+                      <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                        {record.yolo?.confidence
+                          ? Math.round(record.yolo.confidence * 100)
+                          : 0}
+                        %
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Confiança YOLO
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Homens
+                      </span>
+                      <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                        {record.insightface?.men || 0}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Mulheres
+                      </span>
+                      <span className="text-lg font-bold text-pink-600 dark:text-pink-400">
+                        {record.insightface?.women || 0}
+                      </span>
+                    </div>
+                    {record.insightface?.age && (
+                      <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Faixa Etária
+                        </div>
+                        <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
+                          <span>Min: {record.insightface.age.min}</span>
+                          <span>Máx: {record.insightface.age.max}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className="space-y-6">
-                  {record.capture && (
-                    <CaptureDisplay
-                      capture={record.capture}
-                      title="Captura Principal"
-                    />
-                  )}
+                {/* Capture Preview */}
+                <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700/50 dark:to-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-600">
+                  <div className="flex items-center space-x-3 mb-6">
+                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                      <Eye className="w-5 h-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Capturas da Exibição
+                    </h3>
+                  </div>
 
-                  {record.capture_bbox &&
-                    typeof record.capture_bbox === "string" && (
+                  <div className="space-y-6">
+                    {record.capture && (
                       <CaptureDisplay
-                        capture={record.capture_bbox}
-                        title="Detecção de Pessoas"
+                        capture={record.capture}
+                        title="Captura Principal"
                       />
                     )}
 
-                  {!record.capture && !record.capture_bbox && (
-                    <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl h-40 flex items-center justify-center">
-                      <div className="text-center">
-                        <Eye className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                        <span className="text-gray-500 dark:text-gray-400 text-sm">
-                          Nenhuma captura disponível
-                        </span>
+                    {record.capture_bbox &&
+                      typeof record.capture_bbox === "string" && (
+                        <CaptureDisplay
+                          capture={record.capture_bbox}
+                          title="Detecção de Pessoas"
+                        />
+                      )}
+
+                    {!record.capture && !record.capture_bbox && (
+                      <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl h-40 flex items-center justify-center">
+                        <div className="text-center">
+                          <Eye className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <span className="text-gray-500 dark:text-gray-400 text-sm">
+                            Nenhuma captura disponível
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            </>
           )}
 
           {activeTab === "insights" && (
