@@ -3,7 +3,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { QueuesEnum } from 'src/modules/queue/queue.interface';
 import { News, NewsDocument } from 'src/modules/news/news.schema';
-import { Model } from 'mongoose';
+import { FlattenMaps, Model } from 'mongoose';
 import {
   IDetectionDisplayLog,
   IDetectionDisplayLogDto,
@@ -22,7 +22,7 @@ import {
   IApiYoloResult,
 } from 'src/shared/detection/detection.interface';
 import { DisplayLogStatus } from '../display-logs.interface';
-import { DisplayLog } from '../display-logs.schema';
+import { DisplayLog, DisplayLogDocument } from '../display-logs.schema';
 import { RESULT } from 'src/shared/result.enum';
 import { AuthenticatedRequest } from 'src/shared/request';
 import { ConvertToObjectId } from 'src/shared/general';
@@ -75,6 +75,44 @@ export class DetectionDisplayLogService {
         error?.status || HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
+  }
+
+  async generateSignedCaptureUrls(
+    item: FlattenMaps<DisplayLogDocument> &
+      Required<{
+        _id: FlattenMaps<unknown>;
+      }> & {
+        __v: number;
+      },
+    googleCloudStorageService: GoogleCloudStorageService,
+  ): Promise<any> {
+    const expiresInMs = 60 * 60 * 1000; // 1 hour
+    let capturePublicUrl: string | null = null;
+    let captureBboxPublicUrl: string | null = null;
+
+    if (item.capture) {
+      capturePublicUrl = await googleCloudStorageService.getSignedUrlSafe(
+        item.capture,
+        item.bucket as IGoogleStorageBucket,
+        false,
+        expiresInMs,
+      );
+    }
+
+    if (item.capture_bbox) {
+      captureBboxPublicUrl = await googleCloudStorageService.getSignedUrlSafe(
+        item.capture_bbox,
+        item.bucket as IGoogleStorageBucket,
+        false,
+        expiresInMs,
+      );
+    }
+
+    return {
+      ...item,
+      capture: capturePublicUrl || null,
+      capture_bbox: captureBboxPublicUrl || null,
+    };
   }
 
   async execute(payload: IDetectionDisplayLog) {
@@ -191,6 +229,13 @@ export class DetectionDisplayLogService {
         .select(['-data'])
         .lean();
 
+      if (!result) {
+        throw new HttpException(
+          RESULT.DISPLAY_LOG_DETECTION_UPDATE_FAILED,
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+
       Log(
         LogType.INFO,
         DetectionDisplayLogService.name,
@@ -202,7 +247,13 @@ export class DetectionDisplayLogService {
         },
       );
 
-      return { result, error: errorMessage };
+      return {
+        result: await this.generateSignedCaptureUrls(
+          result,
+          this.googleCloudStorageService,
+        ),
+        error: errorMessage,
+      };
     } catch (error) {
       Log(
         LogType.ERROR,
