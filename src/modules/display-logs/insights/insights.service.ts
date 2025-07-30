@@ -1,17 +1,41 @@
 import { Injectable } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { GoogleGenAiProvider } from 'src/shared/google/llm/llm.service';
-import { GoogleGenAiModelsEnum } from 'src/shared/google/llm/llm.interface';
+import {
+  AiStreamChunk,
+  GoogleGenAiModelsEnum,
+} from 'src/shared/google/llm/llm.interface';
+import { InsightGenerateDisplayLogQueryDto } from './insights.interface';
+import { GetDisplayLogService } from '../get/get.service';
+import { GenerateOOHPrompt } from './prompt.interface';
 
 @Injectable()
 export class InsightDisplayLogService {
-  constructor(private readonly aiProvider: GoogleGenAiProvider) {}
+  constructor(
+    private readonly aiProvider: GoogleGenAiProvider,
+    private readonly getDisplayLogService: GetDisplayLogService,
+  ) {}
 
-  generateStream(prompt: string): Observable<MessageEvent> {
-    const stream = this.aiProvider.generateContentStream(
-      prompt,
-      GoogleGenAiModelsEnum.GEMINI_2_0_FLASH_001,
-    );
+  async generateStream(
+    parameters: InsightGenerateDisplayLogQueryDto,
+  ): Promise<Observable<MessageEvent>> {
+    const record = await this.getDisplayLogService.get({ _id: parameters.id });
+
+    const prompt = GenerateOOHPrompt(record);
+
+    let currentModel = GoogleGenAiModelsEnum.GEMINI_2_0_FLASH_001;
+    let stream: AsyncGenerator<AiStreamChunk>;
+
+    try {
+      stream = this.aiProvider.generateContentStream(prompt, currentModel);
+    } catch (error) {
+      console.error(
+        'Error with primary model, falling back to secondary:',
+        error,
+      );
+      currentModel = GoogleGenAiModelsEnum.DEEPSEEK_R1_0528_MAAS;
+      stream = this.aiProvider.generateContentStream(prompt, currentModel);
+    }
 
     return new Observable((subscriber) => {
       void (async () => {
@@ -22,19 +46,18 @@ export class InsightDisplayLogService {
             subscriber.next({ data: chunk.text } as MessageEvent);
           }
 
-          console.log({ fullText });
+          // console.log({ fullText });
 
-          // ==============================================================================
-          // AQUI: Ap�s o stream ser conclu�do, voc� pode pegar o texto completo e salvar no MongoDB.
-          // A vari�vel 'fullText' cont�m toda a resposta gerada.
-          //
-          // Exemplo:
-          // await this.myMongoDbService.save({
-          //   prompt: prompt,
-          //   response: fullText,
-          //   createdAt: new Date(),
-          // });
-          // ==============================================================================
+          await this.getDisplayLogService.displayLogModel.updateOne(
+            {
+              _id: record._id,
+            },
+            {
+              llm_insight: fullText,
+              llm_insight_model: currentModel,
+              llm_insight_at: new Date(),
+            },
+          );
 
           subscriber.next({ data: '[DONE]' } as MessageEvent);
           subscriber.complete();

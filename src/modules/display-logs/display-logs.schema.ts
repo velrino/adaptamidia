@@ -109,6 +109,15 @@ export class DisplayLog {
 
   @Prop({ type: mongoose.Schema.Types.Mixed, required: false, default: null })
   insightface: IApiDetectInsightface;
+
+  @Prop({ type: String, required: false, default: null })
+  llm_insight: string;
+
+  @Prop({ type: String, required: false, default: null })
+  llm_insight_model: string;
+
+  @Prop({ required: false, type: Date })
+  llm_insight_at: Date;
 }
 
 export type DisplayLogDocument = DisplayLog & Document;

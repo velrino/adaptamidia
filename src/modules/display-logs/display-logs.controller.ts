@@ -20,6 +20,7 @@ import { DetectionDisplayLogService } from './detection/detection.service';
 import { IDetectionDisplayLogDto } from './detection/detection.interface';
 import { Observable } from 'rxjs';
 import { InsightDisplayLogService } from './insights/insights.service';
+import { InsightGenerateDisplayLogQueryDto } from './insights/insights.interface';
 
 @Controller()
 export class DisplayLogController {
@@ -59,8 +60,8 @@ export class DisplayLogController {
     );
   }
 
-  @Sse('display/generate-stream')
-  generateStream(@Query('prompt') prompt: string): Observable<MessageEvent> {
-    return this.insightDisplayLogService.generateStream(prompt);
+  @Sse('display/generate-insights')
+  generateStream(@Query() query: InsightGenerateDisplayLogQueryDto) {
+    return this.insightDisplayLogService.generateStream(query);
   }
 }
