@@ -1,11 +1,12 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { GoogleGenAiModelsEnum } from 'src/shared/google/llm/llm.interface';
 
 export class InsightGenerateDisplayLogQueryDto {
   @IsNotEmpty()
   @IsString()
   id: string;
 
-  // @IsOptional()
-  // @IsString()
-  // model?: string;
+  @IsOptional()
+  @IsEnum(GoogleGenAiModelsEnum)
+  model?: GoogleGenAiModelsEnum;
 }

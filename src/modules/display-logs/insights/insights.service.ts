@@ -23,7 +23,13 @@ export class InsightDisplayLogService {
 
     const prompt = GenerateOOHPrompt(record);
 
-    let currentModel = GoogleGenAiModelsEnum.GEMINI_2_0_FLASH_001;
+    const getModel = parameters.model
+      ? GoogleGenAiModelsEnum[parameters.model]
+      : GoogleGenAiModelsEnum.GEMINI_2_0_FLASH_001;
+
+    let currentModel: GoogleGenAiModelsEnum =
+      getModel || GoogleGenAiModelsEnum.GEMINI_2_0_FLASH_001;
+
     let stream: AsyncGenerator<AiStreamChunk>;
 
     try {
@@ -45,8 +51,6 @@ export class InsightDisplayLogService {
             fullText += chunk.text;
             subscriber.next({ data: chunk.text } as MessageEvent);
           }
-
-          // console.log({ fullText });
 
           await this.getDisplayLogService.displayLogModel.updateOne(
             {
