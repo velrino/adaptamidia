@@ -27,6 +27,7 @@ import { useToast } from "@/context/ToastContext";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { IToastType } from "@/interfaces/general";
 import { GetErrorMessage } from "@/utils/generic";
+import { GeminiStreamComponent } from "./LLM";
 
 interface DisplayLogModalInfoProps {
   recordInformed: IApiDisplayLogItem;
@@ -673,7 +674,7 @@ export default function DisplayLogModalInfo({
                     </div>
                   </div>
                 </div>
-
+                {record?._id && <GeminiStreamComponent id={record._id} />}
                 {/* Placeholder for future insights */}
                 <div className="mt-8 p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl">
                   <div className="text-gray-500 dark:text-gray-400">
