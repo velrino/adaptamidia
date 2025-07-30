@@ -87,8 +87,13 @@ export enum EnumApiCompanyUnitType {
 }
 
 export enum LLMModelsEnum {
-  GEMINI_2_0_FLASH_001 = "GEMINI_2_0_FLASH_001",
   DEEPSEEK_R1_0528_MAAS = "DEEPSEEK_R1_0528_MAAS",
+  // GEMINI
+  GEMINI_2_0_FLASH_001 = "GEMINI_2_0_FLASH_001",
+  GEMINI_2_5_PRO = "GEMINI_2_5_PRO",
+
+  // META
+  META_LLAMA_4_MAVERICK_17B_128E_INSTRUCT_MAAS = "META_LLAMA_4_MAVERICK_17B_128E_INSTRUCT_MAAS",
 }
 
 export const LLMModelsAsOptions = [
@@ -97,7 +102,15 @@ export const LLMModelsAsOptions = [
     label: "gemini-2.0-flash-001",
   },
   {
+    value: LLMModelsEnum.GEMINI_2_5_PRO,
+    label: "gemini-2.5-pro",
+  },
+  {
     value: LLMModelsEnum.DEEPSEEK_R1_0528_MAAS,
     label: "deepseek-ai/deepseek-r1-0528-maas",
+  },
+  {
+    value: LLMModelsEnum.META_LLAMA_4_MAVERICK_17B_128E_INSTRUCT_MAAS,
+    label: "meta/llama-4-maverick-17b-128e-instruct-maas",
   },
 ];
