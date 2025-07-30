@@ -7,12 +7,14 @@ export function LoadingButton({
   loading,
   icon: Icon,
   children,
+  className,
   variant = "primary",
 }: {
   onClick: () => void;
   loading: boolean;
   icon: any;
   children: React.ReactNode;
+  className?: string;
   variant?: "primary" | "secondary";
 }) {
   const baseClasses =
@@ -30,7 +32,7 @@ export function LoadingButton({
       disabled={loading}
       className={`${baseClasses} ${variants[variant]} ${
         loading ? "opacity-75 cursor-not-allowed" : "hover:scale-105"
-      }`}
+      } ${className || ""}`}
     >
       {loading ? (
         <Loader2 className="w-4 h-4 animate-spin" />

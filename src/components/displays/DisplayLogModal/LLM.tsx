@@ -1,12 +1,31 @@
+import { LoadingButton } from "@/components/ui/loading-button";
+import { Sparkles } from "lucide-react";
 import React, { useState, useRef, useEffect } from "react";
+import MarkdownPreview from "@uiw/react-markdown-preview";
+import { IApiDisplayLogItem } from "@/backend/api/api.interface";
+import Select from "@/components/form/Select";
+import { LLMModelsAsOptions, LLMModelsEnum } from "@/backend/api/api.enum";
 
-export const GeminiStreamComponent = ({ id }: { id: string }) => {
-  const [prompt, setPrompt] = useState<string>(
-    "Conte uma história curta sobre um robô que descobre a música."
+export const DisplayLogLLMStreamComponent = ({
+  record,
+}: {
+  record: IApiDisplayLogItem;
+}) => {
+  const [generatedText, setGeneratedText] = useState<string>(
+    record?.llm_insight || String()
   );
-  const [generatedText, setGeneratedText] = useState<string>("");
+
+  const [llmModelUsed, setLlmModelUsed] = useState<string>(
+    record?.llm_insight_model || String()
+  );
+
+  const [llmSelected, setLLMSelected] = useState<LLMModelsEnum | string>(
+    record?.llm_insight_model || LLMModelsEnum.GEMINI_2_0_FLASH_001
+  );
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const [loadingLLM, setLoadingLLM] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   // Cleanup do EventSource quando o componente for desmontado
   useEffect(() => {
@@ -17,8 +36,16 @@ export const GeminiStreamComponent = ({ id }: { id: string }) => {
     };
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Auto-scroll quando generatedText é atualizado
+  useEffect(() => {
+    if (scrollRef.current && generatedText) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [generatedText]);
+
+  const handleSubmit = async () => {
+    setLoadingLLM(true);
+
     if (isStreaming) return;
 
     // Limpa o texto anterior e define o estado de carregamento
@@ -32,7 +59,7 @@ export const GeminiStreamComponent = ({ id }: { id: string }) => {
   // Função que usa EventSource para lidar com o stream SSE
   const handleStreamWithEventSource = async () => {
     // const encodedPrompt = encodeURIComponent(prompt);
-    const url = `${process.env.NEXT_PUBLIC_BASE_API_URL}/display/generate-insights?id=${id}`;
+    const url = `${process.env.NEXT_PUBLIC_BASE_API_URL}/display/generate-insights?id=${record._id}&model=${llmSelected}`;
 
     try {
       // Fecha EventSource anterior se existir
@@ -50,6 +77,8 @@ export const GeminiStreamComponent = ({ id }: { id: string }) => {
           setIsStreaming(false);
           eventSource.close();
           eventSourceRef.current = null;
+          setLoadingLLM(false);
+          setLlmModelUsed(llmSelected);
           return;
         }
 
@@ -78,62 +107,48 @@ export const GeminiStreamComponent = ({ id }: { id: string }) => {
   };
 
   return (
-    <div
-      style={{
-        fontFamily: "sans-serif",
-        padding: "20px",
-        maxWidth: "700px",
-        margin: "auto",
-      }}
-    >
-      <h1>Teste de Stream com NestJS e Gemini</h1>
-      <form onSubmit={handleSubmit}>
-        <textarea
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          rows={4}
-          style={{ width: "100%", padding: "10px", boxSizing: "border-box" }}
-          placeholder="Digite seu prompt aqui..."
-        />
-        <button
-          type="submit"
-          disabled={isStreaming}
-          style={{ padding: "10px 20px", marginTop: "10px" }}
-        >
-          {isStreaming ? "Gerando..." : "Enviar"}
-        </button>
-      </form>
+    <div className="w-full">
+      <div className="flex justify-center items-center gap-4 w-full my-5">
+        <div className="min-w-[200px]">
+          {/* <Label>Modelo</Label> */}
+          <Select
+            options={LLMModelsAsOptions}
+            defaultValue={llmSelected}
+            placeholder="Modelo LLM"
+            onChange={(value: string) => {
+              setLLMSelected(value as LLMModelsEnum);
+            }}
+            className="dark:bg-dark-900 w-full"
+          />
+        </div>
 
-      <div style={{ marginTop: "20px" }}>
-        <h2>Resposta do Gemini:</h2>
-        <pre
-          style={{
-            whiteSpace: "pre-wrap",
-            wordWrap: "break-word",
-            background: "#f4f4f4",
-            padding: "15px",
-            borderRadius: "5px",
-            minHeight: "100px",
-          }}
+        <LoadingButton
+          onClick={handleSubmit}
+          loading={loadingLLM}
+          icon={Sparkles}
+          variant="primary"
+          className="h-[40px] mt-auto"
         >
-          {generatedText}
-          {
-            isStreaming && (
-              <span className="cursor">|</span>
-            ) /* Efeito de cursor */
-          }
-        </pre>
+          Gerar insights com IA
+        </LoadingButton>
       </div>
 
-      <style>{`
-        .cursor {
-          animation: blink 1s step-end infinite;
-        }
-        @keyframes blink {
-          from, to { color: transparent; }
-          50% { color: black; }
-        }
-      `}</style>
+      {!loadingLLM && llmModelUsed && (
+        <div className="text-center text-sm text-gray-500 mb-4 gap-1 flex justify-center">
+          <div>Powered by</div>
+          <div className="font-mono text-purple-600 dark:text-purple-400">
+            {llmModelUsed}
+          </div>
+        </div>
+      )}
+
+      <div ref={scrollRef} className="overflow-y-auto">
+        <MarkdownPreview
+          source={generatedText}
+          style={{ padding: 16, background: "transparent", textAlign: "left" }}
+          className="[&_*]:text-black [&_*]:dark:text-white"
+        />
+      </div>
     </div>
   );
 };

@@ -852,6 +852,9 @@ export interface IApiDisplayLogItem {
   } | null;
   created_at: string;
   updated_at: string;
+  llm_insight?: string;
+  llm_insight_model?: string;
+  llm_insight_at?: string;
 }
 
 export interface IApiDisplayLogResponse {

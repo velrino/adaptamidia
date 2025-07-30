@@ -85,3 +85,19 @@ export enum EnumApiCompanyUnitType {
   FUNERAL_HOME = "FUNERAL_HOME", // Funerária
   PRINT_SHOP = "PRINT_SHOP", // Gráfica
 }
+
+export enum LLMModelsEnum {
+  GEMINI_2_0_FLASH_001 = "GEMINI_2_0_FLASH_001",
+  DEEPSEEK_R1_0528_MAAS = "DEEPSEEK_R1_0528_MAAS",
+}
+
+export const LLMModelsAsOptions = [
+  {
+    value: LLMModelsEnum.GEMINI_2_0_FLASH_001,
+    label: "gemini-2.0-flash-001",
+  },
+  {
+    value: LLMModelsEnum.DEEPSEEK_R1_0528_MAAS,
+    label: "deepseek-ai/deepseek-r1-0528-maas",
+  },
+];

@@ -13,7 +13,6 @@ import {
   Activity,
   BarChart3,
   FileText,
-  Zap,
   Target,
   Globe,
   ChevronRight,
@@ -27,7 +26,7 @@ import { useToast } from "@/context/ToastContext";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { IToastType } from "@/interfaces/general";
 import { GetErrorMessage } from "@/utils/generic";
-import { GeminiStreamComponent } from "./LLM";
+import { DisplayLogLLMStreamComponent } from "./LLM";
 
 interface DisplayLogModalInfoProps {
   recordInformed: IApiDisplayLogItem;
@@ -75,9 +74,8 @@ export default function DisplayLogModalInfo({
 
   const { showToast } = useToast();
   const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState<TabType>("overview");
+  const [activeTab, setActiveTab] = useState<TabType>("insights");
   const [loadingVisual, setLoadingVisual] = useState(false);
-  const [loadingLLM, setLoadingLLM] = useState(false);
 
   const formatDuration = (seconds: number) => {
     return `${seconds}s`;
@@ -132,13 +130,13 @@ export default function DisplayLogModalInfo({
     }
   };
 
-  const handleLLMInsights = async () => {
-    setLoadingLLM(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setLoadingLLM(false);
-    showToast("EM DEV", IToastType.INFO);
-  };
+  // const handleLLMInsights = async () => {
+  //   setLoadingLLM(true);
+  //   // Simulate API call
+  //   await new Promise((resolve) => setTimeout(resolve, 1000));
+  //   setLoadingLLM(false);
+  //   showToast("EM DEV", IToastType.INFO);
+  // };
 
   const isAdvertisement =
     record.type === "ADVERTISEMENT" && record.advertisement;
@@ -339,7 +337,7 @@ export default function DisplayLogModalInfo({
               </div>
 
               {/* Action Buttons */}
-              <div className="lg:col-span-3 mt-6">
+              {/* <div className="lg:col-span-3 mt-6">
                 <div className="bg-gradient-to-r from-gray-50 to-white dark:from-gray-700/30 dark:to-gray-800/30 rounded-xl p-6 border border-gray-100 dark:border-gray-600">
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
                     <Zap className="w-5 h-5 mr-2 text-yellow-500" />
@@ -356,7 +354,7 @@ export default function DisplayLogModalInfo({
                     </LoadingButton>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           )}
 
@@ -495,7 +493,7 @@ export default function DisplayLogModalInfo({
                   icon={Cpu}
                   variant="primary"
                 >
-                  Rodar Computação Visual
+                  Executar Computação Visual
                 </LoadingButton>
               </div>
 
@@ -618,7 +616,7 @@ export default function DisplayLogModalInfo({
           {activeTab === "insights" && (
             <div className="space-y-6">
               <div className="text-center py-12">
-                <div className="p-4 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                {/* <div className="p-4 bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/30 dark:to-purple-900/30 rounded-full w-20 h-20 mx-auto mb-4 flex items-center justify-center">
                   <Sparkles className="w-10 h-10 text-blue-600 dark:text-blue-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
@@ -627,9 +625,9 @@ export default function DisplayLogModalInfo({
                 <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
                   Os insights gerados por IA aparecerão aqui após a análise do
                   conteúdo e dados de audiência.
-                </p>
+                </p> */}
 
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-6 border border-amber-200 dark:border-amber-800 max-w-2xl mx-auto">
+                {/* <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-xl p-6 border border-amber-200 dark:border-amber-800 max-w-2xl mx-auto">
                   <div className="flex items-center space-x-3 mb-4">
                     <div className="p-2 bg-amber-100 dark:bg-amber-900/50 rounded-lg">
                       <Brain className="w-5 h-5 text-amber-600 dark:text-amber-400" />
@@ -673,10 +671,12 @@ export default function DisplayLogModalInfo({
                       </div>
                     </div>
                   </div>
-                </div>
-                {record?._id && <GeminiStreamComponent id={record._id} />}
+                </div> */}
+                {record?._id && (
+                  <DisplayLogLLMStreamComponent record={record} />
+                )}
                 {/* Placeholder for future insights */}
-                <div className="mt-8 p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl">
+                {/* <div className="mt-8 p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl">
                   <div className="text-gray-500 dark:text-gray-400">
                     <Monitor className="w-12 h-12 mx-auto mb-3 opacity-50" />
                     <p className="text-sm">
@@ -687,7 +687,7 @@ export default function DisplayLogModalInfo({
                       insights for implementado
                     </p>
                   </div>
-                </div>
+                </div> */}
               </div>
             </div>
           )}

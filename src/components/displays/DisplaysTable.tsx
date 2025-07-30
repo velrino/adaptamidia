@@ -91,7 +91,7 @@ export default function DisplaysTable() {
           showToast(GetErrorMessage(data.error), IToastType.ERROR);
         } else if (response.ok) {
           setResponse(data);
-          // setCurrentSelected(data?.data?.[0]);
+          setCurrentSelected(data?.data?.[0]);
         }
       } catch (error) {
         showToast(GetErrorMessage(error), IToastType.ERROR);
