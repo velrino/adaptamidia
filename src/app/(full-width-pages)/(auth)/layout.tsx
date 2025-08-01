@@ -24,8 +24,8 @@ export default function AuthLayout({
                   <Image
                     src="/logo/white.png"
                     alt="Logo"
-                    width={40}
-                    height={40}
+                    width={100}
+                    height={100}
                   />
                 </Link>
                 <p className="text-center text-gray-400 dark:text-white/60">

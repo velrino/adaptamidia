@@ -9,11 +9,15 @@ export const config = {
 
 const publicRoutes = ["/display", "/login"];
 
+const isPublicAsset = (pathname: string) => {
+  return /\.(png|jpg|jpeg|gif|svg|css|js|ico|woff|woff2|webp)$/.test(pathname);
+};
+
 export default async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
   const isPublicRoute = publicRoutes.some((route) =>
     pathname.startsWith(route)
-  );
+  ) || isPublicAsset(pathname);
 
   // console.log("Middleware:", { pathname, isPublicRoute });
 
