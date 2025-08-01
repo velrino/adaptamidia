@@ -23,7 +23,7 @@ import { Delay } from "@/utils/generic";
 import Spinner from "../ui/spinner/Spinner";
 
 const demo = {
-  title: "Adapta Mídia",
+  title: "Alpha Mídia",
 };
 
 interface IStudioScene {
@@ -113,7 +113,7 @@ const mockScripts: IStudioScript[] = [
   },
   {
     id: 2,
-    text: "Crie com Adapta Midia!",
+    text: "Crie com Alpha Midia!",
     speaker: speakers[0],
     dropdown: false,
     model: models[0].value,
@@ -443,7 +443,7 @@ export default function StudioComponent() {
         <div className="flex items-center justify-between my-2 mx-4 flex-shrink-0 ">
           <div className="flex items-center space-x-4">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Adapta Mídia - Studio
+              Alpha Mídia - Studio
             </h1>
             {/* <span className="px-3 py-1 bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 rounded-full text-sm font-medium">
               Brand Kit ⚡
@@ -482,7 +482,7 @@ export default function StudioComponent() {
             <div className="col-span-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-100 dark:border-gray-700 p-4 overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 {/* <h3 className="font-medium text-gray-900 dark:text-white">
-                  Adapta Mídia
+                  Alpha Mídia
                 </h3> */}
                 <div className="w-full">
                   <Input

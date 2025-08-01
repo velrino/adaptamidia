@@ -1137,7 +1137,7 @@ export const newsMockData: IApiNewsResponse = {
       author: "Rafael Magalhães dos Santos",
       title: "O impacto invisível da Covid-19 no coração",
       description:
-        "Um coração mais fraco tem mais dificuldade para se adaptar às mudanças do ambiente e do corpo, o que pode aumentar o risco de doenças cardiovasculares\nO post O impacto invisível da Covid-19 no coração apareceu primeiro em Olhar Digital.",
+        "Um coração mais fraco tem mais dificuldade para se Alphar às mudanças do ambiente e do corpo, o que pode aumentar o risco de doenças cardiovasculares\nO post O impacto invisível da Covid-19 no coração apareceu primeiro em Olhar Digital.",
       url: "https://olhardigital.com.br/2025/02/28/medicina-e-saude/o-impacto-invisivel-da-covid-19-no-coracao/",
       image:
         "https://img.odcdn.com.br/wp-content/uploads/2025/02/Capa-Covid-19.jpg",

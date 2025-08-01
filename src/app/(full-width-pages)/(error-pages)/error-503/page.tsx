@@ -5,9 +5,9 @@ import Link from "next/link";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Next.js Error 503 | Adapta Midia - Next.js Dashboard Template",
+  title: "Next.js Error 503 | Alpha Midia - Next.js Dashboard Template",
   description:
-    "This is Next.js Error 503 page for Adapta Midia - Next.js Tailwind CSS Admin Dashboard Template",
+    "This is Next.js Error 503 page for Alpha Midia - Next.js Tailwind CSS Admin Dashboard Template",
 };
 
 export default function page() {
@@ -49,7 +49,7 @@ export default function page() {
 
       {/* <!-- Footer --> */}
       <p className="absolute text-sm text-center text-gray-500 -translate-x-1/2 bottom-6 left-1/2 dark:text-gray-400">
-        &copy; {new Date().getFullYear()} - Adapta Midia
+        &copy; {new Date().getFullYear()} - Alpha Midia
       </p>
     </div>
   );

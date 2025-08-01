@@ -5,9 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Next.js Coming Soon | Adapta Midia - Next.js Dashboard Template",
+  title: "Next.js Coming Soon | Alpha Midia - Next.js Dashboard Template",
   description:
-    "This is Next.js Coming Soon page for Adapta Midia - Next.js Tailwind CSS Admin Dashboard Template",
+    "This is Next.js Coming Soon page for Alpha Midia - Next.js Tailwind CSS Admin Dashboard Template",
 };
 
 export default function ComingSoon() {

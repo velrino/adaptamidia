@@ -4,9 +4,9 @@ import { Metadata } from "next";
 import React from "react";
 
 export const metadata: Metadata = {
-  title: "Next.js Pagination | Adapta Midia - Next.js Dashboard Template",
+  title: "Next.js Pagination | Alpha Midia - Next.js Dashboard Template",
   description:
-    "This is Next.js Pagination page for Adapta Midia - Next.js Tailwind CSS Admin Dashboard Template",
+    "This is Next.js Pagination page for Alpha Midia - Next.js Tailwind CSS Admin Dashboard Template",
 };
 
 export default function Pagination() {

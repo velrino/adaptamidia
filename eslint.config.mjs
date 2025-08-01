@@ -15,6 +15,7 @@ const eslintConfig = [
     // Disable the @next/next/no-img-element rule
     rules: {
       "@next/next/no-img-element": "off",
+      "react-hooks/exhaustive-deps": "off",
     },
   },
 ];

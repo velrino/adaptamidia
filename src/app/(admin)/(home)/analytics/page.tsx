@@ -12,9 +12,9 @@ import React from "react";
 
 export const metadata: Metadata = {
   title:
-    "Next.js Analytics Dashboard | Adapta Midia - Next.js Dashboard Template",
+    "Next.js Analytics Dashboard | Alpha Midia - Next.js Dashboard Template",
   description:
-    "This is Next.js Analytics Dashboard page for Adapta Midia - Next.js Tailwind CSS Admin Dashboard Template",
+    "This is Next.js Analytics Dashboard page for Alpha Midia - Next.js Tailwind CSS Admin Dashboard Template",
 };
 
 export default function Analytics() {
