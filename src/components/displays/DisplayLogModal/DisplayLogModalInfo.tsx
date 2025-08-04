@@ -507,7 +507,7 @@ export default function DisplayLogModalInfo({
                     </h3>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="grid grid-cols-2 gap-4 mb-6">
                     <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
                       <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
                         {record.insightface?.total || 0}
@@ -524,7 +524,7 @@ export default function DisplayLogModalInfo({
                         Idade Média
                       </div>
                     </div>
-                    <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
+                    {/* <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
                       <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
                         {record.yolo?.confidence
                           ? Math.round(record.yolo.confidence * 100)
@@ -534,7 +534,7 @@ export default function DisplayLogModalInfo({
                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Confiança YOLO
                       </div>
-                    </div>
+                    </div> */}
                   </div>
 
                   <div className="space-y-4">
