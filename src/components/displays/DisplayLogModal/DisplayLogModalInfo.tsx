@@ -72,7 +72,7 @@ export default function DisplayLogModalInfo({
 
   const { showToast } = useToast();
   const { data: session } = useSession();
-  const [activeTab, setActiveTab] = useState<TabType>("insights");
+  const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [loadingVisual, setLoadingVisual] = useState(false);
 
   const formatDuration = (seconds: number) => {
