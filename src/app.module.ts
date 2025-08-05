@@ -21,6 +21,7 @@ import { QueueModule } from './modules/queue/queue.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { WeatherModule } from './modules/weather/weather.module';
 import { DisplayModule } from './modules/display/display.module';
+import { LeadsModule } from './modules/leads/leads.module';
 import { HealthCheckService } from './app.service';
 import { DetectionService } from './shared/detection/detection.service';
 
@@ -78,6 +79,7 @@ import { DetectionService } from './shared/detection/detection.service';
     FilesModule,
     UserModule,
     WeatherModule,
+    LeadsModule,
   ],
   controllers: [AppController],
   providers: [HealthCheckService, DetectionService],
