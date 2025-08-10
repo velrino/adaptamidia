@@ -29,4 +29,6 @@ export enum RedisKeysEnum {
   // WEATHER
   GET_WEATHER = 'GET_WEATHER',
   GET_CURRENCY = 'GET_CURRENCY',
+
+  LEAD_IP = 'LEAD_IP',
 }

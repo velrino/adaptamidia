@@ -8,11 +8,14 @@ export class Leads {
   @Prop({ required: false })
   contactType?: string;
 
+  @Prop({ required: false, index: true, unique: true })
+  ip?: string;
+
   @Prop({ required: false })
   name?: string;
 
-  @Prop({ required: true })
-  email: string;
+  @Prop({ required: false })
+  email?: string;
 
   @Prop({ required: false })
   phone?: string;
