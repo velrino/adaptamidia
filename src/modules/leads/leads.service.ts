@@ -19,19 +19,11 @@ export class LeadsService {
     try {
       const ip = request.custom_client.ip;
 
-      const lead = await this.leadsModel.findOneAndUpdate(
-        { ip },
-        {
-          ...parameters,
-          ip,
-          request: request.custom_client || null,
-        },
-        {
-          upsert: true,
-          new: true,
-          projection: { _id: 1 },
-        },
-      );
+      const lead = await this.leadsModel.create({
+        ...parameters,
+        ip,
+        request: request.custom_client || null,
+      });
 
       return {
         id: lead._id,
