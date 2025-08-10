@@ -1,31 +1,31 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
 export class CreateLeadValidator {
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  contactType: string;
+  contactType?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  name: string;
+  name?: string;
 
   @IsNotEmpty()
   @IsString()
   email: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  phone: string;
+  phone?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  company: string;
+  company?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  business: string;
+  business?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  message: string;
+  message?: string;
 }

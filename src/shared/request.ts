@@ -11,6 +11,7 @@ export interface RequestCustomClient extends IUserAgentParserResult {
   source: IpSourceEnum;
   timezone: string;
   headers?: IncomingHttpHeaders;
+  detectedThreats: string[];
 }
 
 export interface CustomRequest extends Request {

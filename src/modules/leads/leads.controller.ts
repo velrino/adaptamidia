@@ -1,7 +1,8 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, Req } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { LeadsService } from './leads.service';
 import { CreateLeadValidator } from './leads.interface';
+import { CustomRequest } from 'src/shared/request';
 
 @Controller()
 export class LeadsController {
@@ -9,7 +10,7 @@ export class LeadsController {
 
   @Post('leads')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
-  createLead(@Body() data: CreateLeadValidator) {
-    return this.leadsService.create(data);
+  createLead(@Req() req: CustomRequest, @Body() data: CreateLeadValidator) {
+    return this.leadsService.execute(req, data);
   }
 }
