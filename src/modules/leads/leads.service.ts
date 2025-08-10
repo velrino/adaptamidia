@@ -15,19 +15,26 @@ export class LeadsService {
     private readonly redisService: RedisService,
   ) {}
 
-  async execute(request: CustomRequest, parameters: any) {
+  async create(request: CustomRequest, parameters: any) {
     try {
       const ip = request.custom_client.ip;
 
-      const lead = new this.leadsModel({
-        ...parameters,
-        ip,
-        request: request.custom_client || null,
-      });
-      const created = await lead.save();
+      const lead = await this.leadsModel.findOneAndUpdate(
+        { ip },
+        {
+          ...parameters,
+          ip,
+          request: request.custom_client || null,
+        },
+        {
+          upsert: true,
+          new: true,
+          projection: { _id: 1 },
+        },
+      );
 
       return {
-        id: created._id,
+        id: lead._id,
       };
     } catch (error) {
       console.error('Error creating lead:', error);

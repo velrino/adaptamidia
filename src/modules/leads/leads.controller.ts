@@ -17,6 +17,6 @@ export class LeadsController {
   @Post('leads')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   createLead(@Req() req: CustomRequest, @Body() data: CreateLeadValidator) {
-    return this.leadsService.execute(req, data);
+    return this.leadsService.create(req, data);
   }
 }
