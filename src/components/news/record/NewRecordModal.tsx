@@ -31,14 +31,13 @@ export default function NewRecordModal({
       isOpen={true}
       onClose={handleClose}
       showCloseButton={true}
-      className="max-w-[1200px] max-h-[90vh] overflow-y-auto"
+      isFullscreen={true}
+      // className="max-w-[1200px] max-h-[90vh] overflow-y-auto"
     >
-      <div className="px-6 pb-24">
-        <div className="mx-auto">
-          {/* <DisplayLogModalInfo recordInformed={record} /> */}
-          <NewRecord recordInformed={record} />
-        </div>
-      </div>
+      {/* <div className="fixed top-0 left-0 flex flex-col w-full h-screen overflow-x-hidden overflow-y-auto bg-white dark:bg-gray-900 p-0"> */}
+      {/* <DisplayLogModalInfo recordInformed={record} /> */}
+      <NewRecord recordInformed={record} />
+      {/* </div> */}
     </Modal>
   );
 }

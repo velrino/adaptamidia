@@ -136,37 +136,37 @@ export default function NewRecord({ recordInformed }: NewRecordProps) {
   };
 
   return (
-    <div className="h-screen bg-white dark:bg-gray-900 flex flex-col">
-      <h1 className="text-2xl font-bold text-gray-900 dark:text-white p-6 border-b border-gray-200 dark:border-gray-700 truncate">
+    <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
+      <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white p-4 md:p-6 border-b border-gray-200 dark:border-gray-700 truncate">
         Editar {record.title || "Record de Notícia"}
       </h1>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-2 gap-0 min-h-full">
-          {/* Lado Esquerdo - Imagem */}
-          <div className="bg-gray-50 dark:bg-gray-800 p-6 flex flex-col items-center justify-start border-r border-gray-200 dark:border-gray-700">
-            <div className="w-full max-w-lg sticky top-6">
+        <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-0 lg:min-h-full">
+          {/* Seção da Imagem */}
+          <div className="bg-gray-50 dark:bg-gray-800 p-4 md:p-6 flex flex-col items-center justify-start lg:border-r border-gray-200 dark:border-gray-700">
+            <div className="w-full max-w-lg lg:sticky lg:top-6">
               {/* Imagem atual */}
               {croppedImage || record.image ? (
-                <div className="mb-6">
+                <div className="mb-4 md:mb-6">
                   <img
                     src={croppedImage || record.image}
                     alt="Preview"
                     className="w-full h-auto rounded-lg border border-gray-300 dark:border-gray-600 shadow-lg"
                     style={{ aspectRatio: "16/9" }}
                   />
-                  <div className="mt-2 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <div className="mt-2 text-center text-xs md:text-sm text-gray-500 dark:text-gray-400">
                     Aspect ratio: 16:9 (TV)
                   </div>
                 </div>
               ) : (
                 <div
-                  className="mb-6 w-full bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600"
+                  className="mb-4 md:mb-6 w-full bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600"
                   style={{ aspectRatio: "16/9" }}
                 >
                   <div className="text-center text-gray-500 dark:text-gray-400">
-                    <LuImageUp size={48} className="mx-auto mb-2" />
-                    <p>Nenhuma imagem selecionada</p>
+                    <LuImageUp size={32} className="md:w-12 md:h-12 mx-auto mb-2" />
+                    <p className="text-sm md:text-base">Nenhuma imagem selecionada</p>
                   </div>
                 </div>
               )}
@@ -182,9 +182,9 @@ export default function NewRecord({ recordInformed }: NewRecordProps) {
               <Button
                 onClick={() => fileInputRef.current?.click()}
                 variant="outline"
-                className="w-full border-2 border-dashed border-gray-300 dark:border-gray-600 p-4 hover:border-blue-500 dark:hover:border-blue-400 transition-colors"
+                className="w-full border-2 border-dashed border-gray-300 dark:border-gray-600 p-3 md:p-4 hover:border-blue-500 dark:hover:border-blue-400 transition-colors text-sm md:text-base"
               >
-                <LuImageUp size={20} className="mr-2" />
+                <LuImageUp size={16} className="md:w-5 md:h-5 mr-2" />
                 {croppedImage || record.image
                   ? "Alterar Imagem"
                   : "Fazer Upload de Imagem"}
@@ -192,9 +192,9 @@ export default function NewRecord({ recordInformed }: NewRecordProps) {
             </div>
           </div>
 
-          {/* Lado Direito - Formulário */}
-          <div className="p-6">
-            <div className="space-y-6 max-w-2xl">
+          {/* Seção do Formulário */}
+          <div className="p-4 md:p-6">
+            <div className="space-y-4 md:space-y-6 max-w-2xl">
               {/* Título */}
               <FormInput
                 label="Título"
@@ -208,7 +208,7 @@ export default function NewRecord({ recordInformed }: NewRecordProps) {
                 label="Descrição"
                 value={record.description}
                 onChange={(value) => handleInputChange("description", value)}
-                rows={4}
+                rows={3}
               />
 
               {/* Autor */}
@@ -254,7 +254,7 @@ export default function NewRecord({ recordInformed }: NewRecordProps) {
               />
 
               {/* Botão de Atualizar */}
-              <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+              <div className="pt-4 md:pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
                   onClick={handleUpdate}
                   disabled={isUpdating}
@@ -274,13 +274,13 @@ export default function NewRecord({ recordInformed }: NewRecordProps) {
           isOpen={cropModal.isOpen}
           onClose={cropModal.closeModal}
           showCloseButton={false}
-          className="max-w-[80vw] p-6 bg-white dark:bg-gray-900"
+          className="max-w-[95vw] md:max-w-[80vw] p-4 md:p-6 bg-white dark:bg-gray-900"
         >
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+          <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white mb-3 md:mb-4">
             Recortar Imagem (16:9)
           </h2>
 
-          <div className="relative w-full max-h-[60vh] bg-gray-900 aspect-video">
+          <div className="relative w-full h-[50vh] md:max-h-[60vh] bg-gray-900 aspect-video">
             <Cropper
               image={uploadedImage}
               crop={crop}
@@ -292,17 +292,17 @@ export default function NewRecord({ recordInformed }: NewRecordProps) {
             />
           </div>
 
-          <div className="flex justify-between mt-4">
+          <div className="flex flex-col sm:flex-row justify-between gap-3 mt-4">
             <Button
               variant="outline"
               onClick={cropModal.closeModal}
-              className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+              className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 order-2 sm:order-1"
             >
               Cancelar
             </Button>
             <Button
               onClick={handleCropConfirm}
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white order-1 sm:order-2"
             >
               Confirmar Recorte
             </Button>
