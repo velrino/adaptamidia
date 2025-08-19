@@ -124,13 +124,13 @@ export function AdvertisementComponent({
         {data.company?._id && (
           <>
             <div className="grid grid-cols-12 gap-4 md:gap-6">
-              <div className="col-span-6">
+              {/* <div className="col-span-6">
                 <GenerateAdvertisementModal
                   open={modalGenerate.isOpen}
                   currentModal={modalGenerate}
                   onCropComplete={handleGenerated}
                 />
-              </div>
+              </div> */}
               <div className="col-span-6">
                 <MediaCropperModal
                   open={modalMediaCropper.isOpen}

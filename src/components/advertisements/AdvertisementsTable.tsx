@@ -315,18 +315,17 @@ export default function AdvertisementsTable() {
       {currentAdvertisement && (
         <AdvertisementModal
           action={contentAction}
-          advertisementData={currentAdvertisement}
-          setContentAction={setContentAction}
-          refresh={async (refresh: boolean) => {
-            if (refresh) {
-              getResponse({
-                cache: false,
-              });
-            }
-          }}
-          onCloseCallback={() => {
+          data={currentAdvertisement}
+          onClose={() => {
             setCurrentAdvertisement(null);
             console.log("Modal closed!");
+          }}
+          onSuccess={(data) => {
+            setCurrentAdvertisement(data);
+            setContentAction(ContentAction.UPDATE);
+            getResponse({
+              cache: false,
+            });
           }}
         />
       )}

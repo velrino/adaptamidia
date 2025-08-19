@@ -2,7 +2,7 @@ import { Tabs } from "@/components/ui/tabs/Principal";
 import React, { useCallback, useEffect, useState } from "react";
 import AdvertisementModalLocal from "./AdvertisementModalLocal";
 import AdvertisementModalAbout from "./AdvertisementModalAbout";
-import { IAdvertisementModalCommonProps } from "./interface";
+import { AdvertisementFormProps } from "./interface";
 import { Display } from "../Ads/Display";
 import { AdsCurrentType, DisplayThemes } from "@/interfaces/ads";
 import { AdvertisementComponent } from "./AdvertisementModalItems";
@@ -19,11 +19,11 @@ import { GetErrorMessage } from "@/utils/generic";
 import { ContentAction, IToastType } from "@/interfaces/general";
 import { AdvertisementMetricsTab } from "./Metrics/Tab";
 
-const AdvertisementModalTab: React.FC<IAdvertisementModalCommonProps> = ({
+const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
   action,
   data,
   onUpdate,
-}: IAdvertisementModalCommonProps) => {
+}: AdvertisementFormProps) => {
   const { data: session } = useSession();
   const { showFullScreenLoading, hideFullScreenLoading } = useLoading();
   const { showToast } = useToast();

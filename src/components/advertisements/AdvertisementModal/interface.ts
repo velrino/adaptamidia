@@ -1,14 +1,15 @@
 import { IApiAdvertisementItem } from "@/backend/api/api.interface";
 import { ContentAction } from "@/interfaces/general";
 
-export interface AdvertisementModalCommonProps {
+export interface AdvertisementModalProps {
   action: ContentAction;
   data: IApiAdvertisementItem;
-  onCallback?: (callback: IApiAdvertisementItem) => void;
+  onClose: () => void;
+  onSuccess: (data: IApiAdvertisementItem) => void;
 }
 
-export interface IAdvertisementModalCommonProps {
-  action: ContentAction;
+export interface AdvertisementFormProps {
   data: IApiAdvertisementItem;
   onUpdate: (data: Partial<IApiAdvertisementItem>) => void;
+  action: ContentAction;
 }

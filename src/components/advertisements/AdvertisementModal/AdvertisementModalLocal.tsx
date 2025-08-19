@@ -41,7 +41,7 @@ import {
 } from "@/utils/generic";
 import { AdPeriod, AdPeriodText } from "@/interfaces/ads";
 // import { BsCashCoin } from "react-icons/bs";
-import { IAdvertisementModalCommonProps } from "./interface";
+import { AdvertisementFormProps } from "./interface";
 import Select from "@/components/form/Select";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/context/ToastContext";
@@ -67,7 +67,7 @@ const defaultFormReport: IDefaultFormReport = {
   end_date: String(),
 };
 
-interface IAdvertisementModalLocal extends IAdvertisementModalCommonProps {
+interface IAdvertisementModalLocal extends AdvertisementFormProps {
   default_units: IApiUnitItemResponse[];
 }
 

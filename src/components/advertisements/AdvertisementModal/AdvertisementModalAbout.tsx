@@ -9,13 +9,13 @@ import {
 } from "@/backend/mock/advertisements";
 import { AdsAudience, AdStatusOptions } from "@/interfaces/ads";
 import { IReactSelectOption } from "@/interfaces/general";
-import { IAdvertisementModalCommonProps } from "./interface";
+import { AdvertisementFormProps } from "./interface";
 import { CompanySelect } from "@/reusable/CompanySelect/CompanySelect";
 // import { EnumApiCompanyType } from "@/backend/api/api.enum";
 import TextArea from "@/components/form/input/TextArea";
 
 const AdvertisementModalAbout = memo(
-  ({ data, onUpdate }: IAdvertisementModalCommonProps) => {
+  ({ data, onUpdate }: AdvertisementFormProps) => {
     const updateForm = (
       column: keyof IApiAdvertisementItem,
       value: unknown
