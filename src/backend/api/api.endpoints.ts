@@ -259,4 +259,14 @@ export const API = {
       });
     },
   },
+  news: {
+    async paginate(access_token: string, data: IApiPaginateCompanyUnits) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: "/news",
+        data,
+        access_token,
+      });
+    },
+  },
 };

@@ -167,6 +167,7 @@ export interface IApiUpdateAdvertisementRequest {
 
 export interface IApiNewsResponseItem {
   _id: string;
+  video?: string;
   provider: string;
   language: string;
   keyword: string;
@@ -190,6 +191,11 @@ export interface IApiNewsResponse {
   provider: string | null;
   parameters: IApiPaginateParameters;
   data: IApiNewsResponseItem[];
+}
+
+export interface IApiNewsRequest extends IApiPaginateParameters {
+  id?: string[];
+  search?: string;
 }
 
 // END NEWS

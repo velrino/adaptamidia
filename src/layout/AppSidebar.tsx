@@ -22,7 +22,7 @@ import {
   UserCircleIcon,
 } from "../icons/index";
 import { BsWindowStack } from "react-icons/bs";
-import { PiBuildingOfficeLight } from "react-icons/pi";
+import { PiBuildingOfficeLight, PiNewspaper } from "react-icons/pi";
 import { Environment } from "@/utils/generic";
 
 type NavItem = {
@@ -44,6 +44,15 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "Anúncios", path: "/advertisements", pro: false },
       { name: "Exibições", path: "/displays", pro: false },
+      // { name: "Métricas", path: "/analytics", pro: true },
+    ],
+  },
+  {
+    icon: <PiNewspaper size={25} />,
+    name: "Notícias",
+    subItems: [
+      { name: "Notícias", path: "/news", pro: false },
+      // { name: "Exibições", path: "/displays", pro: false },
       // { name: "Métricas", path: "/analytics", pro: true },
     ],
   },
