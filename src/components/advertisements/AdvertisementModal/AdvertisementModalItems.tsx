@@ -11,7 +11,6 @@ import { useSession } from "next-auth/react";
 import { useToast } from "@/context/ToastContext";
 import { IToastType } from "@/interfaces/general";
 import { useLoading } from "@/context/LoadingContext";
-import { GenerateAdvertisementModal } from "./Ads/GenerateModal";
 
 export function AdvertisementComponent({
   data,
@@ -75,42 +74,42 @@ export function AdvertisementComponent({
     }
   };
 
-  const handleGenerated = async (fileUrl: string) => {
-    if (!session?.api_session) {
-      return;
-    }
+  // const handleGenerated = async (fileUrl: string) => {
+  //   if (!session?.api_session) {
+  //     return;
+  //   }
 
-    if (!data?.company) {
-      showToast("Escolha um Anunciante!", IToastType.INFO);
-      return;
-    }
+  //   if (!data?.company) {
+  //     showToast("Escolha um Anunciante!", IToastType.INFO);
+  //     return;
+  //   }
 
-    try {
-      showFullScreenLoading();
+  //   try {
+  //     showFullScreenLoading();
 
-      showToast(`Upload feito com sucesso!`, IToastType.SUCCESS);
+  //     showToast(`Upload feito com sucesso!`, IToastType.SUCCESS);
 
-      const newItem: IApiAdvertisementItemItem = {
-        id: new Date().getTime().toString(),
-        description: String(),
-        seconds: 30,
-        source: fileUrl,
-        title: String(),
-        type: AdType.VIDEO,
-      };
+  //     const newItem: IApiAdvertisementItemItem = {
+  //       id: new Date().getTime().toString(),
+  //       description: String(),
+  //       seconds: 30,
+  //       source: fileUrl,
+  //       title: String(),
+  //       type: AdType.VIDEO,
+  //     };
 
-      const updatedData = { items: [newItem], type: AdType.VIDEO };
+  //     const updatedData = { items: [newItem], type: AdType.VIDEO };
 
-      onUpdate(updatedData);
-    } catch (error) {
-      showToast(GetErrorMessage(error), IToastType.ERROR);
-    } finally {
-      hideFullScreenLoading();
-    }
-  };
+  //     onUpdate(updatedData);
+  //   } catch (error) {
+  //     showToast(GetErrorMessage(error), IToastType.ERROR);
+  //   } finally {
+  //     hideFullScreenLoading();
+  //   }
+  // };
 
   const modalMediaCropper = useModal();
-  const modalGenerate = useModal();
+  // const modalGenerate = useModal();
 
   return (
     <>

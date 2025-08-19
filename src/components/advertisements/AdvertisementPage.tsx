@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client";
 
 import React from "react";
@@ -10,7 +12,8 @@ import { advertisementService } from "@/services/advertisementService";
 import AdvertisementForm from "./AdvertisementForm";
 import Spinner from "../ui/spinner/Spinner";
 
-interface AdvertisementPageProps extends Omit<AdvertisementFormProps, "onUpdate"> {
+interface AdvertisementPageProps
+  extends Omit<AdvertisementFormProps, "onUpdate"> {
   onSuccess?: (data: any) => void;
 }
 
@@ -20,7 +23,7 @@ export default function AdvertisementPage({
   onSuccess,
 }: AdvertisementPageProps) {
   const router = useRouter();
-  
+
   const {
     data,
     setData,
@@ -61,14 +64,15 @@ export default function AdvertisementPage({
       }
 
       if (result.success && result.data) {
-        const actionText = action === ContentAction.CREATE ? "criado" : "atualizado";
+        const actionText =
+          action === ContentAction.CREATE ? "criado" : "atualizado";
         showToast(
           `${requestData.title || "Anúncio"} ${actionText} com sucesso!`,
           IToastType.SUCCESS
         );
-        
+
         setData(result.data);
-        
+
         if (onSuccess) {
           onSuccess(result.data);
         } else {
@@ -85,11 +89,7 @@ export default function AdvertisementPage({
 
   return (
     <div className="flex flex-col w-full h-screen overflow-x-hidden overflow-y-auto bg-white dark:bg-gray-900">
-      <AdvertisementForm
-        data={data}
-        onUpdate={handleUpdate}
-        action={action}
-      />
+      <AdvertisementForm data={data} onUpdate={handleUpdate} action={action} />
       <div className="flex items-center justify-end w-full gap-3 bg-white dark:bg-gray-900 px-6 py-6 border-t">
         <Button size="sm" variant="outline" onClick={() => router.back()}>
           Voltar

@@ -353,6 +353,7 @@ export default function NewsTable() {
           )}
         </div>
       </div>
+      {currentSelected}
       {/* {currentSelected && (
         <DisplayLogModal
           record={currentSelected}
