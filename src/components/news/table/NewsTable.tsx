@@ -24,6 +24,7 @@ import { API } from "@/backend/api/api.endpoints";
 import PaginationWithIcon from "../../ui/pagination/PaginationWitIcon";
 import Spinner from "../../ui/spinner/Spinner";
 import { NewsSortKey } from "@/interfaces/news";
+import NewRecordModal from "../record/NewRecordModal";
 // import DisplayLogModal from "./DisplayLogModal/DisplayLogModal";
 
 export default function NewsTable() {
@@ -353,9 +354,9 @@ export default function NewsTable() {
           )}
         </div>
       </div>
-      {currentSelected}
-      {/* {currentSelected && (
-        <DisplayLogModal
+
+      {currentSelected && (
+        <NewRecordModal
           record={currentSelected}
           refresh={async (refresh: boolean) => {
             if (refresh) {
@@ -364,7 +365,7 @@ export default function NewsTable() {
               });
             }
           }}
-          onCloseCallback={(record?: IApiDisplayLogItem | undefined) => {
+          onCloseCallback={(record?: IApiNewsResponseItem | undefined) => {
             if (record?._id) {
               setCurrentSelected(record);
             } else {
@@ -372,7 +373,7 @@ export default function NewsTable() {
             }
           }}
         />
-      )} */}
+      )}
     </>
   );
 }
