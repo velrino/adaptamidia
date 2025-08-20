@@ -76,6 +76,14 @@ export class IDashboardGeneralDto {
       ? value.map((v) => new Types.ObjectId(v))
       : [new Types.ObjectId(value)],
   )
+  news?: Types.ObjectId[];
+
+  @IsOptional()
+  @Transform(({ value }) =>
+    Array.isArray(value)
+      ? value.map((v) => new Types.ObjectId(v))
+      : [new Types.ObjectId(value)],
+  )
   local_unit?: Types.ObjectId[];
 
   @IsOptional()
@@ -119,6 +127,7 @@ export interface IDashboardGeneral {
   is_admin: boolean;
   company?: Types.ObjectId[];
   advertisement?: Types.ObjectId[];
+  news?: Types.ObjectId[];
   local_unit?: Types.ObjectId[];
   permissions: PermissionsEnum[];
   news_page: number;

@@ -393,6 +393,12 @@ export class DashboardGeneralService {
 
       if (parameters.advertisement?.length) {
         queryBuilder['advertisement'] = { $in: parameters.advertisement };
+        queryBuilder.type = DisplayType.ADVERTISEMENT;
+      }
+
+      if (parameters.news?.length) {
+        queryBuilder['news'] = { $in: parameters.news };
+        queryBuilder.type = DisplayType.NEWS;
       }
 
       if (parameters.local_unit?.length) {
