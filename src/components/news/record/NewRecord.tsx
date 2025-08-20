@@ -164,6 +164,7 @@ export default function NewRecord({
   const handleUpdate = async () => {
     showFullScreenLoading();
     setIsUpdating(true);
+    console.log({ session: session?.api_session });
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulação
       showToast("Record atualizado com sucesso!", IToastType.SUCCESS);
