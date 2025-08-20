@@ -107,7 +107,7 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
                 internalQuery={{
                   advertisement: [data._id],
                 }}
-                className="px-5 mt-2"
+                className="mx-5 mt-2"
               />
             ),
           },

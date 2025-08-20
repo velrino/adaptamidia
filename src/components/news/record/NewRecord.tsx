@@ -469,7 +469,7 @@ export default function NewRecord({
             internalQuery={{
               news: [record._id],
             }}
-            className="px-5 mt-2"
+            className="mx-5 mt-2"
           />
         </>
       )}
