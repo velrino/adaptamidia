@@ -366,44 +366,6 @@ const AdvertisementModalLocal = memo(
                       onNeighborhoodChange={handleNeighborhoodChange}
                       onUnitsChange={handleUnitsChange}
                     />
-                    {/* 
-                    <div className="col-span-2">
-                      <Label htmlFor="title">
-                        Regiões {data.neighborhood.length}
-                      </Label>
-                      <SelectReact
-                        isMulti
-                        placeholder="Selecione as regiões"
-                        isDisabled={isUnitsLoading}
-                        isLoading={isUnitsLoading}
-                        className="dark:bg-dark-900"
-                        value={
-                          unitsOptions.filter((option: IReactSelectOption) =>
-                            data.neighborhood.includes(option.value as string)
-                          ) || []
-                        }
-                        options={unitsOptions}
-                        onChange={(newValue) => {
-                          const neighborhoods = newValue.map(
-                            (neighborhood) => neighborhood.value
-                          );
-                          updateForm("neighborhood", neighborhoods);
-                        }}
-                      />
-                    </div>
-
-                    <div className="col-span-2">
-                      <AdvertisementModalUnits
-                        title={`Estabelecimentos (${
-                          units.length
-                        }) - ${SumAllDevices(units)} Telas`}
-                        content={units}
-                        seconds={data.seconds}
-                        isOpen={showUnits}
-                        toggleAccordion={handleToggleShowUnits}
-                        callback={advertisementModalUnitsCallback}
-                      />
-                    </div> */}
                   </>
                 )}
               </div>

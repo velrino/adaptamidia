@@ -170,10 +170,23 @@ export function RegionsComponent({
   const lastNeighborhoods = useRef<string[]>(neighborhoodInformed || []);
 
   useEffect(() => {
-    if (unitsInformed.length > 0 && session?.api_session && !hasInitialized) {
-      getUnits({ units: unitsInformed });
-      setHasInitialized(true);
-    }
+    const handleGetUnits = async () => {
+      try {
+        if (
+          unitsInformed.length > 0 &&
+          session?.api_session &&
+          !hasInitialized
+        ) {
+          await getUnits({ units: unitsInformed });
+        }
+      } catch (error) {
+        console.error({ RegionsComponent: error });
+      } finally {
+        setHasInitialized(true);
+      }
+    };
+
+    handleGetUnits();
   }, [unitsInformed, session?.api_session, getUnits, hasInitialized]);
 
   useEffect(() => {
