@@ -181,6 +181,8 @@ export interface IApiNewsResponseItem {
   published_at: string;
   created_at: string;
   updated_at: string;
+  neighborhood: string[];
+  units: string[];
 }
 
 export interface IApiNewsResponse {

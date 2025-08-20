@@ -1,8 +1,11 @@
 "use client";
 
-import { IApiNewsResponseItem } from "@/backend/api/api.interface";
+import {
+  IApiNewsResponseItem,
+  IApiUnitItemResponse,
+} from "@/backend/api/api.interface";
 import { useToast } from "@/context/ToastContext";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import Cropper from "react-easy-crop";
 import { LuImageUp, LuUser, LuTag, LuFileText } from "react-icons/lu";
 import Button from "@/components/ui/button/Button";
@@ -16,10 +19,14 @@ import {
   FormDateTimeInput,
   FormSelect,
 } from "@/components/ui/input";
+import { useSession } from "next-auth/react";
+import { useLoading } from "@/context/LoadingContext";
+import { RegionsComponent } from "@/components/regions/Regions";
 
 interface NewRecordProps {
   recordInformed?: IApiNewsResponseItem | null;
   isCreateMode?: boolean;
+  default_units: IApiUnitItemResponse[];
 }
 
 async function getCroppedImg(
@@ -74,14 +81,25 @@ const defaultNewRecord: IApiNewsResponseItem = {
   published_at: new Date().toISOString(),
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
+  units: ["67e31b5bbb5d774e801b4f68", "68960d3feac4dfe7e80c0539"],
+  neighborhood: ["Alphaville", "Brooklin"],
 };
 
 export default function NewRecord({
   recordInformed,
   isCreateMode = false,
+  default_units = [],
 }: NewRecordProps) {
+  const { data: session } = useSession();
+
+  const { showFullScreenLoading, hideFullScreenLoading } = useLoading();
+
   const [record, setRecord] = useState<IApiNewsResponseItem>(
-    isCreateMode ? defaultNewRecord : recordInformed || defaultNewRecord
+    isCreateMode
+      ? defaultNewRecord
+      : recordInformed
+      ? { ...defaultNewRecord, ...recordInformed }
+      : defaultNewRecord
   );
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
@@ -157,6 +175,32 @@ export default function NewRecord({
   ) => {
     setRecord((prev) => ({ ...prev, [field]: value }));
   };
+
+  const [units, setUnits] = useState<IApiUnitItemResponse[]>(() => {
+    if (recordInformed?.units?.length && default_units?.length) {
+      return default_units.filter((unit) =>
+        recordInformed.units.includes(unit._id)
+      );
+    }
+    return default_units || [];
+  });
+
+  const handleNeighborhoodChange = useCallback((neighborhoods: string[]) => {
+    setRecord((prev) => ({
+      ...prev,
+      neighborhood: neighborhoods,
+    }));
+  }, []);
+
+  const handleUnitsChange = useCallback((newUnits: IApiUnitItemResponse[]) => {
+    setUnits(newUnits);
+    setRecord((prev) => ({
+      ...prev,
+      units: newUnits.map((unit) => unit._id),
+    }));
+  }, []);
+
+  console.log("NewRecord render - record.units:", record.units);
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
@@ -304,6 +348,13 @@ export default function NewRecord({
                 value={record.keyword || ""}
                 onChange={(value) => handleInputChange("keyword", value)}
                 icon={LuTag}
+              />
+
+              <RegionsComponent
+                neighborhoodInformed={record.neighborhood}
+                unitsInformed={record.units || []}
+                onNeighborhoodChange={handleNeighborhoodChange}
+                onUnitsChange={handleUnitsChange}
               />
 
               {/* Botão de Atualizar */}
