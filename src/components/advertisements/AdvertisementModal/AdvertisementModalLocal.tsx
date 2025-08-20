@@ -48,10 +48,8 @@ const defaultFormReport: IDefaultFormReport = {
   end_date: String(),
 };
 
-interface IAdvertisementModalLocal extends AdvertisementFormProps {}
-
 const AdvertisementModalLocal = memo(
-  ({ data, onUpdate }: IAdvertisementModalLocal) => {
+  ({ data, onUpdate }: AdvertisementFormProps) => {
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
     const maxStartDate = useMemo(

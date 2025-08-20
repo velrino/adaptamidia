@@ -1,5 +1,5 @@
 import { Tabs } from "@/components/ui/tabs/Principal";
-import React, { useCallback, useEffect, useState } from "react";
+import React from "react";
 import AdvertisementModalLocal from "./AdvertisementModalLocal";
 import AdvertisementModalAbout from "./AdvertisementModalAbout";
 import { AdvertisementFormProps } from "./interface";
@@ -7,16 +7,7 @@ import { Display } from "../Ads/Display";
 import { AdsCurrentType, DisplayThemes } from "@/interfaces/ads";
 import { AdvertisementComponent } from "./AdvertisementModalItems";
 import { useSession } from "next-auth/react";
-import {
-  IApiDisplayResponseItem,
-  IApiPaginateCompanyUnits,
-  IApiUnitItemResponse,
-} from "@/backend/api/api.interface";
-import { useLoading } from "@/context/LoadingContext";
-import { API } from "@/backend/api/api.endpoints";
-import { useToast } from "@/context/ToastContext";
-import { GetErrorMessage } from "@/utils/generic";
-import { ContentAction, IToastType } from "@/interfaces/general";
+import { IApiDisplayResponseItem } from "@/backend/api/api.interface";
 import { AdvertisementMetricsTab } from "./Metrics/Tab";
 
 const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
@@ -25,9 +16,6 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
   onUpdate,
 }: AdvertisementFormProps) => {
   const { data: session } = useSession();
-
-  const [advertisementModalLocalAlready, setAdvertisementModalLocalAlready] =
-    useState<boolean>(action === ContentAction.UPDATE ? false : true);
 
   const openPreview = () => {
     if (!session?.api_session || !data._id) {
