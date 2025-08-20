@@ -6,47 +6,27 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import Label from "@/components/form/Label";
 import {
   IApiAdvertisementItem,
-  IApiGroupCompanyUnitsRequest,
-  IApiGroupCompanyUnitsResponseItem,
-  IApiPaginateCompanyUnits,
   IApiUnitItemResponse,
 } from "@/backend/api/api.interface";
 import { DateHelper, DateHelperFormat, DateInputStyle } from "@/utils/date";
 import Flatpickr from "react-flatpickr";
 import { CalenderIcon } from "@/icons";
-// import { CompanyUnitsMock, CompanyUnitsMockData } from "@/backend/mock/units";
 import dynamic from "next/dynamic";
-import SelectReact from "react-select";
-import AdvertisementModalUnits from "./AdvertisementModalUnits";
-import { IReactSelectOption, IToastType } from "@/interfaces/general";
-import { SumAllDevices } from "./helper";
-import {
-  EnumAdvertisementModalUnit,
-  IAdvertisementModalUnitCallback,
-} from "./AdvertisementModalUnits/interface";
 import Spinner from "@/components/ui/spinner/Spinner";
 import { PiEye, PiUsersLight } from "react-icons/pi";
 import {
-  // FormatCurrency,
   FormatThousand,
   GenerateNumberRangeAsOptions,
-  GetErrorMessage,
   SumUnitPeriodNative,
 } from "@/utils/generic";
 import { AdPeriod, AdPeriodText } from "@/interfaces/ads";
-// import { BsCashCoin } from "react-icons/bs";
 import { AdvertisementFormProps } from "./interface";
 import Select from "@/components/form/Select";
-import { useSession } from "next-auth/react";
-import { useToast } from "@/context/ToastContext";
-import { API } from "@/backend/api/api.endpoints";
-import { useLoading } from "@/context/LoadingContext";
 import { RegionsComponent } from "@/components/regions/Regions";
 
 const LazyMap = dynamic(() => import("./Ads/Map"), {
@@ -74,10 +54,6 @@ interface IAdvertisementModalLocal extends AdvertisementFormProps {
 
 const AdvertisementModalLocal = memo(
   ({ data, onUpdate, default_units }: IAdvertisementModalLocal) => {
-    const { data: session } = useSession();
-    const { showFullScreenLoading, hideFullScreenLoading } = useLoading();
-    const { showToast } = useToast();
-
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
     const maxStartDate = useMemo(
@@ -125,96 +101,9 @@ const AdvertisementModalLocal = memo(
       AdPeriodText[currentPeriod]
     );
 
-    const [showUnits, setShowUnits] = useState<boolean>(true);
-
-    const handleToggleShowUnits = useCallback(() => {
-      setShowUnits((prev) => !prev);
-    }, []);
-
     const [units, setUnits] = useState<IApiUnitItemResponse[]>(
       default_units || []
     );
-
-    const getUnits = useCallback(
-      async (apiQuery: IApiPaginateCompanyUnits) => {
-        if (!session?.api_session) {
-          return;
-        }
-
-        setIsUnitsLoading(true);
-        showFullScreenLoading();
-        try {
-          const query: IApiPaginateCompanyUnits = {
-            // page: currentPage,
-            limit: 100,
-            ...apiQuery,
-          };
-
-          const response = await API.company_units.paginate(
-            session.api_session.access_token,
-            query
-          );
-
-          const responseData = await response.json();
-
-          if (responseData?.error) {
-            showToast(GetErrorMessage(responseData.error), IToastType.ERROR);
-          } else if (response.ok) {
-            setUnits((prevUnits) => {
-              const existingIds = new Set(
-                prevUnits.map((unit: IApiUnitItemResponse) => unit._id)
-              );
-              const newUnits = responseData.data.filter(
-                (unit: IApiUnitItemResponse) => !existingIds.has(unit._id)
-              );
-              return [...prevUnits, ...newUnits]; // Adiciona apenas os novos
-            });
-            showToast("Adicionado com sucesso", IToastType.SUCCESS);
-          }
-        } catch (error) {
-          showToast(GetErrorMessage(error), IToastType.ERROR);
-        } finally {
-          setIsUnitsLoading(false);
-          hideFullScreenLoading();
-        }
-      },
-      [
-        session?.api_session,
-        showToast,
-        showFullScreenLoading,
-        hideFullScreenLoading,
-      ]
-    );
-
-    const lastNeighborhoods = useRef<string[]>(data.neighborhood || []);
-
-    useEffect(() => {
-      const currentNeighborhoods = data.neighborhood || [];
-      const currentLength = currentNeighborhoods.length;
-
-      // Detecta adição de bairro
-      if (currentLength > lastNeighborhoods.current.length) {
-        const lastNeighborhood = currentNeighborhoods.slice(-1)[0];
-        getUnits({ neighborhood: lastNeighborhood });
-      }
-      // Detecta remoção de bairro
-      else if (currentLength < lastNeighborhoods.current.length) {
-        const removedNeighborhood = lastNeighborhoods.current.find(
-          (neighborhood) => !currentNeighborhoods.includes(neighborhood)
-        );
-
-        if (removedNeighborhood) {
-          setUnits((prevUnits) =>
-            prevUnits.filter(
-              (unit) => unit.neighborhood !== removedNeighborhood
-            )
-          );
-        }
-      }
-
-      // Atualiza a referência para o próximo render
-      lastNeighborhoods.current = currentNeighborhoods;
-    }, [data.neighborhood, getUnits]);
 
     const classifyPeriod = useCallback((diff: number): AdPeriod => {
       if (diff <= 1) return AdPeriod.DAILY;
@@ -274,70 +163,6 @@ const AdvertisementModalLocal = memo(
         onUpdate({ [column]: value });
       },
       [onUpdate]
-    );
-
-    const [unitsOptions, setUnitsOptions] = useState<IReactSelectOption[]>([]);
-    const [isUnitsLoading, setIsUnitsLoading] = useState(false);
-
-    const getCompanyGroup = useCallback(
-      async (apiQuery: IApiGroupCompanyUnitsRequest) => {
-        if (!session?.api_session) {
-          return;
-        }
-
-        setIsUnitsLoading(true);
-        try {
-          const query: IApiGroupCompanyUnitsRequest = {
-            // page: currentPage,
-            // limit: 100,
-            // popular_time: true,
-            ...apiQuery,
-          };
-
-          const response = await API.company_units.group(
-            session.api_session.access_token,
-            query
-          );
-
-          const responseData = await response.json();
-
-          if (responseData?.error) {
-            showToast(GetErrorMessage(responseData.error), IToastType.ERROR);
-          } else if (response.ok) {
-            const companyUnitList = responseData.data
-              .map((item: IApiGroupCompanyUnitsResponseItem) => ({
-                value: item.neighborhood,
-                label: `${item.city} - ${item.neighborhood}`,
-              }))
-              .sort((a: IReactSelectOption, b: IReactSelectOption) =>
-                a.label.localeCompare(b.label)
-              );
-            setUnitsOptions(companyUnitList);
-          }
-        } catch (error) {
-          showToast(GetErrorMessage(error), IToastType.ERROR);
-        } finally {
-          setIsUnitsLoading(false);
-        }
-      },
-      [session?.api_session, showToast]
-    );
-
-    useEffect(() => {
-      if (session?.api_session) {
-        getCompanyGroup({});
-      }
-    }, [getCompanyGroup, session?.api_session]);
-
-    const advertisementModalUnitsCallback = useCallback(
-      (current: IAdvertisementModalUnitCallback) => {
-        if (current.type === EnumAdvertisementModalUnit.REMOVE_UNIT) {
-          const currentData = current.data as IApiUnitItemResponse;
-          const newUnits = units.filter((item) => item._id !== currentData._id);
-          setUnits(newUnits);
-        }
-      },
-      [units]
     );
 
     const handleStartDateChange = useCallback(
