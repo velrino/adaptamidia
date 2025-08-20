@@ -679,6 +679,7 @@ export interface IApiDashboardDisplayByUnitRequest
   page: number;
   limit: number;
   advertisement?: string[];
+  news?: string[];
   sort: {
     column: "total";
     value: -1 | 1;
