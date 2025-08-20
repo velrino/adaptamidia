@@ -13,7 +13,7 @@ import { IApiUnitItemResponse } from "@/backend/api/api.interface";
 // import { type Map as LeafletMap } from "leaflet";
 import { type MapOptions } from "leaflet";
 
-import { useEffect, useRef } from "react";
+// import { useState } from "react";
 
 interface MapProps {
   style?: {
@@ -69,25 +69,17 @@ const calculateZoom = (list: IApiUnitItemResponse[]) => {
   return 10; // Zoom mínimo para áreas muito grandes
 };
 
-export default function AdvertisementMap(props: MapProps) {
-  const mapRef = useRef<L.Map>(null);
-  const center = calculateCenter(props.list);
-  const zoom = calculateZoom(props.list);
+export default function AdvertisementMap(parameters: MapProps) {
+  if (L.DomUtil.get("map") !== undefined) {
+    L.DomUtil.get("map")?.remove();
+  }
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (mapRef.current) {
-        mapRef.current.invalidateSize();
-      }
-    }, 100);
-
-    return () => clearTimeout(timer);
-  }, [props.list]);
+  const center = calculateCenter(parameters.list);
+  const zoom = calculateZoom(parameters.list);
 
   return (
     <div className="max-h-[75vh]">
       <MapContainer
-        ref={mapRef}
         center={center}
         zoom={zoom}
         minZoom={3}
@@ -96,15 +88,16 @@ export default function AdvertisementMap(props: MapProps) {
           [-90, -180], // Limite sul-oeste
           [90, 180], // Limite norte-leste
         ]}
-        maxBoundsViscosity={1.0}
+        maxBoundsViscosity={1.0} // Impede que o mapa saia dos limites
         style={{
           height: "100%",
           width: "100%",
-          minHeight: props.style?.minHeight || "75vh",
+          minHeight: parameters.style?.minHeight || "75vh",
           maxHeight: "75vh",
-          ...props.style,
+          ...parameters.style,
         }}
-        {...props?.customMapContainer}
+        // className="max-h-[75vh]"
+        {...parameters?.customMapContainer}
       >
         <TileLayer
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
@@ -114,7 +107,7 @@ export default function AdvertisementMap(props: MapProps) {
             [90, 180],
           ]}
         />
-        {props.list?.map((item: IApiUnitItemResponse) => (
+        {parameters.list.map((item: IApiUnitItemResponse) => (
           <Marker
             key={item._id}
             position={[
@@ -123,7 +116,7 @@ export default function AdvertisementMap(props: MapProps) {
             ]}
             eventHandlers={{
               click: () => {
-                // if (props.enableClickPopUp) {
+                // if (parameters.enableClickPopUp) {
                 //   setSelectedItem(item);
                 // }
               },
