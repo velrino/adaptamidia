@@ -169,7 +169,6 @@ export function RegionsComponent({
 
   const lastNeighborhoods = useRef<string[]>(neighborhoodInformed || []);
 
-  // Buscar unidades quando unitsInformed estiver preenchido (apenas uma vez)
   useEffect(() => {
     if (unitsInformed.length > 0 && session?.api_session && !hasInitialized) {
       getUnits({ units: unitsInformed });
