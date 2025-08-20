@@ -48,12 +48,10 @@ const defaultFormReport: IDefaultFormReport = {
   end_date: String(),
 };
 
-interface IAdvertisementModalLocal extends AdvertisementFormProps {
-  default_units: IApiUnitItemResponse[];
-}
+interface IAdvertisementModalLocal extends AdvertisementFormProps {}
 
 const AdvertisementModalLocal = memo(
-  ({ data, onUpdate, default_units }: IAdvertisementModalLocal) => {
+  ({ data, onUpdate }: IAdvertisementModalLocal) => {
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
     const maxStartDate = useMemo(
@@ -101,9 +99,7 @@ const AdvertisementModalLocal = memo(
       AdPeriodText[currentPeriod]
     );
 
-    const [units, setUnits] = useState<IApiUnitItemResponse[]>(
-      default_units || []
-    );
+    const [units, setUnits] = useState<IApiUnitItemResponse[]>([]);
 
     const classifyPeriod = useCallback((diff: number): AdPeriod => {
       if (diff <= 1) return AdPeriod.DAILY;

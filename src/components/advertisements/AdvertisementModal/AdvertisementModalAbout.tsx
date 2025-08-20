@@ -66,7 +66,7 @@ const AdvertisementModalAbout = memo(
     // End Segment
 
     return (
-      <div className="overflow-y-auto min-h-[75vh] max-h-[75vh] px-6">
+      <div className="mb-20">
         <div className="grid gap-6 sm:grid-cols-2">
           {data && (
             <>

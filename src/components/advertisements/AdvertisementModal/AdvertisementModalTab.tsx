@@ -25,67 +25,9 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
   onUpdate,
 }: AdvertisementFormProps) => {
   const { data: session } = useSession();
-  const { showFullScreenLoading, hideFullScreenLoading } = useLoading();
-  const { showToast } = useToast();
 
   const [advertisementModalLocalAlready, setAdvertisementModalLocalAlready] =
     useState<boolean>(action === ContentAction.UPDATE ? false : true);
-  const [defaultUnits, setDefaultUnits] = useState<IApiUnitItemResponse[]>([]);
-
-  const getDefaultUnits = useCallback(
-    async (apiQuery: IApiPaginateCompanyUnits) => {
-      if (!session?.api_session) {
-        return;
-      }
-      showFullScreenLoading();
-      try {
-        const query: IApiPaginateCompanyUnits = {
-          limit: 100,
-          ...apiQuery,
-        };
-
-        const response = await API.company_units.paginatePost(
-          session.api_session.access_token,
-          query
-        );
-
-        const responseData = await response.json();
-
-        if (responseData?.error) {
-          showToast(GetErrorMessage(responseData.error), IToastType.ERROR);
-        } else if (response.ok) {
-          setDefaultUnits((prevUnits) => {
-            const existingIds = new Set(
-              prevUnits.map((unit: IApiUnitItemResponse) => unit._id)
-            );
-            const newUnits = responseData.data.filter(
-              (unit: IApiUnitItemResponse) => !existingIds.has(unit._id)
-            );
-            return [...prevUnits, ...newUnits]; // Adiciona apenas os novos
-          });
-          showToast("Carregado com sucesso", IToastType.SUCCESS);
-          setAdvertisementModalLocalAlready(() => true);
-        }
-      } catch (error) {
-        showToast(GetErrorMessage(error), IToastType.ERROR);
-      } finally {
-        hideFullScreenLoading();
-      }
-    },
-    [
-      session?.api_session,
-      showToast,
-      showFullScreenLoading,
-      hideFullScreenLoading,
-    ]
-  );
-
-  useEffect(() => {
-    if (action === ContentAction.UPDATE && data.units.length) {
-      setAdvertisementModalLocalAlready(() => false);
-      getDefaultUnits({ units: data.units });
-    }
-  }, []);
 
   const openPreview = () => {
     if (!session?.api_session || !data._id) {
@@ -100,7 +42,7 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
       id: "ADS",
       label: "Anúncio",
       content: (
-        <div className="grid grid-cols-2 gap-4 p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
           <div className="text-black dark:text-white text-center">
             {data._id && (
               <div className="cursor-pointer">
@@ -114,8 +56,8 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
                 <div className="h-10">Salve para ver no Display</div>
               </div>
             )}
-            <div className="flex justify-center max-h-0">
-              <div className="scale-45">
+            <div className="flex justify-center w-full">
+              <div>
                 <Display
                   list={
                     [data].map((item) => ({
@@ -124,27 +66,26 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
                     })) as IApiDisplayResponseItem[]
                   }
                   theme={DisplayThemes.brand}
+                  style={{
+                    container: "relative",
+                  }}
                   preview={true}
                   useWebcam={false}
                 />
               </div>
             </div>
+            <div className="justify-center w-full text-center mt-5">
+              <AdvertisementComponent data={data} onUpdate={onUpdate} />
+            </div>
           </div>
-          <div className="aspect-video">
-            <AdvertisementComponent data={data} onUpdate={onUpdate} />
+          <div>
+            <AdvertisementModalAbout
+              action={action}
+              data={data}
+              onUpdate={onUpdate}
+            />
           </div>
         </div>
-      ),
-    },
-    {
-      id: "ABOUT",
-      label: "Sobre",
-      content: (
-        <AdvertisementModalAbout
-          action={action}
-          data={data}
-          onUpdate={onUpdate}
-        />
       ),
     },
     {
@@ -152,18 +93,16 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
       label: `Estabelecimentos`,
       content: (
         <>
-          {advertisementModalLocalAlready === true && (
+          {
             <AdvertisementModalLocal
               action={action}
               data={data}
               onUpdate={onUpdate}
-              default_units={defaultUnits}
             />
-          )}
+          }
         </>
       ),
     },
-
     ...(data?._id
       ? [
           {
@@ -173,12 +112,6 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
           },
         ]
       : []),
-
-    // {
-    //   id: "Three",
-    //   label: "Three",
-    //   content: <TabTwo data={data} onUpdate={onUpdate} />,
-    // },
   ];
 
   return (
@@ -194,23 +127,5 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
     </div>
   );
 };
-
-// const TabTwo: React.FC<{
-//   data: IApiAdvertisementItem;
-//   onUpdate: (data: Partial<IApiAdvertisementItem>) => void;
-// }> = ({ data, onUpdate }) => {
-//   return (
-//     <div className="space-y-2">
-//       <p>title: {data.title}</p>
-//       <p>end_date: {data.end_date}</p>
-//       <Input
-//         type="text"
-//         value={data.title}
-//         onChange={(e) => onUpdate({ title: e.target.value })}
-//         placeholder="Edit Name"
-//       />
-//     </div>
-//   );
-// };
 
 export default AdvertisementModalTab;

@@ -113,39 +113,26 @@ export function AdvertisementComponent({
 
   return (
     <>
-      <div className="flex items-center justify-center min-h-full text-white text-center">
-        {!data.company?._id && (
-          <div>
-            Selecione um <strong>Anúnciante</strong> antes de fazer upload
-          </div>
-        )}
+      {!data.company?._id && (
+        <div>
+          Selecione um <strong>Anúnciante</strong> antes de fazer upload
+        </div>
+      )}
 
-        {data.company?._id && (
-          <>
-            <div className="grid grid-cols-12 gap-4 md:gap-6">
-              {/* <div className="col-span-6">
-                <GenerateAdvertisementModal
-                  open={modalGenerate.isOpen}
-                  currentModal={modalGenerate}
-                  onCropComplete={handleGenerated}
-                />
-              </div> */}
-              <div className="col-span-6">
-                <MediaCropperModal
-                  open={modalMediaCropper.isOpen}
-                  currentModal={modalMediaCropper}
-                  onCropComplete={handleCroppedImage}
-                  // file={{
-                  //   source:
-                  //     "https://storage.googleapis.com/xmp-midia/ads/67f9c0e21d68c92defe72f87/24a361d3-5a76-47ec-b157-8d078dc3d99d",
-                  //   type: "video",
-                  // }}
-                />
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+      {data.company?._id && (
+        <>
+          <MediaCropperModal
+            open={modalMediaCropper.isOpen}
+            currentModal={modalMediaCropper}
+            onCropComplete={handleCroppedImage}
+            // file={{
+            //   source:
+            //     "https://storage.googleapis.com/xmp-midia/ads/67f9c0e21d68c92defe72f87/24a361d3-5a76-47ec-b157-8d078dc3d99d",
+            //   type: "video",
+            // }}
+          />
+        </>
+      )}
     </>
   );
 }

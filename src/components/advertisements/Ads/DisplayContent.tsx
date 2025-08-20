@@ -72,7 +72,7 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
   return (
     <div
       className={`
-        relative h-full 
+        relative h-full
         ${advertisement ? "w-10/12" : "w-full"} 
         bg-black flex items-center justify-center overflow-hidden
       `}

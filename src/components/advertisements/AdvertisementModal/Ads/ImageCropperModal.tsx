@@ -175,9 +175,11 @@ export const MediaCropperModal: React.FC<MediaCropperModalProps> = ({
       />
       <Button
         onClick={() => fileInputRef.current?.click()}
-        className="p-10 bg-principal hover:bg-principal"
+        variant="outline"
+        className="w-full md:w-100 border-2 border-dashed border-gray-300 dark:border-gray-600 p-3 md:p-4 hover:border-blue-500 dark:hover:border-blue-400 transition-colors text-sm md:text-base"
       >
-        <LuImageUp size={40} className="text-white" />
+        <LuImageUp size={16} className="md:w-5 md:h-5 mr-2" />
+        Fazer Upload
       </Button>
 
       {fileSrc && (

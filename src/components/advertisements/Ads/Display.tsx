@@ -93,7 +93,6 @@ export function Display({
   const sendLog = useCallback(
     async (item: IApiDisplayResponseItem, displaySeconds: number) => {
       const currentId = item.ads?._id || item.news?._id;
-      console.log({ preview, unit, currentId });
 
       if (preview === false && unit && currentId) {
         const captureId: string = Date.now().toString();
