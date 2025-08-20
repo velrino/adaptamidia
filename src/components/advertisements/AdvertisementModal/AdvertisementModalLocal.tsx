@@ -47,6 +47,7 @@ import { useSession } from "next-auth/react";
 import { useToast } from "@/context/ToastContext";
 import { API } from "@/backend/api/api.endpoints";
 import { useLoading } from "@/context/LoadingContext";
+import { RegionsComponent } from "@/components/regions/Regions";
 
 const LazyMap = dynamic(() => import("./Ads/Map"), {
   ssr: false,
@@ -418,6 +419,17 @@ const AdvertisementModalLocal = memo(
 
     const options = GenerateNumberRangeAsOptions(10, 30);
 
+    const handleNeighborhoodChange = useCallback((neighborhoods: string[]) => {
+      updateForm("neighborhood", neighborhoods);
+    }, []);
+
+    const handleUnitsChange = useCallback(
+      (newUnits: IApiUnitItemResponse[]) => {
+        setUnits(newUnits);
+      },
+      []
+    );
+
     return (
       <>
         <div className="grid gap-3 sm:grid-cols-3">
@@ -529,6 +541,13 @@ const AdvertisementModalLocal = memo(
                       </div>
                     </div>
 
+                    <RegionsComponent
+                      neighborhoodInformed={data.neighborhood}
+                      unitsInformed={data.units || []}
+                      onNeighborhoodChange={handleNeighborhoodChange}
+                      onUnitsChange={handleUnitsChange}
+                    />
+                    {/* 
                     <div className="col-span-2">
                       <Label htmlFor="title">
                         Regiões {data.neighborhood.length}
@@ -565,7 +584,7 @@ const AdvertisementModalLocal = memo(
                         toggleAccordion={handleToggleShowUnits}
                         callback={advertisementModalUnitsCallback}
                       />
-                    </div>
+                    </div> */}
                   </>
                 )}
               </div>
