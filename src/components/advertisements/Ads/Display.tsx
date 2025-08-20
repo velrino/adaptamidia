@@ -81,6 +81,8 @@ export function Display({
   const [currentAdIndex, setCurrentAdIndex] = useState(0);
   const [currentDisplay, setCurrentDisplay] =
     useState<IApiDisplayResponseItem>();
+  const [timeRemaining, setTimeRemaining] = useState(5);
+  const [totalTime, setTotalTime] = useState(5);
 
   // Memoized current item to avoid recalculations
   const currentItem = useMemo(
@@ -151,12 +153,27 @@ export function Display({
   useEffect(() => {
     if (!list.length) return;
 
+    const displaySeconds = currentItem.ads?.seconds || 5;
+
+    setTotalTime(displaySeconds);
     setCurrentDisplay(currentItem);
     updateAdStats(currentAdIndex);
+    setTimeRemaining(displaySeconds);
 
-    const displaySeconds = 3; // tempo fixo para exibição
+    // Timer para countdown
+    const countdownInterval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 0.1) {
+          clearInterval(countdownInterval);
+          return 0;
+        }
+        return prev - 0.1;
+      });
+    }, 100);
 
     const timer = setTimeout(async () => {
+      clearInterval(countdownInterval);
+
       if (!preview) {
         await sendLog(currentItem, displaySeconds);
       }
@@ -164,7 +181,10 @@ export function Display({
       setCurrentAdIndex((prevIndex) => (prevIndex + 1) % list.length);
     }, displaySeconds * 1000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(countdownInterval);
+    };
   }, [list, currentAdIndex, currentItem, preview, sendLog]);
 
   if (!currentDisplay) return null;
@@ -180,6 +200,14 @@ export function Display({
           theme,
         }}
       />
+      <div className="fixed bottom-0 left-0 w-full h-1 bg-gray-300">
+        <div
+          className="h-full bg-blue-500 transition-all duration-100 ease-linear"
+          style={{
+            width: `${((totalTime - timeRemaining) / totalTime) * 100}%`,
+          }}
+        />
+      </div>
       {/* Webcam invisível, apenas para captura de frame */}
       {useWebcam && <HiddenWebcam ref={webcamRef} />}
     </div>
