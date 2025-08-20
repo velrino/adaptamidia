@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/input";
 
 interface NewRecordProps {
-  recordInformed: IApiNewsResponseItem;
+  recordInformed?: IApiNewsResponseItem | null;
+  isCreateMode?: boolean;
 }
 
 async function getCroppedImg(
@@ -58,8 +59,30 @@ async function getCroppedImg(
   });
 }
 
-export default function NewRecord({ recordInformed }: NewRecordProps) {
-  const [record, setRecord] = useState<IApiNewsResponseItem>(recordInformed);
+const defaultNewRecord: IApiNewsResponseItem = {
+  _id: String(),
+  provider: String(),
+  language: String(),
+  keyword: String(),
+  source_id: null,
+  source_name: String(),
+  author: String(),
+  title: String(),
+  description: String(),
+  url: String(),
+  image: String(),
+  published_at: new Date().toISOString(),
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
+export default function NewRecord({
+  recordInformed,
+  isCreateMode = false,
+}: NewRecordProps) {
+  const [record, setRecord] = useState<IApiNewsResponseItem>(
+    isCreateMode ? defaultNewRecord : recordInformed || defaultNewRecord
+  );
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -115,9 +138,9 @@ export default function NewRecord({ recordInformed }: NewRecordProps) {
   };
 
   const handleUpdate = async () => {
+    console.log({ isCreateMode, record });
     setIsUpdating(true);
     try {
-      // Aqui você implementaria a lógica de atualização do record
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulação
       showToast("Record atualizado com sucesso!", IToastType.SUCCESS);
     } catch (error) {
@@ -138,7 +161,9 @@ export default function NewRecord({ recordInformed }: NewRecordProps) {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col">
       <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white p-4 md:p-6 border-b border-gray-200 dark:border-gray-700 truncate">
-        Editar {record.title || "Record de Notícia"}
+        {isCreateMode
+          ? `Criar ${record.title || "Record de Notícia"}`
+          : `Editar ${record.title || "Record de Notícia"}`}
       </h1>
 
       <div className="flex-1 overflow-y-auto">
@@ -165,8 +190,13 @@ export default function NewRecord({ recordInformed }: NewRecordProps) {
                   style={{ aspectRatio: "16/9" }}
                 >
                   <div className="text-center text-gray-500 dark:text-gray-400">
-                    <LuImageUp size={32} className="md:w-12 md:h-12 mx-auto mb-2" />
-                    <p className="text-sm md:text-base">Nenhuma imagem selecionada</p>
+                    <LuImageUp
+                      size={32}
+                      className="md:w-12 md:h-12 mx-auto mb-2"
+                    />
+                    <p className="text-sm md:text-base">
+                      Nenhuma imagem selecionada
+                    </p>
                   </div>
                 </div>
               )}
@@ -235,11 +265,13 @@ export default function NewRecord({ recordInformed }: NewRecordProps) {
               />
 
               {/* Data de Publicação */}
-              <FormDateTimeInput
-                label="Data de Publicação"
-                value={record.published_at}
-                onChange={(value) => handleInputChange("published_at", value)}
-              />
+              {!isCreateMode && (
+                <FormDateTimeInput
+                  label="Data de Publicação"
+                  value={record.published_at}
+                  onChange={(value) => handleInputChange("published_at", value)}
+                />
+              )}
 
               {/* Provider */}
               <FormSelect
@@ -253,6 +285,27 @@ export default function NewRecord({ recordInformed }: NewRecordProps) {
                 placeholder="Selecione um provider"
               />
 
+              {/* Language */}
+              <FormSelect
+                label="Idioma"
+                value={record.language || ""}
+                onChange={(value) => handleInputChange("language", value)}
+                options={[
+                  { value: "PT_BR", label: "Português (Brasil)" },
+                  { value: "EN", label: "English" },
+                  { value: "ES", label: "Español" },
+                ]}
+                placeholder="Selecione um idioma"
+              />
+
+              {/* Keyword */}
+              <FormInput
+                label="Palavra-chave"
+                value={record.keyword || ""}
+                onChange={(value) => handleInputChange("keyword", value)}
+                icon={LuTag}
+              />
+
               {/* Botão de Atualizar */}
               <div className="pt-4 md:pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
@@ -260,7 +313,13 @@ export default function NewRecord({ recordInformed }: NewRecordProps) {
                   disabled={isUpdating}
                   className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
                 >
-                  {isUpdating ? "Atualizando..." : "Atualizar Record"}
+                  {isUpdating
+                    ? isCreateMode
+                      ? "Criando..."
+                      : "Atualizando..."
+                    : isCreateMode
+                    ? "Criar Notícia"
+                    : "Atualizar Notícia"}
                 </Button>
               </div>
             </div>

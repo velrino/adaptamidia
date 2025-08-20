@@ -7,7 +7,8 @@ import { IApiNewsResponseItem } from "@/backend/api/api.interface";
 import NewRecord from "./NewRecord";
 
 interface INewRecordModalProps {
-  record: IApiNewsResponseItem;
+  record?: IApiNewsResponseItem | null;
+  isCreateMode?: boolean;
   setOpen?: (open: boolean) => void;
   refresh: (open: boolean) => void;
   onCloseCallback: (record?: IApiNewsResponseItem) => void;
@@ -15,6 +16,7 @@ interface INewRecordModalProps {
 
 export default function NewRecordModal({
   record,
+  isCreateMode = false,
   onCloseCallback,
 }: INewRecordModalProps) {
   // const { data: session } = useSession();
@@ -32,12 +34,8 @@ export default function NewRecordModal({
       onClose={handleClose}
       showCloseButton={true}
       isFullscreen={true}
-      // className="max-w-[1200px] max-h-[90vh] overflow-y-auto"
     >
-      {/* <div className="fixed top-0 left-0 flex flex-col w-full h-screen overflow-x-hidden overflow-y-auto bg-white dark:bg-gray-900 p-0"> */}
-      {/* <DisplayLogModalInfo recordInformed={record} /> */}
-      <NewRecord recordInformed={record} />
-      {/* </div> */}
+      <NewRecord recordInformed={record} isCreateMode={isCreateMode} />
     </Modal>
   );
 }

@@ -41,6 +41,7 @@ export default function NewsTable() {
 
   const [currentSelected, setCurrentSelected] =
     useState<IApiNewsResponseItem | null>();
+  const [isCreateMode, setIsCreateMode] = useState<boolean>(false);
   const [list, setList] = useState<IApiNewsResponseItem[]>([]);
   const [response, setResponse] = useState<IApiNewsResponse>();
 
@@ -196,7 +197,16 @@ export default function NewsTable() {
               className="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-11 pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800 xl:w-[300px]"
             />
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-3">
+            <button
+              onClick={() => {
+                setIsCreateMode(true);
+                setCurrentSelected({} as IApiNewsResponseItem);
+              }}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              + Criar Novo
+            </button>
             <div className="text-sm text-gray-600 dark:text-gray-400">
               Página {currentPage} de {response?.pages || 0} •{" "}
               {response?.total || 0} registros
@@ -355,9 +365,10 @@ export default function NewsTable() {
         </div>
       </div>
 
-      {currentSelected && (
+      {(currentSelected || isCreateMode) && (
         <NewRecordModal
           record={currentSelected}
+          isCreateMode={isCreateMode}
           refresh={async (refresh: boolean) => {
             if (refresh) {
               getResponse({
@@ -371,6 +382,7 @@ export default function NewsTable() {
             } else {
               setCurrentSelected(null);
             }
+            setIsCreateMode(false);
           }}
         />
       )}
