@@ -16,7 +16,7 @@ export const useDisplayRotation = ({
 }: UseDisplayRotationProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout>();
+  const timerRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const currentItem = list[currentIndex];
 

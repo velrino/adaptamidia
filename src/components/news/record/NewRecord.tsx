@@ -5,14 +5,14 @@ import {
   IApiUnitItemResponse,
 } from "@/backend/api/api.interface";
 import { useToast } from "@/context/ToastContext";
-import { useState, useCallback, useRef, act } from "react";
+import { useState, useCallback, useRef } from "react";
 import Cropper from "react-easy-crop";
 import { LuImageUp, LuUser, LuTag, LuFileText } from "react-icons/lu";
 import Button from "@/components/ui/button/Button";
 import { Modal } from "@/components/ui/modal";
 import { useModal } from "@/hooks/useModal";
 import { IToastType } from "@/interfaces/general";
-import { Activity, BarChart3, FileText, Sparkles } from "lucide-react";
+import { Activity, FileText } from "lucide-react";
 import {
   FormInput,
   FormTextArea,
@@ -23,7 +23,6 @@ import {
 import { useSession } from "next-auth/react";
 import { useLoading } from "@/context/LoadingContext";
 import { RegionsComponent } from "@/components/regions/Regions";
-import DisplayLogsChart from "@/components/analytics/DisplayLogsChart";
 import { NewRecordMetricsTab } from "./NewRecordMetrics";
 
 interface NewRecordProps {
@@ -90,6 +89,7 @@ const defaultNewRecord: IApiNewsResponseItem = {
 enum TabName {
   overview = "overview",
   metrics = "metrics",
+  displays = "displays",
 }
 
 export default function NewRecord({
@@ -199,7 +199,12 @@ export default function NewRecord({
 
   const tabs = [
     { id: TabName.overview, label: "Conteúdo", icon: Activity },
-    { id: TabName.metrics, label: "Métricas", icon: FileText },
+    ...(record?._id?.length
+      ? [
+          { id: TabName.metrics, label: "Métricas", icon: FileText },
+          { id: TabName.displays, label: "Displays", icon: FileText },
+        ]
+      : []),
   ];
 
   const [activeTab, setActiveTab] = useState<TabName>(TabName.overview);
