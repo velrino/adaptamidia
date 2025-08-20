@@ -24,6 +24,7 @@ import { useSession } from "next-auth/react";
 import { useLoading } from "@/context/LoadingContext";
 import { RegionsComponent } from "@/components/regions/Regions";
 import { NewRecordMetricsTab } from "./NewRecordMetrics";
+import DisplaysTable from "@/components/displays/DisplaysTable";
 
 interface NewRecordProps {
   recordInformed?: IApiNewsResponseItem | null;
@@ -161,7 +162,6 @@ export default function NewRecord({
   };
 
   const handleUpdate = async () => {
-    console.log({ isCreateMode, record, session: session?.api_session });
     showFullScreenLoading();
     setIsUpdating(true);
     try {
@@ -202,7 +202,7 @@ export default function NewRecord({
     ...(record?._id?.length
       ? [
           { id: TabName.metrics, label: "Métricas", icon: FileText },
-          { id: TabName.displays, label: "Displays", icon: FileText },
+          { id: TabName.displays, label: "Exibições", icon: FileText },
         ]
       : []),
   ];
@@ -460,6 +460,17 @@ export default function NewRecord({
       {activeTab === TabName.metrics && (
         <>
           <NewRecordMetricsTab id={record._id} />
+        </>
+      )}
+
+      {activeTab === TabName.displays && (
+        <>
+          <DisplaysTable
+            internalQuery={{
+              news: [record._id],
+            }}
+            className="px-5 mt-2"
+          />
         </>
       )}
     </div>

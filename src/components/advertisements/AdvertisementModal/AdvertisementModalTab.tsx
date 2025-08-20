@@ -9,6 +9,7 @@ import { AdvertisementComponent } from "./AdvertisementModalItems";
 import { useSession } from "next-auth/react";
 import { IApiDisplayResponseItem } from "@/backend/api/api.interface";
 import { AdvertisementMetricsTab } from "./Metrics/Tab";
+import DisplaysTable from "@/components/displays/DisplaysTable";
 
 const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
   action,
@@ -97,6 +98,18 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
             id: "METRICS",
             label: "Métricas",
             content: <AdvertisementMetricsTab id={data._id} />,
+          },
+          {
+            id: "DISPLAYS",
+            label: "Exibições",
+            content: (
+              <DisplaysTable
+                internalQuery={{
+                  advertisement: [data._id],
+                }}
+                className="px-5 mt-2"
+              />
+            ),
           },
         ]
       : []),

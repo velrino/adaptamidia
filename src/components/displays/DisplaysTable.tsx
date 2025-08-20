@@ -20,13 +20,21 @@ import { AngleDownIcon, AngleUpIcon } from "@/icons";
 import { DisplayLogSortKey } from "@/interfaces/display-logs";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/context/ToastContext";
-import { GetErrorMessage } from "@/utils/generic";
+import { cn, GetErrorMessage } from "@/utils/generic";
 import { API } from "@/backend/api/api.endpoints";
 import PaginationWithIcon from "../ui/pagination/PaginationWitIcon";
 import Spinner from "../ui/spinner/Spinner";
 import DisplayLogModal from "./DisplayLogModal/DisplayLogModal";
 
-export default function DisplaysTable() {
+interface IDisplaysTable {
+  internalQuery?: IApiPaginateDisplayLogs;
+  className?: string;
+}
+
+export default function DisplaysTable({
+  internalQuery,
+  className,
+}: IDisplaysTable) {
   const { data: session } = useSession();
   const { showToast } = useToast();
   const [loading, setLoading] = useState<boolean>(true);
@@ -72,6 +80,7 @@ export default function DisplaysTable() {
       try {
         setLoading(true);
         const query: IApiPaginateDisplayLogs = {
+          ...internalQuery,
           page: currentPage,
           limit: 20,
           get_signed_url: true,
@@ -164,7 +173,12 @@ export default function DisplaysTable() {
 
   return (
     <>
-      <div className="overflow-hidden bg-white dark:bg-white/[0.03] rounded-xl">
+      <div
+        className={cn(
+          "overflow-hidden bg-white dark:bg-white/[0.03] rounded-xl mb-20",
+          className
+        )}
+      >
         <div className="flex flex-col gap-2 px-4 py-4 border border-b-0 border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center ">
           <div className="relative">
             <button className="absolute text-gray-500 -translate-y-1/2 left-4 top-1/2 dark:text-gray-400">
