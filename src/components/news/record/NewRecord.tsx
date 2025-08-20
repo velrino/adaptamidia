@@ -5,7 +5,7 @@ import {
   IApiUnitItemResponse,
 } from "@/backend/api/api.interface";
 import { useToast } from "@/context/ToastContext";
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import Cropper from "react-easy-crop";
 import { LuImageUp, LuUser, LuTag, LuFileText } from "react-icons/lu";
 import Button from "@/components/ui/button/Button";
@@ -26,7 +26,6 @@ import { RegionsComponent } from "@/components/regions/Regions";
 interface NewRecordProps {
   recordInformed?: IApiNewsResponseItem | null;
   isCreateMode?: boolean;
-  default_units: IApiUnitItemResponse[];
 }
 
 async function getCroppedImg(
@@ -88,10 +87,8 @@ const defaultNewRecord: IApiNewsResponseItem = {
 export default function NewRecord({
   recordInformed,
   isCreateMode = false,
-  default_units = [],
 }: NewRecordProps) {
   const { data: session } = useSession();
-
   const { showFullScreenLoading, hideFullScreenLoading } = useLoading();
 
   const [record, setRecord] = useState<IApiNewsResponseItem>(
@@ -156,7 +153,8 @@ export default function NewRecord({
   };
 
   const handleUpdate = async () => {
-    console.log({ isCreateMode, record });
+    console.log({ isCreateMode, record, session: session?.api_session });
+    showFullScreenLoading();
     setIsUpdating(true);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulação
@@ -166,6 +164,7 @@ export default function NewRecord({
       showToast("Erro ao atualizar record", IToastType.ERROR);
     } finally {
       setIsUpdating(false);
+      hideFullScreenLoading();
     }
   };
 
@@ -176,15 +175,6 @@ export default function NewRecord({
     setRecord((prev) => ({ ...prev, [field]: value }));
   };
 
-  const [units, setUnits] = useState<IApiUnitItemResponse[]>(() => {
-    if (recordInformed?.units?.length && default_units?.length) {
-      return default_units.filter((unit) =>
-        recordInformed.units.includes(unit._id)
-      );
-    }
-    return default_units || [];
-  });
-
   const handleNeighborhoodChange = useCallback((neighborhoods: string[]) => {
     setRecord((prev) => ({
       ...prev,
@@ -193,14 +183,11 @@ export default function NewRecord({
   }, []);
 
   const handleUnitsChange = useCallback((newUnits: IApiUnitItemResponse[]) => {
-    setUnits(newUnits);
     setRecord((prev) => ({
       ...prev,
       units: newUnits.map((unit) => unit._id),
     }));
   }, []);
-
-  console.log("NewRecord render - record.units:", record.units);
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 flex flex-col">

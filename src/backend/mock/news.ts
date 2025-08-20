@@ -1876,5 +1876,5 @@ export const newsMockData: IApiNewsResponse = {
       created_at: "2025-03-04T15:22:22.672Z",
       updated_at: "2025-03-04T15:22:22.672Z",
     },
-  ],
+  ].map((item) => ({ ...item, neighborhood: [], units: [] })),
 };

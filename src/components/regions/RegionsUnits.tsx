@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+"use client";
+
 import { IApiUnitItemResponse } from "@/backend/api/api.interface";
 import Accordion from "@/components/ui/accordion/Accordion";
 import React, { useState, useMemo, ReactNode } from "react";
@@ -34,7 +37,7 @@ const UnitImageItem = ({ image }: { image: string }) => {
 
   return (
     <Image
-      src={currentImage}
+      src={currentImage || "/images/local/1.jpg"}
       alt="Imagem do local"
       fill
       sizes="(max-width: 768px) 100vw, 50vw"

@@ -171,10 +171,7 @@ export function RegionsComponent({
 
   // Buscar unidades quando unitsInformed estiver preenchido (apenas uma vez)
   useEffect(() => {
-    console.log("useEffect executado");
-    console.log({ unitsInformed, session: session?.api_session, hasInitialized });
     if (unitsInformed.length > 0 && session?.api_session && !hasInitialized) {
-      console.log("Chamando getUnits...");
       getUnits({ units: unitsInformed });
       setHasInitialized(true);
     }
