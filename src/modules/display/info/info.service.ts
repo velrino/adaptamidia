@@ -47,6 +47,8 @@ export class DisplayUnitInfoService {
         from: parameters.from,
         city: currentUnit.state,
         country: currentUnit.country,
+        lat: currentUnit.location.coordinates[1],
+        lon: currentUnit.location.coordinates[0],
       });
 
       const getCurrency = await this.getCurrencyService.execute({

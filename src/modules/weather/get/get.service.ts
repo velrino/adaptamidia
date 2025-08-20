@@ -37,7 +37,7 @@ export class GetWeatherService {
   // }
 
   async getWeatherapi(query: string) {
-    const API_KEY = 'e7ef565e6f684715905215446250604';
+    const API_KEY = '933beb086b83433b8fb175057252008';
 
     const url = `https://api.weatherapi.com/v1/current.json?key=${API_KEY}&q=${encodeURIComponent(query)}&lang=pt`;
 
@@ -88,14 +88,15 @@ export class GetWeatherService {
     const cityName = RemoveAccents(parameters.city);
     const countryName = RemoveAccents(parameters.country);
 
-    const cacheKey = this.redisService.createKeyByObject(
+    const cacheKey = this.redisService.prepareCacheKey(
       RedisKeysEnum.GET_WEATHER,
-      parameters,
+      cityName,
+      countryName,
     );
 
     // 1. Verificar cache primeiro se solicitado
     if (parameters.from === FromEnum.CACHE) {
-      const dataCached = await this.redisService.get(cacheKey.name);
+      const dataCached = await this.redisService.get(cacheKey);
       if (dataCached) {
         return dataCached;
       }
@@ -116,7 +117,7 @@ export class GetWeatherService {
     if (record) {
       // Atualizar cache com o registro encontrado
       await this.redisService.set(
-        cacheKey.name,
+        cacheKey,
         record,
         Milliseconds({ minutes: 30 }),
       );
@@ -125,7 +126,7 @@ export class GetWeatherService {
 
     // 3. Se não encontrou, buscar da API externa
     const dataProvided = await this.getWeatherapi(
-      `${cityName}, ${countryName}`,
+      `${parameters.lat}, ${parameters.lon}`,
     );
 
     // 4. Atualizar ou criar registro no banco de dados
@@ -151,7 +152,7 @@ export class GetWeatherService {
 
     // 5. Atualizar cache com os novos dados
     await this.redisService.set(
-      cacheKey.name,
+      cacheKey,
       updatedRecord,
       Milliseconds({ minutes: 30 }),
     );

@@ -4,6 +4,8 @@ export interface IGetWeatherService {
   from: FromEnum;
   city: string;
   country: string;
+  lat: number;
+  lon: number;
 }
 
 export interface IWeatherApiCurrentResponse {

@@ -36,6 +36,7 @@ export class DisplayService {
           'preferences',
           'city',
           'country',
+          'location',
         ];
 
     const cacheKey = this.redisService.createKeyByObject(

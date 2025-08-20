@@ -56,6 +56,7 @@ export interface IDisplayAdvertisementUnit {
     name: string;
     status: AdvertisementStatus;
   } | null;
+  location: { type: 'Point'; coordinates: [number, number] };
   //TODO
   preferences: {
     exclude_source_name: string[];
