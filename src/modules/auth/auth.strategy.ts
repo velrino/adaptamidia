@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -6,6 +11,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User } from '../user/user.schema';
 import { Authenticated, AuthTokenParameters } from './auth.interface';
+import { RESULT } from 'src/shared/result.enum';
 
 @Injectable()
 export class AuthStrategy extends PassportStrategy(Strategy) {
@@ -24,10 +30,8 @@ export class AuthStrategy extends PassportStrategy(Strategy) {
     const user = await this.userModel.findById(token.id).exec();
 
     if (!user?._id) {
-      throw new UnauthorizedException();
+      throw new HttpException(RESULT.INVALID_TOKEN, HttpStatus.UNAUTHORIZED);
     }
-
-    // user = await this.reviewUserSubscriptionService.execute(user);
 
     return { token, user } as any;
   }

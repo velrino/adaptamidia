@@ -6,6 +6,7 @@ import {
   LanguageEnum,
   NewsKeywordEnum,
   NewsProviderEnum,
+  NewsStatusEnum,
 } from '../news.interface';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { News, NewsDocument } from '../news.schema';
@@ -154,6 +155,7 @@ export class SyncNewsService {
               description,
               url,
               image: urlToImage,
+              status: NewsStatusEnum.ACTIVE,
               published_at: new Date(publishedAt),
             }),
           ),

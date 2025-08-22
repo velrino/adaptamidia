@@ -4,6 +4,13 @@ export enum LanguageEnum {
 
 export enum NewsProviderEnum {
   NEWS_API = 'NEWS_API',
+  LESAMPA = 'LESAMPA',
+}
+
+export enum NewsStatusEnum {
+  ACTIVE = 'ACTIVE',
+  REVIEW = 'REVIEW',
+  INACTIVE = 'INACTIVE',
 }
 
 export enum NewsKeywordEnum {

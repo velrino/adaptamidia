@@ -1,11 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { SchemaDefault } from 'src/shared/shema';
 import {
   LanguageEnum,
   NewsKeywordEnum,
   NewsProviderEnum,
+  NewsStatusEnum,
 } from './news.interface';
+import { User } from '../user/user.schema';
 
 @Schema({
   collection: 'news',
@@ -15,14 +17,22 @@ export class News extends Document {
   @Prop({ required: true, enum: NewsProviderEnum, uppercase: true })
   provider: NewsProviderEnum;
 
+  @Prop({ type: Types.ObjectId, ref: 'User', required: false, index: true })
+  user: Types.ObjectId | User;
+
+  @Prop({
+    required: true,
+    enum: NewsStatusEnum,
+    uppercase: true,
+    default: NewsStatusEnum.ACTIVE,
+  })
+  status: NewsStatusEnum;
+
   @Prop({ required: true, enum: LanguageEnum, uppercase: true })
   language: LanguageEnum;
 
   @Prop({ required: true, enum: NewsKeywordEnum, uppercase: true })
   keyword: NewsKeywordEnum;
-
-  // @Prop({ required: true, type: [mongoose.Schema.Types.Mixed] })
-  // data: INewsApiArticle[];
 
   @Prop({ required: false })
   source_id: string;
@@ -48,14 +58,11 @@ export class News extends Document {
   @Prop({ required: true, type: Date })
   published_at: Date;
 
+  @Prop({ required: false, type: Date })
+  end_at: Date;
+
   @Prop()
   content: string;
-
-  // @Prop({ required: true, type: String })
-  // external_id: string;
-
-  // @Prop({ required: true, type: Date })
-  // published_at: Date;
 }
 
 export type NewsDocument = News & Document;
