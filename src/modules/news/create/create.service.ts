@@ -2,11 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { News, NewsDocument } from '../news.schema';
 import { Model, Types } from 'mongoose';
-import {
-  CreateNewsDto,
-  ICreateNews,
-  ICreateNewsCommon,
-} from './create.interface';
+import { CreateNewsDto, ICreateNewsCommon } from './create.interface';
 import { AuthenticatedRequest } from 'src/shared/request';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { RESULT } from 'src/shared/result.enum';
@@ -30,8 +26,8 @@ export class CreateNewsService {
 
   async execute(parameters: ICreateNewsCommon) {
     try {
-      const createParams: ICreateNews = {
-        ...(parameters as ICreateNews),
+      const createParams = {
+        ...parameters,
       };
 
       if (typeof parameters.user === 'string' && parameters.user) {

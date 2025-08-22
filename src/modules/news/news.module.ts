@@ -5,11 +5,17 @@ import { MongoCollection } from 'src/shared/mongo.schema';
 import { NewsController } from './news.controller';
 import { PaginateNewsService } from './paginate/paginate.service';
 import { CreateNewsService } from './create/create.service';
+import { UpdateNewsService } from './update/update.service';
 
 @Module({
   imports: [MongooseModule.forFeature([MongoCollection.news])],
   controllers: [NewsController],
-  providers: [SyncNewsService, PaginateNewsService, CreateNewsService],
+  providers: [
+    SyncNewsService,
+    PaginateNewsService,
+    CreateNewsService,
+    UpdateNewsService,
+  ],
   exports: [],
 })
 export class NewsModule {}

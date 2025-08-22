@@ -92,9 +92,5 @@ export interface ICreateNewsCommon {
   published_at: string;
   units: string[];
   neighborhood: string[];
-  user?: string;
-}
-
-export interface ICreateNews {
-  user?: Types.ObjectId;
+  user?: string | Types.ObjectId;
 }

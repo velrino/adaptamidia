@@ -2,7 +2,9 @@ import {
   Body,
   Controller,
   Get,
+  Param,
   Post,
+  Put,
   Query,
   Req,
   UseGuards,
@@ -14,12 +16,14 @@ import { PaginateNewsService } from './paginate/paginate.service';
 import { NewsPaginateDto } from './paginate/paginate.interface';
 import { CreateNewsService } from './create/create.service';
 import { CreateNewsDto } from './create/create.interface';
+import { UpdateNewsService } from './update/update.service';
 
 @Controller()
 export class NewsController {
   constructor(
     private readonly paginateNewsService: PaginateNewsService,
     private readonly createNewsService: CreateNewsService,
+    private readonly updateNewsService: UpdateNewsService,
   ) {}
 
   @Get('news')
@@ -40,6 +44,21 @@ export class NewsController {
     @Body() body: CreateNewsDto,
   ) {
     return this.createNewsService.executeFromController(
+      authenticatedRequest,
+      body,
+    );
+  }
+
+  @Put('news/:id')
+  @UseGuards(AuthJwtGuard)
+  @SkipThrottle()
+  update(
+    @Req() authenticatedRequest: AuthenticatedRequest,
+    @Body() body: CreateNewsDto,
+    @Param('id') id: string,
+  ) {
+    return this.updateNewsService.executeFromController(
+      id,
       authenticatedRequest,
       body,
     );
