@@ -6,6 +6,7 @@ import { NewsController } from './news.controller';
 import { PaginateNewsService } from './paginate/paginate.service';
 import { CreateNewsService } from './create/create.service';
 import { UpdateNewsService } from './update/update.service';
+import { DeleteNewsService } from './delete/delete.service';
 
 @Module({
   imports: [MongooseModule.forFeature([MongoCollection.news])],
@@ -15,6 +16,7 @@ import { UpdateNewsService } from './update/update.service';
     PaginateNewsService,
     CreateNewsService,
     UpdateNewsService,
+    DeleteNewsService,
   ],
   exports: [],
 })

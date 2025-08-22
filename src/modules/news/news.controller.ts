@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -17,6 +18,7 @@ import { NewsPaginateDto } from './paginate/paginate.interface';
 import { CreateNewsService } from './create/create.service';
 import { CreateNewsDto } from './create/create.interface';
 import { UpdateNewsService } from './update/update.service';
+import { DeleteNewsService } from './delete/delete.service';
 
 @Controller()
 export class NewsController {
@@ -24,6 +26,7 @@ export class NewsController {
     private readonly paginateNewsService: PaginateNewsService,
     private readonly createNewsService: CreateNewsService,
     private readonly updateNewsService: UpdateNewsService,
+    private readonly deleteNewsService: DeleteNewsService,
   ) {}
 
   @Get('news')
@@ -62,5 +65,12 @@ export class NewsController {
       authenticatedRequest,
       body,
     );
+  }
+
+  @Delete('news/:id')
+  @UseGuards(AuthJwtGuard)
+  @SkipThrottle()
+  delete(@Param('id') id: string) {
+    return this.deleteNewsService.executeFromController(id);
   }
 }

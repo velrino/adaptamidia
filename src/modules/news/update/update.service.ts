@@ -57,8 +57,8 @@ export class UpdateNewsService {
         { message: RESULT.FAILED_UPDATE_NEWS, parameters, error },
       );
       throw new HttpException(
-        RESULT.FAILED_UPDATE_NEWS,
-        HttpStatus.UNPROCESSABLE_ENTITY,
+        error?.message || RESULT.FAILED_DELETE_NEWS,
+        error?.status || HttpStatus.UNPROCESSABLE_ENTITY,
       );
     }
   }
