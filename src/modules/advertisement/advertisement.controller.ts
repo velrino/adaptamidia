@@ -25,6 +25,9 @@ import {
 } from './list/list.interface';
 import { ListAdvertisementService } from './list/list.service';
 import { Throttle } from '@nestjs/throttler';
+import { PermissionsEnum } from '../permissions/permissions.enum';
+
+const defaultPermissions = [PermissionsEnum.ADVERTISER];
 
 @Controller()
 export class AdvertisementController {
@@ -44,7 +47,7 @@ export class AdvertisementController {
 
   @Get('advertisement')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
-  @PermissionsAllowed()
+  @PermissionsAllowed(defaultPermissions)
   list(
     @Req() req: AuthenticatedRequest,
     @Query() query: ListAdvertisementPaginateDto,
@@ -54,7 +57,7 @@ export class AdvertisementController {
 
   @Post('advertisement')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
-  @PermissionsAllowed()
+  @PermissionsAllowed(defaultPermissions)
   create(
     @Req() req: AuthenticatedRequest,
     @Body() body: CreateAdvertisementDto,
@@ -68,7 +71,7 @@ export class AdvertisementController {
 
   @Put('advertisement/:id')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
-  @PermissionsAllowed()
+  @PermissionsAllowed(defaultPermissions)
   update(
     @Req() req: AuthenticatedRequest,
     @Body() body: CreateAdvertisementDto,

@@ -50,6 +50,8 @@ export class ListAdvertisementPaginateDto extends ListAdvertisementPaginateDefau
   @IsArray()
   @IsMongoId({ each: true, message: 'INVALID_ID_FORMAT' })
   id?: string[];
+
+  company?: string[];
 }
 
 export class ListAdvertisementPreviewPaginateDto extends ListAdvertisementPaginateDefaultDto {

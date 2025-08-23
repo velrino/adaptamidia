@@ -12,6 +12,7 @@ import { RedisService } from 'src/shared/redis/redis.service';
 import { RedisKeysEnum } from 'src/shared/redis/redis.keys';
 import { ListAdvertisementPaginateDto } from './list.interface';
 import { Advertisement, AdvertisementDocument } from '../advertisement.schema';
+import { GetUserCompany, HandleBody } from 'src/shared/general';
 
 @Injectable()
 export class ListAdvertisementService {
@@ -21,29 +22,12 @@ export class ListAdvertisementService {
     private readonly redisService: RedisService,
   ) {}
 
-  // onApplicationBootstrap() {
-  //   const query: any = {
-  //     city: ['Barueri', 'São Paulo'],
-  //     state: ['São Paulo'],
-  //     country: ['Brazil'],
-  //   };
-
-  //   console.log({ query: querystring.encode(query) });
-  // }
-
   executeFromRequest(
     currentRequest: AuthenticatedRequest,
     parameters: ListAdvertisementPaginateDto,
   ) {
     try {
-      //   VerifyUserCanProced({
-      //     need_company: parameters.company_id,
-      //     user_permissions: currentRequest.user.user.permissions,
-      //     user_companies: currentRequest.user.user.companies,
-      //     need_permissions: [],
-      //   });
-
-      return this.execute(parameters);
+      return this.execute(HandleBody(currentRequest, parameters));
     } catch (error) {
       throw new HttpException(
         error?.message || RESULT.COMPANY_UNIT_GET_FAILED,
@@ -80,6 +64,12 @@ export class ListAdvertisementService {
 
     if (parameters.id) {
       query._id = { $in: parameters.id.map((id) => new Types.ObjectId(id)) };
+    }
+
+    if (parameters.company) {
+      query.company = {
+        $in: parameters.company.map((id) => new Types.ObjectId(id)),
+      };
     }
 
     // const fields: (keyof ListAdvertisementPaginateDto)[] = [
@@ -153,13 +143,13 @@ export class ListAdvertisementService {
         parameters,
       );
 
-      if (parameters.cache) {
-        const dataCached = await this.redisService.get(cacheKey.name);
+      // if (parameters.cache) {
+      //   const dataCached = await this.redisService.get(cacheKey.name);
 
-        if (dataCached) {
-          return dataCached;
-        }
-      }
+      //   if (dataCached) {
+      //     return dataCached;
+      //   }
+      // }
 
       const records = await this.getData(parameters);
 

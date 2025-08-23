@@ -52,6 +52,21 @@ export function GetUserCompany(currentRequest: AuthenticatedRequest): {
   return { company: null, sudo: true };
 }
 
+export function HandleBody(
+  currentRequest: AuthenticatedRequest,
+  parameters: any,
+) {
+  const result = GetUserCompany(currentRequest);
+
+  let payload = parameters;
+
+  if (!result.sudo && result.company) {
+    payload = { ...parameters, company: [result.company?.toString()] };
+  }
+
+  return payload;
+}
+
 export function NormalizeToArray(value: any): string[] {
   if (typeof value === 'string') return [value];
   if (Array.isArray(value)) return value;
