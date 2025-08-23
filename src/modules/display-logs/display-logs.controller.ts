@@ -21,6 +21,9 @@ import { IDetectionDisplayLogDto } from './detection/detection.interface';
 import { Observable } from 'rxjs';
 import { InsightDisplayLogService } from './insights/insights.service';
 import { InsightGenerateDisplayLogQueryDto } from './insights/insights.interface';
+import { PermissionsEnum } from '../permissions/permissions.enum';
+
+const defaultPermissions = [PermissionsEnum.ADVERTISER, PermissionsEnum.NEWS];
 
 @Controller()
 export class DisplayLogController {
@@ -34,7 +37,7 @@ export class DisplayLogController {
   @Post('display/logs/paginate')
   @SkipThrottle()
   @UseGuards(AuthJwtGuard, PermissionsGuard)
-  @PermissionsAllowed()
+  @PermissionsAllowed(defaultPermissions)
   paginate(
     @Req() req: AuthenticatedRequest,
     @Body() body: ListDisplayLogsPaginateDto,
@@ -50,6 +53,8 @@ export class DisplayLogController {
 
   @Post('display/log/detect')
   @Throttle({ default: { limit: 100, ttl: 60000 } })
+  @UseGuards(AuthJwtGuard, PermissionsGuard)
+  @PermissionsAllowed(defaultPermissions)
   detectDisplayLog(
     @Req() req: AuthenticatedRequest,
     @Body() body: IDetectionDisplayLogDto,
@@ -61,6 +66,8 @@ export class DisplayLogController {
   }
 
   @Sse('display/generate-insights')
+  @UseGuards(AuthJwtGuard, PermissionsGuard)
+  @PermissionsAllowed(defaultPermissions)
   generateStream(@Query() query: InsightGenerateDisplayLogQueryDto) {
     return this.insightDisplayLogService.generateStream(query);
   }

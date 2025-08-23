@@ -15,6 +15,7 @@ import { DisplayLog, DisplayLogDocument } from '../display-logs.schema';
 import { ListDisplayLogsPaginateDto } from './list.interface';
 import { GoogleCloudStorageService } from 'src/shared/google/cloud/google-cloud-storage.service';
 import { IGoogleStorageBucket } from 'src/shared/google/cloud/google-cloud-storage.interface';
+import { HandleBody } from 'src/shared/general';
 
 @Injectable()
 export class ListDisplayLogService {
@@ -30,14 +31,7 @@ export class ListDisplayLogService {
     parameters: ListDisplayLogsPaginateDto,
   ) {
     try {
-      //   VerifyUserCanProced({
-      //     need_company: parameters.company_id,
-      //     user_permissions: currentRequest.user.user.permissions,
-      //     user_companies: currentRequest.user.user.companies,
-      //     need_permissions: [],
-      //   });
-
-      return this.execute(parameters);
+      return this.execute(HandleBody(currentRequest, parameters));
     } catch (error) {
       throw new HttpException(
         error?.message || RESULT.COMPANY_UNIT_GET_FAILED,
@@ -75,6 +69,13 @@ export class ListDisplayLogService {
     if (parameters.id) {
       query._id = { $in: parameters.id.map((id) => new Types.ObjectId(id)) };
     }
+
+    if (parameters.company) {
+      query.advertiser = {
+        $in: parameters.company.map((id) => new Types.ObjectId(id)),
+      };
+    }
+    console.log({ parameters });
 
     if (parameters.local_unit) {
       query.local_unit = {

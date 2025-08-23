@@ -11,6 +11,8 @@ import { NormalizeToArray } from 'src/shared/general';
 import { PaginateDto } from 'src/shared/interfaces/paginate.dto';
 
 export class ListDisplayLogsPaginateDto extends PaginateDto {
+  company?: string[];
+
   @IsOptional()
   @Transform(({ value }) => NormalizeToArray(value))
   @IsArray()
