@@ -5,12 +5,14 @@ import MarkdownPreview from "@uiw/react-markdown-preview";
 import { IApiDisplayLogItem } from "@/backend/api/api.interface";
 import Select from "@/components/form/Select";
 import { LLMModelsAsOptions, LLMModelsEnum } from "@/backend/api/api.enum";
+import { useSession } from "next-auth/react";
 
 export const DisplayLogLLMStreamComponent = ({
   record,
 }: {
   record: IApiDisplayLogItem;
 }) => {
+  const { data: session } = useSession();
   const [generatedText, setGeneratedText] = useState<string>(
     record?.llm_insight || String()
   );
@@ -63,11 +65,19 @@ export const DisplayLogLLMStreamComponent = ({
 
     try {
       // Fecha EventSource anterior se existir
+      if (!session?.api_session?.access_token) {
+        return;
+      }
+
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
       }
 
-      const eventSource = new EventSource(url);
+      // Para usar Bearer token, você precisa enviar via query param ou usar fetch polyfill
+      const token = session?.api_session?.access_token;
+      const urlWithToken = `${url}&token=${encodeURIComponent(token)}`;
+
+      const eventSource = new EventSource(urlWithToken);
       eventSourceRef.current = eventSource;
 
       eventSource.onmessage = (event) => {
