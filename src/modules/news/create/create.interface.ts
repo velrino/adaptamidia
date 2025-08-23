@@ -15,6 +15,7 @@ import {
   NewsProviderEnum,
 } from '../news.interface';
 import { Types } from 'mongoose';
+import { Transform } from 'class-transformer';
 
 export class CreateNewsDto {
   @IsEnum(NewsProviderEnum)
@@ -25,9 +26,10 @@ export class CreateNewsDto {
   @IsNotEmpty()
   language: LanguageEnum;
 
-  @IsEnum(NewsKeywordEnum)
+  @IsString()
   @IsNotEmpty()
-  keyword: NewsKeywordEnum;
+  @Transform(({ value }) => value?.toString().toUpperCase().trim())
+  keyword: string;
 
   @IsString()
   @IsOptional()

@@ -3,7 +3,6 @@ import { Document, Types } from 'mongoose';
 import { SchemaDefault } from 'src/shared/shema';
 import {
   LanguageEnum,
-  NewsKeywordEnum,
   NewsProviderEnum,
   NewsStatusEnum,
 } from './news.interface';
@@ -31,8 +30,8 @@ export class News extends Document {
   @Prop({ required: true, enum: LanguageEnum, uppercase: true })
   language: LanguageEnum;
 
-  @Prop({ required: true, enum: NewsKeywordEnum, uppercase: true })
-  keyword: NewsKeywordEnum;
+  @Prop({ required: true, uppercase: true })
+  keyword: string;
 
   @Prop({ required: false })
   source_id: string;

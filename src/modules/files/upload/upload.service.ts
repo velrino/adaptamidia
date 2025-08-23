@@ -37,7 +37,7 @@ export class UploadFileService {
       const storage = await this.googleCloudStorageService.uploadFile(
         parameters.company
           ? `${parameters.foldername}/${String(parameters.company)}`
-          : `generic/${parameters.foldername}`,
+          : `default/${parameters.foldername}`,
         uuidv4().toString(),
         parameters.file,
         parameters.bucket,

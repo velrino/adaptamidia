@@ -1,5 +1,7 @@
 export enum LanguageEnum {
   PT_BR = 'PT_BR',
+  EN = 'EN',
+  ES = 'ES',
 }
 
 export enum NewsProviderEnum {
@@ -22,6 +24,13 @@ export enum NewsKeywordEnum {
   BITCOIN = 'BITCOIN',
   CINEMA = 'CINEMA',
   NEGOCIOS = 'NEGÓCIOS',
+  MUSICA = 'MÚSICA',
+  EDUCACAO = 'EDUCAÇÃO',
+  ESPORTES = 'ESPORTES',
+  CIENCIA = 'CIÊNCIA',
+  INOVACAO = 'INOVAÇÃO',
+  MEIO_AMBIENTE = 'MEIO AMBIENTE',
+  INTELIGENCIA_ARTIFICIAL = 'INTELIGÊNCIA ARTIFICIAL',
 }
 
 export interface INewsApiArticle {
