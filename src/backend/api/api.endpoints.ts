@@ -4,6 +4,7 @@ import {
   IApiCreateAdvertisementRequest,
   IApiCreateCompanyUnitRequest,
   IApiCreateDisplayLogRequest,
+  IApiCreateNews,
   IApiDashboardDisplayLogRequest,
   IApiDashboardResumeRequest,
   IApiDetectionDisplayLogDto,
@@ -264,6 +265,22 @@ export const API = {
       return ApiResources.request({
         method: IApiRequestMethod.GET,
         path: "/news",
+        data,
+        access_token,
+      });
+    },
+    async create(access_token: string, data: IApiCreateNews) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/news",
+        data,
+        access_token,
+      });
+    },
+    async update(access_token: string, id: string, data: IApiCreateNews) {
+      return ApiResources.request({
+        method: IApiRequestMethod.PUT,
+        path: `/news/${id}`,
         data,
         access_token,
       });

@@ -876,3 +876,21 @@ export interface IApiDisplayLogResponse {
 export interface IApiDetectionDisplayLogDto {
   id: string;
 }
+
+// CREATE NEWS
+
+export interface IApiCreateNews {
+  provider: string;
+  language: string;
+  keyword: string;
+  source_id: string;
+  source_name: string;
+  author: string;
+  title: string;
+  description: string;
+  url: string;
+  image: string;
+  published_at: string;
+  units: string[];
+  neighborhood: string[];
+}

@@ -101,7 +101,13 @@ export default function NewsTable() {
     [currentPage, session?.api_session, showToast, setResponse]
   );
 
+  const createNewRecord = () => {
+    setIsCreateMode(true);
+    setCurrentSelected({} as IApiNewsResponseItem);
+  };
+
   useEffect(() => {
+    createNewRecord();
     if (session?.api_session) {
       getResponse({
         page: currentPage,
@@ -199,10 +205,7 @@ export default function NewsTable() {
           </div>
           <div className="ml-auto flex items-center gap-3">
             <button
-              onClick={() => {
-                setIsCreateMode(true);
-                setCurrentSelected({} as IApiNewsResponseItem);
-              }}
+              onClick={createNewRecord}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
             >
               + Criar Novo

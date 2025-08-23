@@ -1,4 +1,6 @@
 import { IApiRequest, IApiRequestMethod } from "./api.interface";
+import { signOut } from "next-auth/react";
+import { toast } from "react-toastify";
 
 export const ApiResources = {
   async request(parameters: IApiRequest): Promise<Response> {
@@ -35,7 +37,17 @@ export const ApiResources = {
           : JSON.stringify(parameters.data);
     }
 
-    return await fetch(url, options);
+    const result = await fetch(url, options);
+
+    if (result.status === 401) {
+      toast.error("Sessão expirada. Você será redirecionado para o login.", {
+        toastId: "session-expired",
+      });
+      await signOut({ redirect: false });
+      window.location.href = "/login";
+    }
+
+    return result;
   },
 };
 
