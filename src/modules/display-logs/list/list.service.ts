@@ -57,6 +57,8 @@ export class ListDisplayLogService {
 
     const query: QueryOptions<DisplayLogDocument> = {};
 
+    query.$or = [];
+
     const dateFilter: MongoDbDateQuery = {};
 
     // Apply start date filter (if applicable)
@@ -86,6 +88,7 @@ export class ListDisplayLogService {
       parameters.permissions.includes(PermissionsEnum.NEWS)
     ) {
       query.$or = [
+        ...query.$or,
         {
           type: DisplayType.ADVERTISEMENT,
           advertiser: {
@@ -124,6 +127,7 @@ export class ListDisplayLogService {
 
     if (parameters.search) {
       query.$or = [
+        ...query.$or,
         { identifier: { $regex: parameters.search, $options: 'i' } },
         { ip: { $regex: parameters.search, $options: 'i' } },
         { user_agent: { $regex: parameters.search, $options: 'i' } },
