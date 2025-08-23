@@ -1,6 +1,6 @@
 import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { AuthJwtGuard } from '../auth/auth.guard';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { AuthenticatedRequest } from 'src/shared/request';
 import { UserService } from './user.service';
 
@@ -10,7 +10,7 @@ export class UserController {
 
   @Get('user/me')
   @UseGuards(AuthJwtGuard)
-  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @SkipThrottle()
   getProfile(@Req() req: AuthenticatedRequest) {
     return this.userService.hiddenFields(JSON.parse(JSON.stringify(req.user)));
   }
