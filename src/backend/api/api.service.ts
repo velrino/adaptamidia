@@ -43,6 +43,7 @@ export const ApiResources = {
       toast.error("Sessão expirada. Você será redirecionado para o login.", {
         toastId: "session-expired",
       });
+      localStorage.clear();
       await signOut({ redirect: false });
       window.location.href = "/login";
     }

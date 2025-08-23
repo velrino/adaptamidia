@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, ReactNode, useState, useMemo, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  ReactNode,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import { UserPermission } from "@/interfaces/permissions";
 
 interface UserData {
@@ -44,26 +51,37 @@ const UserContext = createContext<UserContextType>({
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [userData, setUserDataState] = useState<UserData | null>(null);
-  
+
   const permissions = useMemo(() => {
     const userPerms = userData?.user?.permissions || [];
-    // Always include SUDO in the permissions set for checking
-    return new Set([...userPerms, UserPermission.SUDO]);
+
+    return new Set([...userPerms]);
   }, [userData]);
 
   const email = userData?.user?.email || "";
 
-  const hasPermission = useCallback((permission: string): boolean => {
-    return permissions.has(permission);
-  }, [permissions]);
+  const hasPermission = useCallback(
+    (permission: string): boolean => {
+      return permissions.has(permission);
+    },
+    [permissions]
+  );
 
-  const hasAnyPermission = useCallback((perms: string[]): boolean => {
-    return perms.some(permission => permissions.has(permission));
-  }, [permissions]);
+  const hasAnyPermission = useCallback(
+    (perms: string[]): boolean => {
+      return [UserPermission.SUDO, ...perms].some((permission) =>
+        permissions.has(permission)
+      );
+    },
+    [permissions]
+  );
 
-  const hasAllPermissions = useCallback((perms: string[]): boolean => {
-    return perms.every(permission => permissions.has(permission));
-  }, [permissions]);
+  const hasAllPermissions = useCallback(
+    (perms: string[]): boolean => {
+      return perms.every((permission) => permissions.has(permission));
+    },
+    [permissions]
+  );
 
   const setUserData = useCallback((data: UserData | null) => {
     setUserDataState(data);

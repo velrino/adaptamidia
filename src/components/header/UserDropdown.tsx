@@ -28,6 +28,7 @@ export default function UserDropdown() {
   }, []);
 
   const logoutUser = useCallback(async () => {
+    localStorage.clear();
     await signOut({ redirect: false });
     router.replace("/login");
   }, [router]);

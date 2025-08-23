@@ -2,6 +2,7 @@ import "next-auth/jwt";
 import Credentials from "next-auth/providers/credentials";
 import { DefaultSession, NextAuthOptions, getServerSession } from "next-auth";
 import { API } from "../api/api.endpoints";
+import { StorageKey } from "@/utils/generic";
 // import { IApiAuthLogin } from "./services/api/interfaces";
 
 export type ApiSession = {
@@ -37,6 +38,13 @@ export const nextAuthOptions: NextAuthOptions = {
       }
 
       return session;
+    },
+    async signIn({ user }) {
+      // Clear cache on successful login (client-side safe)
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(StorageKey.USER_DATA_CACHE);
+      }
+      return true;
     },
   },
   pages: {

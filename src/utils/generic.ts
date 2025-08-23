@@ -198,3 +198,6 @@ export const Delay = (ms: number) =>
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+export const StorageKey = {
+  USER_DATA_CACHE: "USER_DATA_CACHE",
+};
