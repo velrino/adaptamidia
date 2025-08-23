@@ -98,6 +98,7 @@ const defaultNewRecord: IApiNewsResponseItem = {
   updated_at: new Date().toISOString(),
   units: [],
   neighborhood: [],
+  end_at: String(),
 };
 
 enum TabName {
@@ -232,6 +233,7 @@ export default function NewRecord({
     setIsUpdating(true);
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { _id, created_at, updated_at, ...rest } = record;
 
       const body: IApiCreateNews = rest as IApiCreateNews;

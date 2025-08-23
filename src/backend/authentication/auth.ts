@@ -39,7 +39,7 @@ export const nextAuthOptions: NextAuthOptions = {
 
       return session;
     },
-    async signIn({ user }) {
+    async signIn() {
       // Clear cache on successful login (client-side safe)
       if (typeof window !== "undefined") {
         localStorage.removeItem(StorageKey.USER_DATA_CACHE);

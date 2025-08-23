@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/context/ToastContext";
@@ -44,6 +46,7 @@ export function useUserSession(options: UseUserSessionOptions = {}) {
           setUserData(responseData);
         }
       } catch (error) {
+        console.log({ useUserSession: error });
         showToast("Erro ao carregar dados do usuário", IToastType.ERROR);
       }
     };

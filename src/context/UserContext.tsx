@@ -18,7 +18,7 @@ interface UserData {
     expires_in: string;
   };
   user: {
-    companies: any[];
+    companies: string[];
     _id: string;
     email: string;
     permissions: string[];
