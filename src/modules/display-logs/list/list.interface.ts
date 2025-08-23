@@ -8,7 +8,7 @@ import {
   IsString,
 } from 'class-validator';
 import { NormalizeToArray } from 'src/shared/general';
-import { PaginateDto } from 'src/shared/interfaces/paginate.dto';
+import { PaginateDto, SortEnum } from 'src/shared/interfaces/paginate.dto';
 
 export class ListDisplayLogsPaginateDto extends PaginateDto {
   company?: string[];
@@ -70,5 +70,25 @@ export class ListDisplayLogsPaginateDto extends PaginateDto {
   @IsOptional()
   @IsString()
   @Transform(({ value }) => value?.trim())
+  search?: string;
+}
+
+export interface IListDisplayLogsPaginate {
+  permissions: string[];
+  page: number;
+  limit: number;
+  start_date?: string;
+  end_date?: string;
+  cache: boolean;
+  sort?: SortEnum;
+  popular_time?: boolean;
+  company?: string[];
+  id?: string[];
+  local_unit?: string[];
+  news?: string[];
+  advertisement?: string[];
+  advertiser?: string[];
+  sort_by?: string;
+  get_signed_url: boolean;
   search?: string;
 }

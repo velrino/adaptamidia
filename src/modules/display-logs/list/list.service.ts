@@ -12,10 +12,15 @@ import {
 } from 'src/shared/interfaces/paginate.dto';
 import { RedisService } from 'src/shared/redis/redis.service';
 import { DisplayLog, DisplayLogDocument } from '../display-logs.schema';
-import { ListDisplayLogsPaginateDto } from './list.interface';
+import {
+  IListDisplayLogsPaginate,
+  ListDisplayLogsPaginateDto,
+} from './list.interface';
 import { GoogleCloudStorageService } from 'src/shared/google/cloud/google-cloud-storage.service';
 import { IGoogleStorageBucket } from 'src/shared/google/cloud/google-cloud-storage.interface';
 import { HandleBody } from 'src/shared/general';
+import { DisplayType } from 'src/modules/display/unit/unit.interface';
+import { PermissionsEnum } from 'src/modules/permissions/permissions.enum';
 
 @Injectable()
 export class ListDisplayLogService {
@@ -31,7 +36,10 @@ export class ListDisplayLogService {
     parameters: ListDisplayLogsPaginateDto,
   ) {
     try {
-      return this.execute(HandleBody(currentRequest, parameters));
+      return this.execute(
+        currentRequest,
+        HandleBody(currentRequest, parameters),
+      );
     } catch (error) {
       throw new HttpException(
         error?.message || RESULT.COMPANY_UNIT_GET_FAILED,
@@ -41,7 +49,7 @@ export class ListDisplayLogService {
   }
 
   async getData(
-    parameters: ListDisplayLogsPaginateDto,
+    parameters: IListDisplayLogsPaginate,
   ): Promise<PaginatedResponseDto<DisplayLogDocument>> {
     const currentPage = parameters.page - 1;
 
@@ -70,12 +78,31 @@ export class ListDisplayLogService {
       query._id = { $in: parameters.id.map((id) => new Types.ObjectId(id)) };
     }
 
-    if (parameters.company) {
+    const isSudo = parameters.permissions.includes(PermissionsEnum.SUDO);
+
+    if (
+      !isSudo &&
+      parameters.company &&
+      parameters.permissions.includes(PermissionsEnum.NEWS)
+    ) {
+      query.$or = [
+        {
+          type: DisplayType.ADVERTISEMENT,
+          advertiser: {
+            $in: parameters.company.map((id) => new Types.ObjectId(id)),
+          },
+        },
+        { type: DisplayType.NEWS },
+      ];
+    } else if (
+      !isSudo &&
+      parameters.company &&
+      parameters.permissions.includes(PermissionsEnum.ADVERTISER)
+    ) {
       query.advertiser = {
         $in: parameters.company.map((id) => new Types.ObjectId(id)),
       };
     }
-    console.log({ parameters });
 
     if (parameters.local_unit) {
       query.local_unit = {
@@ -196,7 +223,10 @@ export class ListDisplayLogService {
     };
   }
 
-  async execute(parameters: ListDisplayLogsPaginateDto) {
+  async execute(
+    authenticatedRequest: AuthenticatedRequest,
+    parameters: ListDisplayLogsPaginateDto,
+  ) {
     try {
       //   const cacheKey = this.redisService.createKeyByObject(
       //     RedisKeysEnum.LIST_DISPLAY_LOGS,
@@ -211,7 +241,10 @@ export class ListDisplayLogService {
       //     }
       //   }
 
-      const records = await this.getData(parameters);
+      const records = await this.getData({
+        ...parameters,
+        permissions: authenticatedRequest.user.user.permissions || [],
+      });
 
       //   await this.redisService.set(cacheKey.name, records, 300000); // 5 minutes
 

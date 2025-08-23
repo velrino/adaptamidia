@@ -81,3 +81,13 @@ export interface ICheckExist {
   id: string;
   exists: boolean;
 }
+
+export interface IPaginate {
+  page: number;
+  limit: number;
+  start_date?: string;
+  end_date?: string;
+  cache: boolean;
+  sort?: SortEnum;
+  popular_time?: boolean;
+}
