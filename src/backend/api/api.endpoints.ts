@@ -287,5 +287,12 @@ export const API = {
         access_token,
       });
     },
+    async delete(access_token: string, id: string) {
+      return ApiResources.request({
+        method: IApiRequestMethod.DELETE,
+        path: `/news/${id}`,
+        access_token,
+      });
+    },
   },
 };

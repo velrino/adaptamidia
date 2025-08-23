@@ -135,10 +135,12 @@ export default function NewRecord({
     y: number;
   } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isRequired, setIsRequired] = useState(true);
 
   const { showToast } = useToast();
   const cropModal = useModal();
+  const deleteModal = useModal();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -291,6 +293,38 @@ export default function NewRecord({
       showToast("Erro ao atualizar record", IToastType.ERROR);
     } finally {
       setIsUpdating(false);
+      hideFullScreenLoading();
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!session?.api_session?.access_token || !record._id) {
+      return;
+    }
+
+    setIsDeleting(true);
+    showFullScreenLoading();
+
+    try {
+      const response = await API.news.delete(
+        session.api_session.access_token,
+        record._id
+      );
+
+      if (response.ok) {
+        showToast("Notícia deletada com sucesso!", IToastType.SUCCESS);
+        deleteModal.closeModal();
+        // Redirect or refresh list after deletion
+        window.location.href = "/news";
+      } else {
+        const responseData = await response.json();
+        showToast(GetErrorMessage(responseData.message), IToastType.ERROR);
+      }
+    } catch (error) {
+      console.log({ error });
+      showToast("Erro ao deletar notícia", IToastType.ERROR);
+    } finally {
+      setIsDeleting(false);
       hideFullScreenLoading();
     }
   };
@@ -540,21 +574,32 @@ export default function NewRecord({
                         onUnitsChange={handleUnitsChange}
                       />
 
-                      {/* Botão de Atualizar */}
+                      {/* Botões de Atualizar e Deletar */}
                       <div className="pt-4 md:pt-6 border-t border-gray-200 dark:border-gray-700">
-                        <Button
-                          onClick={handleUpdate}
-                          disabled={isUpdating || isRequired}
-                          className="w-full bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
-                        >
-                          {isUpdating
-                            ? isCreateMode
-                              ? "Criando..."
-                              : "Atualizando..."
-                            : isCreateMode
-                            ? "Criar Notícia"
-                            : "Atualizar Notícia"}
-                        </Button>
+                        <div className="flex gap-3">
+                          <Button
+                            onClick={handleUpdate}
+                            disabled={isUpdating || isRequired}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
+                          >
+                            {isUpdating
+                              ? isCreateMode
+                                ? "Criando..."
+                                : "Atualizando..."
+                              : isCreateMode
+                              ? "Criar Notícia"
+                              : "Atualizar Notícia"}
+                          </Button>
+                          {!isCreateMode && (
+                            <Button
+                              onClick={() => deleteModal.openModal()}
+                              disabled={isUpdating || isDeleting}
+                              className="bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 text-white px-4"
+                            >
+                              Deletar
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -600,6 +645,39 @@ export default function NewRecord({
                   </div>
                 </Modal>
               )}
+
+              {/* Modal de Confirmação de Deleção */}
+              <Modal
+                isOpen={deleteModal.isOpen}
+                onClose={deleteModal.closeModal}
+                showCloseButton={false}
+                className="max-w-md p-6 bg-white dark:bg-gray-900"
+              >
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                  Confirmar Deleção
+                </h2>
+                <p className="text-gray-600 dark:text-gray-300 mb-6">
+                  Tem certeza que deseja deletar esta notícia? Esta ação não
+                  pode ser desfeita.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={deleteModal.closeModal}
+                    disabled={isDeleting}
+                    className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                    className="bg-red-600 hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600 text-white"
+                  >
+                    {isDeleting ? "Deletando..." : "Deletar"}
+                  </Button>
+                </div>
+              </Modal>
             </>
           )}
 
