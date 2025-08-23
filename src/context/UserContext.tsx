@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, ReactNode, useState, useMemo, useCallback } from "react";
+import { UserPermission } from "@/interfaces/permissions";
 
 interface UserData {
   token: {
@@ -45,7 +46,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [userData, setUserDataState] = useState<UserData | null>(null);
   
   const permissions = useMemo(() => {
-    return new Set(userData?.user?.permissions || []);
+    const userPerms = userData?.user?.permissions || [];
+    // Always include SUDO in the permissions set for checking
+    return new Set([...userPerms, UserPermission.SUDO]);
   }, [userData]);
 
   const email = userData?.user?.email || "";

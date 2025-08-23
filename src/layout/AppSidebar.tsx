@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
+import { useUser } from "../context/UserContext";
 import {
   BoxCubeIcon,
   CalenderIcon,
@@ -24,12 +25,14 @@ import {
 import { BsWindowStack } from "react-icons/bs";
 import { PiBuildingOfficeLight, PiNewspaper } from "react-icons/pi";
 import { Environment } from "@/utils/generic";
+import { UserPermission } from "@/interfaces/permissions";
 
 type NavItem = {
   name: string;
   icon: React.ReactNode;
   path?: string;
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
+  permissions?: UserPermission[];
 };
 
 const navItems: NavItem[] = [
@@ -41,6 +44,7 @@ const navItems: NavItem[] = [
   {
     icon: <BsWindowStack size={25} />,
     name: "Publicidade",
+    permissions: [UserPermission.ADVERTISER],
     subItems: [
       { name: "Anúncios", path: "/advertisements", pro: false },
       { name: "Exibições", path: "/displays", pro: false },
@@ -50,6 +54,7 @@ const navItems: NavItem[] = [
   {
     icon: <PiNewspaper size={25} />,
     name: "Notícias",
+    permissions: [UserPermission.NEWS],
     subItems: [
       { name: "Notícias", path: "/news", pro: false },
       // { name: "Exibições", path: "/displays", pro: false },
@@ -59,6 +64,7 @@ const navItems: NavItem[] = [
   {
     icon: <PiBuildingOfficeLight size={25} />,
     name: "Clientes",
+    permissions: [UserPermission.LOCAL],
     subItems: [
       { name: "Empresas", path: "/companies", pro: false },
       { name: "Unidades", path: "/units", pro: true },
@@ -209,6 +215,7 @@ const supportItems: NavItem[] = [
 
 const AppSidebar: React.FC = () => {
   const { isExpanded, isMobileOpen, isHovered, setIsHovered } = useSidebar();
+  const { hasAnyPermission } = useUser();
   const pathname = usePathname();
 
   const renderMenuItems = (
@@ -216,7 +223,11 @@ const AppSidebar: React.FC = () => {
     menuType: "main" | "support" | "others"
   ) => (
     <ul className="flex flex-col gap-4">
-      {navItems.map((nav, index) => (
+      {navItems
+        .filter((nav) => 
+          !nav.permissions || hasAnyPermission(nav.permissions)
+        )
+        .map((nav, index) => (
         <li key={nav.name}>
           {nav.subItems ? (
             <button
@@ -360,7 +371,12 @@ const AppSidebar: React.FC = () => {
           : menuType === "support"
           ? supportItems
           : othersItems;
-      items.forEach((nav, index) => {
+      
+      const filteredItems = items.filter((nav) => 
+        !nav.permissions || hasAnyPermission(nav.permissions)
+      );
+      
+      filteredItems.forEach((nav, index) => {
         if (nav.subItems) {
           nav.subItems.forEach((subItem) => {
             if (isActive(subItem.path)) {
@@ -379,7 +395,7 @@ const AppSidebar: React.FC = () => {
     if (!submenuMatched) {
       setOpenSubmenu(null);
     }
-  }, [pathname, isActive]);
+  }, [pathname, isActive, hasAnyPermission]);
 
   useEffect(() => {
     // Set the height of the submenu items when the submenu is opened

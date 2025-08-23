@@ -37,13 +37,44 @@ src/
 
 ### Sistema de Permissões
 ```typescript
+import { UserPermission } from "@/interfaces/permissions";
+
 const { hasPermission, hasAnyPermission, hasAllPermissions } = useUser();
 
-// Verificar uma permissão
-if (hasPermission("SUDO")) { /* ... */ }
+// Verificar uma permissão específica
+if (hasPermission(UserPermission.SUDO)) { /* ... */ }
 
-// Verificar múltiplas permissões
-if (hasAnyPermission(["ADMIN", "EDITOR"])) { /* ... */ }
+// Verificar múltiplas permissões (qualquer uma)
+if (hasAnyPermission([UserPermission.ADVERTISER, UserPermission.NEWS])) { /* ... */ }
+
+// Verificar múltiplas permissões (todas necessárias)
+if (hasAllPermissions([UserPermission.SUDO, UserPermission.ADVERTISER])) { /* ... */ }
+```
+
+#### Enum de Permissões
+```typescript
+export enum UserPermission {
+  ADVERTISER = 'ADVERTISER', // Acesso à publicidade
+  LOCAL = 'LOCAL',           // Acesso aos clientes/estabelecimentos
+  NEWS = 'NEWS',             // Acesso às notícias
+  SUDO = 'SUDO',             // Acesso total (sempre incluído automaticamente)
+}
+```
+
+#### Sidebar com Permissões
+- **SUDO**: Acessa tudo automaticamente (sempre incluído)
+- **Publicidade**: `UserPermission.ADVERTISER` + SUDO
+- **Notícias**: `UserPermission.NEWS` + SUDO  
+- **Clientes**: `UserPermission.LOCAL` + SUDO
+- **Dashboard**: Sem restrições (todos acessam)
+
+```typescript
+// Exemplo de item da sidebar
+{
+  name: "Publicidade",
+  permissions: [UserPermission.ADVERTISER], // SUDO é incluído automaticamente
+  subItems: [...]
+}
 ```
 
 ### Cache Strategy
