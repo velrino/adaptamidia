@@ -3,18 +3,19 @@
 import { LoadingProvider } from "@/context/LoadingContext";
 import { useSidebar } from "@/context/SidebarContext";
 import { ToastProvider } from "@/context/ToastContext";
+import { UserProvider } from "@/context/UserContext";
 import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
+import { useUserSession } from "@/hooks/useUserSession";
 import { SessionProvider } from "next-auth/react";
 import React from "react";
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const { isExpanded, isHovered, isMobileOpen } = useSidebar();
+  
+  // Initialize user session with cache
+  useUserSession();
 
   // Dynamic class for main content margin based on sidebar state
   const mainContentMargin = isMobileOpen
@@ -24,29 +25,41 @@ export default function AdminLayout({
     : "lg:ml-[90px]";
 
   return (
-    <SessionProvider>
-      <ToastProvider>
-        <LoadingProvider>
-          <div className="min-h-screen xl:flex">
-            {/* Sidebar and Backdrop */}
-            <AppSidebar />
-            <Backdrop />
-            {/* Main Content Area */}
-            <div
-              className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
-            >
-              {/* Header */}
-              <AppHeader />
-              {/* Page Content */}
-              <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
-                {children}
-                {/* <PersonDetector /> */}
-                {/* <StudioModal currentModal={modalStudio} /> */}
-              </div>
+    <ToastProvider>
+      <LoadingProvider>
+        <div className="min-h-screen xl:flex">
+          {/* Sidebar and Backdrop */}
+          <AppSidebar />
+          <Backdrop />
+          {/* Main Content Area */}
+          <div
+            className={`flex-1 transition-all duration-300 ease-in-out ${mainContentMargin}`}
+          >
+            {/* Header */}
+            <AppHeader />
+            {/* Page Content */}
+            <div className="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+              {children}
+              {/* <PersonDetector /> */}
+              {/* <StudioModal currentModal={modalStudio} /> */}
             </div>
           </div>
-        </LoadingProvider>
-      </ToastProvider>
+        </div>
+      </LoadingProvider>
+    </ToastProvider>
+  );
+}
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <SessionProvider>
+      <UserProvider>
+        <AdminLayoutContent>{children}</AdminLayoutContent>
+      </UserProvider>
     </SessionProvider>
   );
 }
