@@ -62,6 +62,27 @@ export class News extends Document {
 
   @Prop()
   content: string;
+
+  @Prop({
+    required: false,
+    type: [Types.ObjectId],
+    ref: 'CompanyUnit',
+    index: true,
+    default: [],
+    set: (arr: Types.ObjectId[]) =>
+      Array.from(new Set(arr.map((id) => id.toString()))).map(
+        (id) => new Types.ObjectId(id),
+      ),
+  })
+  units: Types.ObjectId[];
+
+  @Prop({
+    required: false,
+    type: [String],
+    default: [],
+    set: (arr: string[]) => Array.from(new Set(arr)),
+  })
+  neighborhood: string[];
 }
 
 export type NewsDocument = News & Document;

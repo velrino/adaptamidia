@@ -36,11 +36,11 @@ export class CreateNewsDto {
   source_id: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   source_name: string;
 
   @IsString()
-  @IsNotEmpty()
+  @IsOptional()
   author: string;
 
   @IsString()
@@ -52,15 +52,15 @@ export class CreateNewsDto {
   description: string;
 
   @IsUrl()
-  @IsNotEmpty()
+  @IsOptional()
   url: string;
 
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   image: string;
 
   @IsDateString()
-  @IsNotEmpty()
+  @IsOptional()
   published_at: string;
 
   @IsDateString()
