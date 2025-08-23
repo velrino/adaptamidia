@@ -176,9 +176,11 @@ export interface IApiNewsResponseItem {
   author: string;
   title: string;
   description: string;
+  status: string;
   url: string;
   image: string;
   published_at: string;
+  end_at: string;
   created_at: string;
   updated_at: string;
   neighborhood: string[];
@@ -418,7 +420,7 @@ export interface IApiUpdateCompanyUnitPopularTimesRequest {
 
 export interface IApiUploadFileRequest {
   file: Blob;
-  company_id: string;
+  company_id?: string;
   foldername: string;
   bucket: string;
 }

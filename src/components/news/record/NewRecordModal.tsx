@@ -35,7 +35,7 @@ export default function NewRecordModal({
       showCloseButton={true}
       isFullscreen={true}
     >
-      <NewRecord recordInformed={record} isCreateMode={isCreateMode} />
+      <NewRecord recordInformed={record} isCreateModeInformed={isCreateMode} />
     </Modal>
   );
 }

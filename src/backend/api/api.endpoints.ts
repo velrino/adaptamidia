@@ -230,7 +230,9 @@ export const API = {
       const filename = `file.${fileExtension}`;
 
       formData.append("file", data.file, filename);
-      formData.append("company_id", data.company_id);
+      if (data.company_id) {
+        formData.append("company_id", data.company_id);
+      }
       formData.append("foldername", data.foldername);
       formData.append("bucket", data.bucket);
 

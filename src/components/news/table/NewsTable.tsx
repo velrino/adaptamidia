@@ -107,9 +107,10 @@ export default function NewsTable() {
   };
 
   useEffect(() => {
-    createNewRecord();
+    // createNewRecord();
     if (session?.api_session) {
       getResponse({
+        cache: false,
         page: currentPage,
       });
     }
