@@ -7,8 +7,8 @@ import {
 } from 'src/shared/google/llm/llm.interface';
 import { InsightGenerateDisplayLogQueryDto } from './insights.interface';
 import { GetDisplayLogService } from '../get/get.service';
-import { GenerateOOHPrompt } from './prompt.interface';
 import { AuthService } from 'src/modules/auth/auth.service';
+import { ShortOohPrompt } from './short-prompt.interface';
 
 @Injectable()
 export class InsightDisplayLogService {
@@ -25,7 +25,7 @@ export class InsightDisplayLogService {
 
     const record = await this.getDisplayLogService.get({ _id: parameters.id });
 
-    const prompt = GenerateOOHPrompt(record);
+    const prompt = ShortOohPrompt(record);
 
     const getModel = parameters.model
       ? GoogleGenAiModelsEnum[parameters.model]
