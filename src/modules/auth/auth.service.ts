@@ -553,4 +553,33 @@ export class AuthService {
       );
     }
   }
+
+  async validateToken(access_token: string) {
+    try {
+      const tokenDecoded = this.jwtService.verify(access_token);
+
+      const now = Math.floor(Date.now() / 1000);
+      if (tokenDecoded.exp && tokenDecoded.exp < now) {
+        throw new HttpException(RESULT.TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED);
+      }
+
+      return tokenDecoded;
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throw new HttpException(RESULT.TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED);
+      }
+
+      if (error.name === 'JsonWebTokenError') {
+        throw new HttpException(
+          RESULT.INVALID_TOKEN,
+          HttpStatus.UNPROCESSABLE_ENTITY,
+        );
+      }
+
+      throw new HttpException(
+        error?.message || RESULT.INVALID_TOKEN,
+        error?.status || HttpStatus.UNPROCESSABLE_ENTITY,
+      );
+    }
+  }
 }

@@ -33,5 +33,6 @@ import { MongoCollection } from 'src/shared/mongo.schema';
     AuthDeviceService,
   ],
   controllers: [AuthController],
+  exports: [AuthService],
 })
 export class AuthModule {}

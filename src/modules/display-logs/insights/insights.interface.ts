@@ -4,6 +4,10 @@ import { GoogleGenAiModelsEnum } from 'src/shared/google/llm/llm.interface';
 export class InsightGenerateDisplayLogQueryDto {
   @IsNotEmpty()
   @IsString()
+  token: string;
+
+  @IsNotEmpty()
+  @IsString()
   id: string;
 
   @IsOptional()

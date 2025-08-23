@@ -8,17 +8,21 @@ import {
 import { InsightGenerateDisplayLogQueryDto } from './insights.interface';
 import { GetDisplayLogService } from '../get/get.service';
 import { GenerateOOHPrompt } from './prompt.interface';
+import { AuthService } from 'src/modules/auth/auth.service';
 
 @Injectable()
 export class InsightDisplayLogService {
   constructor(
     private readonly aiProvider: GoogleGenAiProvider,
     private readonly getDisplayLogService: GetDisplayLogService,
+    private readonly authService: AuthService,
   ) {}
 
   async generateStream(
     parameters: InsightGenerateDisplayLogQueryDto,
   ): Promise<Observable<MessageEvent>> {
+    await this.authService.validateToken(parameters.token);
+
     const record = await this.getDisplayLogService.get({ _id: parameters.id });
 
     const prompt = GenerateOOHPrompt(record);

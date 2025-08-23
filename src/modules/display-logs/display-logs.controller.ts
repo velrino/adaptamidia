@@ -66,8 +66,6 @@ export class DisplayLogController {
   }
 
   @Sse('display/generate-insights')
-  @UseGuards(AuthJwtGuard, PermissionsGuard)
-  @PermissionsAllowed(defaultPermissions)
   generateStream(@Query() query: InsightGenerateDisplayLogQueryDto) {
     return this.insightDisplayLogService.generateStream(query);
   }

@@ -2,6 +2,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { CreateDisplayLogService } from './create/create.service';
 import { MongoCollection } from 'src/shared/mongo.schema';
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
 import { DisplayLogController } from './display-logs.controller';
 import { DetectionDisplayLogService } from './detection/detection.service';
 import { GetDisplayLogService } from './get/get.service';
@@ -20,6 +21,7 @@ import { InsightDisplayLogService } from './insights/insights.service';
       MongoCollection.display_logs,
       MongoCollection.news,
     ]),
+    JwtModule,
   ],
   controllers: [DisplayLogController],
   providers: [
