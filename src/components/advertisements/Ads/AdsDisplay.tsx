@@ -34,7 +34,7 @@ export const AdDisplay: React.FC<{
       </div>
       {ad.type === AdType.VIDEO ? (
         <video
-          src={ad.items[0].source}
+          src={ad.source}
           autoPlay
           loop
           muted
@@ -42,7 +42,7 @@ export const AdDisplay: React.FC<{
         ></video>
       ) : (
         <img
-          src={ad.items[0].source}
+          src={ad.source}
           alt={ad.title}
           className="h-full w-full object-cover"
         />

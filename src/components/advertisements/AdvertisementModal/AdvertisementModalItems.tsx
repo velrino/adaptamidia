@@ -1,7 +1,4 @@
-import {
-  IApiAdvertisementItem,
-  IApiAdvertisementItemItem,
-} from "@/backend/api/api.interface";
+import { IApiAdvertisementItem } from "@/backend/api/api.interface";
 import { AdType } from "@/interfaces/ads";
 import { MediaCropperModal } from "./Ads/ImageCropperModal";
 import { useModal } from "@/hooks/useModal";
@@ -52,16 +49,7 @@ export function AdvertisementComponent({
       } else if (response.ok && responseData?.file?.public_url) {
         showToast(`Upload feito com sucesso!`, IToastType.SUCCESS);
 
-        const newItem: IApiAdvertisementItemItem = {
-          id: responseData?.file?._id,
-          description: String(),
-          seconds: 30,
-          source: responseData?.file?.public_url,
-          title: String(),
-          type,
-        };
-
-        const updatedData = { items: [newItem], type };
+        const updatedData = { source: responseData?.file?.public_url, type };
 
         onUpdate(updatedData);
       } else {
@@ -74,42 +62,7 @@ export function AdvertisementComponent({
     }
   };
 
-  // const handleGenerated = async (fileUrl: string) => {
-  //   if (!session?.api_session) {
-  //     return;
-  //   }
-
-  //   if (!data?.company) {
-  //     showToast("Escolha um Anunciante!", IToastType.INFO);
-  //     return;
-  //   }
-
-  //   try {
-  //     showFullScreenLoading();
-
-  //     showToast(`Upload feito com sucesso!`, IToastType.SUCCESS);
-
-  //     const newItem: IApiAdvertisementItemItem = {
-  //       id: new Date().getTime().toString(),
-  //       description: String(),
-  //       seconds: 30,
-  //       source: fileUrl,
-  //       title: String(),
-  //       type: AdType.VIDEO,
-  //     };
-
-  //     const updatedData = { items: [newItem], type: AdType.VIDEO };
-
-  //     onUpdate(updatedData);
-  //   } catch (error) {
-  //     showToast(GetErrorMessage(error), IToastType.ERROR);
-  //   } finally {
-  //     hideFullScreenLoading();
-  //   }
-  // };
-
   const modalMediaCropper = useModal();
-  // const modalGenerate = useModal();
 
   return (
     <>

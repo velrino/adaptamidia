@@ -49,15 +49,7 @@ export const AdsRecordDefault: IApiAdvertisementItem = {
   description: String(),
   type: AdType.VIDEO,
   spotlight: false,
-  items: [
-    {
-      title: String(),
-      description: String(),
-      seconds: 0,
-      source: "/videos/demo/0.mp4",
-      type: AdType.VIDEO,
-    },
-  ],
+  source: "/videos/demo/0.mp4",
   seconds: 10,
   status: AdStatus.REVIEW,
   start_date: DateHelper.addDays(new Date(), 1, "days").toISOString(),

@@ -293,11 +293,11 @@ export default function DisplaysTable({
                         <div className="flex items-center gap-3">
                           {/* Imagem */}
                           <div className="w-10 h-10 overflow-hidden rounded-full">
-                            {item?.advertisement?.items?.[0]?.source ? (
+                            {item?.advertisement?.source ? (
                               <video
                                 width={100}
                                 height={100}
-                                src={item.advertisement.items[0].source}
+                                src={item.advertisement.source}
                                 className="w-full h-full object-cover"
                                 style={{ objectPosition: "center" }}
                                 muted

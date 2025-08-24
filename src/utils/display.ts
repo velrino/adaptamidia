@@ -10,13 +10,16 @@ export const cleanHtmlDescription = (htmlString?: string): string => {
 export const getAssetUrl = (item: IApiDisplayResponseItem): string | null => {
   if (item?.news?.image) {
     return item.news.image;
-  } else if (item?.ads?.items?.[0]?.source) {
-    return item.ads.items[0].source;
+  } else if (item?.ads?.source) {
+    return item.ads.source;
   }
   return null;
 };
 
-export const formatCurrency = (value?: number, fallbackValue?: number): string => {
+export const formatCurrency = (
+  value?: number,
+  fallbackValue?: number
+): string => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",

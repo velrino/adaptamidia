@@ -419,8 +419,8 @@ export default function DisplayLogModalInfo({
 
                     {/* Advertisement Items */}
                     <div className="space-y-4">
-                      {record.advertisement!.items.map((item, index) => (
-                        <div key={index} className="rounded-xl p-4">
+                      {record.advertisement && (
+                        <div className="rounded-xl p-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="p-4 rounded-lg">
                               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 leading-relaxed">
@@ -432,27 +432,15 @@ export default function DisplayLogModalInfo({
                                   {record.advertisement!.description}
                                 </p>
                               )}
-
-                              {item.title && (
-                                <h5 className="font-medium text-gray-900 dark:text-white mb-2">
-                                  {item.title}
-                                </h5>
-                              )}
-
-                              {item.description && (
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                                  {item.description}
-                                </p>
-                              )}
                             </div>
                             <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded-lg p-3 flex items-center justify-center">
                               <div className="text-center">
                                 {record.advertisement &&
-                                item.type === "VIDEO" ? (
+                                record.type === "VIDEO" ? (
                                   <>
                                     <video
                                       src={
-                                        record.advertisement.items[0]?.source ||
+                                        record.advertisement?.source ||
                                         "/placeholder.svg"
                                       }
                                       autoPlay
@@ -474,7 +462,7 @@ export default function DisplayLogModalInfo({
                             </div>
                           </div>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 </>

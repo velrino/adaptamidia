@@ -90,15 +90,6 @@ export interface IApiAdvertisementResponse {
   data: IApiAdvertisementItem[];
 }
 
-export interface IApiAdvertisementItemItem {
-  id?: string;
-  title: string;
-  description: string;
-  seconds: number;
-  source: string;
-  type: AdType;
-}
-
 export interface IApiAdvertisementItemCompanyResponse {
   _id: string;
   document: string;
@@ -118,9 +109,9 @@ export interface IApiAdvertisementItem {
   description: string;
   type: AdType;
   spotlight: boolean;
-  items: IApiAdvertisementItemItem[];
   seconds: number;
   status: AdStatus;
+  source: string;
   start_date: string;
   end_date: string;
   created_at: string;
@@ -134,9 +125,9 @@ export interface IApiAdvertisementItem {
 export interface IApiCreateAdvertisementRequest {
   company: string;
   title: string;
+  source: string;
   description: string;
   type: AdType;
-  items: IApiAdvertisementItemItem[];
   seconds: number;
   status: AdStatus;
   neighborhood: string[];
@@ -151,8 +142,8 @@ export interface IApiUpdateAdvertisementRequest {
   company: string;
   title: string;
   description: string;
+  source: string;
   type: AdType;
-  items: IApiAdvertisementItemItem[];
   seconds: number;
   status: AdStatus;
   neighborhood: string[];
@@ -513,20 +504,11 @@ export interface IApiDisplayResponseItemAds {
   _id: string;
   title: string;
   type: string;
-  items: IApiDisplayResponseItemAdsItem[];
   seconds: number;
+  source: string;
   status: string;
   start_date: string;
   end_date: string;
-}
-
-export interface IApiDisplayResponseItemAdsItem {
-  id: string;
-  description: string;
-  seconds: number;
-  source: string;
-  title: string;
-  type: string;
 }
 
 export interface IApiDisplayResponseItemAdsNews {
@@ -812,15 +794,7 @@ export interface IApiDisplayLogItem {
     _id: string;
     title: string;
     description: string;
-    items: [
-      {
-        description: string;
-        seconds: number;
-        source: string;
-        title: string;
-        type: string;
-      }
-    ];
+    source: string;
   };
   advertiser?: string;
   local: string;

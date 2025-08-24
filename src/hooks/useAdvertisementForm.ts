@@ -1,17 +1,21 @@
 import { useState } from "react";
-import { IApiAdvertisementItem, IApiCreateAdvertisementRequest, IApiUpdateAdvertisementRequest } from "@/backend/api/api.interface";
+import {
+  IApiAdvertisementItem,
+  IApiCreateAdvertisementRequest,
+  IApiUpdateAdvertisementRequest,
+} from "@/backend/api/api.interface";
 import { ContentAction, IToastType } from "@/interfaces/general";
 import { useToast } from "@/context/ToastContext";
 import { useSession } from "next-auth/react";
 import { useLoading } from "@/context/LoadingContext";
 
 export const useAdvertisementForm = (
-  initialData: IApiAdvertisementItem, 
+  initialData: IApiAdvertisementItem,
   action: ContentAction
 ) => {
   const [data, setData] = useState<IApiAdvertisementItem>(initialData);
   const [loadingSave, setLoadingSave] = useState(false);
-  
+
   const { showToast } = useToast();
   const { data: session } = useSession();
   const { showFullScreenLoading, hideFullScreenLoading } = useLoading();
@@ -28,13 +32,15 @@ export const useAdvertisementForm = (
     return true;
   };
 
-  const buildRequestData = (): IApiCreateAdvertisementRequest | IApiUpdateAdvertisementRequest => {
+  const buildRequestData = ():
+    | IApiCreateAdvertisementRequest
+    | IApiUpdateAdvertisementRequest => {
     return {
       company: data.company._id,
       title: data.title,
       description: data.description,
       type: data.type,
-      items: data.items,
+      source: data.source,
       seconds: data.seconds,
       status: data.status,
       neighborhood: data.neighborhood,
@@ -58,6 +64,6 @@ export const useAdvertisementForm = (
     showToast,
     showFullScreenLoading,
     hideFullScreenLoading,
-    action
+    action,
   };
 };

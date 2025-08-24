@@ -64,8 +64,8 @@ export const DisplayContent: React.FC<IDisplayContent> = ({
   useEffect(() => {
     if (item?.news && item?.news?.image) {
       setAssetURL(() => getNews().image);
-    } else if (item?.ads && item?.ads?.items?.[0]?.source) {
-      setAssetURL(() => getAdvertisement().items[0].source);
+    } else if (item?.ads && item?.ads?.source) {
+      setAssetURL(() => getAdvertisement().source);
     }
   }, [item, getAdvertisement, getNews]);
 
