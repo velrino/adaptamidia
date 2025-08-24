@@ -18,6 +18,9 @@ import { PermissionsGuard } from '../permissions/permissions.guard';
 import { ListCompanyPaginateDto } from './list/list.interface';
 import { ListCompanyService } from './list/list.service';
 import { UpdateCompanyService } from './update/update.service';
+import { PermissionsEnum } from '../permissions/permissions.enum';
+
+const defaultPermissions = [PermissionsEnum.LOCAL];
 
 @Controller()
 export class CompanyController {
@@ -27,19 +30,9 @@ export class CompanyController {
     private readonly updateCompanyService: UpdateCompanyService,
   ) {}
 
-  @Post('company')
-  @UseGuards(AuthJwtGuard, PermissionsGuard)
-  @PermissionsAllowed()
-  createCompany(
-    @Req() req: AuthenticatedRequest,
-    @Body() data: CreateCompanyValidator,
-  ) {
-    return this.createCompanyService.executeFromRequest(req, data);
-  }
-
   @Get('company')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
-  @PermissionsAllowed()
+  @PermissionsAllowed([...defaultPermissions, PermissionsEnum.ADVERTISER])
   list(
     @Req() req: AuthenticatedRequest,
     @Query() query: ListCompanyPaginateDto,
@@ -47,9 +40,19 @@ export class CompanyController {
     return this.listCompanyService.executeFromRequest(req, query);
   }
 
+  @Post('company')
+  @UseGuards(AuthJwtGuard, PermissionsGuard)
+  @PermissionsAllowed(defaultPermissions)
+  createCompany(
+    @Req() req: AuthenticatedRequest,
+    @Body() data: CreateCompanyValidator,
+  ) {
+    return this.createCompanyService.executeFromRequest(req, data);
+  }
+
   @Put('company/:id')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
-  @PermissionsAllowed()
+  @PermissionsAllowed(defaultPermissions)
   updateCompany(
     @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
