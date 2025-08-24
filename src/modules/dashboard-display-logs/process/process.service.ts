@@ -46,7 +46,7 @@ export class DashboardDisplayLogsProcessService {
     await this.execute();
   }
 
-  @Cron(CronExpression.EVERY_HOUR)
+  @Cron(CronExpression.EVERY_MINUTE)
   async execute() {
     const lockKey = `dashboard-process-${new Date().toISOString().split('T')[0]}`;
     const lockAcquired = await this.acquireLock(
@@ -76,9 +76,9 @@ export class DashboardDisplayLogsProcessService {
 
       const periods = [
         this.getLogsByDay,
-        this.getLogsByWeek,
-        this.getLogsByMonth,
-        this.getLogsByYear,
+        // this.getLogsByWeek,
+        // this.getLogsByMonth,
+        // this.getLogsByYear,
       ];
 
       for (const entity of entities) {
@@ -270,51 +270,51 @@ export class DashboardDisplayLogsProcessService {
     );
   }
 
-  async getLogsByWeek(
-    date: Date,
-    entityField: EntityFieldEnum,
-  ): Promise<IAggregationResult[]> {
-    const { startDate, endDate } = this.getDateRange(
-      AggregationPeriod.WEEK,
-      date,
-    );
-    return await this.executeQuery(
-      startDate,
-      endDate,
-      entityField,
-      AggregationPeriod.WEEK,
-    );
-  }
+  // async getLogsByWeek(
+  //   date: Date,
+  //   entityField: EntityFieldEnum,
+  // ): Promise<IAggregationResult[]> {
+  //   const { startDate, endDate } = this.getDateRange(
+  //     AggregationPeriod.WEEK,
+  //     date,
+  //   );
+  //   return await this.executeQuery(
+  //     startDate,
+  //     endDate,
+  //     entityField,
+  //     AggregationPeriod.WEEK,
+  //   );
+  // }
 
-  async getLogsByMonth(
-    date: Date,
-    entityField: EntityFieldEnum,
-  ): Promise<IAggregationResult[]> {
-    const { startDate, endDate } = this.getDateRange(
-      AggregationPeriod.MONTH,
-      date,
-    );
-    return await this.executeQuery(
-      startDate,
-      endDate,
-      entityField,
-      AggregationPeriod.MONTH,
-    );
-  }
+  // async getLogsByMonth(
+  //   date: Date,
+  //   entityField: EntityFieldEnum,
+  // ): Promise<IAggregationResult[]> {
+  //   const { startDate, endDate } = this.getDateRange(
+  //     AggregationPeriod.MONTH,
+  //     date,
+  //   );
+  //   return await this.executeQuery(
+  //     startDate,
+  //     endDate,
+  //     entityField,
+  //     AggregationPeriod.MONTH,
+  //   );
+  // }
 
-  async getLogsByYear(
-    date: Date,
-    entityField: EntityFieldEnum,
-  ): Promise<IAggregationResult[]> {
-    const { startDate, endDate } = this.getDateRange(
-      AggregationPeriod.YEAR,
-      date,
-    );
-    return await this.executeQuery(
-      startDate,
-      endDate,
-      entityField,
-      AggregationPeriod.YEAR,
-    );
-  }
+  // async getLogsByYear(
+  //   date: Date,
+  //   entityField: EntityFieldEnum,
+  // ): Promise<IAggregationResult[]> {
+  //   const { startDate, endDate } = this.getDateRange(
+  //     AggregationPeriod.YEAR,
+  //     date,
+  //   );
+  //   return await this.executeQuery(
+  //     startDate,
+  //     endDate,
+  //     entityField,
+  //     AggregationPeriod.YEAR,
+  //   );
+  // }
 }
