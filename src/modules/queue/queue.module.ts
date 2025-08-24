@@ -10,7 +10,10 @@ import { QueueService } from './queue.service';
       name: QueuesEnum.DISPLAY_LOG_CREATE,
     }),
     BullModule.registerQueue({
-      name: QueuesEnum.DETECT_IMAGE,
+      name: QueuesEnum.DISPLAY_LOG_DETECT_IMAGE,
+    }),
+    BullModule.registerQueue({
+      name: QueuesEnum.DISPLAY_LOG_INSIGHT,
     }),
   ],
   providers: [QueueService],

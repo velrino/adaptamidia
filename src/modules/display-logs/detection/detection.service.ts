@@ -27,8 +27,9 @@ import { RESULT } from 'src/shared/result.enum';
 import { AuthenticatedRequest } from 'src/shared/request';
 import { ConvertToObjectId } from 'src/shared/general';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { QueueService } from 'src/modules/queue/queue.service';
 
-@Processor(QueuesEnum.DETECT_IMAGE)
+@Processor(QueuesEnum.DISPLAY_LOG_DETECT_IMAGE)
 @Injectable()
 export class DetectionDisplayLogService {
   constructor(
@@ -37,6 +38,7 @@ export class DetectionDisplayLogService {
     private readonly displayLogService: GetDisplayLogService,
     private readonly detectionService: DetectionService,
     private readonly googleCloudStorageService: GoogleCloudStorageService,
+    private readonly queueService: QueueService,
   ) {}
 
   // async onApplicationBootstrap() {
@@ -46,11 +48,11 @@ export class DetectionDisplayLogService {
   //   await this.processPendingRecordsBatch();
   // }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  // @Cron(CronExpression.EVERY_MINUTE)
   async processPendingRecordsBatch() {
     const internalSetting = {
       timeWindowMinutes: 60,
-      batchSize: 3,
+      batchSize: 30,
       founded: 0,
       processed: 0,
       delayBetweenBatchesSeconds: 5,
@@ -387,6 +389,10 @@ export class DetectionDisplayLogService {
           filter,
           updateColumns,
         );
+
+        await this.queueService.addQueueDisplayLogInsight({
+          id: String(displayLog._id),
+        });
 
         return result;
       }

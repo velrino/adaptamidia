@@ -11,14 +11,17 @@ import {
   IDetectionDisplayLog,
   IDetectionDisplayLogProcessor,
 } from '../display-logs/detection/detection.interface';
+import { IDisplayLogInsightExecute } from '../display-logs/insights/insights.interface';
 
 @Injectable()
 export class QueueService {
   constructor(
     @InjectQueue(QueuesEnum.DISPLAY_LOG_CREATE)
     readonly displayLogCreateQueue: Queue<ICreateDisplayLogProcessor>,
-    @InjectQueue(QueuesEnum.DETECT_IMAGE)
-    readonly detectImageQueue: Queue<IDetectionDisplayLogProcessor>,
+    @InjectQueue(QueuesEnum.DISPLAY_LOG_DETECT_IMAGE)
+    readonly displayLogDetectImageQueueQueue: Queue<IDetectionDisplayLogProcessor>,
+    @InjectQueue(QueuesEnum.DISPLAY_LOG_INSIGHT)
+    readonly displayLogInsightQueue: Queue<IDisplayLogInsightExecute>,
   ) {}
 
   defaultQueueOptions: Bull.JobOptions = {
@@ -57,8 +60,27 @@ export class QueueService {
   async addQueueDetectImage(parameters: IDetectionDisplayLog) {
     const currentEvent = this.addQueueDetectImage.name;
 
-    return await this.detectImageQueue
+    return await this.displayLogDetectImageQueueQueue
       .add({ parameters }, this.defaultQueueOptions)
+      .then((result) => {
+        Log(LogType.INFO, QueueService.name, currentEvent, LogAction.SUCCESS, {
+          result: result.id,
+        });
+        return result;
+      })
+      .catch((error) => {
+        Log(LogType.ERROR, QueueService.name, currentEvent, LogAction.FAILED, {
+          error,
+        });
+        return error;
+      });
+  }
+
+  async addQueueDisplayLogInsight(parameters: IDisplayLogInsightExecute) {
+    const currentEvent = this.addQueueDisplayLogInsight.name;
+
+    return await this.displayLogInsightQueue
+      .add(parameters, this.defaultQueueOptions)
       .then((result) => {
         Log(LogType.INFO, QueueService.name, currentEvent, LogAction.SUCCESS, {
           result: result.id,

@@ -74,4 +74,23 @@ export class GoogleGenAiProvider {
       yield { text };
     }
   }
+
+  async generateContent(prompt: string, currentModel: GoogleGenAiModelsEnum) {
+    const modelChosed = GoogleGenAiModels[currentModel];
+
+    const client = modelChosed.vertexai
+      ? new GoogleGenAI({
+          location: modelChosed.location,
+          project: modelChosed.project,
+          vertexai: true,
+        })
+      : new GoogleGenAI({
+          apiKey: process.env.GOOGLE_GENAI_API_KEY,
+        });
+
+    return await client.models.generateContent({
+      model: modelChosed.model,
+      contents: prompt,
+    });
+  }
 }

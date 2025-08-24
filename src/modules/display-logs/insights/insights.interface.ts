@@ -14,3 +14,7 @@ export class InsightGenerateDisplayLogQueryDto {
   @IsEnum(GoogleGenAiModelsEnum)
   model?: GoogleGenAiModelsEnum;
 }
+
+export interface IDisplayLogInsightExecute {
+  id: string;
+}
