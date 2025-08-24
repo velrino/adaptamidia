@@ -82,29 +82,40 @@ export class ListDisplayLogService {
 
     const isSudo = parameters.permissions.includes(PermissionsEnum.SUDO);
 
-    if (
-      !isSudo &&
-      parameters.company &&
-      parameters.permissions.includes(PermissionsEnum.NEWS)
-    ) {
-      query.$or = [
-        ...query.$or,
-        {
-          type: DisplayType.ADVERTISEMENT,
+    if (!isSudo && parameters.company) {
+      const permissionConditions: QueryOptions<DisplayLogDocument>[] = [];
+
+      if (parameters.permissions.includes(PermissionsEnum.NEWS)) {
+        permissionConditions.push(
+          {
+            type: DisplayType.ADVERTISEMENT,
+            advertiser: {
+              $in: parameters.company.map((id) => new Types.ObjectId(id)),
+            },
+          },
+          { type: DisplayType.NEWS },
+        );
+      }
+
+      if (parameters.permissions.includes(PermissionsEnum.ADVERTISER)) {
+        permissionConditions.push({
           advertiser: {
             $in: parameters.company.map((id) => new Types.ObjectId(id)),
           },
-        },
-        { type: DisplayType.NEWS },
-      ];
-    } else if (
-      !isSudo &&
-      parameters.company &&
-      parameters.permissions.includes(PermissionsEnum.ADVERTISER)
-    ) {
-      query.advertiser = {
-        $in: parameters.company.map((id) => new Types.ObjectId(id)),
-      };
+        });
+      }
+
+      if (parameters.permissions.includes(PermissionsEnum.LOCAL)) {
+        permissionConditions.push({
+          local: {
+            $in: parameters.company.map((id) => new Types.ObjectId(id)),
+          },
+        });
+      }
+
+      if (permissionConditions.length > 0) {
+        query.$or = [...query.$or, ...permissionConditions];
+      }
     }
 
     if (parameters.local_unit) {

@@ -23,7 +23,11 @@ import { InsightDisplayLogService } from './insights/insights.service';
 import { InsightGenerateDisplayLogQueryDto } from './insights/insights.interface';
 import { PermissionsEnum } from '../permissions/permissions.enum';
 
-const defaultPermissions = [PermissionsEnum.ADVERTISER, PermissionsEnum.NEWS];
+const defaultPermissions = [
+  PermissionsEnum.ADVERTISER,
+  PermissionsEnum.NEWS,
+  PermissionsEnum.LOCAL,
+];
 
 @Controller()
 export class DisplayLogController {
