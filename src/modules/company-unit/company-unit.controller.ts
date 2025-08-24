@@ -22,6 +22,9 @@ import { GroupCompanyUnitService } from './group/group.service';
 import { UpdateCompanyUnitService } from './update/update.service';
 import { UpdateCompanyUnitValidator } from './update/update.interface';
 import { SkipThrottle } from '@nestjs/throttler';
+import { PermissionsEnum } from '../permissions/permissions.enum';
+
+const defaultPermissions = [PermissionsEnum.LOCAL];
 
 @Controller()
 export class CompanyUnitController {
@@ -34,7 +37,7 @@ export class CompanyUnitController {
 
   @Get('company/unit/group')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
-  @PermissionsAllowed()
+  @PermissionsAllowed([...defaultPermissions, PermissionsEnum.ADVERTISER])
   group(
     @Req() req: AuthenticatedRequest,
     @Query() query: GroupCompanyUnitPaginateDto,
@@ -45,7 +48,7 @@ export class CompanyUnitController {
   @Get('company/unit')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
   @SkipThrottle()
-  @PermissionsAllowed()
+  @PermissionsAllowed([...defaultPermissions, PermissionsEnum.ADVERTISER])
   list(
     @Req() req: AuthenticatedRequest,
     @Query() query: ListCompanyUnitPaginateDto,
@@ -56,7 +59,7 @@ export class CompanyUnitController {
   @Post('company/unit/list')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
   @SkipThrottle()
-  @PermissionsAllowed()
+  @PermissionsAllowed(defaultPermissions)
   listPost(
     @Req() req: AuthenticatedRequest,
     @Body() body: ListCompanyUnitPaginateDto,
@@ -66,7 +69,7 @@ export class CompanyUnitController {
 
   @Post('company/unit')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
-  @PermissionsAllowed()
+  @PermissionsAllowed(defaultPermissions)
   createCompany(
     @Req() req: AuthenticatedRequest,
     @Body() data: CreateCompanyUnitValidator,
@@ -76,7 +79,7 @@ export class CompanyUnitController {
 
   @Put('company/unit/:id')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
-  @PermissionsAllowed()
+  @PermissionsAllowed(defaultPermissions)
   updateCompanyUnit(
     @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
@@ -87,7 +90,7 @@ export class CompanyUnitController {
 
   @Get('company/unit/:id')
   @UseGuards(AuthJwtGuard, PermissionsGuard)
-  @PermissionsAllowed()
+  @PermissionsAllowed([...defaultPermissions, PermissionsEnum.ADVERTISER])
   get(
     @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
