@@ -303,9 +303,10 @@ export class CreateDisplayLogService {
         status: parameters.status,
       });
 
-      // await this.queueService.addQueueDetectImage({
-      //   id: record._id as Types.ObjectId,
-      // });
+      await this.queueService.addQueueDetectImage({
+        id: record._id as Types.ObjectId,
+        return: false,
+      });
 
       return record;
     } catch (error) {

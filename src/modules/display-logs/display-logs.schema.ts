@@ -104,8 +104,8 @@ export class DisplayLog {
   @Prop({ type: mongoose.Schema.Types.Mixed, required: false, default: null })
   yolo: IApiYoloResult;
 
-  @Prop({ type: mongoose.Schema.Types.Mixed, required: false, default: null })
-  deepface: IApiDeepFaceAnalysisResult;
+  // @Prop({ type: mongoose.Schema.Types.Mixed, required: false, default: null })
+  // deepface: IApiDeepFaceAnalysisResult;
 
   @Prop({ type: mongoose.Schema.Types.Mixed, required: false, default: null })
   insightface: IApiDetectInsightface;
@@ -118,6 +118,12 @@ export class DisplayLog {
 
   @Prop({ required: false, type: Date })
   llm_insight_at: Date;
+
+  @Prop({ type: Date, required: false, default: null })
+  processing_lock: Date;
+
+  @Prop({ type: Number, required: false, default: null })
+  processing_instance: number;
 }
 
 export type DisplayLogDocument = DisplayLog & Document;

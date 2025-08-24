@@ -26,6 +26,7 @@ import { DisplayLog, DisplayLogDocument } from '../display-logs.schema';
 import { RESULT } from 'src/shared/result.enum';
 import { AuthenticatedRequest } from 'src/shared/request';
 import { ConvertToObjectId } from 'src/shared/general';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Processor(QueuesEnum.DETECT_IMAGE)
 @Injectable()
@@ -37,6 +38,123 @@ export class DetectionDisplayLogService {
     private readonly detectionService: DetectionService,
     private readonly googleCloudStorageService: GoogleCloudStorageService,
   ) {}
+
+  // async onApplicationBootstrap() {
+  //   // await this.displayLogService.displayLogModel.updateMany({
+  //   //   $unset: { processing_lock: 1, processing_instance: 1 },
+  //   // });
+  //   await this.processPendingRecordsBatch();
+  // }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async processPendingRecordsBatch() {
+    const internalSetting = {
+      timeWindowMinutes: 60,
+      batchSize: 3,
+      founded: 0,
+      processed: 0,
+      delayBetweenBatchesSeconds: 5,
+      timeWindow: new Date(),
+    };
+
+    internalSetting.timeWindow.setMinutes(
+      internalSetting.timeWindow.getMinutes() -
+        internalSetting.timeWindowMinutes,
+    );
+
+    Log(
+      LogType.INFO,
+      DetectionDisplayLogService.name,
+      this.processPendingRecordsBatch.name,
+      LogAction.JOB_STARTED,
+      {
+        internalSetting,
+      },
+    );
+
+    for (
+      let processed = 0;
+      processed < 1000;
+      processed += internalSetting.batchSize
+    ) {
+      const candidateRecords = await this.displayLogService.displayLogModel
+        .find({
+          yolo: null,
+          insightface: null,
+          created_at: { $gte: internalSetting.timeWindow },
+          processing_lock: { $exists: false },
+        })
+        .select(['_id'])
+        .limit(internalSetting.batchSize)
+        .lean();
+
+      if (!candidateRecords || candidateRecords.length === 0) break;
+
+      const batch: any[] = [];
+      for (const candidate of candidateRecords) {
+        const lockedRecord = await this.displayLogService.displayLogModel
+          .findOneAndUpdate(
+            {
+              _id: candidate._id,
+              processing_lock: { $exists: false },
+            },
+            {
+              $set: {
+                processing_lock: new Date(),
+                processing_instance: process.pid,
+              },
+            },
+            { new: true },
+          )
+          .select(['_id'])
+          .lean();
+
+        if (lockedRecord) {
+          batch.push(lockedRecord);
+        }
+      }
+
+      internalSetting.founded += batch.length;
+
+      Log(
+        LogType.INFO,
+        DetectionDisplayLogService.name,
+        this.processPendingRecordsBatch.name,
+        LogAction.JOB_PROGRESS,
+        {
+          internalSetting,
+          batch: batch.length,
+        },
+      );
+
+      for (const record of batch) {
+        try {
+          internalSetting.processed += 1;
+          await this.execute({ id: record._id.toString(), return: false });
+        } catch (error) {
+          await this.displayLogService.displayLogModel.updateOne(
+            { _id: record._id },
+            { $unset: { processing_lock: 1, processing_instance: 1 } },
+          );
+          throw error;
+        }
+      }
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, internalSetting.delayBetweenBatchesSeconds * 1000),
+      );
+    }
+
+    Log(
+      LogType.INFO,
+      DetectionDisplayLogService.name,
+      this.processPendingRecordsBatch.name,
+      LogAction.JOB_FINISHED,
+      {
+        internalSetting,
+      },
+    );
+  }
 
   @Process({ concurrency: 5 })
   async processJob(job: Job<IDetectionDisplayLogProcessor>) {
@@ -68,7 +186,10 @@ export class DetectionDisplayLogService {
       //     need_permissions: [],
       //   });
 
-      return this.execute({ id: ConvertToObjectId(parameters.id) });
+      return this.execute({
+        id: ConvertToObjectId(parameters.id),
+        return: true,
+      });
     } catch (error) {
       throw new HttpException(
         error?.message || RESULT.DISPLAY_LOG_DETECTION_FAILED,
@@ -145,11 +266,15 @@ export class DetectionDisplayLogService {
         yolo = await this.detectionService.detectYolo(imageFile);
         status = DisplayLogStatus.DETECTION_YOLO;
 
-        insightface = await this.detectionService.detectInsightface(imageFile);
-        status = DisplayLogStatus.DETECTION_INSIGHTFACE;
+        if (yolo.people === 0) {
+          insightface = ApiDetectInsightfaceDefault;
+          status = DisplayLogStatus.DETECTION_INSIGHTFACE;
+        } else {
+          insightface =
+            await this.detectionService.detectInsightface(imageFile);
+          status = DisplayLogStatus.DETECTION_INSIGHTFACE;
+        }
 
-        // deepface = await this.detectionService.detectDeepFace(imageFile);
-        // status = DisplayLogStatus.DETECTION_DEEPFACE;
         detectPeopleBbox =
           await this.detectionService.detectPeopleBbox(imageFile);
       } catch (error) {
@@ -224,8 +349,32 @@ export class DetectionDisplayLogService {
 
       const filter = { _id: displayLog._id };
 
+      if (errorMessage) {
+        Log(
+          LogType.ERROR,
+          DetectionDisplayLogService.name,
+          this.execute.name,
+          LogAction.FAILED,
+          { about: 'BEFORE_RETURN', payload, errorMessage },
+        );
+      }
+
+      const updateColumns = {
+        $set: updateQuery,
+        $unset: { processing_lock: 1, processing_instance: 1 },
+      };
+
+      if (payload.return === false) {
+        const result = await this.displayLogService.displayLogModel.updateOne(
+          filter,
+          updateColumns,
+        );
+
+        return result;
+      }
+
       const result = await this.displayLogService.displayLogModel
-        .findOneAndUpdate(filter, updateQuery, { new: true })
+        .findOneAndUpdate(filter, updateColumns, { new: true })
         .select(['-data'])
         .populate({
           path: 'news',

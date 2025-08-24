@@ -11,6 +11,9 @@ export enum LogAction {
   SKIP = 'skip',
   FAILED = 'failed',
   PROGRESS = 'progress',
+  JOB_STARTED = 'JOB_STARTED',
+  JOB_PROGRESS = 'JOB_PROGRESS',
+  JOB_FINISHED = 'JOB_FINISHED',
 }
 
 export function Log(

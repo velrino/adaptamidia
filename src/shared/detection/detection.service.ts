@@ -51,27 +51,28 @@ export class DetectionService {
     const fullUrl = `${this.baseUrl}${endpoint}`;
 
     try {
-      Log(
-        LogType.INFO,
-        DetectionService.name,
-        this.makeRequest.name,
-        LogAction.STARTED,
-        {
-          fullUrl,
-          endpoint,
-          method,
-          ...(file?.originalname && { fileName: file.originalname }),
-          ...(file?.size && { fileSize: file.size }),
-          ...(file?.mimetype && { mimeType: file.mimetype }),
-          ...(file?.buffer?.length && { bufferLength: file.buffer.length }),
-        },
-      );
+      // Log(
+      //   LogType.INFO,
+      //   DetectionService.name,
+      //   this.makeRequest.name,
+      //   LogAction.STARTED,
+      //   {
+      //     fullUrl,
+      //     endpoint,
+      //     method,
+      //     ...(file?.originalname && { fileName: file.originalname }),
+      //     ...(file?.size && { fileSize: file.size }),
+      //     ...(file?.mimetype && { mimeType: file.mimetype }),
+      //     ...(file?.buffer?.length && { bufferLength: file.buffer.length }),
+      //   },
+      // );
 
       let body: FormData | undefined;
       if (file && method === 'POST') {
         const formData = new FormData();
         const filename = file.originalname.split('/').pop() || 'image.jpg';
-        const blob = new Blob([file.buffer], { type: file.mimetype });
+        const uint8Array = new Uint8Array(file.buffer);
+        const blob = new Blob([uint8Array], { type: file.mimetype });
         formData.append('file', blob, filename);
         body = formData;
       }

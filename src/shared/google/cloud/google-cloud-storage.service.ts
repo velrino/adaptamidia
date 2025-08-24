@@ -327,8 +327,6 @@ export class GoogleCloudStorageService {
     bucket: IGoogleStorageBucket,
     filePath: string,
   ): Promise<Buffer> {
-    // const filePath = `/logs/${unitId}/${type}/${recordId}/${identifier}`;
-    console.log({ bucket, filePath });
     try {
       const file = this.storage.bucket(bucket).file(filePath);
       const [buffer] = await file.download();
