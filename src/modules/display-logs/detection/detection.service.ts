@@ -63,10 +63,11 @@ export class DetectionDisplayLogService {
     );
 
     // Cleanup orphaned locks older than 5 minutes
-    const cleanupResult = await this.displayLogService.displayLogModel.updateMany(
-      { processing_lock: { $lt: new Date(Date.now() - 5 * 60 * 1000) } },
-      { $unset: { processing_lock: 1, processing_instance: 1 } }
-    );
+    const cleanupResult =
+      await this.displayLogService.displayLogModel.updateMany(
+        { processing_lock: { $lt: new Date(Date.now() - 5 * 60 * 1000) } },
+        { $unset: { processing_lock: 1, processing_instance: 1 } },
+      );
 
     Log(
       LogType.INFO,
@@ -96,13 +97,6 @@ export class DetectionDisplayLogService {
         .lean();
 
       if (!candidateRecords || candidateRecords.length === 0) {
-        Log(
-          LogType.INFO,
-          DetectionDisplayLogService.name,
-          this.processPendingRecordsBatch.name,
-          LogAction.JOB_NO_MORE_RECORDS,
-          { processed, totalFound: internalSetting.founded },
-        );
         break;
       }
 
