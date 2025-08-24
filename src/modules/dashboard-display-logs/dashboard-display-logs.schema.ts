@@ -22,27 +22,11 @@ export interface IConfidenceStats {
   min: number;
 }
 
-export interface IGlobalAggregation {
-  total_people: number;
-  total_men: number;
-  total_women: number;
-  confidence: IConfidenceStats;
-  age: IAgeStats;
-}
-
-export interface IByEntityAggregation {
-  entity_id: string;
-  total_people: number;
-  total_men: number;
-  total_women: number;
-  confidence: IConfidenceStats;
-  age: IAgeStats;
-}
-
 export enum AggregationPeriod {
-  DAILY = 'daily',
-  MONTHLY = 'monthly',
-  YEARLY = 'yearly',
+  DAY = 'DAY',
+  WEEK = 'WEEK',
+  MONTH = 'MONTH',
+  YEAR = 'YEAR',
 }
 
 @Schema({ ...SchemaDefault, collection: 'dashboard_display_logs' })
@@ -90,11 +74,23 @@ export class DashboardDisplayLogsAggregation {
   })
   advertiser?: Types.ObjectId;
 
-  @Prop({ type: mongoose.Schema.Types.Mixed, required: true })
-  global: IGlobalAggregation;
+  @Prop({ required: true, type: Types.ObjectId, index: true })
+  entity_id: Types.ObjectId;
 
-  @Prop({ type: mongoose.Schema.Types.Mixed, required: false, default: null })
-  entity: IByEntityAggregation;
+  @Prop({ required: true, type: Number })
+  displays: number;
+
+  @Prop({ required: true, type: Number })
+  total_people: number;
+
+  @Prop({ required: true, type: Number })
+  total_men: number;
+
+  @Prop({ required: true, type: Number })
+  total_women: number;
+
+  @Prop({ required: true, type: Object })
+  age: IAgeStats;
 }
 
 export type DashboardDisplayLogsAggregationDocument =

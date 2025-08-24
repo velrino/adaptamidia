@@ -1,18 +1,31 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
+import { DateTime } from 'luxon';
 import {
   DashboardDisplayLogsAggregation,
   DashboardDisplayLogsAggregationDocument,
   AggregationPeriod,
-  IGlobalAggregation,
-  IByEntityAggregation,
 } from '../dashboard-display-logs.schema';
 import {
   DisplayLog,
   DisplayLogDocument,
 } from '../../display-logs/display-logs.schema';
 import { EntityFieldEnum } from '../dashboard-display-logs.interface';
+
+export interface IAggregationResult {
+  _id: string;
+  advertiser?: string;
+  advertisement?: string;
+  local_unit?: string;
+  news?: string;
+  displays: number;
+  total_people: number;
+  total_men: number;
+  total_women: number;
+  max_age: number;
+  min_age: number;
+}
 
 @Injectable()
 export class DashboardDisplayLogsProcessService {
@@ -24,14 +37,67 @@ export class DashboardDisplayLogsProcessService {
   ) {}
 
   async onApplicationBootstrap() {
-    await this.execute(
-      new Date('2024-01-01'),
-      new Date(),
-      EntityFieldEnum.local_unit,
-    );
+    await this.dashboardModel.deleteMany({});
+    await this.execute();
   }
 
-  async execute(startDate: Date, endDate: Date, entityField: EntityFieldEnum) {
+  async execute() {
+    const entities = [
+      EntityFieldEnum.advertisement,
+      EntityFieldEnum.local_unit,
+      EntityFieldEnum.news,
+    ];
+
+    const periods = [
+      this.getLogsByDay,
+      this.getLogsByWeek,
+      this.getLogsByMonth,
+      this.getLogsByYear,
+    ];
+
+    for (const entity of entities) {
+      for (const fn of periods) {
+        await fn.call(this, new Date(), entity);
+      }
+    }
+  }
+
+  private getDateRange(
+    period: AggregationPeriod,
+    date: Date,
+  ): { startDate: Date; endDate: Date } {
+    const dt = DateTime.fromJSDate(date);
+
+    switch (period) {
+      case AggregationPeriod.DAY:
+        return {
+          startDate: dt.startOf('day').toJSDate(),
+          endDate: dt.endOf('day').toJSDate(),
+        };
+      case AggregationPeriod.WEEK:
+        return {
+          startDate: dt.startOf('week').toJSDate(),
+          endDate: dt.endOf('week').toJSDate(),
+        };
+      case AggregationPeriod.MONTH:
+        return {
+          startDate: dt.startOf('month').toJSDate(),
+          endDate: dt.endOf('month').toJSDate(),
+        };
+      case AggregationPeriod.YEAR:
+        return {
+          startDate: dt.startOf('year').toJSDate(),
+          endDate: dt.endOf('year').toJSDate(),
+        };
+    }
+  }
+
+  private async executeQuery(
+    startDate: Date,
+    endDate: Date,
+    entityField: EntityFieldEnum,
+    currentPeriod: AggregationPeriod,
+  ): Promise<IAggregationResult[]> {
     const matchCondition: any = {
       start_at: { $gte: startDate, $lte: endDate },
       [entityField]: { $exists: true, $ne: null },
@@ -77,10 +143,115 @@ export class DashboardDisplayLogsProcessService {
       },
     ];
 
-    const records = await this.displayLogModel.aggregate(pipeline).exec();
+    const records: IAggregationResult[] = await this.displayLogModel
+      .aggregate(pipeline)
+      .exec();
 
     for (const record of records) {
-      console.log({ record });
+      const normalizedStartDate = DateTime.fromJSDate(startDate)
+        .startOf('day')
+        .toUTC()
+        .toJSDate();
+
+      await this.dashboardModel.findOneAndUpdate(
+        {
+          date: normalizedStartDate,
+          period: currentPeriod,
+          [entityField]: record._id,
+        },
+        {
+          date: normalizedStartDate,
+          period: currentPeriod,
+          [entityField]: record._id,
+          ...(entityField === EntityFieldEnum.advertisement && {
+            advertiser: record.advertiser,
+            advertisement: record.advertisement,
+          }),
+          ...(entityField === EntityFieldEnum.local_unit && {
+            local_unit: record.local_unit,
+          }),
+          ...(entityField === EntityFieldEnum.news && {
+            news: record.news,
+          }),
+          entity_id: new Types.ObjectId(record._id),
+          displays: record.displays,
+          total_people: record.total_people,
+          total_men: record.total_men,
+          total_women: record.total_women,
+          age: {
+            max: record.max_age,
+            min: record.min_age,
+            average: Math.round((record.min_age + record.max_age) / 2),
+          },
+        },
+        { upsert: true },
+      );
     }
+
+    return records;
+  }
+
+  async getLogsByDay(
+    date: Date,
+    entityField: EntityFieldEnum,
+  ): Promise<IAggregationResult[]> {
+    const { startDate, endDate } = this.getDateRange(
+      AggregationPeriod.DAY,
+      date,
+    );
+    return await this.executeQuery(
+      startDate,
+      endDate,
+      entityField,
+      AggregationPeriod.DAY,
+    );
+  }
+
+  async getLogsByWeek(
+    date: Date,
+    entityField: EntityFieldEnum,
+  ): Promise<IAggregationResult[]> {
+    const { startDate, endDate } = this.getDateRange(
+      AggregationPeriod.WEEK,
+      date,
+    );
+    return await this.executeQuery(
+      startDate,
+      endDate,
+      entityField,
+      AggregationPeriod.WEEK,
+    );
+  }
+
+  async getLogsByMonth(
+    date: Date,
+    entityField: EntityFieldEnum,
+  ): Promise<IAggregationResult[]> {
+    const { startDate, endDate } = this.getDateRange(
+      AggregationPeriod.MONTH,
+      date,
+    );
+    return await this.executeQuery(
+      startDate,
+      endDate,
+      entityField,
+      AggregationPeriod.MONTH,
+    );
+  }
+
+  async getLogsByYear(
+    date: Date,
+    entityField: EntityFieldEnum,
+  ): Promise<IAggregationResult[]> {
+    const { startDate, endDate } = this.getDateRange(
+      AggregationPeriod.YEAR,
+      date,
+    );
+    return await this.executeQuery(
+      startDate,
+      endDate,
+      entityField,
+      AggregationPeriod.YEAR,
+    );
   }
 }
