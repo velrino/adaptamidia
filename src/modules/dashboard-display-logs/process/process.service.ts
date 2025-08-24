@@ -190,10 +190,10 @@ export class DashboardDisplayLogsProcessService {
 
     const records: IAggregationResult[] = [];
     const batchOperations: any[] = [];
-    const normalizedStartDate = DateTime.fromJSDate(startDate)
-      .startOf('day')
-      .toUTC()
-      .toJSDate();
+    // const normalizedStartDate = DateTime.fromJSDate(startDate)
+    //   .startOf('day')
+    //   .toUTC()
+    //   .toJSDate();
 
     const cursor = this.displayLogModel.aggregate(pipeline).cursor();
 
@@ -231,7 +231,7 @@ export class DashboardDisplayLogsProcessService {
       batchOperations.push({
         updateOne: {
           filter: {
-            date: normalizedStartDate,
+            date: record._id.date,
             period: currentPeriod,
             [entityField]: record._id,
           },

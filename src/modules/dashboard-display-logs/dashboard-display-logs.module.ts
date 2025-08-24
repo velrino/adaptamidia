@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { MongoCollection } from 'src/shared/mongo.schema';
 import { DashboardDisplayLogsController } from './dashboard-display-logs.controller';
 import { DashboardDisplayLogsProcessService } from './process/process.service';
+import { ListDashboardDisplayLogsService } from './list/list.service';
 
 @Module({
   imports: [
@@ -14,6 +15,9 @@ import { DashboardDisplayLogsProcessService } from './process/process.service';
     ScheduleModule.forRoot(),
   ],
   controllers: [DashboardDisplayLogsController],
-  providers: [DashboardDisplayLogsProcessService],
+  providers: [
+    DashboardDisplayLogsProcessService,
+    ListDashboardDisplayLogsService,
+  ],
 })
 export class DashboardDisplayLogsModule {}
