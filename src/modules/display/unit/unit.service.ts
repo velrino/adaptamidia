@@ -87,7 +87,7 @@ export class DisplayByUnitService {
         start_date: 1,
         end_date: 1,
         title: 1,
-        items: 1,
+        source: 1,
       })
       .sort({ created_at: -1 })
       .skip(skip)

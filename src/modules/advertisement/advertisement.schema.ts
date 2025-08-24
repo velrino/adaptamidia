@@ -8,23 +8,6 @@ import {
 } from './advertisement.interface';
 import { Company } from '../company/company.schema';
 
-export class AdvertisementItem {
-  @Prop({ type: String, required: false, default: String() })
-  title: string;
-
-  @Prop({ type: String, required: false, default: String() })
-  description: string;
-
-  @Prop({ type: Number, required: false, default: 0 })
-  seconds: number;
-
-  @Prop({ type: String, required: true })
-  source: string;
-
-  @Prop({ required: true, enum: AdvertisementType, uppercase: true })
-  type: AdvertisementType;
-}
-
 export class AdvertisementMetricsItem {
   @Prop({ type: Number, required: true, default: 0 })
   impressions: number; // Quantas vezes foi exibido
@@ -58,11 +41,11 @@ export class Advertisement {
   @Prop({ type: String, required: false, default: String() })
   description: string;
 
+  @Prop({ type: String, required: false, default: String() })
+  source: string;
+
   @Prop({ required: true, enum: AdvertisementType, uppercase: true })
   type: AdvertisementType;
-
-  @Prop({ required: true, type: [AdvertisementItem] })
-  items: AdvertisementItem[];
 
   @Prop({
     required: true,

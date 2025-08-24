@@ -40,6 +40,22 @@ export class CreateAdvertisementService extends AdvertisementService {
         metrics: AdvertisementMetricsItemDefault,
       },
     );
+
+    // const records = await this.model.find();
+
+    // for (let index = 0; index < records.length; index++) {
+    //   const element = records[index];
+
+    //   await this.model.updateOne(
+    //     { _id: element._id },
+    //     {
+    //       source: element.items[0].source,
+    //       // Remove o array items original
+    //       $unset: { items: '' },
+    //     },
+    //   );
+    //   console.log({ _id: element._id, element: element.items[0].source });
+    // }
   }
 
   executeFromRequest(
@@ -137,16 +153,11 @@ export class CreateAdvertisementService extends AdvertisementService {
 
       await this.validate(parameters);
 
-      this.allItemsIsSameType(parameters.items);
-
       const document: any = {
         ...parameters,
         company,
         status: parameters.status || AdvertisementStatus.REVIEW,
         metrics: AdvertisementMetricsItemDefault,
-        type: parameters?.items.length
-          ? parameters?.items?.[0].type
-          : AdvertisementType.UNDEFINED,
       };
 
       let record = await this.model.create({
@@ -194,8 +205,6 @@ export class CreateAdvertisementService extends AdvertisementService {
 
       await this.validate(parameters);
 
-      this.allItemsIsSameType(parameters.items);
-      // console.log({ parameters, advertisement });
       const documentData: any = {
         ...parameters,
         company,

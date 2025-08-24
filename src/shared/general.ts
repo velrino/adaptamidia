@@ -183,3 +183,26 @@ export function ConvertToObjectId(
 
   return new Types.ObjectId(value);
 }
+
+export const MIME_TO_EXTENSION: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
+  'image/png': '.png',
+  'image/gif': '.gif',
+  'image/webp': '.webp',
+  'video/mp4': '.mp4',
+  'image/svg+xml': '.svg',
+  // 'video/avi': '.avi',
+  // 'video/quicktime': '.mov',
+  // 'application/pdf': '.pdf',
+  // 'text/plain': '.txt',
+  // 'application/msword': '.doc',
+  // 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+  //   '.docx',
+  // 'application/vnd.ms-excel': '.xls',
+  // 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
+  // 'audio/mpeg': '.mp3',
+  // 'audio/wav': '.wav',
+  // 'application/zip': '.zip',
+  // 'application/x-rar-compressed': '.rar',
+};

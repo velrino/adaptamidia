@@ -12,30 +12,18 @@ import {
 import { Transform, Type } from 'class-transformer';
 import { AdvertisementType } from '../advertisement.interface';
 
-export class CreateAdvertisementItemDto {
-  @IsString()
-  title: string;
-
-  @IsString()
-  description: string;
-
-  @IsNotEmpty()
-  @IsNumber()
-  seconds: number;
-
-  @IsNotEmpty()
-  @IsString()
-  source: string;
-
-  @IsNotEmpty()
-  @IsEnum(AdvertisementType)
-  type: AdvertisementType;
-}
-
 export class CreateAdvertisementDto {
   @IsNotEmpty()
   @IsString()
   status: string;
+
+  @IsNotEmpty()
+  @IsString()
+  type: string;
+
+  @IsNotEmpty()
+  @IsString()
+  source: string;
 
   @IsOptional()
   @IsMongoId()
@@ -50,12 +38,6 @@ export class CreateAdvertisementDto {
   @IsNotEmpty()
   @IsNumber()
   seconds: number;
-
-  @IsArray()
-  @IsNotEmpty()
-  @ValidateNested({ each: true })
-  @Type(() => CreateAdvertisementItemDto)
-  items: CreateAdvertisementItemDto[];
 
   @IsNotEmpty()
   @IsDate()
