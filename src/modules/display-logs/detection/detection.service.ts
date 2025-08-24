@@ -62,6 +62,12 @@ export class DetectionDisplayLogService {
         internalSetting.timeWindowMinutes,
     );
 
+    // Cleanup orphaned locks older than 5 minutes
+    const cleanupResult = await this.displayLogService.displayLogModel.updateMany(
+      { processing_lock: { $lt: new Date(Date.now() - 5 * 60 * 1000) } },
+      { $unset: { processing_lock: 1, processing_instance: 1 } }
+    );
+
     Log(
       LogType.INFO,
       DetectionDisplayLogService.name,
@@ -69,6 +75,7 @@ export class DetectionDisplayLogService {
       LogAction.JOB_STARTED,
       {
         internalSetting,
+        cleanupResult: cleanupResult.modifiedCount,
       },
     );
 
@@ -88,7 +95,16 @@ export class DetectionDisplayLogService {
         .limit(internalSetting.batchSize)
         .lean();
 
-      if (!candidateRecords || candidateRecords.length === 0) break;
+      if (!candidateRecords || candidateRecords.length === 0) {
+        Log(
+          LogType.INFO,
+          DetectionDisplayLogService.name,
+          this.processPendingRecordsBatch.name,
+          LogAction.JOB_NO_MORE_RECORDS,
+          { processed, totalFound: internalSetting.founded },
+        );
+        break;
+      }
 
       const batch: any[] = [];
       for (const candidate of candidateRecords) {
@@ -129,14 +145,22 @@ export class DetectionDisplayLogService {
 
       for (const record of batch) {
         try {
-          internalSetting.processed += 1;
           await this.execute({ id: record._id.toString(), return: false });
+          internalSetting.processed += 1;
         } catch (error) {
+          // Remove lock but continue processing other records
           await this.displayLogService.displayLogModel.updateOne(
             { _id: record._id },
             { $unset: { processing_lock: 1, processing_instance: 1 } },
           );
-          throw error;
+          Log(
+            LogType.ERROR,
+            DetectionDisplayLogService.name,
+            this.processPendingRecordsBatch.name,
+            LogAction.FAILED,
+            { recordId: record._id, error: error?.message || String(error) },
+          );
+          // Continue processing other records instead of throwing
         }
       }
 
