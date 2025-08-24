@@ -43,6 +43,7 @@ export class DashboardDisplayLogsProcessService {
 
   async onApplicationBootstrap() {
     // await this.dashboardModel.deleteMany({});
+
     await this.execute();
   }
 
@@ -74,12 +75,7 @@ export class DashboardDisplayLogsProcessService {
         EntityFieldEnum.news,
       ];
 
-      const periods = [
-        this.getLogsByDay,
-        // this.getLogsByWeek,
-        // this.getLogsByMonth,
-        // this.getLogsByYear,
-      ];
+      const periods = [this.getLogsByDay];
 
       for (const entity of entities) {
         for (const fn of periods) {
@@ -115,34 +111,13 @@ export class DashboardDisplayLogsProcessService {
     await this.redisService.del(key);
   }
 
-  private getDateRange(
-    period: AggregationPeriod,
-    date: Date,
-  ): { startDate: Date; endDate: Date } {
+  private getDateRange(date: Date): { startDate: Date; endDate: Date } {
     const dt = DateTime.fromJSDate(date);
 
-    switch (period) {
-      case AggregationPeriod.DAY:
-        return {
-          startDate: dt.startOf('day').toJSDate(),
-          endDate: dt.endOf('day').toJSDate(),
-        };
-      case AggregationPeriod.WEEK:
-        return {
-          startDate: dt.startOf('week').toJSDate(),
-          endDate: dt.endOf('week').toJSDate(),
-        };
-      case AggregationPeriod.MONTH:
-        return {
-          startDate: dt.startOf('month').toJSDate(),
-          endDate: dt.endOf('month').toJSDate(),
-        };
-      case AggregationPeriod.YEAR:
-        return {
-          startDate: dt.startOf('year').toJSDate(),
-          endDate: dt.endOf('year').toJSDate(),
-        };
-    }
+    return {
+      startDate: dt.startOf('day').toJSDate(),
+      endDate: dt.endOf('day').toJSDate(),
+    };
   }
 
   private async executeQuery(
@@ -152,9 +127,12 @@ export class DashboardDisplayLogsProcessService {
     currentPeriod: AggregationPeriod,
   ): Promise<IAggregationResult[]> {
     const matchCondition: any = {
-      start_at: { $gte: startDate, $lte: endDate },
+      // start_at: { $gte: startDate, $lte: endDate },
       [entityField]: { $exists: true, $ne: null },
-      $or: [{ 'yolo.people': { $gt: 0 } }, { 'insightface.total': { $gt: 0 } }],
+      $and: [
+        { 'yolo.people': { $gt: 0 } },
+        { 'insightface.total': { $gt: 0 } },
+      ],
     };
 
     if (entityField === EntityFieldEnum.advertisement) {
@@ -167,7 +145,15 @@ export class DashboardDisplayLogsProcessService {
       },
       {
         $group: {
-          _id: `$${entityField}`,
+          _id: {
+            entity: `$${entityField}`,
+            date: {
+              $dateToString: {
+                format: '%Y-%m-%d',
+                date: '$end_at',
+              },
+            },
+          },
           ...(entityField === EntityFieldEnum.advertisement && {
             advertiser: { $first: `$${EntityFieldEnum.advertiser}` },
             advertisement: { $first: `$${EntityFieldEnum.advertisement}` },
@@ -192,6 +178,12 @@ export class DashboardDisplayLogsProcessService {
           total_women: { $sum: { $ifNull: ['$insightface.women', 0] } },
           max_age: { $max: '$insightface.age.max' },
           min_age: { $min: '$insightface.age.min' },
+          end_at: { $first: '$end_at' },
+        },
+      },
+      {
+        $sort: {
+          '_id.date': 1 as const,
         },
       },
     ];
@@ -208,8 +200,10 @@ export class DashboardDisplayLogsProcessService {
     for await (const record of cursor) {
       records.push(record);
 
+      // console.log({ record, date: record._id.date });
+
       const updateDoc = {
-        date: normalizedStartDate,
+        date: record._id.date,
         period: currentPeriod,
         [entityField]: record._id,
         ...(entityField === EntityFieldEnum.advertisement && {
@@ -222,7 +216,7 @@ export class DashboardDisplayLogsProcessService {
         ...(entityField === EntityFieldEnum.news && {
           news: record.news,
         }),
-        entity_id: new Types.ObjectId(record._id),
+        entity_id: new Types.ObjectId(record._id.entity),
         displays: record.displays,
         total_people: record.total_people,
         total_men: record.total_men,
@@ -258,10 +252,8 @@ export class DashboardDisplayLogsProcessService {
     date: Date,
     entityField: EntityFieldEnum,
   ): Promise<IAggregationResult[]> {
-    const { startDate, endDate } = this.getDateRange(
-      AggregationPeriod.DAY,
-      date,
-    );
+    const { startDate, endDate } = this.getDateRange(date);
+
     return await this.executeQuery(
       startDate,
       endDate,
@@ -269,52 +261,4 @@ export class DashboardDisplayLogsProcessService {
       AggregationPeriod.DAY,
     );
   }
-
-  // async getLogsByWeek(
-  //   date: Date,
-  //   entityField: EntityFieldEnum,
-  // ): Promise<IAggregationResult[]> {
-  //   const { startDate, endDate } = this.getDateRange(
-  //     AggregationPeriod.WEEK,
-  //     date,
-  //   );
-  //   return await this.executeQuery(
-  //     startDate,
-  //     endDate,
-  //     entityField,
-  //     AggregationPeriod.WEEK,
-  //   );
-  // }
-
-  // async getLogsByMonth(
-  //   date: Date,
-  //   entityField: EntityFieldEnum,
-  // ): Promise<IAggregationResult[]> {
-  //   const { startDate, endDate } = this.getDateRange(
-  //     AggregationPeriod.MONTH,
-  //     date,
-  //   );
-  //   return await this.executeQuery(
-  //     startDate,
-  //     endDate,
-  //     entityField,
-  //     AggregationPeriod.MONTH,
-  //   );
-  // }
-
-  // async getLogsByYear(
-  //   date: Date,
-  //   entityField: EntityFieldEnum,
-  // ): Promise<IAggregationResult[]> {
-  //   const { startDate, endDate } = this.getDateRange(
-  //     AggregationPeriod.YEAR,
-  //     date,
-  //   );
-  //   return await this.executeQuery(
-  //     startDate,
-  //     endDate,
-  //     entityField,
-  //     AggregationPeriod.YEAR,
-  //   );
-  // }
 }
