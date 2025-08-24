@@ -37,7 +37,7 @@ export class DashboardDisplayLogsProcessService {
   ) {}
 
   async onApplicationBootstrap() {
-    await this.dashboardModel.deleteMany({});
+    // await this.dashboardModel.deleteMany({});
     await this.execute();
   }
 
