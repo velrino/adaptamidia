@@ -24,6 +24,7 @@ import { DisplayModule } from './modules/display/display.module';
 import { LeadsModule } from './modules/leads/leads.module';
 import { HealthCheckService } from './app.service';
 import { DetectionService } from './shared/detection/detection.service';
+import { DashboardDisplayLogsModule } from './modules/dashboard-display-logs/dashboard-display-logs.module';
 
 @Module({
   imports: [
@@ -76,6 +77,7 @@ import { DetectionService } from './shared/detection/detection.service';
     CompanyModule,
     CompanyUnitModule,
     DisplayLogsModule,
+    DashboardDisplayLogsModule,
     FilesModule,
     UserModule,
     WeatherModule,
