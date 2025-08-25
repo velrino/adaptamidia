@@ -14,11 +14,20 @@ import {
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { API } from "@/backend/api/api.endpoints";
-import dynamic from "next/dynamic";
-
-const ReactApexChart = dynamic(() => import("react-apexcharts"), {
-  ssr: false,
-});
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 // Type definitions
 interface DisplayLogData {
@@ -64,9 +73,6 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   news,
   local_unit,
   advertisement,
-  // Props opcionais de customização
-  title = "Dashboard de Analytics",
-  subtitle = "Análise de displays e demografia de audiência",
   showControls, // Mostrar controles de filtro
   showMetrics, // Mostrar cards de métricas
   showTable, // Mostrar tabela detalhada
@@ -230,159 +236,28 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
     setIsDark(!isDark);
   };
 
-  // Configurações dos gráficos
-  const displayChartOptions = {
-    chart: {
-      id: "displays-chart",
-      toolbar: { show: true },
-      zoom: { enabled: true },
-    },
-    xaxis: {
-      categories: filteredData.map((item) => {
-        const date = new Date(item.date);
-        return viewType === "monthly"
-          ? date.toLocaleDateString("pt-BR", {
-              month: "short",
-              year: "numeric",
-            })
-          : date.toLocaleDateString("pt-BR", {
-              day: "2-digit",
-              month: "short",
-            });
-      }),
-      title: { text: viewType === "monthly" ? "Mês" : "Data" },
-    },
-    yaxis: {
-      title: { text: "Número de Displays" },
-    },
-    title: {
-      text: "Displays ao Longo do Tempo",
-      align: "left" as const,
-    },
-    colors: ["#3B82F6"],
-    stroke: {
-      curve: "smooth" as const,
-      width: 3,
-    },
-    markers: {
-      size: 5,
-      hover: { size: 7 },
-    },
-    grid: {},
-    legend: {},
-  };
+  // Preparar dados para Recharts
+  const chartData = filteredData.map((item) => {
+    const date = new Date(item.date);
+    const formattedDate =
+      viewType === "monthly"
+        ? date.toLocaleDateString("pt-BR", {
+            month: "short",
+            year: "numeric",
+          })
+        : date.toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "short",
+          });
 
-  const displayChartSeries = [
-    {
-      name: "Displays",
-      data: filteredData.map((item) => item.displays || 0),
-    },
-  ];
-
-  const demographicsChartOptions = {
-    chart: {
-      id: "demographics-chart",
-      toolbar: { show: true },
-    },
-    xaxis: {
-      categories: filteredData.map((item) => {
-        const date = new Date(item.date);
-        return viewType === "monthly"
-          ? date.toLocaleDateString("pt-BR", {
-              month: "short",
-              year: "numeric",
-            })
-          : date.toLocaleDateString("pt-BR", {
-              day: "2-digit",
-              month: "short",
-            });
-      }),
-    },
-    yaxis: {
-      title: { text: "Número de Pessoas" },
-    },
-    title: {
-      text: "Demografia por Gênero",
-      align: "left" as const,
-    },
-    colors: ["#10B981", "#F59E0B"],
-    plotOptions: {
-      bar: {
-        horizontal: false,
-        columnWidth: "55%",
-      },
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    legend: {
-      position: "top" as const,
-    },
-    grid: {},
-  };
-
-  const demographicsChartSeries = [
-    {
-      name: "Homens",
-      data: filteredData.map((item) => item.total_men || 0),
-    },
-    {
-      name: "Mulheres",
-      data: filteredData.map((item) => item.total_women || 0),
-    },
-  ];
-
-  const ageChartOptions = {
-    chart: {
-      id: "age-chart",
-      toolbar: { show: true },
-    },
-    xaxis: {
-      categories: filteredData.map((item) => {
-        const date = new Date(item.date);
-        return viewType === "monthly"
-          ? date.toLocaleDateString("pt-BR", {
-              month: "short",
-              year: "numeric",
-            })
-          : date.toLocaleDateString("pt-BR", {
-              day: "2-digit",
-              month: "short",
-            });
-      }),
-    },
-    yaxis: {
-      title: { text: "Idade Média" },
-    },
-    title: {
-      text: "Idade Média ao Longo do Tempo",
-      align: "left" as const,
-    },
-    colors: ["#8B5CF6"],
-    stroke: {
-      curve: "smooth" as const,
-      width: 3,
-    },
-    fill: {
-      type: "gradient",
-      gradient: {
-        shadeIntensity: 1,
-        opacityFrom: 0.3,
-        opacityTo: 0.9,
-      },
-    },
-    grid: {},
-    legend: {},
-  };
-
-  const ageChartSeries = [
-    {
-      name: "Idade Média",
-      data: filteredData.map(
-        (item) => Math.round((item.age_average || 0) * 10) / 10
-      ),
-    },
-  ];
+    return {
+      date: formattedDate,
+      displays: item.displays || 0,
+      homens: item.total_men || 0,
+      mulheres: item.total_women || 0,
+      idadeMedia: Math.round((item.age_average || 0) * 10) / 10,
+    };
+  });
 
   // Métricas resumidas
   const totalDisplays = filteredData.reduce(
@@ -400,39 +275,29 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       : 0;
 
   const themeClasses = {
-    // bg: isDark ? "bg-gray-900" : "bg-gray-50",
-    cardBg: isDark ? "bg-gray-800" : "bg-white",
-    textPrimary: isDark ? "text-white" : "text-gray-900",
-    textSecondary: isDark ? "text-gray-300" : "text-gray-600",
-    textMuted: isDark ? "text-gray-400" : "text-gray-500",
-    border: isDark ? "border-gray-700" : "border-gray-300",
-    hoverBg: isDark ? "hover:bg-gray-700" : "hover:bg-gray-50",
-    tableBg: isDark ? "bg-gray-700" : "bg-gray-50",
-    tableRow: isDark ? "divide-gray-700" : "divide-gray-200",
-    input: isDark
-      ? "bg-gray-700 border-gray-600 text-white"
-      : "bg-white border-gray-300 text-gray-900",
-    button: isDark
-      ? "bg-blue-600 hover:bg-blue-700"
-      : "bg-blue-600 hover:bg-blue-700",
+    cardBg: "bg-white dark:bg-white/[0.03]",
+    textPrimary: "text-gray-900 dark:text-white",
+    textSecondary: "text-gray-600 dark:text-gray-300",
+    textMuted: "text-gray-500 dark:text-gray-400",
+    border: "border-gray-300 dark:border-gray-700",
+    hoverBg: "hover:bg-gray-50 dark:hover:bg-gray-700",
+    tableBg: "bg-gray-50 dark:bg-gray-700",
+    tableRow: "divide-gray-200 dark:divide-gray-700",
+    input:
+      "bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white",
+    button:
+      "bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700",
   };
 
   return (
     <div
-      className={`min-h-screen p-6 transition-colors duration-200 ${className}`}
+      className={`min-h-screen transition-colors duration-200 ${className} ${
+        isDark ? "dark" : ""
+      }`}
     >
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex justify-between items-start">
-          <div>
-            <h1
-              className={`text-3xl font-bold ${themeClasses.textPrimary} mb-2`}
-            >
-              {title}
-            </h1>
-            <p className={themeClasses.textSecondary}>{subtitle}</p>
-          </div>
-
           {/* Dark Mode Toggle */}
           {showDarkToggle && (
             <button
@@ -457,11 +322,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2">
                 <Filter className={`w-5 h-5 ${themeClasses.textMuted}`} />
-                <label
-                  className={`text-sm font-medium ${themeClasses.textSecondary}`}
-                >
-                  Visualização:
-                </label>
+
                 <select
                   value={viewType}
                   onChange={(e) =>
@@ -473,15 +334,6 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   <option value="monthly">Mensal</option>
                 </select>
               </div>
-
-              <button
-                onClick={loadData}
-                disabled={loading}
-                className={`px-4 py-2 ${themeClasses.button} text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors duration-200`}
-              >
-                <TrendingUp className="w-4 h-4" />
-                {loading ? "Carregando..." : "Atualizar"}
-              </button>
             </div>
           </div>
         )}
@@ -564,215 +416,162 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         )}
 
         {/* Gráficos */}
-        {!loading && filteredData.length > 0 && (
+        {!loading && chartData.length > 0 && (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {/* Gráfico de Displays */}
             <div className={`${themeClasses.cardBg} rounded-lg shadow-sm p-6`}>
-              <div className="w-full">
-                <div
-                  className="chart-container"
-                  style={{ position: "relative" }}
-                  id="display-chart-container"
-                >
-                  {typeof window !== "undefined" &&
-                    displayChartSeries.length > 0 && (
-                      <ReactApexChart
-                        key={`display-chart-${
-                          filteredData.length
-                        }-${isDark}-${Date.now()}`}
-                        options={{
-                          ...displayChartOptions,
-                          chart: {
-                            ...displayChartOptions.chart,
-                            id: `displays-chart-unique-${Date.now()}-${Math.random()}`,
-                            animations: {
-                              enabled: false,
-                            },
-                          },
-                          theme: {
-                            mode: isDark ? "dark" : "light",
-                          },
-                          grid: {
-                            borderColor: isDark ? "#374151" : "#e5e7eb",
-                            ...displayChartOptions.grid,
-                          },
-                          xaxis: {
-                            ...displayChartOptions.xaxis,
-                            labels: {
-                              style: {
-                                colors: isDark ? "#9ca3af" : "#6b7280",
-                              },
-                            },
-                          },
-                          yaxis: {
-                            ...displayChartOptions.yaxis,
-                            labels: {
-                              style: {
-                                colors: isDark ? "#9ca3af" : "#6b7280",
-                              },
-                            },
-                          },
-                          legend: {
-                            ...displayChartOptions.legend,
-                            labels: {
-                              colors: isDark ? "#9ca3af" : "#6b7280",
-                            },
-                          },
-                          title: {
-                            ...displayChartOptions.title,
-                            style: {
-                              color: isDark ? "#f9fafb" : "#111827",
-                              fontSize: "16px",
-                              fontWeight: "600",
-                            },
-                          },
-                        }}
-                        series={displayChartSeries}
-                        type="line"
-                        height={300}
-                      />
-                    )}
-                </div>
-              </div>
+              <h3
+                className={`text-lg font-semibold ${themeClasses.textPrimary} mb-4`}
+              >
+                Displays ao Longo do Tempo
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={chartData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke={isDark ? "#374151" : "#e5e7eb"}
+                  />
+                  <XAxis
+                    dataKey="date"
+                    tick={{
+                      fill: isDark ? "#9ca3af" : "#6b7280",
+                      fontSize: 12,
+                    }}
+                  />
+                  <YAxis
+                    tick={{
+                      fill: isDark ? "#9ca3af" : "#6b7280",
+                      fontSize: 12,
+                    }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: isDark ? "#374151" : "#ffffff",
+                      border: `1px solid ${isDark ? "#4b5563" : "#d1d5db"}`,
+                      borderRadius: "8px",
+                      color: isDark ? "#f9fafb" : "#111827",
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="displays"
+                    stroke="#3B82F6"
+                    strokeWidth={3}
+                    dot={{ fill: "#3B82F6", strokeWidth: 2, r: 4 }}
+                    name="Displays"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
             </div>
 
+            {/* Gráfico de Demografia */}
             <div className={`${themeClasses.cardBg} rounded-lg shadow-sm p-6`}>
-              <div className="w-full">
-                <div
-                  className="chart-container"
-                  style={{ position: "relative" }}
-                  id="demographics-chart-container"
-                >
-                  {typeof window !== "undefined" &&
-                    demographicsChartSeries.length > 0 && (
-                      <ReactApexChart
-                        key={`demographics-chart-${
-                          filteredData.length
-                        }-${isDark}-${Date.now()}`}
-                        options={{
-                          ...demographicsChartOptions,
-                          chart: {
-                            ...demographicsChartOptions.chart,
-                            id: `demographics-chart-unique-${Date.now()}-${Math.random()}`,
-                            animations: {
-                              enabled: false,
-                            },
-                          },
-                          theme: {
-                            mode: isDark ? "dark" : "light",
-                          },
-                          grid: {
-                            borderColor: isDark ? "#374151" : "#e5e7eb",
-                            ...demographicsChartOptions.grid,
-                          },
-                          xaxis: {
-                            ...demographicsChartOptions.xaxis,
-                            labels: {
-                              style: {
-                                colors: isDark ? "#9ca3af" : "#6b7280",
-                              },
-                            },
-                          },
-                          yaxis: {
-                            ...demographicsChartOptions.yaxis,
-                            labels: {
-                              style: {
-                                colors: isDark ? "#9ca3af" : "#6b7280",
-                              },
-                            },
-                          },
-                          legend: {
-                            ...demographicsChartOptions.legend,
-                            labels: {
-                              colors: isDark ? "#9ca3af" : "#6b7280",
-                            },
-                          },
-                          title: {
-                            ...demographicsChartOptions.title,
-                            style: {
-                              color: isDark ? "#f9fafb" : "#111827",
-                              fontSize: "16px",
-                              fontWeight: "600",
-                            },
-                          },
-                        }}
-                        series={demographicsChartSeries}
-                        type="bar"
-                        height={300}
-                      />
-                    )}
-                </div>
-              </div>
+              <h3
+                className={`text-lg font-semibold ${themeClasses.textPrimary} mb-4`}
+              >
+                Demografia por Gênero
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={chartData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke={isDark ? "#374151" : "#e5e7eb"}
+                  />
+                  <XAxis
+                    dataKey="date"
+                    tick={{
+                      fill: isDark ? "#9ca3af" : "#6b7280",
+                      fontSize: 12,
+                    }}
+                  />
+                  <YAxis
+                    tick={{
+                      fill: isDark ? "#9ca3af" : "#6b7280",
+                      fontSize: 12,
+                    }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: isDark ? "#374151" : "#ffffff",
+                      border: `1px solid ${isDark ? "#4b5563" : "#d1d5db"}`,
+                      borderRadius: "8px",
+                      color: isDark ? "#f9fafb" : "#111827",
+                    }}
+                  />
+                  <Legend
+                    wrapperStyle={{
+                      color: isDark ? "#9ca3af" : "#6b7280",
+                    }}
+                  />
+                  <Bar dataKey="homens" fill="#10B981" name="Homens" />
+                  <Bar dataKey="mulheres" fill="#F59E0B" name="Mulheres" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
 
+            {/* Gráfico de Idade Média */}
             <div
               className={`${themeClasses.cardBg} rounded-lg shadow-sm p-6 xl:col-span-2`}
             >
-              <div className="w-full">
-                <div
-                  className="chart-container"
-                  style={{ position: "relative" }}
-                  id="age-chart-container"
-                >
-                  {typeof window !== "undefined" &&
-                    ageChartSeries.length > 0 && (
-                      <ReactApexChart
-                        key={`age-chart-${
-                          filteredData.length
-                        }-${isDark}-${Date.now()}`}
-                        options={{
-                          ...ageChartOptions,
-                          chart: {
-                            ...ageChartOptions.chart,
-                            id: `age-chart-unique-${Date.now()}-${Math.random()}`,
-                            animations: {
-                              enabled: false,
-                            },
-                          },
-                          theme: {
-                            mode: isDark ? "dark" : "light",
-                          },
-                          grid: {
-                            borderColor: isDark ? "#374151" : "#e5e7eb",
-                            ...ageChartOptions.grid,
-                          },
-                          xaxis: {
-                            ...ageChartOptions.xaxis,
-                            labels: {
-                              style: {
-                                colors: isDark ? "#9ca3af" : "#6b7280",
-                              },
-                            },
-                          },
-                          yaxis: {
-                            ...ageChartOptions.yaxis,
-                            labels: {
-                              style: {
-                                colors: isDark ? "#9ca3af" : "#6b7280",
-                              },
-                            },
-                          },
-                          legend: {
-                            ...ageChartOptions.legend,
-                            labels: {
-                              colors: isDark ? "#9ca3af" : "#6b7280",
-                            },
-                          },
-                          title: {
-                            ...ageChartOptions.title,
-                            style: {
-                              color: isDark ? "#f9fafb" : "#111827",
-                              fontSize: "16px",
-                              fontWeight: "600",
-                            },
-                          },
-                        }}
-                        series={ageChartSeries}
-                        type="area"
-                        height={300}
+              <h3
+                className={`text-lg font-semibold ${themeClasses.textPrimary} mb-4`}
+              >
+                Idade Média ao Longo do Tempo
+              </h3>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={chartData}>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke={isDark ? "#374151" : "#e5e7eb"}
+                  />
+                  <XAxis
+                    dataKey="date"
+                    tick={{
+                      fill: isDark ? "#9ca3af" : "#6b7280",
+                      fontSize: 12,
+                    }}
+                  />
+                  <YAxis
+                    tick={{
+                      fill: isDark ? "#9ca3af" : "#6b7280",
+                      fontSize: 12,
+                    }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: isDark ? "#374151" : "#ffffff",
+                      border: `1px solid ${isDark ? "#4b5563" : "#d1d5db"}`,
+                      borderRadius: "8px",
+                      color: isDark ? "#f9fafb" : "#111827",
+                    }}
+                    formatter={(value: any) => [`${value} anos`, "Idade Média"]}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="idadeMedia"
+                    stroke="#8B5CF6"
+                    fill="url(#colorIdadeMedia)"
+                    strokeWidth={3}
+                    name="Idade Média"
+                  />
+                  <defs>
+                    <linearGradient
+                      id="colorIdadeMedia"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8} />
+                      <stop
+                        offset="95%"
+                        stopColor="#8B5CF6"
+                        stopOpacity={0.1}
                       />
-                    )}
-                </div>
-              </div>
+                    </linearGradient>
+                  </defs>
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
         )}

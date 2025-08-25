@@ -25,15 +25,6 @@ export const metadata: Metadata = {
 export default function HomeComponent() {
   return (
     <>
-      <div>
-        <AnalyticsDashboard
-          local_unit={"6889fd177623411dbfd50021"}
-          title="Dashboard da Unidade Local"
-          subtitle="Análise de performance da unidade"
-          showTable={false} // Exemplo sem tabela
-          // onDataUpdate={handleDataUpdate}
-        />
-      </div>
       <div className="grid grid-cols-12 gap-4 md:gap-6">
         <div className="col-span-12">
           <AnalyticsMetrics />
@@ -51,6 +42,17 @@ export default function HomeComponent() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
             <TopRecords />
           </div>
+        </div>
+
+        <div className="col-span-12">
+          <AnalyticsDashboard
+            local_unit={"6889fd177623411dbfd50021"}
+            title="Dashboard da Unidade Local"
+            subtitle="Análise de performance da unidade"
+            showTable={false}
+            showControls={true}
+            // onDataUpdate={handleDataUpdate}
+          />
         </div>
 
         <div className="col-span-12 xl:col-span-7">
