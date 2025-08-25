@@ -46,7 +46,7 @@ export default function HomeComponent() {
 
         <div className="col-span-12">
           <AnalyticsDashboard
-            local_unit={"6889fd177623411dbfd50021"}
+            // local_unit={"6889fd177623411dbfd50021"}
             title="Dashboard da Unidade Local"
             subtitle="Análise de performance da unidade"
             showTable={false}

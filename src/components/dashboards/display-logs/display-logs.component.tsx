@@ -158,12 +158,12 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       return;
     }
 
-    if (!dataSource) {
-      console.error(
-        "Nenhuma fonte de dados foi fornecida. Use news, local_unit ou advertisement."
-      );
-      return;
-    }
+    // if (!dataSource) {
+    //   console.error(
+    //     "Nenhuma fonte de dados foi fornecida. Use news, local_unit ou advertisement."
+    //   );
+    //   return;
+    // }
 
     try {
       setLoading(true);
@@ -175,7 +175,9 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       };
 
       // Adicionar o campo correto baseado na fonte de dados
-      bodyData[dataSource.type] = dataSource.id;
+      if (dataSource) {
+        bodyData[dataSource.type] = dataSource.id;
+      }
 
       const response = await API.display_logs.dashboard(
         session.api_session.access_token,
