@@ -190,21 +190,16 @@ export class DashboardDisplayLogsProcessService {
 
     const records: IAggregationResult[] = [];
     const batchOperations: any[] = [];
-    // const normalizedStartDate = DateTime.fromJSDate(startDate)
-    //   .startOf('day')
-    //   .toUTC()
-    //   .toJSDate();
 
     const cursor = this.displayLogModel.aggregate(pipeline).cursor();
 
     for await (const record of cursor) {
       records.push(record);
 
-      // console.log({ record, date: record._id.date });
-
-      const updateDoc = {
+      const filter = {
         date: record._id.date,
         period: currentPeriod,
+        entity_id: new Types.ObjectId(record._id.entity),
         [entityField]: record._id,
         ...(entityField === EntityFieldEnum.advertisement && {
           advertiser: record.advertiser,
@@ -216,6 +211,10 @@ export class DashboardDisplayLogsProcessService {
         ...(entityField === EntityFieldEnum.news && {
           news: record.news,
         }),
+      };
+
+      const updateDoc = {
+        ...filter,
         entity_id: new Types.ObjectId(record._id.entity),
         displays: record.displays,
         total_people: record.total_people,
@@ -230,11 +229,7 @@ export class DashboardDisplayLogsProcessService {
 
       batchOperations.push({
         updateOne: {
-          filter: {
-            date: record._id.date,
-            period: currentPeriod,
-            [entityField]: record._id,
-          },
+          filter,
           update: { $set: updateDoc },
           upsert: true,
         },
