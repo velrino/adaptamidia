@@ -3,15 +3,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  Calendar,
-  Users,
-  Eye,
-  TrendingUp,
-  Filter,
-  Sun,
-  Moon,
-} from "lucide-react";
+import { Calendar, Users, Eye, Filter, Sun, Moon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { API } from "@/backend/api/api.endpoints";
 import {
