@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { GetExtensionFromMimeType } from "@/utils/generic";
 import {
   IApiAuthLogin,
@@ -217,6 +219,14 @@ export const API = {
       return ApiResources.request({
         method: IApiRequestMethod.POST,
         path: "/display/log/detect",
+        data,
+        access_token,
+      });
+    },
+    async dashboard(access_token: string, data: any) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/dashboard/display-logs",
         data,
         access_token,
       });
