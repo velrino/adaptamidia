@@ -101,3 +101,54 @@ dependencies:
 - Logs detalhados para debugging remoto
 - Atualizações automáticas de conteúdo
 - Backup local para funcionamento offline
+
+## Padrões de Código
+
+### Interfaces e Tipagem
+- **SEMPRE usar interfaces** em vez de `Map<String, dynamic>` para dados estruturados
+- Criar interfaces na pasta `lib/interfaces/` com padrão TypeScript-like
+- Usar `abstract class` para definir contratos (interfaces)
+- Implementar classes concretas que seguem as interfaces
+
+### Exemplo de Interface:
+```dart
+// lib/interfaces/auth_data.dart
+abstract class IAuthResponse {
+  String get accessToken;
+  String get id;
+  // ... outros campos
+  
+  Map<String, dynamic> toJson();
+  factory IAuthResponse.fromJson(Map<String, dynamic> json) = AuthResponse.fromJson;
+}
+
+class AuthResponse implements IAuthResponse {
+  @override
+  final String accessToken;
+  // ... implementação
+}
+```
+
+### Serviços Isolados
+- **Serviços devem ser reutilizáveis** e isolados
+- Usar padrão Singleton com `static instance`
+- Separar lógica de negócio das telas
+- Exemplos:
+  - `AuthSuccessService` - Para lidar com sucesso de autenticação
+  - `ConfigurationService` - Para modal de configurações reutilizável
+
+### Estrutura de Arquivos
+```
+lib/
+├── interfaces/     # Contratos/interfaces TypeScript-like
+├── models/         # Modelos de dados
+├── services/       # Lógica de negócio isolada e reutilizável
+├── screens/        # Telas da aplicação
+└── utils/          # Utilitários gerais
+```
+
+### Boas Práticas
+- Sempre verificar `context.mounted` antes de usar `BuildContext` em async
+- Usar `?.toString()` para conversões seguras de tipos dinâmicos
+- Validar tipos com `is` antes de casting
+- Serviços devem retornar interfaces, não implementações concretas
