@@ -29,13 +29,9 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
     _animationController.forward();
   }
 
@@ -101,9 +97,7 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
 
     if (mounted) {
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const LoginScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     }
   }
@@ -130,9 +124,7 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
                   const SizedBox(height: 40),
                   _buildHeader(isDark),
                   const SizedBox(height: 60),
-                  Expanded(
-                    child: _buildOrientationSelector(isDark),
-                  ),
+                  Expanded(child: _buildOrientationSelector(isDark)),
                   _buildBottomSection(isDark),
                 ],
               ),
@@ -147,20 +139,12 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.blue.withOpacity(0.3)),
-          ),
-          child: Text(
-            'SeeMidia Display',
-            style: TextStyle(
-              color: Colors.blue[600],
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Image.asset(
+            'assets/images/logo.png',
+            height: 100,
+            // fit: BoxFit.contain,
           ),
         ),
         const SizedBox(height: 16),
@@ -298,11 +282,7 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
                   color: Colors.blue,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.check,
-                  size: 16,
-                  color: Colors.white,
-                ),
+                child: const Icon(Icons.check, size: 16, color: Colors.white),
               ),
           ],
         ),
@@ -324,11 +304,7 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
           ),
           child: Row(
             children: [
-              Icon(
-                Icons.info_outline,
-                color: Colors.blue[600],
-                size: 20,
-              ),
+              Icon(Icons.info_outline, color: Colors.blue[600], size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -381,10 +357,7 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
                   )
                 : const Text(
                     'Continuar',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
           ),
         ),

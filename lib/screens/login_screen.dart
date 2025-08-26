@@ -6,6 +6,7 @@ import '../services/auth_success_service.dart';
 import '../services/configuration_service.dart';
 import '../utils/device_utils.dart';
 import 'dart:convert';
+import 'dart:async';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -21,6 +22,8 @@ class _LoginScreenState extends State<LoginScreen>
   String? _qrCodeData;
   String? _deviceId;
   String? _authCode;
+  Timer? _qrCodeTimer;
+  int _remainingSeconds = 300; // 5 minutes
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -59,6 +62,7 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   void dispose() {
     _animationController.dispose();
+    _qrCodeTimer?.cancel();
     super.dispose();
   }
 
@@ -79,9 +83,13 @@ class _LoginScreenState extends State<LoginScreen>
           _authCode = authResponse.code;
           _isLoading = false;
           _isWaitingForAuth = true;
+          _remainingSeconds = 300; // Reset to 5 minutes
         });
 
         print('Auth Code: $_authCode');
+
+        // Start QR code timer
+        _startQRCodeTimer();
 
         // Start listening for auth on Firebase
         _startFirebaseListener();
@@ -98,12 +106,42 @@ class _LoginScreenState extends State<LoginScreen>
       _deviceId!,
       (authData) {
         // Success! User authenticated
+        _qrCodeTimer?.cancel(); // Cancel timer on success
         _handleAuthSuccess(authData);
       },
       (error) {
         _showError('Erro na autenticação: $error');
       },
     );
+  }
+
+  void _startQRCodeTimer() {
+    _qrCodeTimer?.cancel();
+    _qrCodeTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      setState(() {
+        _remainingSeconds--;
+      });
+
+      if (_remainingSeconds <= 0) {
+        timer.cancel();
+        _handleQRCodeExpired();
+      }
+    });
+  }
+
+  void _handleQRCodeExpired() {
+    setState(() {
+      _isWaitingForAuth = false;
+      _qrCodeData = null;
+      _authCode = null;
+      _remainingSeconds = 300;
+    });
+  }
+
+  String _formatTime(int seconds) {
+    final minutes = seconds ~/ 60;
+    final remainingSeconds = seconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${remainingSeconds.toString().padLeft(2, '0')}';
   }
 
   Future<void> _handleAuthSuccess(dynamic authData) async {
@@ -130,10 +168,12 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void _showError(String message) {
+    _qrCodeTimer?.cancel(); // Cancel timer on error
     setState(() {
       _isLoading = false;
       _isWaitingForAuth = false;
       _qrCodeData = null;
+      _remainingSeconds = 300;
     });
 
     if (mounted) {
@@ -173,16 +213,18 @@ class _LoginScreenState extends State<LoginScreen>
           opacity: _fadeAnimation,
           child: SlideTransition(
             position: _slideAnimation,
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 40),
-                  _buildHeader(isDark),
-                  const SizedBox(height: 60),
-                  Expanded(child: _buildMainContent(isDark)),
-                ],
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _buildHeader(isDark),
+                    const SizedBox(height: 40),
+                    _buildMainContent(isDark),
+                  ],
+                ),
               ),
             ),
           ),
@@ -196,17 +238,13 @@ class _LoginScreenState extends State<LoginScreen>
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.blue.withOpacity(0.3)),
-          ),
-          child: Text(
-            'SeeMidia Display',
-            style: TextStyle(
-              color: Colors.blue[600],
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+
+          child: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Image.asset(
+              'assets/images/logo.png',
+              height: 200,
+              // fit: BoxFit.contain,
             ),
           ),
         ),
@@ -222,7 +260,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         const SizedBox(height: 8),
         Text(
-          'Escaneie o QR Code com seu dispositivo móvel para fazer login',
+          'Será gerado códgio para vincular seu dispositivo',
           style: TextStyle(
             fontSize: 16,
             color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -293,7 +331,7 @@ class _LoginScreenState extends State<LoginScreen>
                   const SizedBox(height: 8),
                 ],
                 Text(
-                  'Escaneie este QR Code',
+                  'Digite o código ou escaneie este QR Code',
                   style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
               ],
@@ -311,13 +349,54 @@ class _LoginScreenState extends State<LoginScreen>
             ),
           ),
           const SizedBox(height: 24),
+          // Timer display
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: _remainingSeconds <= 60
+                  ? Colors.red.withValues(alpha: 0.1)
+                  : Colors.blue.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _remainingSeconds <= 60
+                    ? Colors.red.withValues(alpha: 0.3)
+                    : Colors.blue.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.timer_outlined,
+                  size: 20,
+                  color: _remainingSeconds <= 60
+                      ? Colors.red[600]
+                      : Colors.blue[600],
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Expira em: ${_formatTime(_remainingSeconds)}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: _remainingSeconds <= 60
+                        ? Colors.red[600]
+                        : Colors.blue[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
           // Cancel button
           TextButton(
             onPressed: () {
+              _qrCodeTimer?.cancel();
               setState(() {
                 _isWaitingForAuth = false;
                 _qrCodeData = null;
                 _authCode = null;
+                _remainingSeconds = 300;
               });
             },
             child: Text(
@@ -334,20 +413,22 @@ class _LoginScreenState extends State<LoginScreen>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        SizedBox(
-          width: 300,
-          height: 56,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _handleLogin,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue[600],
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 300),
+          child: SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _handleLogin,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue[600],
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
-            ),
-            child: _isLoading
+              child: _isLoading
                 ? const SizedBox(
                     width: 24,
                     height: 24,
@@ -356,38 +437,14 @@ class _LoginScreenState extends State<LoginScreen>
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text(
-                    'Gerar QR Code',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
+                  : const Text(
+                      'Gerar QR Code',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+            ),
           ),
         ),
         const SizedBox(height: 32),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isDark ? Colors.grey[800] : Colors.blue[50],
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDark ? Colors.grey[700]! : Colors.blue[200]!,
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.info_outline, color: Colors.blue[600], size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Toque no botão para gerar o QR Code de autenticação',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isDark ? Colors.grey[300] : Colors.blue[700],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }

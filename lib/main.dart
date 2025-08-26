@@ -99,11 +99,6 @@ class _AppWrapperState extends State<AppWrapper> {
             children: [
               CircularProgressIndicator(),
               SizedBox(height: 16),
-              Text(
-                'SeeMidia Display',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
               Text('Carregando...'),
             ],
           ),
@@ -134,4 +129,3 @@ class _AppWrapperState extends State<AppWrapper> {
     );
   }
 }
-

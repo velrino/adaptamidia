@@ -16,11 +16,12 @@ class HomeScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Text(
-          'SeeMidia - Display',
-          style: TextStyle(
-            color: isDark ? Colors.white : Colors.grey[900],
-            fontWeight: FontWeight.bold,
+        title: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Image.asset(
+            'assets/images/logo.png',
+            height: 100,
+            // fit: BoxFit.contain,
           ),
         ),
         actions: [
@@ -60,11 +61,7 @@ class HomeScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
               ),
-              child: Icon(
-                Icons.home,
-                size: 80,
-                color: Colors.blue[600],
-              ),
+              child: Icon(Icons.home, size: 80, color: Colors.blue[600]),
             ),
             const SizedBox(height: 24),
             Text(
