@@ -1,5 +1,8 @@
 # SeeMidia - Contexto do Projeto
 
+SEMPRE SER PENSADO EM landscape e portait
+LAYOUT Elegante e minimalista. Sempre pensando em dark e light mode
+
 ## Informações Básicas
 
 - **Nome do projeto**: SeeMidia (https://seemidia.com/)
