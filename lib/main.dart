@@ -4,13 +4,14 @@ import 'services/storage_service.dart';
 import 'services/firebase_service.dart';
 import 'screens/configuration_screen.dart';
 import 'screens/login_screen.dart';
+import 'screens/authenticated/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize Firebase
   await FirebaseService.instance.initialize();
-  
+
   runApp(const MyApp());
 }
 
@@ -65,7 +66,7 @@ class _AppWrapperState extends State<AppWrapper> {
 
   Future<void> _checkConfiguration() async {
     final isConfigured = await StorageService.isDeviceConfigured();
-    
+
     if (isConfigured) {
       final config = await StorageService.getDeviceConfig();
       if (config != null) {
@@ -81,7 +82,7 @@ class _AppWrapperState extends State<AppWrapper> {
         }
       }
     }
-    
+
     setState(() {
       _isConfigured = isConfigured;
       _isLoading = false;
@@ -100,10 +101,7 @@ class _AppWrapperState extends State<AppWrapper> {
               SizedBox(height: 16),
               Text(
                 'SeeMidia Display',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 8),
               Text('Carregando...'),
@@ -137,59 +135,3 @@ class _AppWrapperState extends State<AppWrapper> {
   }
 }
 
-// Placeholder HomeScreen - replace with your actual home screen
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('SeeMidia Display'),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            onPressed: () async {
-              await StorageService.logout();
-              if (context.mounted) {
-                Navigator.of(context).pushReplacementNamed('/login');
-              }
-            },
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-          ),
-        ],
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.home,
-              size: 80,
-              color: Colors.blue,
-            ),
-            SizedBox(height: 16),
-            Text(
-              'Bem-vindo ao SeeMidia Display!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 8),
-            Text(
-              'Login realizado com sucesso',
-              style: TextStyle(fontSize: 16),
-            ),
-            SizedBox(height: 24),
-            Text(
-              'Esta é a tela principal do aplicativo.\nAqui será implementado o player de mídia.',
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
