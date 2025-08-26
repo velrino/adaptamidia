@@ -79,6 +79,11 @@ class FirebaseService {
         }
       },
       onError: (error) {
+        // Don't treat permission denied as an error - it's expected when node doesn't exist yet
+        if (error.toString().contains('Permission denied')) {
+          // Just continue listening, this is normal
+          return;
+        }
         onError('Firebase listener error: $error');
       },
     );

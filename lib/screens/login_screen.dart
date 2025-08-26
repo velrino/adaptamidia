@@ -61,7 +61,6 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-
   Future<void> _handleLogin() async {
     setState(() => _isLoading = true);
 
@@ -80,6 +79,8 @@ class _LoginScreenState extends State<LoginScreen>
           _isLoading = false;
           _isWaitingForAuth = true;
         });
+        
+        print('Auth Code: $_authCode');
 
         // Start listening for auth on Firebase
         _startFirebaseListener();
@@ -298,42 +299,42 @@ class _LoginScreenState extends State<LoginScreen>
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-        backgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          automaticallyImplyLeading: false,
-          actions: [
-            IconButton(
-              onPressed: _showConfigurationOptions,
-              icon: Icon(
-                Icons.settings,
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-              ),
+      backgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            onPressed: _showConfigurationOptions,
+            icon: Icon(
+              Icons.settings,
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
             ),
-          ],
-        ),
-        body: SafeArea(
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: SlideTransition(
-              position: _slideAnimation,
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 40),
-                    _buildHeader(isDark),
-                    const SizedBox(height: 60),
-                    Expanded(child: _buildMainContent(isDark)),
-                  ],
-                ),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SlideTransition(
+            position: _slideAnimation,
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 40),
+                  _buildHeader(isDark),
+                  const SizedBox(height: 60),
+                  Expanded(child: _buildMainContent(isDark)),
+                ],
               ),
             ),
           ),
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildHeader(bool isDark) {
@@ -387,87 +388,91 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildQRCodeDisplay(bool isDark) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              // QR Code
-              Container(
-                width: 250,
-                height: 250,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[300]!),
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.memory(
-                    base64Decode(_qrCodeData!.split(',')[1]),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Auth Code
-              if (_authCode != null) ...[
-                Text(
-                  'Código: $_authCode',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey[800],
-                  ),
-                ),
-                const SizedBox(height: 8),
               ],
-              Text(
-                'Escaneie este QR Code',
-                style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-              ),
-            ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // QR Code
+                Container(
+                  width: 250,
+                  height: 250,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.memory(
+                      base64Decode(_qrCodeData!.split(',')[1]),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Auth Code
+                if (_authCode != null) ...[
+                  Text(
+                    'Código: $_authCode',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                Text(
+                  'Escaneie este QR Code',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 32),
-        // Loading indicator
-        const CircularProgressIndicator(),
-        const SizedBox(height: 16),
-        Text(
-          'Aguardando autenticação...',
-          style: TextStyle(
-            fontSize: 16,
-            color: isDark ? Colors.grey[400] : Colors.grey[600],
+          const SizedBox(height: 32),
+          // Loading indicator
+          const CircularProgressIndicator(),
+          const SizedBox(height: 16),
+          Text(
+            'Aguardando autenticação...',
+            style: TextStyle(
+              fontSize: 16,
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+            ),
           ),
-        ),
-        const SizedBox(height: 24),
-        // Cancel button
-        TextButton(
-          onPressed: () {
-            setState(() {
-              _isWaitingForAuth = false;
-              _qrCodeData = null;
-              _authCode = null;
-            });
-          },
-          child: Text(
-            'Cancelar',
-            style: TextStyle(color: Colors.blue[600], fontSize: 16),
+          const SizedBox(height: 24),
+          // Cancel button
+          TextButton(
+            onPressed: () {
+              setState(() {
+                _isWaitingForAuth = false;
+                _qrCodeData = null;
+                _authCode = null;
+              });
+            },
+            child: Text(
+              'Cancelar',
+              style: TextStyle(color: Colors.blue[600], fontSize: 16),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -499,10 +504,7 @@ class _LoginScreenState extends State<LoginScreen>
                   )
                 : const Text(
                     'Gerar QR Code',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
           ),
         ),
