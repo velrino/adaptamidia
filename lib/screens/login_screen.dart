@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
 import '../services/auth_api_service.dart';
 import '../services/firebase_service.dart';
+import '../services/auth_success_service.dart';
+import '../services/configuration_service.dart';
 import '../utils/device_utils.dart';
-import 'configuration_screen.dart';
 import 'dart:convert';
 
 class LoginScreen extends StatefulWidget {
@@ -79,7 +80,7 @@ class _LoginScreenState extends State<LoginScreen>
           _isLoading = false;
           _isWaitingForAuth = true;
         });
-        
+
         print('Auth Code: $_authCode');
 
         // Start listening for auth on Firebase
@@ -107,27 +108,14 @@ class _LoginScreenState extends State<LoginScreen>
 
   Future<void> _handleAuthSuccess(Map<String, dynamic> authData) async {
     try {
-      // Save auth token and user data
-      await StorageService.saveAuthToken(authData['access_token']);
-      await StorageService.saveUserData({
-        'id': authData['id'],
-        'session': authData['session'],
-        'expires_in': authData['expires_in'],
-      });
-
       if (mounted) {
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login realizado com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
+        await AuthSuccessService.instance.handleAuthSuccessFromMap(
+          context,
+          authData,
         );
-
-        // Redirect to home
-        Navigator.of(context).pushReplacementNamed('/home');
       }
     } catch (e) {
+      print('Error in _handleAuthSuccess: $e');
       _showError('Erro ao salvar dados de login: $e');
     }
   }
@@ -147,150 +135,7 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   void _showConfigurationOptions() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (context) => _buildConfigurationBottomSheet(),
-    );
-  }
-
-  Widget _buildConfigurationBottomSheet() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.grey[850] : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(bottom: 20),
-            decoration: BoxDecoration(
-              color: isDark ? Colors.grey[600] : Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          Text(
-            'Configurações do Display',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : Colors.grey[900],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Altere as configurações de orientação e tema',
-            style: TextStyle(
-              fontSize: 14,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 24),
-          _buildConfigOption(
-            'Reconfigurar Orientação',
-            'Alterar entre portrait e landscape',
-            Icons.screen_rotation,
-            () {
-              Navigator.pop(context);
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => const ConfigurationScreen(),
-                ),
-              );
-            },
-            isDark,
-          ),
-          const SizedBox(height: 12),
-          _buildConfigOption(
-            'Limpar Dados',
-            'Resetar todas as configurações',
-            Icons.refresh,
-            () async {
-              await StorageService.clearAll();
-              Navigator.pop(context);
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => const ConfigurationScreen(),
-                ),
-              );
-            },
-            isDark,
-          ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildConfigOption(
-    String title,
-    String subtitle,
-    IconData icon,
-    VoidCallback onTap,
-    bool isDark,
-  ) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.grey[800] : Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark ? Colors.grey[700]! : Colors.grey[200]!,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: Colors.blue[600], size: 20),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : Colors.grey[900],
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: isDark ? Colors.grey[400] : Colors.grey[400],
-            ),
-          ],
-        ),
-      ),
-    );
+    ConfigurationService.instance.showConfigurationOptions(context);
   }
 
   @override
