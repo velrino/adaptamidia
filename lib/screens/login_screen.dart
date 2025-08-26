@@ -106,13 +106,22 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Future<void> _handleAuthSuccess(Map<String, dynamic> authData) async {
+  Future<void> _handleAuthSuccess(dynamic authData) async {
     try {
       if (mounted) {
-        await AuthSuccessService.instance.handleAuthSuccessFromMap(
-          context,
-          authData,
-        );
+        // If it's FirebaseAuthData, convert to Map
+        if (authData is Map<String, dynamic>) {
+          await AuthSuccessService.instance.handleAuthSuccessFromMap(
+            context,
+            authData,
+          );
+        } else {
+          // It's FirebaseAuthData interface
+          await AuthSuccessService.instance.handleAuthSuccessFromMap(
+            context,
+            authData.toJson(),
+          );
+        }
       }
     } catch (e) {
       print('Error in _handleAuthSuccess: $e');

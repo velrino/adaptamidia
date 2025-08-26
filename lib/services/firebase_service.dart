@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
+import '../interfaces/firebase_auth_data.dart';
 
 class FirebaseService {
   static FirebaseService? _instance;
@@ -20,7 +21,7 @@ class FirebaseService {
   }
 
   /// Listen for auth device data once and remove after reading
-  Future<Map<String, dynamic>?> listenForAuthDevice(String deviceId) async {
+  Future<FirebaseAuthData?> listenForAuthDevice(String deviceId) async {
     if (!_initialized) await initialize();
     
     final ref = _database.ref('AUTH_DEVICES/$deviceId');
@@ -34,7 +35,7 @@ class FirebaseService {
       // Remove the data after reading (websocket-like behavior)
       await ref.remove();
       
-      return data;
+      return FirebaseAuthResponse.fromJson(data);
     }
     
     return null;
@@ -43,7 +44,7 @@ class FirebaseService {
   /// Set up a one-time listener for auth device
   void listenOnceForAuthDevice(
     String deviceId,
-    Function(Map<String, dynamic>) onSuccess,
+    Function(FirebaseAuthData) onSuccess,
     Function(String) onError,
   ) {
     if (!_initialized) {
@@ -55,7 +56,7 @@ class FirebaseService {
 
   void _listenOnceForAuthDevice(
     String deviceId,
-    Function(Map<String, dynamic>) onSuccess,
+    Function(FirebaseAuthData) onSuccess,
     Function(String) onError,
   ) {
     final ref = _database.ref('AUTH_DEVICES/$deviceId');
@@ -65,12 +66,13 @@ class FirebaseService {
         if (event.snapshot.exists) {
           try {
             final data = Map<String, dynamic>.from(event.snapshot.value as Map);
+            final authData = FirebaseAuthResponse.fromJson(data);
             
             // Remove the data after reading
             ref.remove().then((_) {
-              onSuccess(data);
+              onSuccess(authData);
             }).catchError((error) {
-              onSuccess(data); // Still call success even if remove fails
+              onSuccess(authData); // Still call success even if remove fails
             });
             
           } catch (e) {
