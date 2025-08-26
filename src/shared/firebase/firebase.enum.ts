@@ -1,3 +1,3 @@
 export enum FirebasePathsEnum {
-  AUTH_DEVICES = 'auth-devices',
+  AUTH_DEVICES = 'AUTH_DEVICES',
 }
