@@ -415,24 +415,28 @@ class _CompanyUnitsListState extends State<CompanyUnitsList> {
   }
 
   Widget _buildNetflixCard(ICompanyUnit unit, bool isDark, double cardWidth, double cardHeight) {
-    return Container(
-      width: cardWidth,
-      height: cardHeight,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.grey[800] : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? Colors.grey[700]! : Colors.grey[200]!,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pushNamed('/display', arguments: unit.id);
+      },
+      child: Container(
+        width: cardWidth,
+        height: cardHeight,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey[800] : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDark ? Colors.grey[700]! : Colors.grey[200]!,
           ),
-        ],
-      ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -505,6 +509,7 @@ class _CompanyUnitsListState extends State<CompanyUnitsList> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -5,6 +5,7 @@ import 'services/firebase_service.dart';
 import 'screens/configuration_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/authenticated/home_screen.dart';
+import 'screens/authenticated/display_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,6 +42,15 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/config': (context) => const ConfigurationScreen(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/display') {
+          final unitId = settings.arguments as String;
+          return MaterialPageRoute(
+            builder: (context) => DisplayScreen(unitId: unitId),
+          );
+        }
+        return null;
       },
       debugShowCheckedModeBanner: false,
     );
