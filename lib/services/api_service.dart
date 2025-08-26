@@ -4,9 +4,9 @@ import 'package:http/http.dart' as http;
 import 'logger_service.dart';
 
 class ApiService {
-  static const String _baseUrl = 'http://localhost:4001';
+  static const String _baseUrl = 'https://28b7d10e90e1.ngrok-free.app';
   static const Duration _timeout = Duration(seconds: 30);
-  
+
   static final Map<String, String> _defaultHeaders = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
@@ -20,52 +20,62 @@ class ApiService {
   ) async {
     try {
       final uri = Uri.parse('$_baseUrl$endpoint');
-      
+
       // Log the request
       LoggerService.apiRequest(method, endpoint, data: data);
-      
+
       http.Response response;
-      
+
       switch (method.toUpperCase()) {
         case 'GET':
-          response = await http.get(
-            uri,
-            headers: _defaultHeaders,
-          ).timeout(_timeout);
+          response = await http
+              .get(uri, headers: _defaultHeaders)
+              .timeout(_timeout);
           break;
         case 'POST':
-          response = await http.post(
-            uri,
-            headers: _defaultHeaders,
-            body: data != null ? jsonEncode(data) : null,
-          ).timeout(_timeout);
+          response = await http
+              .post(
+                uri,
+                headers: _defaultHeaders,
+                body: data != null ? jsonEncode(data) : null,
+              )
+              .timeout(_timeout);
           break;
         case 'PUT':
-          response = await http.put(
-            uri,
-            headers: _defaultHeaders,
-            body: data != null ? jsonEncode(data) : null,
-          ).timeout(_timeout);
+          response = await http
+              .put(
+                uri,
+                headers: _defaultHeaders,
+                body: data != null ? jsonEncode(data) : null,
+              )
+              .timeout(_timeout);
           break;
         case 'DELETE':
-          response = await http.delete(
-            uri,
-            headers: _defaultHeaders,
-          ).timeout(_timeout);
+          response = await http
+              .delete(uri, headers: _defaultHeaders)
+              .timeout(_timeout);
           break;
         default:
           throw ApiException('Método HTTP não suportado: $method');
       }
 
       final apiResponse = _handleResponse<T>(response, fromJson);
-      
+
       // Log the response
       if (apiResponse.success) {
-        LoggerService.apiResponse(endpoint, response.statusCode, response: apiResponse.data);
+        LoggerService.apiResponse(
+          endpoint,
+          response.statusCode,
+          response: apiResponse.data,
+        );
       } else {
-        LoggerService.apiResponse(endpoint, response.statusCode, error: apiResponse.error);
+        LoggerService.apiResponse(
+          endpoint,
+          response.statusCode,
+          error: apiResponse.error,
+        );
       }
-      
+
       return apiResponse;
     } on SocketException catch (e) {
       LoggerService.apiError(endpoint, e);
@@ -90,10 +100,10 @@ class ApiService {
     T Function(Map<String, dynamic>) fromJson,
   ) {
     final statusCode = response.statusCode;
-    
+
     try {
       final jsonData = jsonDecode(response.body) as Map<String, dynamic>;
-      
+
       if (statusCode >= 200 && statusCode < 300) {
         return ApiResponse<T>(
           success: true,
@@ -177,7 +187,7 @@ class ApiResponse<T> {
 // Custom exception class
 class ApiException implements Exception {
   final String message;
-  
+
   ApiException(this.message);
 
   @override
