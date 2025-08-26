@@ -5,8 +5,6 @@ import 'package:http/http.dart' as http;
 
 class AuthApiService {
   static const String _authEndpoint = '/auth/device';
-  static const String _baseUrl =
-      'https://api.seemidia.com'; // Replace with your actual API base URL
 
   /// Simple generateAuth method that calls the API directly
   // static Future<Map<String, dynamic>?> generateAuth(String deviceId) async {

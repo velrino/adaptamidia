@@ -16,27 +16,31 @@ class ApiService {
     String method,
     String endpoint,
     Map<String, dynamic>? data,
-    T Function(Map<String, dynamic>) fromJson,
-  ) async {
+    T Function(Map<String, dynamic>) fromJson, {
+    Map<String, String>? headers,
+  }) async {
     try {
       final uri = Uri.parse('$_baseUrl$endpoint');
 
       // Log the request
       LoggerService.apiRequest(method, endpoint, data: data);
 
+      // Merge custom headers with default headers
+      final finalHeaders = {..._defaultHeaders, ...?headers};
+
       http.Response response;
 
       switch (method.toUpperCase()) {
         case 'GET':
           response = await http
-              .get(uri, headers: _defaultHeaders)
+              .get(uri, headers: finalHeaders)
               .timeout(_timeout);
           break;
         case 'POST':
           response = await http
               .post(
                 uri,
-                headers: _defaultHeaders,
+                headers: finalHeaders,
                 body: data != null ? jsonEncode(data) : null,
               )
               .timeout(_timeout);
@@ -45,14 +49,14 @@ class ApiService {
           response = await http
               .put(
                 uri,
-                headers: _defaultHeaders,
+                headers: finalHeaders,
                 body: data != null ? jsonEncode(data) : null,
               )
               .timeout(_timeout);
           break;
         case 'DELETE':
           response = await http
-              .delete(uri, headers: _defaultHeaders)
+              .delete(uri, headers: finalHeaders)
               .timeout(_timeout);
           break;
         default:
@@ -130,9 +134,10 @@ class ApiService {
   // GET request
   static Future<ApiResponse<T>> get<T>(
     String endpoint,
-    T Function(Map<String, dynamic>) fromJson,
-  ) {
-    return _makeRequest('GET', endpoint, null, fromJson);
+    T Function(Map<String, dynamic>) fromJson, {
+    Map<String, String>? headers,
+  }) {
+    return _makeRequest('GET', endpoint, null, fromJson, headers: headers);
   }
 
   // POST request
