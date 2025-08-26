@@ -6,7 +6,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { HttpMiddleware } from './middleware/http.middleware';
 import { RedisModule } from './shared/redis/redis.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { PusherModule } from './shared/pusher/pusher.module';
+import { FirebaseModule } from './shared/firebase/firebase.module';
 import { UserModule } from './modules/user/user.module';
 import { CompanyModule } from './modules/company/company.module';
 import { CompanyUnitModule } from './modules/company-unit/company-unit.module';
@@ -69,7 +69,7 @@ import { DashboardDisplayLogsModule } from './modules/dashboard-display-logs/das
     NewsModule,
     DashboardModule,
     RedisModule,
-    PusherModule,
+    FirebaseModule,
     DisplayModule,
     AuthModule,
     AdvertisementModule,

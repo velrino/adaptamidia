@@ -5,7 +5,7 @@ import { IncomingHttpHeaders } from 'http';
 import { Authenticated } from 'src/modules/auth/auth.interface';
 
 export interface RequestCustomClient extends IUserAgentParserResult {
-  ip: string | null;
+  ip: string;
   latitude: number;
   longitude: number;
   source: IpSourceEnum;

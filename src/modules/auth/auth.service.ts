@@ -12,7 +12,11 @@ import { DateTime } from 'luxon';
 
 import AuthHelper from './auth.helper';
 import { JwtService } from '@nestjs/jwt';
-import { AuthenticatedRequest, RequestCustomClient } from 'src/shared/request';
+import {
+  AuthenticatedRequest,
+  CustomRequest,
+  RequestCustomClient,
+} from 'src/shared/request';
 
 import { hasPermission } from '../permissions/permissions.helper';
 
@@ -35,6 +39,7 @@ import {
 import { UserOTPEnum } from '../user/user.interface';
 import { AuthOtpService } from './otp/otp.service';
 import { PermissionsEnum } from '../permissions/permissions.enum';
+import { AuthTokenService } from './token/token.service';
 
 @Injectable()
 export class AuthService {
@@ -44,13 +49,17 @@ export class AuthService {
     // private readonly logService: LogService,
     // private readonly emailService: EmailService,
     private readonly authOtpService: AuthOtpService,
+    private readonly authTokenService: AuthTokenService,
   ) {}
 
   /**
    * Registers a new user
    * Validates the email parameters with a hashed password and generates a JWT token for authentication.
    */
-  async register(parameters: AuthSignUpDto): Promise<AuthTokenParameters> {
+  async register(
+    parameters: AuthSignUpDto,
+    req: CustomRequest,
+  ): Promise<AuthTokenParameters> {
     try {
       await this.registerValidation(parameters.email);
 
@@ -59,7 +68,10 @@ export class AuthService {
         parameters.password,
       );
 
-      return this.prepareTokenPayload(newUser._id.toString());
+      return this.authTokenService.execute(
+        newUser._id.toString(),
+        req.custom_client.ip,
+      );
     } catch (error) {
       console.error(`AuthService.register | user ${parameters.email}`, {
         parameters,
@@ -306,7 +318,7 @@ export class AuthService {
     try {
       const user = await this.getUserByLogin(parameters, request);
 
-      return this.prepareTokenPayload(user._id.toString());
+      return this.authTokenService.execute(user._id.toString(), request.ip);
     } catch (error) {
       delete parameters?.password;
 
@@ -325,21 +337,21 @@ export class AuthService {
    * Prepares the JWT token payload for authentication.
    * Generates a JWT token with the user's ID and sets the expiration time.
    */
-  private prepareTokenPayload(userId: string): AuthTokenParameters {
-    const access_token = this.jwtService.sign({ id: userId });
+  // private prepareTokenPayload(userId: string): AuthTokenParameters {
+  //   const access_token = this.jwtService.sign({ id: userId });
 
-    const tokenDecoded = this.jwtService.decode(access_token);
+  //   const tokenDecoded = this.jwtService.decode(access_token);
 
-    return {
-      access_token,
-      expires_in: DateTime.fromSeconds(tokenDecoded.exp), //new Date(tokenDecoded.exp * 1000).toISOString(),
-      ...tokenDecoded,
-    };
-  }
+  //   return {
+  //     access_token,
+  //     expires_in: DateTime.fromSeconds(tokenDecoded.exp), //new Date(tokenDecoded.exp * 1000).toISOString(),
+  //     ...tokenDecoded,
+  //   };
+  // }
 
   public async setPassword(
     parameters: AuthSetPasswordDto,
-    // request: RequestCustomClient,
+    request: RequestCustomClient,
   ) {
     try {
       const user = await this.userModel.findOne({
@@ -360,7 +372,10 @@ export class AuthService {
         { new: true },
       );
 
-      const token = this.prepareTokenPayload(user._id.toString());
+      const token = this.authTokenService.execute(
+        user._id.toString(),
+        request.ip,
+      );
 
       // await this.logService.createLog({
       //   type: LogTypeEnum.auth,
@@ -440,8 +455,8 @@ export class AuthService {
     }
   }
 
-  async refreshToken(userId: string) {
-    return this.prepareTokenPayload(userId);
+  async refreshToken(userId: string, request: RequestCustomClient) {
+    return this.authTokenService.execute(userId, request.ip);
   }
 
   public async generateOTP(authenticated: Authenticated) {

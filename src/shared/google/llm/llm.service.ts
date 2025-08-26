@@ -7,6 +7,7 @@ import {
 } from './llm.interface';
 import { join } from 'path';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
+import { GetGoogleCloudCredential, GoogleCloudCredential } from '../resouces';
 
 export interface GenAiConfig {
   useVertexAI?: boolean;
@@ -24,28 +25,9 @@ export class GoogleGenAiProvider {
       apiKey: process.env.GOOGLE_GENAI_API_KEY,
     });
 
-    const fileToFind = 'rare-tape-466414-f4-a4a31231b9e1.json';
-
-    const dirs = ['dist', 'resources'];
-    const keyFilename = join(
-      process.cwd(),
-      'resources',
-      'rare-tape-466414-f4-a4a31231b9e1.json',
+    process.env.GOOGLE_APPLICATION_CREDENTIALS = GetGoogleCloudCredential(
+      GoogleCloudCredential['rare-tape-466414-f4-a4a31231b9e1.json'],
     );
-
-    Log(
-      LogType.INFO,
-      GoogleGenAiProvider.name,
-      'constructor',
-      LogAction.STARTED,
-      { keyFilename },
-    );
-
-    if (!keyFilename) {
-      throw new Error(`NOT_FOUND = ${fileToFind} in [${dirs.join(', ')}]`);
-    }
-
-    process.env.GOOGLE_APPLICATION_CREDENTIALS = keyFilename;
   }
 
   async *generateContentStream(

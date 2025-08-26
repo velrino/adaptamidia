@@ -32,8 +32,9 @@ export class AuthController {
   @Post('register')
   async register(
     @Body(new ValidationPipe({ transform: true })) data: AuthSignUpDto,
+    @Req() req: CustomRequest,
   ) {
-    return await this.authService.register(data);
+    return await this.authService.register(data, req);
   }
 
   @Post('login')
@@ -62,7 +63,7 @@ export class AuthController {
   @Get('refresh-token')
   @UseGuards(AuthJwtGuard)
   async refreshToken(@Req() req: any) {
-    return this.authService.refreshToken(req.user.id);
+    return this.authService.refreshToken(req.user.id, req.custom_client);
   }
 
   @Get('otp/generate')

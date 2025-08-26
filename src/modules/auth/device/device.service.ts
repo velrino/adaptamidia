@@ -1,23 +1,21 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
 import * as QRCode from 'qrcode';
-import { PusherService } from 'src/shared/pusher/pusher.service';
 import { AuthDeviceGenerateDto, IAuthDeviceCache } from './device.dto';
 import { RedisService } from 'src/shared/redis/redis.service';
 import { AuthenticatedRequest, CustomRequest } from 'src/shared/request';
 import { DateTime } from 'luxon';
 import { RedisKeysEnum } from 'src/shared/redis/redis.keys';
-import {
-  PusherChannelsEnum,
-  PusherEventsEnum,
-} from 'src/shared/pusher/pusher.enum';
+
 import { AuthTokenService } from '../token/token.service';
 import { RESULT } from 'src/shared/result.enum';
+import { FirebaseDatabaseService } from 'src/shared/firebase/firebase-database.service';
+import { FirebasePathsEnum } from 'src/shared/firebase/firebase.enum';
 
 @Injectable()
 export class AuthDeviceService {
   constructor(
-    private readonly pusherService: PusherService,
+    private readonly firebaseDatabaseService: FirebaseDatabaseService,
     private readonly redisService: RedisService,
     private readonly authTokenService: AuthTokenService,
     // private readonly logService: LogService,
@@ -87,7 +85,10 @@ export class AuthDeviceService {
 
       const user = authenticated.user.user.id;
 
-      const result = this.authTokenService.execute(user);
+      const result = this.authTokenService.execute(
+        user,
+        String(authenticated?.custom_client?.ip),
+      );
 
       // await this.logService.createLog({
       //   type: LogTypeEnum.auth,
@@ -104,33 +105,18 @@ export class AuthDeviceService {
       //   },
       // });
 
-      const sendWebSocket = await this.pusherService.pusher.trigger(
-        PusherChannelsEnum.AUTH_DEVICE_CHANNEL,
-        PusherEventsEnum.AUTH_DEVICE_GENERATE_CODE,
+      await this.firebaseDatabaseService.save(
+        FirebasePathsEnum.AUTH_DEVICES,
+        data.id,
         result,
-        // {
-        //   socket_id: data.id,
-        // },
       );
 
-      if ([200, 201].includes(sendWebSocket.status)) {
-        console.log(RESULT.AUTH_DEVICE_CODE_SEND_EVENT_SUCCESS, {
-          socket_id: data.id,
-          pusher: sendWebSocket,
-        });
-      } else {
-        console.error(RESULT.AUTH_DEVICE_CODE_SEND_EVENT_FAILED, {
-          socket_id: data.id,
-          pusher: sendWebSocket,
-        });
+      console.log(RESULT.AUTH_DEVICE_CODE_SEND_EVENT_SUCCESS, {
+        device_id: data.id,
+        result,
+      });
 
-        throw new HttpException(
-          RESULT.AUTH_DEVICE_CODE_SEND_EVENT_FAILED,
-          HttpStatus.UNPROCESSABLE_ENTITY,
-        );
-      }
-
-      await this.redisService.del(cacheKey);
+      // await this.redisService.del(cacheKey);
 
       return result;
     } catch (error) {

@@ -7,33 +7,17 @@ import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { RESULT } from 'src/shared/result.enum';
 import { readFile } from 'fs/promises';
 import { Readable } from 'stream';
+import { GetGoogleCloudCredential, GoogleCloudCredential } from '../resouces';
 // import { FindFileInDirs } from 'src/shared/general';
 
 @Injectable()
 export class GoogleCloudStorageService {
   private storage: Storage;
 
-  constructor(private configService: ConfigService) {
-    const fileToFind = 'rare-tape-466414-f4-a4a31231b9e1.json';
-
-    const dirs = ['dist', 'resources'];
-    const keyFilename = join(
-      process.cwd(),
-      'resources',
-      'rare-tape-466414-f4-a4a31231b9e1.json',
+  constructor() {
+    const keyFilename = GetGoogleCloudCredential(
+      GoogleCloudCredential['rare-tape-466414-f4-a4a31231b9e1.json'],
     );
-
-    Log(
-      LogType.INFO,
-      GoogleCloudStorageService.name,
-      'constructor',
-      LogAction.STARTED,
-      { keyFilename },
-    );
-
-    if (!keyFilename) {
-      throw new Error(`NOT_FOUND = ${fileToFind} in [${dirs.join(', ')}]`);
-    }
 
     this.storage = new Storage(
       keyFilename ? { keyFilename } : { projectId: 'rare-tape-466414-f4' },

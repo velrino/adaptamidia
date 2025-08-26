@@ -7,8 +7,10 @@ import { AuthTokenParameters } from '../auth.interface';
 export class AuthTokenService {
   constructor(private readonly jwtService: JwtService) {}
 
-  execute(userId: string): AuthTokenParameters {
-    const access_token = this.jwtService.sign({ id: userId });
+  execute(userId: string, ip: string): AuthTokenParameters {
+    const session = `${userId}-${ip}-${Date.now()}`;
+
+    const access_token = this.jwtService.sign({ id: userId, session });
 
     const tokenDecoded = this.jwtService.decode(access_token);
 

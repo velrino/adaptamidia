@@ -50,15 +50,15 @@ export class DashboardDisplayLogsProcessService {
   @Cron(CronExpression.EVERY_MINUTE)
   async execute() {
     const lockKey = `dashboard-process-${new Date().toISOString().split('T')[0]}`;
-    const lockAcquired = await this.acquireLock(
-      lockKey,
-      Milliseconds({ minutes: 5 }),
-    );
+    // const lockAcquired = await this.acquireLock(
+    //   lockKey,
+    //   Milliseconds({ minutes: 5 }),
+    // );
 
-    if (!lockAcquired) {
-      console.log('Dashboard processing already running on another instance');
-      return;
-    }
+    // if (!lockAcquired) {
+    //   console.log('Dashboard processing already running on another instance');
+    //   return;
+    // }
 
     try {
       Log(

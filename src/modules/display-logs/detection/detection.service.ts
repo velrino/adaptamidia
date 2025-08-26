@@ -43,6 +43,7 @@ export class DetectionDisplayLogService {
   @Process({ concurrency: 5 })
   async processJob(job: Job<IDetectionDisplayLogProcessor>) {
     try {
+      console.log({ DetectionDisplayLogService: job.data });
       await this.execute(job.data.parameters);
       await job.isCompleted();
     } catch (error) {
