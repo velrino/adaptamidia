@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import * as admin from 'firebase-admin'; // Importar o Admin SDK
 import { FirebasePathsEnum } from './firebase.enum';
 import {
@@ -8,17 +8,19 @@ import {
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 
 @Injectable()
-export class FirebaseDatabaseService {
-  public readonly database: admin.database.Database;
+export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
+  public database: admin.database.Database;
 
-  constructor() {
-    const keyFilename = GetGoogleCloudCredential(
-      GoogleCloudCredential['seemidia-display-android-82d570aeef50.json'],
-    );
+  constructor() {}
 
-    const serviceAccount = require(keyFilename);
-
+  async onModuleInit(): Promise<void> {
     try {
+      const keyFilename = GetGoogleCloudCredential(
+        GoogleCloudCredential['seemidia-display-android-82d570aeef50.json'],
+      );
+
+      const serviceAccount = require(keyFilename);
+
       // Verifica se o app já foi inicializado para evitar erros em testes/recargas
       if (!admin.apps.length) {
         admin.initializeApp({
@@ -34,11 +36,28 @@ export class FirebaseDatabaseService {
       Log(
         LogType.ERROR,
         FirebaseDatabaseService.name,
-        this.save.name,
+        this.onModuleInit.name,
         LogAction.FAILED,
         { about, error },
       );
       throw new Error(about);
+    }
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    try {
+      // Cleanup Firebase connections
+      if (admin.apps.length) {
+        await Promise.all(admin.apps.map(app => app?.delete()));
+      }
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        FirebaseDatabaseService.name,
+        this.onModuleDestroy.name,
+        LogAction.FAILED,
+        { error },
+      );
     }
   }
 
