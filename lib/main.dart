@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'services/storage_service.dart';
+import 'screens/configuration_screen.dart';
+import 'screens/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,100 +16,80 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'SeeMidia',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        brightness: Brightness.light,
+        useMaterial3: true,
       ),
-      home: const OrientationSelectionScreen(),
-    );
-  }
-}
-
-class OrientationSelectionScreen extends StatelessWidget {
-  const OrientationSelectionScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Escolha a orientação',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 40),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _OrientationButton(
-                  icon: Icons.stay_current_portrait,
-                  label: 'Portrait',
-                  onPressed: () {
-                    SystemChrome.setPreferredOrientations([
-                      DeviceOrientation.portraitUp,
-                    ]);
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) => const MyHomePage(title: 'SeeMidia - Portrait'),
-                      ),
-                    );
-                  },
-                ),
-                _OrientationButton(
-                  icon: Icons.stay_current_landscape,
-                  label: 'Landscape',
-                  onPressed: () {
-                    SystemChrome.setPreferredOrientations([
-                      DeviceOrientation.landscapeLeft,
-                      DeviceOrientation.landscapeRight,
-                    ]);
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) => const MyHomePage(title: 'SeeMidia - Landscape'),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ],
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.dark,
         ),
+        brightness: Brightness.dark,
+        useMaterial3: true,
       ),
+      themeMode: ThemeMode.system,
+      home: const AppWrapper(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
 
-class _OrientationButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
+class AppWrapper extends StatefulWidget {
+  const AppWrapper({super.key});
 
-  const _OrientationButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
+  @override
+  State<AppWrapper> createState() => _AppWrapperState();
+}
+
+class _AppWrapperState extends State<AppWrapper> {
+  bool _isConfigured = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkConfiguration();
+  }
+
+  Future<void> _checkConfiguration() async {
+    final isConfigured = await StorageService.isDeviceConfigured();
+    
+    if (isConfigured) {
+      final config = await StorageService.getDeviceConfig();
+      if (config != null) {
+        if (config.isLandscape) {
+          await SystemChrome.setPreferredOrientations([
+            DeviceOrientation.landscapeLeft,
+            DeviceOrientation.landscapeRight,
+          ]);
+        } else {
+          await SystemChrome.setPreferredOrientations([
+            DeviceOrientation.portraitUp,
+          ]);
+        }
+      }
+    }
+    
+    setState(() {
+      _isConfigured = isConfigured;
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.all(20),
-        minimumSize: const Size(120, 120),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 40),
-          const SizedBox(height: 10),
-          Text(label),
-        ],
-      ),
-    );
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return _isConfigured 
+        ? const LoginScreen() 
+        : const ConfigurationScreen();
   }
 }
 
