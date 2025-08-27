@@ -370,21 +370,34 @@ class _DisplayScreenState extends State<DisplayScreen> {
       width: double.infinity,
       height: double.infinity,
       color: Colors.black,
-      child: Stack(
-        children: [
-          // SOLUÇÃO SIMPLES: FORÇA FULLSCREEN EM QUALQUER VÍDEO
-          Positioned.fill(
-            child: FittedBox(
-              fit: BoxFit.cover, // SEMPRE cover = fullscreen
-              alignment: Alignment.center,
-              child: AspectRatio(
-                aspectRatio: videoSize.aspectRatio,
-                child: VideoPlayer(_videoController!),
-              ),
-            ),
-          ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final screenWidth = constraints.maxWidth;
+          final screenHeight = constraints.maxHeight;
+          final videoRatio = videoSize.aspectRatio;
+          final screenRatio = screenWidth / screenHeight;
           
-        ],
+          // Calcular tamanho para fullscreen
+          double videoWidth, videoHeight;
+          
+          if (videoRatio > screenRatio) {
+            // Vídeo mais largo - ajustar pela altura
+            videoHeight = screenHeight;
+            videoWidth = videoHeight * videoRatio;
+          } else {
+            // Vídeo mais alto - ajustar pela largura
+            videoWidth = screenWidth;
+            videoHeight = videoWidth / videoRatio;
+          }
+          
+          return Center(
+            child: SizedBox(
+              width: videoWidth,
+              height: videoHeight,
+              child: VideoPlayer(_videoController!),
+            ),
+          );
+        },
       ),
     );
   }
