@@ -136,8 +136,19 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
     if (content.type.toLowerCase() == 'advertisement' && mounted) {
       try {
+        // Debug: Log da URL específica que está dando problema
+        debugPrint('🎥 DEBUG Setting up video: ${content.url}');
+        debugPrint('🎥 DEBUG Content ID: ${content.id}');
+        debugPrint('🎥 DEBUG Content Title: ${content.title}');
+        
+        // Verificar se a URL parece válida
+        final uri = Uri.parse(content.url);
+        debugPrint('🎥 DEBUG URL Host: ${uri.host}');
+        debugPrint('🎥 DEBUG URL Path: ${uri.path}');
+        debugPrint('🎥 DEBUG URL has extension: ${uri.path.contains('.')}');
+        
         _videoController = VideoPlayerController.networkUrl(
-          Uri.parse(content.url),
+          uri,
           videoPlayerOptions: VideoPlayerOptions(
             mixWithOthers: false,
             allowBackgroundPlayback: false,
@@ -148,21 +159,48 @@ class _DisplayScreenState extends State<DisplayScreen> {
           ),
           httpHeaders: {
             'Connection': 'keep-alive',
+            'User-Agent': 'SeeMidiaPlayer/1.0',
+            'Accept': 'video/mp4,video/*,*/*',
+            'Cache-Control': 'no-cache',
           },
         );
         
         // Set volume to 0 before initialization to prevent audio codec
         _videoController!.setVolume(0.0);
         
+        debugPrint('🎥 DEBUG Initializing video controller...');
+        
+        // Add listener para monitorar mudanças de estado
+        _videoController!.addListener(() {
+          if (_videoController != null && mounted) {
+            final value = _videoController!.value;
+            debugPrint('🎥 Video State: isPlaying=${value.isPlaying}, hasError=${value.hasError}, isInitialized=${value.isInitialized}');
+            if (value.hasError) {
+              debugPrint('🎥 Video ERROR: ${value.errorDescription}');
+            }
+          }
+        });
+        
         await _videoController!.initialize();
+        debugPrint('🎥 DEBUG Video controller initialized successfully');
+        debugPrint('🎥 DEBUG Video size after init: ${_videoController!.value.size}');
         
         if (mounted) {
           _videoController!.setLooping(false);
           // Add small delay before playing
           await Future.delayed(const Duration(milliseconds: 100));
           await _videoController!.play();
+          debugPrint('🎥 DEBUG Video started playing');
+          
+          // Verificar se realmente está tocando após delay
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (_videoController != null && mounted) {
+            debugPrint('🎥 DEBUG Video playing check: ${_videoController!.value.isPlaying}');
+            debugPrint('🎥 DEBUG Video position: ${_videoController!.value.position}');
+          }
         }
       } catch (e) {
+        debugPrint('🎥 ERROR Setting up video: $e');
         await _disposeVideoController();
       }
     }
@@ -325,18 +363,28 @@ class _DisplayScreenState extends State<DisplayScreen> {
       );
     }
 
+    final videoSize = _videoController!.value.size;
+    debugPrint('🎥 Video: ${videoSize.width}x${videoSize.height} (${videoSize.aspectRatio.toStringAsFixed(2)})');
+
     return Container(
       width: double.infinity,
       height: double.infinity,
       color: Colors.black,
-      child: FittedBox(
-        fit: BoxFit.cover,
-        alignment: Alignment.center,
-        child: SizedBox(
-          width: _videoController!.value.size.width,
-          height: _videoController!.value.size.height,
-          child: VideoPlayer(_videoController!),
-        ),
+      child: Stack(
+        children: [
+          // SOLUÇÃO SIMPLES: FORÇA FULLSCREEN EM QUALQUER VÍDEO
+          Positioned.fill(
+            child: FittedBox(
+              fit: BoxFit.cover, // SEMPRE cover = fullscreen
+              alignment: Alignment.center,
+              child: AspectRatio(
+                aspectRatio: videoSize.aspectRatio,
+                child: VideoPlayer(_videoController!),
+              ),
+            ),
+          ),
+          
+        ],
       ),
     );
   }

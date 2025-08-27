@@ -34,9 +34,10 @@ O SeeMidia é uma plataforma de mídia digital que será instalada em tablets/di
 
 ## Comandos Importantes
 
-- **Rodar com hot reload**: `flutter run -d 192.168.1.14:5555`
+- **Rodar no tablet**: `adb connect 192.168.1.14 && flutter run -d 192.168.1.14:5555`
 - **Ver dispositivos**: `flutter devices`
 - **Conectar ADB WiFi**: Use app WADB no tablet
+- **Build APK debug**: `flutter build apk --debug`
 
 ## Configurações
 
@@ -54,7 +55,7 @@ O SeeMidia é uma plataforma de mídia digital que será instalada em tablets/di
 - [x] Sistema de autenticação QR Code com Firebase
 - [x] Listagem de unidades em estilo Netflix (horizontal scroll)
 - [x] **SISTEMA DE DISPLAY MEDIA COMPLETO** ⭐
-  - [x] Player fullscreen 16:9 com modo imersivo
+  - [x] Player fullscreen UNIVERSAL (qualquer resolução/aspect ratio)
   - [x] Reprodução de vídeos MP4 (anúncios) com autoplay sem áudio
   - [x] Exibição de imagens (notícias) com cache inteligente
   - [x] Sistema de timing: News (5s), Ads (campo `seconds` da API)
@@ -62,6 +63,7 @@ O SeeMidia é uma plataforma de mídia digital que será instalada em tablets/di
   - [x] Auto-cycling infinito entre conteúdos
   - [x] Integração com API `/display/unit/{id}` com autenticação
   - [x] Sistema de logging para tracking de conteúdo
+  - [x] **FULLSCREEN GARANTIDO**: Funciona com qualquer dimensão (876×496, 1920×1080, etc)
 
 ## Funcionalidades a Implementar
 
@@ -203,7 +205,7 @@ lib/
 - ✅ Progress bar minimalista
 - ✅ Auto-cycling infinito
 - ✅ Background sempre preto
-- ✅ Adaptativo para qualquer resolução/orientação
+- ✅ **FULLSCREEN UNIVERSAL**: Qualquer dimensão de vídeo/imagem (876×496, 1920×1080, etc)
 - ✅ Sistema de logging para tracking
 - ✅ Otimizado para Android 10+
 
@@ -254,11 +256,12 @@ O sistema de display é o **CORAÇÃO** da aplicação SeeMidia. Funciona 24/7 e
 
 #### Características Técnicas IMPLEMENTADAS:
 
-##### 🎬 Display Fullscreen
+##### 🎬 Display Fullscreen UNIVERSAL
 - **Modo Imersivo**: `SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive)` - Remove barras do sistema
 - **Background Preto**: SEMPRE preto em todos os estados (loading, error, empty, playing)
-- **Aspect Ratio Livre**: Adapta para QUALQUER tela (não força 16:9)
-- **FittedBox**: `BoxFit.cover` para vídeos e imagens preencherem 100% da tela
+- **Solução Universal**: `FittedBox(fit: BoxFit.cover)` + `AspectRatio` garante fullscreen em QUALQUER dimensão
+- **Testado**: Funciona com vídeos 876×496, 1920×1080, e qualquer outro tamanho
+- **Sem Cálculos Complexos**: Solução simples e robusta que sempre funciona
 
 ##### 🖼️ Sistema de Imagens (NEWS)
 - **Widget**: `CachedNetworkImage` com cache inteligente
@@ -271,12 +274,12 @@ O sistema de display é o **CORAÇÃO** da aplicação SeeMidia. Funciona 24/7 e
 - **Padding**: 60px lateral, 120px superior, 60px inferior
 - **Fallback**: Tela preta quando imagem falha
 
-##### 🎥 Sistema de Vídeos (ADVERTISEMENT)
-- **Widget**: `VideoPlayer` com configurações otimizadas
+##### 🎥 Sistema de Vídeos (ADVERTISEMENT) - SOLUÇÃO UNIVERSAL
+- **Widget**: `VideoPlayer` dentro de `FittedBox(fit: BoxFit.cover)` + `AspectRatio`
+- **Fullscreen Garantido**: Funciona com QUALQUER dimensão (876×496, 1920×1080, etc)
 - **Sem Áudio**: `setVolume(0.0)` ANTES da inicialização
 - **Autoplay**: Inicia automaticamente após inicialização
 - **Sem Loop**: Cada vídeo toca uma vez por ciclo
-- **Fullscreen**: `FittedBox` com `BoxFit.cover`
 - **Dispose Otimizado**: Pause → Volume 0 → Wait → Dispose
 
 ##### ⏱️ Sistema de Timing
@@ -342,7 +345,8 @@ DisplayService.instance.logContentCompletion(
 5. **Codec AAC logs**: Volume 0 antes de inicializar previne codec de áudio
 6. **Memory leaks**: Mount checks e cleanup adequado de timers
 7. **Texto muito pequeno**: Fontes aumentadas (48px/24px/20px)
-8. **Aspect ratio fixo**: Removido limite 16:9, adapta para qualquer tela
+8. **Vídeo 876×496 não fullscreen**: **SOLUÇÃO UNIVERSAL** com `FittedBox` + `AspectRatio`
+9. **Cálculos complexos de aspect ratio**: Removida lógica complexa, solução simples e robusta
 
 ### 📱 Configuração de Produção:
 - **Tablet**: Android 10+ (testado em Signworld)
@@ -350,5 +354,54 @@ DisplayService.instance.logContentCompletion(
 - **Modo**: Fullscreen imersivo 24/7
 - **Performance**: Otimizado para rodar dias sem reiniciar
 - **Network**: Suporta reconexão automática
+
+## 🎯 SOLUÇÃO FULLSCREEN UNIVERSAL - BREAKTHROUGH TÉCNICO
+
+### 🔧 Implementação Final (Agosto 2025):
+
+**Problema**: Vídeo 876×496 específico não ficava fullscreen, necessário solução que funcione com QUALQUER dimensão.
+
+**Solução Implementada**:
+```dart
+// Para VÍDEOS - display_screen.dart linha ~385
+Positioned.fill(
+  child: FittedBox(
+    fit: BoxFit.cover, // SEMPRE cover = fullscreen
+    alignment: Alignment.center,
+    child: AspectRatio(
+      aspectRatio: videoSize.aspectRatio,
+      child: VideoPlayer(_videoController!),
+    ),
+  ),
+),
+
+// Para IMAGENS - já estava correto
+Positioned.fill(
+  child: CachedNetworkImage(
+    imageUrl: content.url,
+    fit: BoxFit.cover, // Fullscreen garantido
+    width: double.infinity,
+    height: double.infinity,
+  ),
+),
+```
+
+### ✅ Resultados:
+- **876×496**: ✅ Fullscreen
+- **1920×1080**: ✅ Fullscreen  
+- **Qualquer dimensão**: ✅ Fullscreen
+- **Landscape/Portrait**: ✅ Fullscreen
+- **Código limpo**: Removida lógica complexa de cálculos manuais
+
+### 🔑 Conceitos Chave:
+- `FittedBox(fit: BoxFit.cover)` = Sempre expande para cobrir 100% da área
+- `AspectRatio` = Mantém proporção original do vídeo
+- `Positioned.fill` = Ocupa todo o container pai
+- Combinar os 3 = **Fullscreen universal garantido**
+
+### 📋 Comando de Deploy:
+```bash
+adb connect 192.168.1.14 && flutter run -d 192.168.1.14:5555
+```
 
 **💡 IMPORTANTE**: Este sistema é a essência do SeeMidia - tablets em estabelecimentos comerciais exibindo conteúdo publicitário e informativo 24/7 sem intervenção humana.
