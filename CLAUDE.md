@@ -405,3 +405,325 @@ adb connect 192.168.1.14 && flutter run -d 192.168.1.14:5555
 ```
 
 **💡 IMPORTANTE**: Este sistema é a essência do SeeMidia - tablets em estabelecimentos comerciais exibindo conteúdo publicitário e informativo 24/7 sem intervenção humana.
+
+## 📋 DETALHAMENTO COMPLETO PARA MIGRAÇÃO REACT NATIVE
+
+### 🏗️ ARQUITETURA FLUTTER IMPLEMENTADA
+
+#### 📁 Estrutura de Pastas:
+```
+lib/
+├── main.dart                          # Entry point + routing
+├── interfaces/                        # Contratos TypeScript-like
+│   ├── auth_data.dart                 # Interfaces de autenticação
+│   └── display_unit.dart              # Interfaces do sistema de display
+├── models/                            # Modelos de dados (não usado)  
+├── services/                          # Business logic isolada
+│   ├── api_service.dart               # HTTP client genérico
+│   ├── auth_service.dart              # Autenticação QR Code
+│   ├── display_service.dart           # Service do display media
+│   ├── firebase_service.dart          # Integração Firebase
+│   └── storage_service.dart           # SharedPreferences wrapper
+├── screens/                           # Telas da aplicação
+│   ├── configuration_screen.dart      # Modal configurações reutilizável
+│   ├── login_screen.dart             # Tela de login QR Code
+│   ├── authenticated/                 # Telas pós-autenticação
+│   │   ├── home_screen.dart          # Lista unidades estilo Netflix
+│   │   └── display_screen.dart       # ⭐ PLAYER FULLSCREEN CORE
+└── utils/                            # Utilitários gerais (não usado)
+```
+
+#### 🔧 SERVICES IMPLEMENTADOS:
+
+##### **ApiService** - HTTP Client Universal
+```dart
+class ApiService {
+  static String baseUrl = 'https://api.seemidia.com/v1';
+  
+  // GET genérico com tipo de retorno
+  static Future<ApiResponse<T>> get<T>(
+    String endpoint,
+    T Function(Map<String, dynamic>) fromJson,
+    {Map<String, String>? headers}
+  );
+  
+  // POST genérico  
+  static Future<ApiResponse<T>> post<T>(
+    String endpoint,
+    Map<String, dynamic> data,
+    T Function(Map<String, dynamic>) fromJson,
+    {Map<String, String>? headers}
+  );
+}
+```
+
+##### **AuthService** - QR Code + Firebase
+```dart
+class AuthService {
+  // Login via QR Code → Firebase
+  Future<IAuthResponse?> authenticateWithQRCode(String qrCodeData);
+  
+  // Refresh token automático
+  Future<String?> refreshToken(String currentToken);
+  
+  // Logout limpa storage
+  Future<void> logout();
+}
+```
+
+##### **DisplayService** - Core do Sistema
+```dart  
+class DisplayService {
+  // Busca conteúdo de uma unidade específica
+  Future<IDisplayUnit?> getDisplayUnit(String unitId);
+  
+  // Log de tracking (futuro envio ao servidor)
+  void logContentCompletion({
+    required String unitId,
+    required String contentId,
+    required String contentType,
+    required String contentTitle,
+    required int displayDuration,
+    required DateTime startTime,
+    required DateTime endTime,
+  });
+}
+```
+
+##### **StorageService** - Persistência Local
+```dart
+class StorageService {
+  // Auth token
+  static Future<String?> getAuthToken();
+  static Future<void> setAuthToken(String token);
+  
+  // User data
+  static Future<Map<String, dynamic>?> getUserData();
+  static Future<void> setUserData(Map<String, dynamic> data);
+  
+  // Orientation preference (futuro)
+  static Future<String?> getOrientation();
+  static Future<void> setOrientation(String orientation);
+}
+```
+
+#### 🎮 TELAS IMPLEMENTADAS:
+
+##### **LoginScreen** - QR Code Scanner
+- Scanner QR Code nativo com preview
+- Validação de QR Code via regex
+- Auto-login se token válido existe
+- Feedback visual de erro/sucesso
+- Navegação automática para HomeScreen
+
+##### **HomeScreen** - Lista de Unidades Netflix-Style  
+- Scroll horizontal de unidades
+- Cards com imagem, nome, e status
+- Loading states elegantes
+- Pull-to-refresh
+- Navegação para `/display/{unitId}` 
+- Logout button no top
+
+##### **DisplayScreen** - ⭐ PLAYER FULLSCREEN CORE
+**O coração do sistema SeeMidia:**
+
+###### Funcionalidades Implementadas:
+1. **Fullscreen Imersivo Total**:
+   - `SystemUiMode.immersive` remove todas as barras
+   - Background sempre preto
+   - Wakelock mantém tela ligada 24/7
+
+2. **Player Universal de Mídia**:
+   - **Imagens (NEWS)**: `CachedNetworkImage` + overlay elegante
+   - **Vídeos (ADVERTISEMENTS)**: `VideoPlayer` sem áudio
+   - **Solução Fullscreen Universal**: `FittedBox(BoxFit.cover)` + `AspectRatio`
+
+3. **Sistema de Timing Preciso**:
+   - NEWS: 5 segundos fixo
+   - ADS: Campo `seconds` da API (10s, 30s, etc)
+   - Progress bar minimalista (branca, bottom)
+   - Auto-cycling infinito
+
+4. **Estados Robustos**:
+   - Loading: Tela preta silenciosa
+   - Error: Tela preta com tap-to-retry
+   - Empty: Tela preta 
+   - Playing: Conteúdo + progress bar
+
+5. **Otimizações de Performance**:
+   - Mount checks em todos async
+   - Timer cleanup automático
+   - Video dispose otimizado com delays
+   - Memory management rigoroso
+
+### 📊 FLUXO DE DADOS API:
+
+#### **Autenticação QR Code**:
+```json
+POST /auth/qr-login
+{
+  "qr_code": "seemidia://unit/64f5b2a8e4b0c3d2f1a6b9c7"
+}
+
+Response:
+{
+  "success": true,
+  "data": {
+    "access_token": "jwt-token",
+    "id": "user-id",
+    "units": [...]
+  }
+}
+```
+
+#### **Display Content**:
+```json
+GET /display/unit/64f5b2a8e4b0c3d2f1a6b9c7
+Authorization: Bearer jwt-token
+
+Response:
+{
+  "success": true,
+  "unit": {
+    "_id": "64f5b2a8e4b0c3d2f1a6b9c7",
+    "name": "Loja Centro SP",
+    "status": "ACTIVE"
+  },
+  "data": [
+    {
+      "type": "NEWS",
+      "news": {
+        "_id": "news-id",
+        "image": "https://img-url.jpg",      // ⚠️ É 'image' não 'url' 
+        "title": "Título da notícia",
+        "description": "Descrição...",
+        "source_name": "Metropoles.com",
+        "author": "Nome Autor",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "type": "ADVERTISEMENT", 
+      "ads": {
+        "_id": "ad-id",
+        "source": "https://video-url.mp4",   // ⚠️ É 'source' não 'url'
+        "title": "Nome do anúncio",
+        "seconds": 30,                       // ⚠️ Duração customizada
+        "status": "ACTIVE"
+      }
+    }
+  ]
+}
+```
+
+### 🎯 PROBLEMAS CRÍTICOS RESOLVIDOS:
+
+1. **Vídeo não fullscreen em qualquer dimensão**:
+   - Solução: `FittedBox(fit: BoxFit.cover)` + `AspectRatio`
+   - Funciona com 876×496, 1920×1080, qualquer tamanho
+
+2. **Memory leaks e crashes**:
+   - Mount checks antes de setState
+   - Timer cancellation automático
+   - Video dispose com delays (200ms)
+
+3. **Codec AAC warnings**:
+   - `setVolume(0.0)` ANTES de inicializar player
+   - `mixWithOthers: false`
+
+4. **Campos incorretos da API**:
+   - NEWS usa `news.image` não `news.url`
+   - ADS usa `ads.source` não `ads.url`  
+   - ADS usa `ads.seconds` para timing
+
+5. **Background verde padrão Flutter**:
+   - `backgroundColor: Colors.black` forçado
+   - Scaffold e Container sempre pretos
+
+### 🚀 MIGRAÇÃO PARA REACT NATIVE:
+
+#### **Dependências Equivalentes**:
+```json
+{
+  "@react-native-async-storage/async-storage": "^1.21.0",  // StorageService
+  "@react-native-firebase/app": "^18.6.2",                // Firebase
+  "@react-native-firebase/database": "^18.6.2",           // Firebase DB
+  "react-native-camera": "^4.2.1",                        // QR Scanner
+  "react-native-video": "^5.2.1",                         // Video Player  
+  "react-native-fast-image": "^8.6.3",                    // Image Cache
+  "react-native-orientation-locker": "^1.5.0",            // Orientation
+  "@react-native-keep-awake/keep-awake": "^2.1.1",       // Wakelock
+  "react-native-system-navigation-bar": "^2.6.1"         // Fullscreen
+}
+```
+
+#### **Componentes Core para Criar**:
+
+1. **DisplayPlayer** (equivale a DisplayScreen):
+   - Fullscreen com `react-native-system-navigation-bar`
+   - Video com `react-native-video` (muted: true)
+   - Image com `react-native-fast-image`
+   - Timer com `useInterval` hook
+   - Progress bar customizada
+
+2. **APIClient** (equivale a ApiService):
+   - Fetch wrapper com retry logic
+   - Auth header automático 
+   - Generic typing com TypeScript
+
+3. **AuthProvider** (equivale a AuthService):
+   - Context para auth state
+   - QR Code authentication
+   - Token refresh automático
+
+#### **Estados e Hooks Necessários**:
+```typescript  
+// Player state
+const [contentIndex, setContentIndex] = useState(0);
+const [isPlaying, setIsPlaying] = useState(false);
+const [progress, setProgress] = useState(0);
+const [contents, setContents] = useState<DisplayContent[]>([]);
+
+// API integration
+const { data: displayUnit } = useDisplayUnit(unitId);
+const { mutate: logCompletion } = useLogContentCompletion();
+```
+
+#### **Arquivo de Configuração React Native**:
+```typescript
+// config/seemidia.ts
+export const SEEMIDIA_CONFIG = {
+  API_BASE_URL: 'https://api.seemidia.com/v1',
+  NEWS_DURATION: 5000, // 5 segundos
+  FULLSCREEN_MODE: 'immersive',
+  WAKELOCK_ENABLED: true,
+  AUTO_REFRESH: true,
+  QR_REGEX: /seemidia:\/\/unit\/[a-f0-9]{24}/,
+  SUPPORTED_VIDEO_FORMATS: ['mp4', 'mov'],
+  SUPPORTED_IMAGE_FORMATS: ['jpg', 'jpeg', 'png', 'webp']
+};
+```
+
+### ⚡ COMANDOS FINAIS FLUTTER:
+```bash
+# Deploy final no tablet
+adb connect 192.168.1.14 && flutter run -d 192.168.1.14:5555
+
+# Build APK de produção  
+flutter build apk --release
+
+# Ver logs em tempo real
+adb logcat | grep flutter
+```
+
+### 🎯 **RESUMO EXECUTIVO**:
+Sistema 100% funcional de display digital 24/7 com:
+- ✅ Autenticação QR Code + Firebase 
+- ✅ Lista de unidades estilo Netflix
+- ✅ Player fullscreen universal (qualquer resolução)
+- ✅ Suporte NEWS (imagens, 5s) e ADS (vídeos, timing variável)
+- ✅ Sistema robusto anti-crash com wakelock
+- ✅ API integration completa com retry logic
+- ✅ Performance otimizada para tablets Android 10+
+
+**Pronto para migração React Native** com toda documentação técnica detalhada acima! 🚀

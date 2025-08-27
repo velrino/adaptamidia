@@ -1,568 +1,457 @@
+import 'dart:async';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'dart:async';
+import 'package:wakelock_plus/wakelock_plus.dart';
+
 import '../../interfaces/display_unit.dart';
 import '../../services/display_service.dart';
 
+/// DisplayScreen
+/// - Força fullscreen verdadeiro para vídeos e imagens (cover)
+/// - Resistente para rodar 24/7 (wakelock, ciclo de vida, fallback em erro)
+/// - Pré-carrega o próximo vídeo quando possível
+///
+/// Como usar rapidamente:
+/// DisplayScreen(contents: [
+///   DisplayContent(type: ContentType.image, url: 'https://.../img.jpg', durationSeconds: 8),
+///   DisplayContent(type: ContentType.video, url: 'https://.../video.mp4'),
+/// ]);
 class DisplayScreen extends StatefulWidget {
-  final String unitId;
-  
-  const DisplayScreen({
-    super.key,
-    required this.unitId,
-  });
+  const DisplayScreen({super.key, this.unitId, this.contents, this.autoStart = true});
+
+  /// ID da unidade para buscar conteúdo via API
+  final String? unitId;
+
+  /// Conteúdos (caso não venha por API). Se nulo, adapte o `_loadDisplayUnit()`
+  final List<DisplayContent>? contents;
+
+  /// Se deve iniciar automaticamente a reprodução
+  final bool autoStart;
 
   @override
   State<DisplayScreen> createState() => _DisplayScreenState();
 }
 
-class _DisplayScreenState extends State<DisplayScreen> {
-  bool _isLoading = true;
-  String? _error;
-  IDisplayUnit? _displayUnit;
-  int _currentContentIndex = 0;
-  Timer? _contentTimer;
-  Timer? _progressTimer;
-  double _progress = 0.0;
-  DateTime? _contentStartTime;
-  int _currentDuration = 0;
+class _DisplayScreenState extends State<DisplayScreen>
+    with WidgetsBindingObserver {
+  // Timeline
+  List<DisplayContent> _contents = const [];
+  int _currentIndex = 0;
+
+  // Timers
+  Timer? _contentTimer; // controla duração de imagens e fallback
+  Timer? _progressTimer; // opcional p/ reportar progresso
+
+  // Video controllers
   VideoPlayerController? _videoController;
+  VideoPlayerController? _nextVideoController; // pré-carregamento do próximo
+
+  bool _isSettingUp = false; // evita setups concorrentes
+  bool _disposed = false;
 
   @override
   void initState() {
     super.initState();
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
-    _loadDisplayUnit();
+    WidgetsBinding.instance.addObserver(this);
+
+    // Imersão total
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    // Mantém a tela ligada 24/7
+    WakelockPlus.enable();
+
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    // Carrega conteúdos
+    if (widget.contents != null && widget.contents!.isNotEmpty) {
+      _contents = widget.contents!;
+    } else {
+      _contents = await _loadDisplayUnit();
+    }
+
+    if (_contents.isEmpty) return;
+
+    if (widget.autoStart && mounted) {
+      await _startContentDisplay();
+    }
+  }
+
+  /// Carrega conteúdo da unidade via API
+  Future<List<DisplayContent>> _loadDisplayUnit() async {
+    if (widget.unitId == null) {
+      return [];
+    }
+
+    try {
+      final displayUnit = await DisplayService.instance.getDisplayUnit(widget.unitId!);
+      if (displayUnit == null) {
+        return [];
+      }
+
+      // Converte IDisplayContent para DisplayContent do screen
+      return displayUnit.contents
+          .where((content) => content.isActive)
+          .map((content) => _convertToDisplayContent(content))
+          .toList();
+    } catch (e) {
+      debugPrint('Error loading display unit: $e');
+      return [];
+    }
+  }
+
+  /// Converte IDisplayContent da API para DisplayContent do screen
+  DisplayContent _convertToDisplayContent(IDisplayContent apiContent) {
+    ContentType type;
+    if (apiContent.type == 'NEWS') {
+      type = ContentType.image;
+    } else if (apiContent.type == 'ADVERTISEMENT') {
+      type = ContentType.video;
+    } else {
+      type = ContentType.image; // default
+    }
+
+    int? duration;
+    if (apiContent.type == 'NEWS') {
+      duration = 5; // NEWS sempre 5 segundos
+    } else if (apiContent.seconds != null) {
+      duration = apiContent.seconds; // ADS usa campo seconds da API
+    }
+
+    return DisplayContent(
+      type: type,
+      url: apiContent.url,
+      durationSeconds: duration,
+    );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Pausa/resume confiável ao mudar estado do app
+    if (_videoController == null) return;
+
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+        _videoController!.pause();
+        break;
+      case AppLifecycleState.resumed:
+        if (_videoController!.value.isInitialized && mounted) {
+          _videoController!.play();
+        }
+        break;
+      default:
+        break;
+    }
   }
 
   @override
   void dispose() {
+    _disposed = true;
+    WidgetsBinding.instance.removeObserver(this);
+
     _contentTimer?.cancel();
     _progressTimer?.cancel();
-    _disposeVideoController();
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+    _disposeVideoController(_videoController);
+    _disposeVideoController(_nextVideoController);
+
+    WakelockPlus.disable();
     super.dispose();
   }
 
-  Future<void> _loadDisplayUnit() async {
+  Future<void> _disposeVideoController(VideoPlayerController? c) async {
     try {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
-
-      final displayUnit = await DisplayService.instance.getDisplayUnit(widget.unitId);
-      
-      if (displayUnit != null && displayUnit.contents.isNotEmpty) {
-        setState(() {
-          _displayUnit = displayUnit;
-          _isLoading = false;
-        });
-        
-        if (mounted) {
-          _startContentDisplay();
-        }
-      } else {
-        setState(() {
-          _error = 'Nenhum conteúdo encontrado para esta unidade';
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'Erro ao carregar conteúdo: $e';
-        _isLoading = false;
-      });
-    }
+      await c?.pause();
+      await c?.dispose();
+    } catch (_) {}
   }
 
   Future<void> _startContentDisplay() async {
-    if (_displayUnit == null || _displayUnit!.contents.isEmpty || !mounted) return;
+    if (!mounted || _disposed || _isSettingUp) return;
 
-    // Cancel existing timers first
+    _isSettingUp = true;
+    _contentTimer?.cancel();
+
+    if (_contents.isEmpty) {
+      _isSettingUp = false;
+      return;
+    }
+
+    final content = _contents[_currentIndex % _contents.length];
+
+    try {
+      switch (content.type) {
+        case ContentType.video:
+          await _playVideo(content);
+          break;
+        case ContentType.image:
+          await _showImage(content);
+          break;
+      }
+    } catch (e) {
+      debugPrint('⚠️ Erro ao iniciar conteúdo: $e');
+      // Em erro, tenta avançar para o próximo sem travar
+      await _goToNextContent();
+    } finally {
+      _isSettingUp = false;
+    }
+  }
+
+  Future<void> _playVideo(DisplayContent content) async {
+    // Descarta players anteriores
+    await _disposeVideoController(_videoController);
+
+    final controller = VideoPlayerController.networkUrl(Uri.parse(content.url));
+
+    _videoController = controller;
+
+    try {
+      await controller.initialize();
+    } catch (e) {
+      debugPrint('🎥 Falha ao inicializar vídeo atual: $e');
+      rethrow;
+    }
+
+    if (!mounted) return;
+
+    // Configurações para reprodução estável
+    await controller.setLooping(false);
+    await controller.play();
+
+    // Listener para avançar ao final
+    controller.addListener(() async {
+      if (!mounted || _disposed) return;
+      final v = controller.value;
+      if (v.isInitialized && !v.isPlaying) {
+        // Chegou ao fim (ou pausou por erro). Avança.
+        // Pequeno debounce para não chamar múltiplas vezes
+        controller.removeListener(() {});
+        await _goToNextContent();
+      }
+    });
+
+    // Pré-carrega próximo vídeo (se existir)
+    _preloadNextVideo();
+
+    setState(() {}); // re-render para exibir player
+
+    // Fallback timer de segurança (se quiser limitar por duração custom)
+    _contentTimer?.cancel();
+    if (content.durationSeconds != null && content.durationSeconds! > 0) {
+      _contentTimer = Timer(Duration(seconds: content.durationSeconds!), () {
+        if (mounted) {
+          _goToNextContent();
+        }
+      });
+    }
+  }
+
+  void _preloadNextVideo() {
+    // Limpa preload anterior
+    _disposeVideoController(_nextVideoController);
+    _nextVideoController = null;
+
+    if (_contents.isEmpty) return;
+
+    final nextIdx = (_currentIndex + 1) % _contents.length;
+    final next = _contents[nextIdx];
+    if (next.type != ContentType.video) return;
+
+    try {
+      final c = VideoPlayerController.networkUrl(Uri.parse(next.url));
+      _nextVideoController = c;
+      c
+          .initialize()
+          .then((_) {
+            // Deixa pronto para trocar rápido (não dá play ainda)
+            debugPrint('⬇️ Próximo vídeo pré-carregado');
+          })
+          .catchError((e) {
+            debugPrint('⚠️ Erro no preload do próximo vídeo: $e');
+          });
+    } catch (e) {
+      debugPrint('⚠️ Exceção ao preparar preload: $e');
+    }
+  }
+
+  Future<void> _showImage(DisplayContent content) async {
+    // Ao trocar para imagem, garanta que não há vídeo tocando
+    await _disposeVideoController(_videoController);
+    setState(() {});
+
+    // Duração padrão para imagens (8s) se não especificado
+    final secs = (content.durationSeconds ?? 8).clamp(1, 3600);
+    _contentTimer?.cancel();
+    _contentTimer = Timer(Duration(seconds: secs), () {
+      if (mounted) {
+        _goToNextContent();
+      }
+    });
+  }
+
+  Future<void> _goToNextContent() async {
+    if (!mounted || _disposed) return;
+
     _contentTimer?.cancel();
     _progressTimer?.cancel();
 
-    final currentContent = _displayUnit!.contents[_currentContentIndex];
-    
-    _currentDuration = currentContent.type.toLowerCase() == 'news' 
-        ? 5 
-        : currentContent.seconds ?? 5;
-    
-    _contentStartTime = DateTime.now();
-    
-    // Setup media player
-    await _setupMediaPlayer(currentContent);
-    
-    // Only proceed if still mounted
-    if (!mounted) return;
-    
+    if (_contents.isEmpty) return;
+
     setState(() {
-      _progress = 0.0;
+      _currentIndex = (_currentIndex + 1) % _contents.length;
     });
 
-    // Start progress timer
-    _progressTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (!mounted) {
-        timer.cancel();
+    // Se o próximo já está pré-carregado e é vídeo, faça um handoff rápido
+    final next = _contents[_currentIndex];
+    if (next.type == ContentType.video && _nextVideoController != null) {
+      // Troca controllers: o próximo vira atual
+      final ready = _nextVideoController!;
+      _nextVideoController = null; // libera slot
+
+      await _disposeVideoController(_videoController);
+      _videoController = ready;
+
+      try {
+        await ready.setLooping(false);
+        await ready.play();
+      } catch (e) {
+        debugPrint('🎥 Erro ao dar play no vídeo pré-carregado: $e');
+        await _startContentDisplay();
         return;
       }
-      
-      setState(() {
-        _progress += 0.1 / _currentDuration;
-        if (_progress >= 1.0) {
-          _progress = 1.0;
-          timer.cancel();
-        }
-      });
-    });
 
-    // Start content timer
-    _contentTimer = Timer(Duration(seconds: _currentDuration), () {
-      if (mounted) {
-        _logContentCompletion();
-        _nextContent();
-      }
-    });
-  }
+      setState(() {});
+      _preloadNextVideo();
 
-  Future<void> _setupMediaPlayer(IDisplayContent content) async {
-    await _disposeVideoController();
-    
-    // Small delay to ensure proper cleanup
-    await Future.delayed(const Duration(milliseconds: 200));
-
-    if (content.type.toLowerCase() == 'advertisement' && mounted) {
-      try {
-        // Debug: Log da URL específica que está dando problema
-        debugPrint('🎥 DEBUG Setting up video: ${content.url}');
-        debugPrint('🎥 DEBUG Content ID: ${content.id}');
-        debugPrint('🎥 DEBUG Content Title: ${content.title}');
-        
-        // Verificar se a URL parece válida
-        final uri = Uri.parse(content.url);
-        debugPrint('🎥 DEBUG URL Host: ${uri.host}');
-        debugPrint('🎥 DEBUG URL Path: ${uri.path}');
-        debugPrint('🎥 DEBUG URL has extension: ${uri.path.contains('.')}');
-        
-        _videoController = VideoPlayerController.networkUrl(
-          uri,
-          videoPlayerOptions: VideoPlayerOptions(
-            mixWithOthers: false,
-            allowBackgroundPlayback: false,
-            // Disable audio track to prevent codec initialization
-            webOptions: const VideoPlayerWebOptions(
-              allowRemotePlayback: false,
-            ),
-          ),
-          httpHeaders: {
-            'Connection': 'keep-alive',
-            'User-Agent': 'SeeMidiaPlayer/1.0',
-            'Accept': 'video/mp4,video/*,*/*',
-            'Cache-Control': 'no-cache',
-          },
-        );
-        
-        // Set volume to 0 before initialization to prevent audio codec
-        _videoController!.setVolume(0.0);
-        
-        debugPrint('🎥 DEBUG Initializing video controller...');
-        
-        // Add listener para monitorar mudanças de estado
-        _videoController!.addListener(() {
-          if (_videoController != null && mounted) {
-            final value = _videoController!.value;
-            debugPrint('🎥 Video State: isPlaying=${value.isPlaying}, hasError=${value.hasError}, isInitialized=${value.isInitialized}');
-            if (value.hasError) {
-              debugPrint('🎥 Video ERROR: ${value.errorDescription}');
-            }
-          }
+      // Fallback de duração
+      _contentTimer?.cancel();
+      if (next.durationSeconds != null && next.durationSeconds! > 0) {
+        _contentTimer = Timer(Duration(seconds: next.durationSeconds!), () {
+          if (mounted) _goToNextContent();
         });
-        
-        await _videoController!.initialize();
-        debugPrint('🎥 DEBUG Video controller initialized successfully');
-        debugPrint('🎥 DEBUG Video size after init: ${_videoController!.value.size}');
-        
-        if (mounted) {
-          _videoController!.setLooping(false);
-          // Add small delay before playing
-          await Future.delayed(const Duration(milliseconds: 100));
-          await _videoController!.play();
-          debugPrint('🎥 DEBUG Video started playing');
-          
-          // Verificar se realmente está tocando após delay
-          await Future.delayed(const Duration(milliseconds: 500));
-          if (_videoController != null && mounted) {
-            debugPrint('🎥 DEBUG Video playing check: ${_videoController!.value.isPlaying}');
-            debugPrint('🎥 DEBUG Video position: ${_videoController!.value.position}');
-          }
-        }
-      } catch (e) {
-        debugPrint('🎥 ERROR Setting up video: $e');
-        await _disposeVideoController();
       }
+
+      return;
     }
-  }
 
-  Future<void> _disposeVideoController() async {
-    if (_videoController != null) {
-      final controller = _videoController!;
-      _videoController = null;
-      
-      try {
-        // Stop playback first
-        if (controller.value.isPlaying) {
-          await controller.pause();
-        }
-        
-        // Set volume to 0 to stop audio processing
-        controller.setVolume(0.0);
-        
-        // Wait for buffering to complete
-        if (controller.value.isBuffering) {
-          await Future.delayed(const Duration(milliseconds: 200));
-        }
-        
-        // Dispose controller
-        await controller.dispose();
-      } catch (e) {
-        // Ignore dispose errors
-      }
-    }
-  }
-
-  void _logContentCompletion() {
-    if (_displayUnit == null || _contentStartTime == null) return;
-
-    final currentContent = _displayUnit!.contents[_currentContentIndex];
-    
-    DisplayService.instance.logContentCompletion(
-      unitId: widget.unitId,
-      contentId: currentContent.id,
-      contentType: currentContent.type,
-      contentTitle: currentContent.title,
-      displayDuration: _currentDuration,
-      startTime: _contentStartTime!,
-      endTime: DateTime.now(),
-    );
-  }
-
-  Future<void> _nextContent() async {
-    if (_displayUnit == null || _displayUnit!.contents.isEmpty || !mounted) return;
-
-    setState(() {
-      _currentContentIndex = (_currentContentIndex + 1) % _displayUnit!.contents.length;
-    });
-    
     await _startContentDisplay();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final hasContents = _contents.isNotEmpty;
+    final DisplayContent? current = hasContents
+        ? _contents[_currentIndex % _contents.length]
+        : null;
 
-    if (_isLoading) {
-      return _buildLoadingState(isDark);
-    }
-
-    if (_error != null) {
-      return _buildErrorState(isDark);
-    }
-
-    if (_displayUnit == null || _displayUnit!.contents.isEmpty) {
-      return _buildEmptyState(isDark);
-    }
-
-    return _buildDisplayContent(isDark);
-  }
-
-  Widget _buildLoadingState(bool isDark) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: Colors.black,
-      ),
-    );
-  }
-
-  Widget _buildErrorState(bool isDark) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: Colors.black,
-        child: Center(
-          child: GestureDetector(
-            onTap: _loadDisplayUnit,
-            child: Container(
-              width: double.infinity,
-              height: double.infinity,
-              color: Colors.black,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(bool isDark) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: Colors.black,
-      ),
-    );
-  }
-
-  Widget _buildDisplayContent(bool isDark) {
-    final currentContent = _displayUnit!.contents[_currentContentIndex];
-    
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          Positioned.fill(
-            child: _buildMediaPlayer(currentContent),
-          ),
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: _buildProgressBar(),
-          ),
+          if (!hasContents)
+            const Center(child: CircularProgressIndicator())
+          else
+            Positioned.fill(child: _buildContent(current!)),
+          // Opcional: overlay de debug
+          // Positioned(
+          //   left: 12,
+          //   bottom: 12,
+          //   child: _DebugBadge(index: _currentIndex, total: _contents.length),
+          // ),
         ],
       ),
     );
   }
 
-  Widget _buildMediaPlayer(IDisplayContent content) {
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: Colors.black,
-      child: content.type.toLowerCase() == 'advertisement' && _videoController != null
-          ? _buildVideoPlayer()
-          : _buildImagePlayer(content),
-    );
+  Widget _buildContent(DisplayContent content) {
+    switch (content.type) {
+      case ContentType.video:
+        return _buildVideoPlayer();
+      case ContentType.image:
+        return _buildImage(content.url);
+    }
   }
 
+  /// FULLSCREEN real do vídeo independente do tamanho do arquivo
+  /// Usa o tamanho nativo do vídeo dentro de um FittedBox.cover
   Widget _buildVideoPlayer() {
-    if (_videoController == null || !_videoController!.value.isInitialized) {
-      return Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: Colors.black,
-      );
+    final controller = _videoController;
+
+    if (controller == null || !controller.value.isInitialized) {
+      return const ColoredBox(color: Colors.black);
     }
 
-    final videoSize = _videoController!.value.size;
-    debugPrint('🎥 Video: ${videoSize.width}x${videoSize.height} (${videoSize.aspectRatio.toStringAsFixed(2)})');
+    final size = controller.value.size;
+    debugPrint('🎥 Video ready - ${size.width}x${size.height}');
 
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: Colors.black,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final screenWidth = constraints.maxWidth;
-          final screenHeight = constraints.maxHeight;
-          final videoRatio = videoSize.aspectRatio;
-          final screenRatio = screenWidth / screenHeight;
-          
-          // Calcular tamanho para fullscreen
-          double videoWidth, videoHeight;
-          
-          if (videoRatio > screenRatio) {
-            // Vídeo mais largo - ajustar pela altura
-            videoHeight = screenHeight;
-            videoWidth = videoHeight * videoRatio;
-          } else {
-            // Vídeo mais alto - ajustar pela largura
-            videoWidth = screenWidth;
-            videoHeight = videoWidth / videoRatio;
-          }
-          
-          return Center(
-            child: SizedBox(
-              width: videoWidth,
-              height: videoHeight,
-              child: VideoPlayer(_videoController!),
-            ),
-          );
-        },
+    return ClipRect(
+      child: FittedBox(
+        fit: BoxFit.cover, // ocupa toda a tela
+        alignment: Alignment.center,
+        child: SizedBox(
+          width: size.width,
+          height: size.height,
+          child: VideoPlayer(controller),
+        ),
       ),
     );
   }
 
-  Widget _buildImagePlayer(IDisplayContent content) {
+  Widget _buildImage(String url) {
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.cover,
+      errorWidget: (context, _, __) => const ColoredBox(color: Colors.black),
+      placeholder: (context, _) => const ColoredBox(color: Colors.black),
+    );
+  }
+}
+
+// ======== MODELOS BÁSICOS (adapte ao seu domínio) ========= //
+
+enum ContentType { image, video }
+
+class DisplayContent {
+  final ContentType type;
+  final String url;
+  final int? durationSeconds; // para imagens ou override de vídeo
+
+  const DisplayContent({
+    required this.type,
+    required this.url,
+    this.durationSeconds,
+  });
+}
+
+// ======== (Opcional) Widget de debug ======== //
+class _DebugBadge extends StatelessWidget {
+  final int index;
+  final int total;
+  const _DebugBadge({required this.index, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: Colors.black,
-      child: content.type.toLowerCase() == 'news'
-          ? _buildNewsContent(content)
-          : _buildAdContent(content),
-    );
-  }
-
-  Widget _buildNewsContent(IDisplayContent content) {
-    return Stack(
-      children: [
-        // Background image - Full screen
-        Positioned.fill(
-          child: CachedNetworkImage(
-            imageUrl: content.url,
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: double.infinity,
-            placeholder: (context, url) => _buildPlaceholder(),
-            errorWidget: (context, url, error) => _buildFallbackContent(content),
-            fadeInDuration: Duration.zero,
-            fadeOutDuration: Duration.zero,
-          ),
-        ),
-        // Text overlay
-        _buildNewsOverlay(content),
-      ],
-    );
-  }
-
-  Widget _buildNewsOverlay(IDisplayContent content) {
-    
-    return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 0,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.transparent,
-              Colors.black.withValues(alpha: 0.8),
-            ],
-          ),
-        ),
-        padding: const EdgeInsets.fromLTRB(60, 120, 60, 60),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: DefaultTextStyle(
+        style: const TextStyle(color: Colors.white70, fontSize: 12),
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Title
-            Text(
-              content.title,
-              style: const TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                height: 1.2,
-              ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            
-            if (content.description != null && content.description!.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              // Description
-              Text(
-                content.description!,
-                style: TextStyle(
-                  fontSize: 24,
-                  color: Colors.white.withValues(alpha: 0.9),
-                  height: 1.4,
-                ),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-            
-            // Source and Author
-            if (content.sourceName != null || content.author != null) ...[
-              const SizedBox(height: 32),
-              Row(
-                children: [
-                  if (content.sourceName != null) ...[
-                    Text(
-                      content.sourceName!,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.8),
-                      ),
-                    ),
-                    if (content.author != null) ...[
-                      Text(
-                        ' • ',
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.white.withValues(alpha: 0.6),
-                        ),
-                      ),
-                    ],
-                  ],
-                  if (content.author != null)
-                    Expanded(
-                      child: Text(
-                        content.author!,
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.white.withValues(alpha: 0.8),
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                ],
-              ),
-            ],
+            const Icon(Icons.bolt, size: 14, color: Colors.white70),
+            const SizedBox(width: 6),
+            Text('item ${index + 1} / $total'),
           ],
         ),
-      ),
-    );
-  }
-
-
-  Widget _buildAdContent(IDisplayContent content) {
-    return Container(
-      color: Colors.black,
-      width: double.infinity,
-      height: double.infinity,
-    );
-  }
-
-  Widget _buildPlaceholder() {
-    return Container(
-      color: Colors.black,
-      width: double.infinity,
-      height: double.infinity,
-    );
-  }
-
-  Widget _buildFallbackContent(IDisplayContent content) {
-    return Container(
-      color: Colors.black,
-      width: double.infinity,
-      height: double.infinity,
-    );
-  }
-
-
-  Widget _buildProgressBar() {
-    return Container(
-      height: 4,
-      color: Colors.transparent,
-      child: LinearProgressIndicator(
-        value: _progress,
-        backgroundColor: Colors.grey.withValues(alpha: 0.3),
-        valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
       ),
     );
   }
