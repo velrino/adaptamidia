@@ -6,6 +6,8 @@ abstract class IDisplayContent {
   String? get description;
   int? get seconds;
   bool get isActive;
+  String? get sourceName;
+  String? get author;
 
   Map<String, dynamic> toJson();
 }
@@ -37,6 +39,10 @@ class DisplayContent implements IDisplayContent {
   final int? seconds;
   @override
   final bool isActive;
+  @override
+  final String? sourceName;
+  @override
+  final String? author;
 
   DisplayContent({
     required this.id,
@@ -46,6 +52,8 @@ class DisplayContent implements IDisplayContent {
     this.description,
     this.seconds,
     required this.isActive,
+    this.sourceName,
+    this.author,
   });
 
   factory DisplayContent.fromJson(Map<String, dynamic> json) {
@@ -59,6 +67,8 @@ class DisplayContent implements IDisplayContent {
           ? json['seconds']
           : int.tryParse(json['seconds']?.toString() ?? ''),
       isActive: json['is_active'] == true,
+      sourceName: json['source_name']?.toString(),
+      author: json['author']?.toString(),
     );
   }
 
@@ -72,6 +82,8 @@ class DisplayContent implements IDisplayContent {
       'description': description,
       'seconds': seconds,
       'is_active': isActive,
+      'source_name': sourceName,
+      'author': author,
     };
   }
 }
@@ -109,11 +121,13 @@ class DisplayUnit implements IDisplayUnit {
             return DisplayContent.fromJson({
               '_id': item['news']['_id'],
               'type': 'NEWS',
-              'url': item['news']['url'],
+              'url': item['news']['image'],
               'title': item['news']['title'],
               'description': item['news']['description'],
               'seconds': null,
               'is_active': item['news']['status'] == 'ACTIVE',
+              'source_name': item['news']['source_name'],
+              'author': item['news']['author'],
             });
           } else if (item['type'] == 'ADVERTISEMENT' && item['ads'] != null) {
             return DisplayContent.fromJson({

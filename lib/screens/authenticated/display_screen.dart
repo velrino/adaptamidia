@@ -41,7 +41,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   void dispose() {
     _contentTimer?.cancel();
     _progressTimer?.cancel();
-    _videoController?.dispose();
+    _disposeVideoController();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
@@ -61,7 +61,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
           _isLoading = false;
         });
         
-        _startContentDisplay();
+        if (mounted) {
+          _startContentDisplay();
+        }
       } else {
         setState(() {
           _error = 'Nenhum conteúdo encontrado para esta unidade';
@@ -77,7 +79,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
   }
 
   Future<void> _startContentDisplay() async {
-    if (_displayUnit == null || _displayUnit!.contents.isEmpty) return;
+    if (_displayUnit == null || _displayUnit!.contents.isEmpty || !mounted) return;
+
+    // Cancel existing timers first
+    _contentTimer?.cancel();
+    _progressTimer?.cancel();
 
     final currentContent = _displayUnit!.contents[_currentContentIndex];
     
@@ -87,14 +93,23 @@ class _DisplayScreenState extends State<DisplayScreen> {
     
     _contentStartTime = DateTime.now();
     
+    // Setup media player
     await _setupMediaPlayer(currentContent);
+    
+    // Only proceed if still mounted
+    if (!mounted) return;
     
     setState(() {
       _progress = 0.0;
     });
 
-    _progressTimer?.cancel();
+    // Start progress timer
     _progressTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      
       setState(() {
         _progress += 0.1 / _currentDuration;
         if (_progress >= 1.0) {
@@ -104,23 +119,79 @@ class _DisplayScreenState extends State<DisplayScreen> {
       });
     });
 
-    _contentTimer?.cancel();
+    // Start content timer
     _contentTimer = Timer(Duration(seconds: _currentDuration), () {
-      _logContentCompletion();
-      _nextContent();
+      if (mounted) {
+        _logContentCompletion();
+        _nextContent();
+      }
     });
   }
 
   Future<void> _setupMediaPlayer(IDisplayContent content) async {
-    _videoController?.dispose();
-    _videoController = null;
+    await _disposeVideoController();
+    
+    // Small delay to ensure proper cleanup
+    await Future.delayed(const Duration(milliseconds: 200));
 
-    if (content.type.toLowerCase() == 'advertisement') {
-      _videoController = VideoPlayerController.networkUrl(Uri.parse(content.url));
-      await _videoController!.initialize();
-      _videoController!.setVolume(0.0);
-      _videoController!.setLooping(false);
-      _videoController!.play();
+    if (content.type.toLowerCase() == 'advertisement' && mounted) {
+      try {
+        _videoController = VideoPlayerController.networkUrl(
+          Uri.parse(content.url),
+          videoPlayerOptions: VideoPlayerOptions(
+            mixWithOthers: false,
+            allowBackgroundPlayback: false,
+            // Disable audio track to prevent codec initialization
+            webOptions: const VideoPlayerWebOptions(
+              allowRemotePlayback: false,
+            ),
+          ),
+          httpHeaders: {
+            'Connection': 'keep-alive',
+          },
+        );
+        
+        // Set volume to 0 before initialization to prevent audio codec
+        _videoController!.setVolume(0.0);
+        
+        await _videoController!.initialize();
+        
+        if (mounted) {
+          _videoController!.setLooping(false);
+          // Add small delay before playing
+          await Future.delayed(const Duration(milliseconds: 100));
+          await _videoController!.play();
+        }
+      } catch (e) {
+        await _disposeVideoController();
+      }
+    }
+  }
+
+  Future<void> _disposeVideoController() async {
+    if (_videoController != null) {
+      final controller = _videoController!;
+      _videoController = null;
+      
+      try {
+        // Stop playback first
+        if (controller.value.isPlaying) {
+          await controller.pause();
+        }
+        
+        // Set volume to 0 to stop audio processing
+        controller.setVolume(0.0);
+        
+        // Wait for buffering to complete
+        if (controller.value.isBuffering) {
+          await Future.delayed(const Duration(milliseconds: 200));
+        }
+        
+        // Dispose controller
+        await controller.dispose();
+      } catch (e) {
+        // Ignore dispose errors
+      }
     }
   }
 
@@ -141,7 +212,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   }
 
   Future<void> _nextContent() async {
-    if (_displayUnit == null || _displayUnit!.contents.isEmpty) return;
+    if (_displayUnit == null || _displayUnit!.contents.isEmpty || !mounted) return;
 
     setState(() {
       _currentContentIndex = (_currentContentIndex + 1) % _displayUnit!.contents.length;
@@ -172,64 +243,31 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
   Widget _buildLoadingState(bool isDark) {
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
-            Text(
-              'Carregando conteúdo...',
-              style: TextStyle(
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
+      backgroundColor: Colors.black,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: Colors.black,
       ),
     );
   }
 
   Widget _buildErrorState(bool isDark) {
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: isDark ? Colors.white : Colors.black,
+      backgroundColor: Colors.black,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: Colors.black,
+        child: Center(
+          child: GestureDetector(
+            onTap: _loadDisplayUnit,
+            child: Container(
+              width: double.infinity,
+              height: double.infinity,
+              color: Colors.black,
+            ),
           ),
-        ),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: Colors.red[600],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _error!,
-              style: TextStyle(
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-                fontSize: 16,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadDisplayUnit,
-              child: const Text('Tentar Novamente'),
-            ),
-          ],
         ),
       ),
     );
@@ -237,37 +275,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
   Widget _buildEmptyState(bool isDark) {
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
-          icon: Icon(
-            Icons.arrow_back,
-            color: isDark ? Colors.white : Colors.black,
-          ),
-        ),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.tv_off,
-              size: 48,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Nenhum conteúdo disponível',
-              style: TextStyle(
-                color: isDark ? Colors.grey[400] : Colors.grey[600],
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
+      backgroundColor: Colors.black,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: Colors.black,
       ),
     );
   }
@@ -298,12 +310,32 @@ class _DisplayScreenState extends State<DisplayScreen> {
       width: double.infinity,
       height: double.infinity,
       color: Colors.black,
-      child: Center(
-        child: AspectRatio(
-          aspectRatio: 16 / 9,
-          child: content.type.toLowerCase() == 'advertisement' && _videoController != null
-              ? VideoPlayer(_videoController!)
-              : _buildImagePlayer(content),
+      child: content.type.toLowerCase() == 'advertisement' && _videoController != null
+          ? _buildVideoPlayer()
+          : _buildImagePlayer(content),
+    );
+  }
+
+  Widget _buildVideoPlayer() {
+    if (_videoController == null || !_videoController!.value.isInitialized) {
+      return Container(
+        width: double.infinity,
+        height: double.infinity,
+        color: Colors.black,
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      color: Colors.black,
+      child: FittedBox(
+        fit: BoxFit.cover,
+        alignment: Alignment.center,
+        child: SizedBox(
+          width: _videoController!.value.size.width,
+          height: _videoController!.value.size.height,
+          child: VideoPlayer(_videoController!),
         ),
       ),
     );
@@ -315,74 +347,152 @@ class _DisplayScreenState extends State<DisplayScreen> {
       height: double.infinity,
       color: Colors.black,
       child: content.type.toLowerCase() == 'news'
-          ? CachedNetworkImage(
-              imageUrl: content.url,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: double.infinity,
-              placeholder: (context, url) => Container(
-                color: Colors.grey[900],
-                child: const Center(
-                  child: CircularProgressIndicator(color: Colors.white),
-                ),
+          ? _buildNewsContent(content)
+          : _buildAdContent(content),
+    );
+  }
+
+  Widget _buildNewsContent(IDisplayContent content) {
+    return Stack(
+      children: [
+        // Background image - Full screen
+        Positioned.fill(
+          child: CachedNetworkImage(
+            imageUrl: content.url,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+            placeholder: (context, url) => _buildPlaceholder(),
+            errorWidget: (context, url, error) => _buildFallbackContent(content),
+            fadeInDuration: Duration.zero,
+            fadeOutDuration: Duration.zero,
+          ),
+        ),
+        // Text overlay
+        _buildNewsOverlay(content),
+      ],
+    );
+  }
+
+  Widget _buildNewsOverlay(IDisplayContent content) {
+    
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              Colors.black.withValues(alpha: 0.8),
+            ],
+          ),
+        ),
+        padding: const EdgeInsets.fromLTRB(60, 120, 60, 60),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Title
+            Text(
+              content.title,
+              style: const TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                height: 1.2,
               ),
-              errorWidget: (context, url, error) => Container(
-                color: Colors.grey[900],
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.article,
-                      size: 64,
-                      color: Colors.white,
-                    ),
-                    const SizedBox(height: 16),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Text(
-                        content.title,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.center,
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+            
+            if (content.description != null && content.description!.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              // Description
+              Text(
+                content.description!,
+                style: TextStyle(
+                  fontSize: 24,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  height: 1.4,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+            
+            // Source and Author
+            if (content.sourceName != null || content.author != null) ...[
+              const SizedBox(height: 32),
+              Row(
+                children: [
+                  if (content.sourceName != null) ...[
+                    Text(
+                      content.sourceName!,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.8),
                       ),
                     ),
-                    if (content.description != null) ...[
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Text(
-                          content.description!,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[400],
-                          ),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                    if (content.author != null) ...[
+                      Text(
+                        ' • ',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.white.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
                   ],
-                ),
+                  if (content.author != null)
+                    Expanded(
+                      child: Text(
+                        content.author!,
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.white.withValues(alpha: 0.8),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
               ),
-            )
-          : Container(
-              color: Colors.grey[900],
-              child: const Center(
-                child: Icon(
-                  Icons.play_circle_filled,
-                  size: 64,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+            ],
+          ],
+        ),
+      ),
     );
   }
+
+
+  Widget _buildAdContent(IDisplayContent content) {
+    return Container(
+      color: Colors.black,
+      width: double.infinity,
+      height: double.infinity,
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    return Container(
+      color: Colors.black,
+      width: double.infinity,
+      height: double.infinity,
+    );
+  }
+
+  Widget _buildFallbackContent(IDisplayContent content) {
+    return Container(
+      color: Colors.black,
+      width: double.infinity,
+      height: double.infinity,
+    );
+  }
+
 
   Widget _buildProgressBar() {
     return Container(

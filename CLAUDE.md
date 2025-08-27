@@ -191,6 +191,22 @@ lib/
 
 ## ⭐ SISTEMA DE DISPLAY MEDIA - CORE DA SEEMIDIA
 
+### 📋 Resumo Executivo
+
+**O que é**: Sistema de exibição fullscreen de mídia (imagens de notícias e vídeos publicitários) em tablets comerciais 24/7.
+
+**Implementação Completa**:
+- ✅ Player fullscreen imersivo (sem barras do sistema)
+- ✅ Suporte para NEWS (imagens, 5s) e ADVERTISEMENTS (vídeos MP4, tempo variável)
+- ✅ Overlay elegante com título, descrição, fonte e autor para notícias
+- ✅ Vídeos sem som com autoplay
+- ✅ Progress bar minimalista
+- ✅ Auto-cycling infinito
+- ✅ Background sempre preto
+- ✅ Adaptativo para qualquer resolução/orientação
+- ✅ Sistema de logging para tracking
+- ✅ Otimizado para Android 10+
+
 ### Arquitetura do Player
 
 O sistema de display é o **CORAÇÃO** da aplicação SeeMidia. Funciona 24/7 exibindo conteúdo em tablets comerciais.
@@ -205,50 +221,88 @@ O sistema de display é o **CORAÇÃO** da aplicação SeeMidia. Funciona 24/7 e
 1. **Navegação**: Clique na unidade → `/display/{unit_id}`
 2. **API Call**: `GET /display/unit/{id}` com Bearer token
 3. **Parsing**: Converte resposta em `DisplayUnit` com lista de `DisplayContent`
-4. **Player**: Exibe fullscreen 16:9 com auto-cycling
+4. **Player**: Exibe fullscreen com auto-cycling infinito
 
 #### Tipos de Conteúdo:
 
 ```dart
-// NEWS (Notícias - sempre imagens)
+// NEWS (Notícias - exibem imagens)
 {
   "type": "NEWS",
   "news": {
-    "url": "https://image-url.jpg",    // ← Imagem
+    "image": "https://image-url.jpg",    // ← IMAGEM (não é url!)
     "title": "Título da notícia",
     "description": "Descrição...",
+    "source_name": "Metropoles.com",     // ← Fonte
+    "author": "Nome do Autor",           // ← Autor
     "status": "ACTIVE"
   }
-  // Duração: SEMPRE 5 segundos
+  // Duração: SEMPRE 5 segundos fixo
 }
 
-// ADVERTISEMENT (Anúncios - sempre vídeos MP4)
+// ADVERTISEMENT (Anúncios - exibem vídeos MP4)
 {
   "type": "ADVERTISEMENT", 
   "ads": {
-    "source": "https://video-url.mp4",  // ← Vídeo MP4
+    "source": "https://video-url.mp4",   // ← Vídeo MP4
     "title": "Nome do anúncio",
-    "seconds": 30,                      // ← Duração customizada
+    "seconds": 30,                       // ← Duração customizada (10s, 30s, etc)
     "status": "ACTIVE"
   }
 }
 ```
 
-#### Características Técnicas:
+#### Características Técnicas IMPLEMENTADAS:
 
-- **Fullscreen Imersivo**: `SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive)`
-- **Aspect Ratio**: 16:9 centralizado em tela preta
-- **Vídeos**: `VideoPlayer` com autoplay, sem áudio, sem loop
-- **Imagens**: `CachedNetworkImage` com fallback para título/descrição
-- **Progress Bar**: Linear branca na parte inferior
-- **Auto-cycling**: Timer automático + navegação infinita
+##### 🎬 Display Fullscreen
+- **Modo Imersivo**: `SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive)` - Remove barras do sistema
+- **Background Preto**: SEMPRE preto em todos os estados (loading, error, empty, playing)
+- **Aspect Ratio Livre**: Adapta para QUALQUER tela (não força 16:9)
+- **FittedBox**: `BoxFit.cover` para vídeos e imagens preencherem 100% da tela
 
-#### Sistema de Timing:
-- **News**: 5 segundos fixo
-- **Ads**: Campo `seconds` da API (10s, 30s, etc.)
-- **Progress**: Atualiza a cada 100ms
+##### 🖼️ Sistema de Imagens (NEWS)
+- **Widget**: `CachedNetworkImage` com cache inteligente
+- **Fit**: `BoxFit.cover` - preenche toda a tela
+- **Overlay de Texto**: Gradient preto na parte inferior com informações
+- **Campos Exibidos**:
+  - Título: 48px bold (até 3 linhas)
+  - Descrição: 24px (até 3 linhas)
+  - Fonte • Autor: 20px (bottom)
+- **Padding**: 60px lateral, 120px superior, 60px inferior
+- **Fallback**: Tela preta quando imagem falha
 
-#### Logging de Conteúdo:
+##### 🎥 Sistema de Vídeos (ADVERTISEMENT)
+- **Widget**: `VideoPlayer` com configurações otimizadas
+- **Sem Áudio**: `setVolume(0.0)` ANTES da inicialização
+- **Autoplay**: Inicia automaticamente após inicialização
+- **Sem Loop**: Cada vídeo toca uma vez por ciclo
+- **Fullscreen**: `FittedBox` com `BoxFit.cover`
+- **Dispose Otimizado**: Pause → Volume 0 → Wait → Dispose
+
+##### ⏱️ Sistema de Timing
+- **News**: 5 segundos FIXO (hardcoded)
+- **Ads**: Campo `seconds` da API (10s, 30s, etc)
+- **Progress Bar**: Atualiza a cada 100ms
+- **Auto-cycling**: Infinito através da lista de conteúdos
+- **Delays**:
+  - 200ms entre dispose e novo vídeo
+  - 100ms antes de iniciar playback
+  - 200ms wait se ainda bufferizando
+
+##### 🔧 Otimizações de Performance
+- **Mount Checks**: Verifica `mounted` em todos pontos críticos
+- **Timer Cleanup**: Cancela timers se widget não montado
+- **Error Handling**: Try/catch em dispose e inicialização
+- **Memory Management**:
+  - Remove cache limits nas imagens (eram 1920x1080)
+  - Dispose adequado de video controllers
+  - Null safety em todas operações
+- **Codec Prevention**:
+  - `mixWithOthers: false`
+  - `setVolume(0.0)` antes de inicializar
+  - Headers `Connection: keep-alive`
+
+#### 📊 Logging de Conteúdo:
 ```dart
 DisplayService.instance.logContentCompletion(
   unitId: "unit_id",
@@ -259,17 +313,42 @@ DisplayService.instance.logContentCompletion(
   startTime: inicio,
   endTime: fim
 );
+// Atualmente só faz log local, futuramente enviará para servidor
 ```
 
-### Estados do Player:
-1. **Loading** - Carregando dados da API
-2. **Error** - Falha na API (com retry)
-3. **Empty** - Sem conteúdo disponível  
-4. **Playing** - Exibindo conteúdo com progress bar
+### 🎯 Estados do Player:
+1. **Loading** - Tela preta silenciosa
+2. **Error** - Tela preta (tap anywhere para retry)
+3. **Empty** - Tela preta 
+4. **Playing** - Conteúdo fullscreen com progress bar branca no bottom
 
-### Navegação:
-- **Entrada**: Home → Clique na unidade → Display
-- **Saída**: Botão back ou gesto → Volta para Home
-- **Loop**: Conteúdo → Próximo → ... → Primeiro → Infinito
+### 🔄 Fluxo de Navegação:
+- **Entrada**: 
+  - HomeScreen → Lista unidades estilo Netflix
+  - Clique na unidade → Navigate para `/display/{unit_id}`
+  - DisplayScreen abre em fullscreen imersivo
+- **Saída**: 
+  - Gesture/Back button → Retorna para HomeScreen
+  - Sistema restaura barras do sistema
+- **Loop de Conteúdo**: 
+  - Index 0 → 1 → 2 → ... → N → 0 (infinito)
+  - Mix de NEWS (5s) e ADS (variável)
 
-**💡 IMPORTANTE**: Este sistema é a essência do SeeMidia - deve ser extremamente estável para funcionamento 24/7 em estabelecimentos comerciais.
+### 🐛 Problemas Resolvidos:
+1. **Imagens não apareciam**: Campo correto é `news.image` não `news.url`
+2. **Vídeos não fullscreen**: Implementado `FittedBox` com `BoxFit.cover`
+3. **Background verde**: Forçado preto em todos os estados
+4. **Buffer overflow**: Dispose otimizado e delays adequados
+5. **Codec AAC logs**: Volume 0 antes de inicializar previne codec de áudio
+6. **Memory leaks**: Mount checks e cleanup adequado de timers
+7. **Texto muito pequeno**: Fontes aumentadas (48px/24px/20px)
+8. **Aspect ratio fixo**: Removido limite 16:9, adapta para qualquer tela
+
+### 📱 Configuração de Produção:
+- **Tablet**: Android 10+ (testado em Signworld)
+- **Orientação**: Landscape ou Portrait (configurável)
+- **Modo**: Fullscreen imersivo 24/7
+- **Performance**: Otimizado para rodar dias sem reiniciar
+- **Network**: Suporta reconexão automática
+
+**💡 IMPORTANTE**: Este sistema é a essência do SeeMidia - tablets em estabelecimentos comerciais exibindo conteúdo publicitário e informativo 24/7 sem intervenção humana.
