@@ -74,6 +74,18 @@ class ConfigurationService {
           const SizedBox(height: 12),
           _buildConfigOption(
             context,
+            'Câmera USB',
+            'Visualizar webcam conectada via USB',
+            Icons.camera_alt,
+            () {
+              Navigator.pop(context);
+              Navigator.of(context).pushNamed('/camera');
+            },
+            isDark,
+          ),
+          const SizedBox(height: 12),
+          _buildConfigOption(
+            context,
             'Limpar Dados',
             'Resetar todas as configurações',
             Icons.refresh,

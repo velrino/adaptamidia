@@ -20,7 +20,12 @@ import '../../services/display_service.dart';
 ///   DisplayContent(type: ContentType.video, url: 'https://.../video.mp4'),
 /// ]);
 class DisplayScreen extends StatefulWidget {
-  const DisplayScreen({super.key, this.unitId, this.contents, this.autoStart = true});
+  const DisplayScreen({
+    super.key,
+    this.unitId,
+    this.contents,
+    this.autoStart = true,
+  });
 
   /// ID da unidade para buscar conteúdo via API
   final String? unitId;
@@ -87,14 +92,16 @@ class _DisplayScreenState extends State<DisplayScreen>
     }
 
     try {
-      final displayUnit = await DisplayService.instance.getDisplayUnit(widget.unitId!);
+      final displayUnit = await DisplayService.instance.getDisplayUnit(
+        widget.unitId!,
+      );
       if (displayUnit == null) {
         return [];
       }
 
       // Converte IDisplayContent para DisplayContent do screen
       return displayUnit.contents
-          .where((content) => content.isActive)
+          // .where((content) => content.isActive)
           .map((content) => _convertToDisplayContent(content))
           .toList();
     } catch (e) {
@@ -125,6 +132,10 @@ class _DisplayScreenState extends State<DisplayScreen>
       type: type,
       url: apiContent.url,
       durationSeconds: duration,
+      title: apiContent.title,
+      description: apiContent.description,
+      sourceName: apiContent.sourceName,
+      author: apiContent.author,
     );
   }
 
@@ -164,10 +175,18 @@ class _DisplayScreenState extends State<DisplayScreen>
   }
 
   Future<void> _disposeVideoController(VideoPlayerController? c) async {
+    if (c == null) return;
     try {
-      await c?.pause();
-      await c?.dispose();
-    } catch (_) {}
+      // Pause rápido para parar processamento
+      await c.pause();
+      // Volume 0 para evitar codec processing durante dispose
+      await c.setVolume(0.0);
+      // Pequeno delay para estabilizar
+      await Future.delayed(const Duration(milliseconds: 50));
+      await c.dispose();
+    } catch (_) {
+      // Ignore erros durante dispose
+    }
   }
 
   Future<void> _startContentDisplay() async {
@@ -205,11 +224,19 @@ class _DisplayScreenState extends State<DisplayScreen>
     // Descarta players anteriores
     await _disposeVideoController(_videoController);
 
-    final controller = VideoPlayerController.networkUrl(Uri.parse(content.url));
+    final controller = VideoPlayerController.networkUrl(
+      Uri.parse(content.url),
+      videoPlayerOptions: VideoPlayerOptions(
+        mixWithOthers: false, // Não misturar com outros players
+        allowBackgroundPlayback: false, // Não tocar em background
+      ),
+    );
 
     _videoController = controller;
 
     try {
+      // CRÍTICO: Define volume 0 ANTES de inicializar para evitar codec AAC
+      await controller.setVolume(0.0);
       await controller.initialize();
     } catch (e) {
       debugPrint('🎥 Falha ao inicializar vídeo atual: $e');
@@ -262,17 +289,24 @@ class _DisplayScreenState extends State<DisplayScreen>
     if (next.type != ContentType.video) return;
 
     try {
-      final c = VideoPlayerController.networkUrl(Uri.parse(next.url));
+      final c = VideoPlayerController.networkUrl(
+        Uri.parse(next.url),
+        videoPlayerOptions: VideoPlayerOptions(
+          mixWithOthers: false, // Isolado de outros players
+          allowBackgroundPlayback: false, // Não tocar em background
+        ),
+      );
       _nextVideoController = c;
-      c
-          .initialize()
-          .then((_) {
-            // Deixa pronto para trocar rápido (não dá play ainda)
-            debugPrint('⬇️ Próximo vídeo pré-carregado');
-          })
-          .catchError((e) {
-            debugPrint('⚠️ Erro no preload do próximo vídeo: $e');
-          });
+      
+      // Preload otimizado: volume 0 + initialize assíncrono
+      c.setVolume(0.0).then((_) {
+        return c.initialize();
+      }).then((_) {
+        // Deixa pronto para trocar rápido (não dá play ainda)
+        debugPrint('⬇️ Próximo vídeo pré-carregado');
+      }).catchError((e) {
+        debugPrint('⚠️ Erro no preload do próximo vídeo: $e');
+      });
     } catch (e) {
       debugPrint('⚠️ Exceção ao preparar preload: $e');
     }
@@ -377,24 +411,24 @@ class _DisplayScreenState extends State<DisplayScreen>
   }
 
   /// FULLSCREEN real do vídeo independente do tamanho do arquivo
-  /// Usa o tamanho nativo do vídeo dentro de um FittedBox.cover
+  /// Força o vídeo a preencher toda a tela usando Transform.scale se necessário
   Widget _buildVideoPlayer() {
     final controller = _videoController;
-
     if (controller == null || !controller.value.isInitialized) {
       return const ColoredBox(color: Colors.black);
     }
 
     final size = controller.value.size;
-    debugPrint('🎥 Video ready - ${size.width}x${size.height}');
+    const overscan = 1.02; // 2% de zoom para esconder as bordas verdes
 
     return ClipRect(
       child: FittedBox(
-        fit: BoxFit.cover, // ocupa toda a tela
+        fit: BoxFit.cover,
         alignment: Alignment.center,
         child: SizedBox(
-          width: size.width,
-          height: size.height,
+          // aumenta levemente o “quadro” do vídeo para cortar as extremidades
+          width: size.width * overscan,
+          height: size.height * overscan,
           child: VideoPlayer(controller),
         ),
       ),
@@ -402,12 +436,194 @@ class _DisplayScreenState extends State<DisplayScreen>
   }
 
   Widget _buildImage(String url) {
-    return CachedNetworkImage(
-      imageUrl: url,
-      fit: BoxFit.cover,
-      errorWidget: (context, _, __) => const ColoredBox(color: Colors.black),
-      placeholder: (context, _) => const ColoredBox(color: Colors.black),
+    final content = _getCurrentContent();
+
+    return Stack(
+      children: [
+        // Imagem de fundo
+        Positioned.fill(
+          child: CachedNetworkImage(
+            imageUrl: url,
+            fit: BoxFit.cover,
+            errorWidget: (context, _, __) =>
+                const ColoredBox(color: Colors.black),
+            placeholder: (context, _) => const ColoredBox(color: Colors.black),
+          ),
+        ),
+
+        // Overlay com informações da notícia (apenas para NEWS)
+        if (content?.type == ContentType.image && content?.title != null)
+          _buildNewsOverlay(content!),
+      ],
     );
+  }
+
+  Widget _buildNewsOverlay(DisplayContent content) {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      child: Container(
+        // Overlay unificado elegante
+        margin: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          // Gradient elegante com transparência
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xE6000000), // Preto semi-transparente
+              Color(0xF0000000), // Preto mais opaco
+            ],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.4),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          // Borda sutil para elegância
+          border: Border.all(
+            color: Colors.white.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Logo SeeMidia à esquerda
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  // color: Colors.white.withValues(alpha: 0.95),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 200,
+                  height: 200,
+                  fit: BoxFit.contain,
+                ),
+              ),
+
+              const SizedBox(width: 24),
+
+              // Linha divisória elegante
+              Container(width: 2, color: Colors.white.withValues(alpha: 0.3)),
+
+              const SizedBox(width: 24),
+
+              // Textos à direita
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Título
+                    if (content.title?.isNotEmpty == true)
+                      Text(
+                        content.title!,
+                        style: const TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          height: 1.2,
+                          letterSpacing: -0.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                    // Espaço entre título e descrição
+                    if (content.title?.isNotEmpty == true &&
+                        content.description?.isNotEmpty == true)
+                      const SizedBox(height: 12),
+
+                    // Descrição
+                    if (content.description?.isNotEmpty == true)
+                      Text(
+                        content.description!,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          color: Color(0xFFE0E0E0),
+                          height: 1.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+
+                    // Espaço antes da fonte
+                    if ((content.title?.isNotEmpty == true ||
+                            content.description?.isNotEmpty == true) &&
+                        (content.sourceName?.isNotEmpty == true ||
+                            content.author?.isNotEmpty == true))
+                      const SizedBox(height: 16),
+
+                    // Fonte e Autor com ícone
+                    if (content.sourceName?.isNotEmpty == true ||
+                        content.author?.isNotEmpty == true)
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.article_outlined,
+                            color: Color(0xFFB0B0B0),
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _buildSourceText(
+                                content.sourceName,
+                                content.author,
+                              ),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Color(0xFFB0B0B0),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  DisplayContent? _getCurrentContent() {
+    if (_contents.isNotEmpty && _currentIndex < _contents.length) {
+      return _contents[_currentIndex];
+    }
+    return null;
+  }
+
+  String _buildSourceText(String? sourceName, String? author) {
+    if (sourceName?.isNotEmpty == true && author?.isNotEmpty == true) {
+      return '$sourceName • $author';
+    } else if (sourceName?.isNotEmpty == true) {
+      return sourceName!;
+    } else if (author?.isNotEmpty == true) {
+      return author!;
+    }
+    return 'SeeMidia';
   }
 }
 
@@ -419,11 +635,19 @@ class DisplayContent {
   final ContentType type;
   final String url;
   final int? durationSeconds; // para imagens ou override de vídeo
+  final String? title;
+  final String? description;
+  final String? sourceName;
+  final String? author;
 
   const DisplayContent({
     required this.type,
     required this.url,
     this.durationSeconds,
+    this.title,
+    this.description,
+    this.sourceName,
+    this.author,
   });
 }
 
@@ -438,7 +662,7 @@ class _DebugBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.white24),
       ),

@@ -263,16 +263,24 @@ O sistema de display é o **CORAÇÃO** da aplicação SeeMidia. Funciona 24/7 e
 - **Testado**: Funciona com vídeos 876×496, 1920×1080, e qualquer outro tamanho
 - **Sem Cálculos Complexos**: Solução simples e robusta que sempre funciona
 
-##### 🖼️ Sistema de Imagens (NEWS)
+##### 🖼️ Sistema de Imagens (NEWS) - OVERLAY UNIFICADO ELEGANTE ⭐
 - **Widget**: `CachedNetworkImage` com cache inteligente
 - **Fit**: `BoxFit.cover` - preenche toda a tela
-- **Overlay de Texto**: Gradient preto na parte inferior com informações
+- **Overlay Corporativo Unificado**: 
+  - **Logo SeeMidia** à esquerda (200x200px) com shadow
+  - **Linha divisória** elegante no centro
+  - **Todos os textos** organizados à direita
+- **Design Anti-Imagem Branca**:
+  - Container único com gradient preto semi-transparente
+  - Bordas arredondadas (20px) + box shadow profunda
+  - Borda sutil branca para elegância extra
 - **Campos Exibidos**:
-  - Título: 48px bold (até 3 linhas)
-  - Descrição: 24px (até 3 linhas)
-  - Fonte • Autor: 20px (bottom)
-- **Padding**: 60px lateral, 120px superior, 60px inferior
-- **Fallback**: Tela preta quando imagem falha
+  - Título: 36px bold branco (até 2 linhas)
+  - Descrição: 20px cinza claro (até 2 linhas)  
+  - Fonte • Autor: 16px com ícone (1 linha)
+- **Layout Responsivo**: `IntrinsicHeight` + `Expanded` para adaptação automática
+- **Posicionamento**: Bottom da tela com margem 24px
+- **Branding**: Espaço dedicado à marca SeeMidia (lado esquerdo)
 
 ##### 🎥 Sistema de Vídeos (ADVERTISEMENT) - SOLUÇÃO UNIVERSAL
 - **Widget**: `VideoPlayer` dentro de `FittedBox(fit: BoxFit.cover)` + `AspectRatio`
@@ -534,23 +542,31 @@ class StorageService {
    - Wakelock mantém tela ligada 24/7
 
 2. **Player Universal de Mídia**:
-   - **Imagens (NEWS)**: `CachedNetworkImage` + overlay elegante
+   - **Imagens (NEWS)**: `CachedNetworkImage` + **overlay unificado corporativo**
    - **Vídeos (ADVERTISEMENTS)**: `VideoPlayer` sem áudio
    - **Solução Fullscreen Universal**: `FittedBox(BoxFit.cover)` + `AspectRatio`
 
-3. **Sistema de Timing Preciso**:
+3. **Overlay Corporativo Elegante para NEWS** ⭐:
+   - **Layout Horizontal**: Logo SeeMidia (esquerda) + Textos (direita)
+   - **Branding Forte**: Logo 200x200px bem visível com shadow
+   - **Design Profissional**: Container único com gradient + bordas arredondadas
+   - **Anti-Imagem Branca**: Fundo semi-transparente preto sempre legível
+   - **Responsive**: Altura se adapta ao conteúdo automaticamente
+   - **Campos**: Título (36px) + Descrição (20px) + Fonte•Autor (16px com ícone)
+
+4. **Sistema de Timing Preciso**:
    - NEWS: 5 segundos fixo
    - ADS: Campo `seconds` da API (10s, 30s, etc)
    - Progress bar minimalista (branca, bottom)
    - Auto-cycling infinito
 
-4. **Estados Robustos**:
+5. **Estados Robustos**:
    - Loading: Tela preta silenciosa
    - Error: Tela preta com tap-to-retry
    - Empty: Tela preta 
    - Playing: Conteúdo + progress bar
 
-5. **Otimizações de Performance**:
+6. **Otimizações de Performance**:
    - Mount checks em todos async
    - Timer cleanup automático
    - Video dispose otimizado com delays
@@ -639,6 +655,13 @@ Response:
 5. **Background verde padrão Flutter**:
    - `backgroundColor: Colors.black` forçado
    - Scaffold e Container sempre pretos
+
+6. **Overlay de texto separado e pouco elegante** ⭐:
+   - **SOLUÇÃO**: Overlay unificado horizontal com logo + textos
+   - **Design corporativo**: Logo SeeMidia bem visível (200x200px)
+   - **Legibilidade garantida**: Funciona com imagens brancas/claras
+   - **Branding forte**: Espaço dedicado à empresa no overlay
+   - **Visual profissional**: Container único com gradient e shadows
 
 ### 🚀 MIGRAÇÃO PARA REACT NATIVE:
 
