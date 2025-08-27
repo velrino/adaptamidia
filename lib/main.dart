@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/rendering.dart';
 import 'services/storage_service.dart';
 import 'services/firebase_service.dart';
 import 'screens/configuration_screen.dart';
@@ -13,6 +14,9 @@ void main() async {
 
   // Initialize Firebase
   await FirebaseService.instance.initialize();
+
+  // Disable debug borders and overlays
+  debugPaintSizeEnabled = false;
 
   runApp(const MyApp());
 }

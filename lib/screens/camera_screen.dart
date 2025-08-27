@@ -102,43 +102,57 @@ class _CameraScreenState extends State<CameraScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
+    return Material(
+      color: Colors.black,
+      child: Scaffold(
         backgroundColor: Colors.black,
-        foregroundColor: Colors.white,
-        title: const Text('SeeMidia Camera'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Reabrir câmera',
-            onPressed: _openCamera,
-          ),
-        ],
-      ),
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
+          title: const Text('SeeMidia Camera'),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Reabrir câmera',
+              onPressed: _openCamera,
+            ),
+          ],
+        ),
       body: SafeArea(
         child: Stack(
           children: [
             // Fullscreen preview keeping aspect ratio by covering the screen
             // (similar to BoxFit.cover).
             Positioned.fill(
-              child: Center(
-                child: AspectRatio(
-                  // Fallback aspect ratio; the widget will adapt as frames arrive.
-                  aspectRatio: 16 / 9,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final width = constraints.maxWidth;
-                      final height = constraints.maxHeight;
-                      return UVCCameraView(
-                        cameraController: _controller,
-                        width: width,
-                        height: height,
-                        // You can tweak params if needed, e.g. bitrate, fps limits, etc.
-                        // params: UVCCameraParams(...),
-                        autoDispose: false, // we manage lifecycle ourselves
-                      );
-                    },
+              child: Container(
+                color: Colors.black,
+                child: Center(
+                  child: AspectRatio(
+                    // Fallback aspect ratio; the widget will adapt as frames arrive.
+                    aspectRatio: 16 / 9,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final width = constraints.maxWidth;
+                        final height = constraints.maxHeight;
+                        return ClipRect(
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.black,
+                            ),
+                            child: UVCCameraView(
+                              cameraController: _controller,
+                              width: width,
+                              height: height,
+                              // You can tweak params if needed, e.g. bitrate, fps limits, etc.
+                              // params: UVCCameraParams(...),
+                              autoDispose: false, // we manage lifecycle ourselves
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ),
@@ -200,8 +214,9 @@ class _CameraScreenState extends State<CameraScreen>
               ),
           ],
         ),
+        ),
+        floatingActionButton: _buildControls(),
       ),
-      floatingActionButton: _buildControls(),
     );
   }
 
