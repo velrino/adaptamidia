@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:video_player/video_player.dart';
+import 'package:native_video_player/native_video_player.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../interfaces/display_unit.dart';
@@ -50,9 +50,10 @@ class _DisplayScreenState extends State<DisplayScreen>
   Timer? _contentTimer; // controla duração de imagens e fallback
   Timer? _progressTimer; // opcional p/ reportar progresso
 
-  // Video controllers
-  VideoPlayerController? _videoController;
-  VideoPlayerController? _nextVideoController; // pré-carregamento do próximo
+  // Video controllers - v4.0.0 usa controller direto do view
+  NativeVideoPlayerController? _videoController;
+  StreamSubscription<void>? _eventsSubscription;
+  bool _hasStartedPlaying = false; // Flag para saber se o vídeo já começou
 
   bool _isSettingUp = false; // evita setups concorrentes
   bool _disposed = false;
@@ -150,7 +151,7 @@ class _DisplayScreenState extends State<DisplayScreen>
         _videoController!.pause();
         break;
       case AppLifecycleState.resumed:
-        if (_videoController!.value.isInitialized && mounted) {
+        if (mounted) {
           _videoController!.play();
         }
         break;
@@ -166,32 +167,16 @@ class _DisplayScreenState extends State<DisplayScreen>
 
     _contentTimer?.cancel();
     _progressTimer?.cancel();
+    _eventsSubscription?.cancel();
 
-    _disposeVideoController(_videoController);
-    _disposeVideoController(_nextVideoController);
+    _videoController?.dispose();
 
     WakelockPlus.disable();
     super.dispose();
   }
 
-  Future<void> _disposeVideoController(VideoPlayerController? c) async {
-    if (c == null) return;
-    try {
-      // Remove todos os listeners primeiro para evitar callbacks após dispose
-      c.removeListener(() {});
-      // Pause rápido para parar processamento
-      if (c.value.isInitialized) {
-        await c.pause();
-        // Volume 0 para evitar codec processing durante dispose
-        await c.setVolume(0.0);
-      }
-      // Pequeno delay para estabilizar
-      await Future.delayed(const Duration(milliseconds: 100));
-      await c.dispose();
-    } catch (_) {
-      // Ignore erros durante dispose
-    }
-  }
+  // Método auxiliar para setup do controller (usado no onViewReady)
+  String? _currentVideoUrl;
 
   Future<void> _startContentDisplay() async {
     if (!mounted || _disposed || _isSettingUp) return;
@@ -224,58 +209,88 @@ class _DisplayScreenState extends State<DisplayScreen>
     }
   }
 
-  Future<void> _playVideo(DisplayContent content) async {
-    // Guarda referência do controller anterior antes de limpar
-    final oldController = _videoController;
-    
-    final controller = VideoPlayerController.networkUrl(
-      Uri.parse(content.url),
-      videoPlayerOptions: VideoPlayerOptions(
-        mixWithOthers: false, // Não misturar com outros players
-        allowBackgroundPlayback: false, // Não tocar em background
-      ),
-    );
-
-    // Define o novo controller ANTES de dispose do antigo
-    _videoController = controller;
-    
-    // Agora descarta o anterior
-    await _disposeVideoController(oldController);
-
+  Future<void> _setupVideoController(NativeVideoPlayerController controller, String videoUrl) async {
     try {
-      // CRÍTICO: Define volume 0 ANTES de inicializar para evitar codec AAC
-      await controller.setVolume(0.0);
-      await controller.initialize();
+      _videoController = controller;
+      
+      // Setup de eventos
+      _eventsSubscription?.cancel();
+      _eventsSubscription = controller.events.listen((event) {
+        if (!mounted || _disposed) return;
+        
+        switch (event) {
+          case PlaybackStatusChangedEvent():
+            // Video acabou, avança para próximo
+            final status = event.status;
+            debugPrint('🎥 Status change: $status');
+            
+            // Marca que o vídeo está tocando
+            if (status == PlaybackStatus.playing) {
+              _hasStartedPlaying = true;
+            }
+            
+            // Se o vídeo parou APÓS ter começado a tocar, é porque acabou
+            if (status == PlaybackStatus.stopped && _hasStartedPlaying) {
+              _hasStartedPlaying = false; // Reset flag
+              // Pequeno delay para garantir que não é apenas transição de estado
+              Future.delayed(const Duration(milliseconds: 500), () {
+                if (mounted && !_disposed) {
+                  _goToNextContent();
+                }
+              });
+            }
+            break;
+            
+          case PlaybackReadyEvent():
+            debugPrint('📹 Video ready');
+            break;
+            
+          case PlaybackPositionChangedEvent():
+            // Podemos usar isso para tracking de progresso se quisermos
+            break;
+            
+          default:
+            debugPrint('📺 Event: $event');
+            break;
+        }
+      });
+
+      // Carrega o vídeo
+      await controller.loadVideo(
+        VideoSource(
+          path: videoUrl,
+          type: VideoSourceType.network,
+        ),
+      );
+      
+      if (!mounted) return;
+      
+      // IMPORTANTE: Dar play no vídeo após carregar
+      await controller.play();
+      
+      setState(() {}); // Re-render para mostrar player
+      
     } catch (e) {
-      debugPrint('🎥 Falha ao inicializar vídeo atual: $e');
+      debugPrint('🎥 Erro ao setup controller: $e');
       rethrow;
     }
+  }
 
+  Future<void> _playVideo(DisplayContent content) async {
     if (!mounted) return;
-
-    // Configurações para reprodução estável
-    await controller.setLooping(false);
-    await controller.play();
-
-    // Listener para avançar ao final
-    void videoEndListener() async {
-      if (!mounted || _disposed) return;
-      final v = controller.value;
-      if (v.isInitialized && !v.isPlaying) {
-        // Remove listener antes de avançar para evitar múltiplas chamadas
-        controller.removeListener(videoEndListener);
-        await _goToNextContent();
-      }
-    }
     
-    controller.addListener(videoEndListener);
+    // Limpa controller anterior
+    _eventsSubscription?.cancel();
+    _videoController?.dispose();
+    _videoController = null;
+    _hasStartedPlaying = false; // Reset flag de playing
+    
+    // Armazena URL para usar no onViewReady
+    _currentVideoUrl = content.url;
+    
+    setState(() {}); // Re-render para inicializar novo player
 
-    // Pré-carrega próximo vídeo (se existir)
-    _preloadNextVideo();
-
-    setState(() {}); // re-render para exibir player
-
-    // Fallback timer de segurança (se quiser limitar por duração custom)
+    // Fallback timer de segurança
     _contentTimer?.cancel();
     if (content.durationSeconds != null && content.durationSeconds! > 0) {
       _contentTimer = Timer(Duration(seconds: content.durationSeconds!), () {
@@ -286,51 +301,20 @@ class _DisplayScreenState extends State<DisplayScreen>
     }
   }
 
-  void _preloadNextVideo() {
-    // Limpa preload anterior
-    _disposeVideoController(_nextVideoController);
-    _nextVideoController = null;
-
-    if (_contents.isEmpty) return;
-
-    final nextIdx = (_currentIndex + 1) % _contents.length;
-    final next = _contents[nextIdx];
-    if (next.type != ContentType.video) return;
-
-    try {
-      final c = VideoPlayerController.networkUrl(
-        Uri.parse(next.url),
-        videoPlayerOptions: VideoPlayerOptions(
-          mixWithOthers: false, // Isolado de outros players
-          allowBackgroundPlayback: false, // Não tocar em background
-        ),
-      );
-      _nextVideoController = c;
-      
-      // Preload otimizado: volume 0 + initialize assíncrono
-      c.setVolume(0.0).then((_) {
-        return c.initialize();
-      }).then((_) {
-        // Deixa pronto para trocar rápido (não dá play ainda)
-        debugPrint('⬇️ Próximo vídeo pré-carregado');
-      }).catchError((e) {
-        debugPrint('⚠️ Erro no preload do próximo vídeo: $e');
-      });
-    } catch (e) {
-      debugPrint('⚠️ Exceção ao preparar preload: $e');
-    }
-  }
+  // Preload não é mais necessário com nova API v4.0.0
+  // O NativeVideoPlayer é mais eficiente
 
   Future<void> _showImage(DisplayContent content) async {
     // Ao trocar para imagem, garante que não há vídeo tocando
-    final oldController = _videoController;
-    _videoController = null; // Limpa referência primeiro
-    await _disposeVideoController(oldController);
+    _eventsSubscription?.cancel();
+    _videoController?.dispose();
+    _videoController = null;
+    _currentVideoUrl = null; // Limpa URL do vídeo
     
     if (mounted) setState(() {});
 
-    // Duração padrão para imagens (8s) se não especificado
-    final secs = (content.durationSeconds ?? 8).clamp(1, 3600);
+    // Duração padrão para imagens (5s) se não especificado
+    final secs = (content.durationSeconds ?? 5).clamp(1, 3600);
     _contentTimer?.cancel();
     _contentTimer = Timer(Duration(seconds: secs), () {
       if (mounted) {
@@ -350,39 +334,6 @@ class _DisplayScreenState extends State<DisplayScreen>
     setState(() {
       _currentIndex = (_currentIndex + 1) % _contents.length;
     });
-
-    // Se o próximo já está pré-carregado e é vídeo, faça um handoff rápido
-    final next = _contents[_currentIndex];
-    if (next.type == ContentType.video && _nextVideoController != null) {
-      // Troca controllers: o próximo vira atual
-      final ready = _nextVideoController!;
-      _nextVideoController = null; // libera slot
-
-      await _disposeVideoController(_videoController);
-      _videoController = ready;
-
-      try {
-        await ready.setLooping(false);
-        await ready.play();
-      } catch (e) {
-        debugPrint('🎥 Erro ao dar play no vídeo pré-carregado: $e');
-        await _startContentDisplay();
-        return;
-      }
-
-      setState(() {});
-      _preloadNextVideo();
-
-      // Fallback de duração
-      _contentTimer?.cancel();
-      if (next.durationSeconds != null && next.durationSeconds! > 0) {
-        _contentTimer = Timer(Duration(seconds: next.durationSeconds!), () {
-          if (mounted) _goToNextContent();
-        });
-      }
-
-      return;
-    }
 
     await _startContentDisplay();
   }
@@ -422,38 +373,23 @@ class _DisplayScreenState extends State<DisplayScreen>
     }
   }
 
-  /// FULLSCREEN real do vídeo independente do tamanho do arquivo
-  /// Força o vídeo a preencher toda a tela usando Transform.scale se necessário
+  /// FULLSCREEN real do vídeo usando native video player v4.0.0
   Widget _buildVideoPlayer() {
-    final controller = _videoController;
-    
-    // Verifica se controller existe, está inicializado E não foi disposed
-    if (controller == null || !controller.value.isInitialized || _disposed) {
+    // Se não tem URL do vídeo, retorna tela preta
+    if (_currentVideoUrl == null || _disposed) {
       return const ColoredBox(color: Colors.black);
     }
 
-    // Double check se ainda está válido antes de renderizar
-    try {
-      final size = controller.value.size;
-      const overscan = 1.02; // 2% de zoom para esconder as bordas verdes
-
-      return ClipRect(
-        child: FittedBox(
-          fit: BoxFit.cover,
-          alignment: Alignment.center,
-          child: SizedBox(
-            // aumenta levemente o "quadro" do vídeo para cortar as extremidades
-            width: size.width * overscan,
-            height: size.height * overscan,
-            child: VideoPlayer(controller),
-          ),
-        ),
-      );
-    } catch (e) {
-      // Se houve erro ao acessar propriedades do controller, provavelmente foi disposed
-      debugPrint('⚠️ Controller inválido no _buildVideoPlayer: $e');
-      return const ColoredBox(color: Colors.black);
-    }
+    // NativeVideoPlayerView direto, sem Positioned pois já está dentro de um
+    return NativeVideoPlayerView(
+      onViewReady: (controller) async {
+        try {
+          await _setupVideoController(controller, _currentVideoUrl!);
+        } catch (e) {
+          debugPrint('⚠️ Erro ao setup video controller: $e');
+        }
+      },
+    );
   }
 
   Widget _buildImage(String url) {
