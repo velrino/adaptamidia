@@ -8,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.seemidia.display"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -25,7 +25,7 @@ android {
         applicationId = "com.seemidia.display"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 24
         // Reduced targetSdk to 27 for flutter_uvc_camera compatibility with Android 10+
         targetSdk = 27
         versionCode = flutter.versionCode

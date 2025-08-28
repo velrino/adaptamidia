@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/config': (context) => const ConfigurationScreen(),
-        '/camera': (context) => const CameraScreen(),
+        '/camera': (context) => const YoloUvcBboxScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/display') {
