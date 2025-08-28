@@ -177,12 +177,16 @@ class _DisplayScreenState extends State<DisplayScreen>
   Future<void> _disposeVideoController(VideoPlayerController? c) async {
     if (c == null) return;
     try {
+      // Remove todos os listeners primeiro para evitar callbacks após dispose
+      c.removeListener(() {});
       // Pause rápido para parar processamento
-      await c.pause();
-      // Volume 0 para evitar codec processing durante dispose
-      await c.setVolume(0.0);
+      if (c.value.isInitialized) {
+        await c.pause();
+        // Volume 0 para evitar codec processing durante dispose
+        await c.setVolume(0.0);
+      }
       // Pequeno delay para estabilizar
-      await Future.delayed(const Duration(milliseconds: 50));
+      await Future.delayed(const Duration(milliseconds: 100));
       await c.dispose();
     } catch (_) {
       // Ignore erros durante dispose
@@ -221,9 +225,9 @@ class _DisplayScreenState extends State<DisplayScreen>
   }
 
   Future<void> _playVideo(DisplayContent content) async {
-    // Descarta players anteriores
-    await _disposeVideoController(_videoController);
-
+    // Guarda referência do controller anterior antes de limpar
+    final oldController = _videoController;
+    
     final controller = VideoPlayerController.networkUrl(
       Uri.parse(content.url),
       videoPlayerOptions: VideoPlayerOptions(
@@ -232,7 +236,11 @@ class _DisplayScreenState extends State<DisplayScreen>
       ),
     );
 
+    // Define o novo controller ANTES de dispose do antigo
     _videoController = controller;
+    
+    // Agora descarta o anterior
+    await _disposeVideoController(oldController);
 
     try {
       // CRÍTICO: Define volume 0 ANTES de inicializar para evitar codec AAC
@@ -250,16 +258,17 @@ class _DisplayScreenState extends State<DisplayScreen>
     await controller.play();
 
     // Listener para avançar ao final
-    controller.addListener(() async {
+    void videoEndListener() async {
       if (!mounted || _disposed) return;
       final v = controller.value;
       if (v.isInitialized && !v.isPlaying) {
-        // Chegou ao fim (ou pausou por erro). Avança.
-        // Pequeno debounce para não chamar múltiplas vezes
-        controller.removeListener(() {});
+        // Remove listener antes de avançar para evitar múltiplas chamadas
+        controller.removeListener(videoEndListener);
         await _goToNextContent();
       }
-    });
+    }
+    
+    controller.addListener(videoEndListener);
 
     // Pré-carrega próximo vídeo (se existir)
     _preloadNextVideo();
@@ -313,9 +322,12 @@ class _DisplayScreenState extends State<DisplayScreen>
   }
 
   Future<void> _showImage(DisplayContent content) async {
-    // Ao trocar para imagem, garanta que não há vídeo tocando
-    await _disposeVideoController(_videoController);
-    setState(() {});
+    // Ao trocar para imagem, garante que não há vídeo tocando
+    final oldController = _videoController;
+    _videoController = null; // Limpa referência primeiro
+    await _disposeVideoController(oldController);
+    
+    if (mounted) setState(() {});
 
     // Duração padrão para imagens (8s) se não especificado
     final secs = (content.durationSeconds ?? 8).clamp(1, 3600);
@@ -414,25 +426,34 @@ class _DisplayScreenState extends State<DisplayScreen>
   /// Força o vídeo a preencher toda a tela usando Transform.scale se necessário
   Widget _buildVideoPlayer() {
     final controller = _videoController;
-    if (controller == null || !controller.value.isInitialized) {
+    
+    // Verifica se controller existe, está inicializado E não foi disposed
+    if (controller == null || !controller.value.isInitialized || _disposed) {
       return const ColoredBox(color: Colors.black);
     }
 
-    final size = controller.value.size;
-    const overscan = 1.02; // 2% de zoom para esconder as bordas verdes
+    // Double check se ainda está válido antes de renderizar
+    try {
+      final size = controller.value.size;
+      const overscan = 1.02; // 2% de zoom para esconder as bordas verdes
 
-    return ClipRect(
-      child: FittedBox(
-        fit: BoxFit.cover,
-        alignment: Alignment.center,
-        child: SizedBox(
-          // aumenta levemente o “quadro” do vídeo para cortar as extremidades
-          width: size.width * overscan,
-          height: size.height * overscan,
-          child: VideoPlayer(controller),
+      return ClipRect(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+          child: SizedBox(
+            // aumenta levemente o "quadro" do vídeo para cortar as extremidades
+            width: size.width * overscan,
+            height: size.height * overscan,
+            child: VideoPlayer(controller),
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      // Se houve erro ao acessar propriedades do controller, provavelmente foi disposed
+      debugPrint('⚠️ Controller inválido no _buildVideoPlayer: $e');
+      return const ColoredBox(color: Colors.black);
+    }
   }
 
   Widget _buildImage(String url) {
@@ -460,149 +481,100 @@ class _DisplayScreenState extends State<DisplayScreen>
 
   Widget _buildNewsOverlay(DisplayContent content) {
     return Positioned(
-      left: 0,
-      right: 0,
-      bottom: 0,
+      left: 24,
+      right: 24,
+      bottom: 24,
       child: Container(
-        // Overlay unificado elegante
-        margin: const EdgeInsets.all(24),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
-          // Gradient elegante com transparência
-          gradient: const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xE6000000), // Preto semi-transparente
-              Color(0xF0000000), // Preto mais opaco
-            ],
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+          color: Colors.black.withValues(alpha: 0.8),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            // Logo SeeMidia
+            Image.asset(
+              'assets/images/logo.png',
+              width: 160,
+              height: 160,
+              fit: BoxFit.contain,
+            ),
+
+            const SizedBox(width: 24),
+
+            // Textos ao lado
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Título
+                  if (content.title?.isNotEmpty == true)
+                    Text(
+                      content.title!,
+                      style: const TextStyle(
+                        fontSize: 42,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                  // Espaço entre título e descrição
+                  if (content.title?.isNotEmpty == true &&
+                      content.description?.isNotEmpty == true)
+                    const SizedBox(height: 10),
+
+                  // Descrição
+                  if (content.description?.isNotEmpty == true)
+                    Text(
+                      content.description!,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        color: Color(0xFFE0E0E0),
+                        height: 1.3,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                  // Espaço antes da fonte
+                  if ((content.title?.isNotEmpty == true ||
+                          content.description?.isNotEmpty == true) &&
+                      (content.sourceName?.isNotEmpty == true ||
+                          content.author?.isNotEmpty == true))
+                    const SizedBox(height: 12),
+
+                  // Fonte e Autor
+                  if (content.sourceName?.isNotEmpty == true ||
+                      content.author?.isNotEmpty == true)
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.article_outlined,
+                          color: Color(0xFFB0B0B0),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _buildSourceText(
+                            content.sourceName,
+                            content.author,
+                          ),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            color: Color(0xFFB0B0B0),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
             ),
           ],
-          // Borda sutil para elegância
-          border: Border.all(
-            color: Colors.white.withValues(alpha: 0.1),
-            width: 1,
-          ),
-        ),
-        child: IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Logo SeeMidia à esquerda
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  // color: Colors.white.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  width: 200,
-                  height: 200,
-                  fit: BoxFit.contain,
-                ),
-              ),
-
-              const SizedBox(width: 24),
-
-              // Linha divisória elegante
-              Container(width: 2, color: Colors.white.withValues(alpha: 0.3)),
-
-              const SizedBox(width: 24),
-
-              // Textos à direita
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Título
-                    if (content.title?.isNotEmpty == true)
-                      Text(
-                        content.title!,
-                        style: const TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          height: 1.2,
-                          letterSpacing: -0.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-
-                    // Espaço entre título e descrição
-                    if (content.title?.isNotEmpty == true &&
-                        content.description?.isNotEmpty == true)
-                      const SizedBox(height: 12),
-
-                    // Descrição
-                    if (content.description?.isNotEmpty == true)
-                      Text(
-                        content.description!,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          color: Color(0xFFE0E0E0),
-                          height: 1.3,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-
-                    // Espaço antes da fonte
-                    if ((content.title?.isNotEmpty == true ||
-                            content.description?.isNotEmpty == true) &&
-                        (content.sourceName?.isNotEmpty == true ||
-                            content.author?.isNotEmpty == true))
-                      const SizedBox(height: 16),
-
-                    // Fonte e Autor com ícone
-                    if (content.sourceName?.isNotEmpty == true ||
-                        content.author?.isNotEmpty == true)
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.article_outlined,
-                            color: Color(0xFFB0B0B0),
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _buildSourceText(
-                                content.sourceName,
-                                content.author,
-                              ),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Color(0xFFB0B0B0),
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
