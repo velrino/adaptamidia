@@ -169,26 +169,28 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
   }
 
   Widget _buildOrientationSelector(bool isDark) {
-    return Column(
-      children: [
-        _buildOrientationCard(
-          'portrait',
-          'Portrait',
-          'Ideal para menus e promoções verticais',
-          Icons.stay_current_portrait,
-          isDark,
-          _selectedIndex == 0,
-        ),
-        const SizedBox(height: 20),
-        _buildOrientationCard(
-          'landscape',
-          'Landscape',
-          'Ideal para vídeos e conteúdo horizontal',
-          Icons.stay_current_landscape,
-          isDark,
-          _selectedIndex == 1,
-        ),
-      ],
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          _buildOrientationCard(
+            'portrait',
+            'Portrait',
+            'Ideal para menus e promoções verticais',
+            Icons.stay_current_portrait,
+            isDark,
+            _selectedIndex == 0,
+          ),
+          const SizedBox(height: 20),
+          _buildOrientationCard(
+            'landscape',
+            'Landscape',
+            'Ideal para vídeos e conteúdo horizontal',
+            Icons.stay_current_landscape,
+            isDark,
+            _selectedIndex == 1,
+          ),
+        ],
+      ),
     );
   }
 

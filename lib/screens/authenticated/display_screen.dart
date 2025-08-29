@@ -57,6 +57,7 @@ class _DisplayScreenState extends State<DisplayScreen>
 
   bool _isSettingUp = false; // evita setups concorrentes
   bool _disposed = false;
+  bool _isVideoReady = false; // Controla se o vídeo está pronto para exibição
 
   @override
   void initState() {
@@ -151,7 +152,7 @@ class _DisplayScreenState extends State<DisplayScreen>
         _videoController!.pause();
         break;
       case AppLifecycleState.resumed:
-        if (mounted) {
+        if (mounted && _isVideoReady) {
           _videoController!.play();
         }
         break;
@@ -169,14 +170,30 @@ class _DisplayScreenState extends State<DisplayScreen>
     _progressTimer?.cancel();
     _eventsSubscription?.cancel();
 
-    _videoController?.dispose();
+    // Limpeza mais robusta do controller de vídeo
+    _cleanupVideoController();
 
     WakelockPlus.disable();
     super.dispose();
   }
 
-  // Método auxiliar para setup do controller (usado no onViewReady)
-  String? _currentVideoUrl;
+  // Limpeza completa do controller de vídeo
+  void _cleanupVideoController() {
+    _eventsSubscription?.cancel();
+    _eventsSubscription = null;
+
+    if (_videoController != null) {
+      try {
+        _videoController!.dispose();
+      } catch (e) {
+        debugPrint('Erro ao disposar video controller: $e');
+      }
+      _videoController = null;
+    }
+
+    _hasStartedPlaying = false;
+    _isVideoReady = false;
+  }
 
   Future<void> _startContentDisplay() async {
     if (!mounted || _disposed || _isSettingUp) return;
@@ -209,29 +226,36 @@ class _DisplayScreenState extends State<DisplayScreen>
     }
   }
 
-  Future<void> _setupVideoController(NativeVideoPlayerController controller, String videoUrl) async {
+  Future<void> _setupVideoController(
+    NativeVideoPlayerController controller,
+    String videoUrl,
+  ) async {
     try {
       _videoController = controller;
-      
+      _isVideoReady = false;
+
       // Setup de eventos
       _eventsSubscription?.cancel();
       _eventsSubscription = controller.events.listen((event) {
         if (!mounted || _disposed) return;
-        
+
         switch (event) {
           case PlaybackStatusChangedEvent():
             // Video acabou, avança para próximo
             final status = event.status;
             debugPrint('🎥 Status change: $status');
-            
+
             // Marca que o vídeo está tocando
             if (status == PlaybackStatus.playing) {
               _hasStartedPlaying = true;
+              _isVideoReady = true;
+              setState(() {}); // Atualiza UI para mostrar o vídeo
             }
-            
+
             // Se o vídeo parou APÓS ter começado a tocar, é porque acabou
             if (status == PlaybackStatus.stopped && _hasStartedPlaying) {
               _hasStartedPlaying = false; // Reset flag
+              _isVideoReady = false;
               // Pequeno delay para garantir que não é apenas transição de estado
               Future.delayed(const Duration(milliseconds: 500), () {
                 if (mounted && !_disposed) {
@@ -239,16 +263,17 @@ class _DisplayScreenState extends State<DisplayScreen>
                 }
               });
             }
-            break;
-            
+
           case PlaybackReadyEvent():
             debugPrint('📹 Video ready');
+            _isVideoReady = true;
+            setState(() {}); // Atualiza UI para mostrar o vídeo
             break;
-            
+
           case PlaybackPositionChangedEvent():
             // Podemos usar isso para tracking de progresso se quisermos
             break;
-            
+
           default:
             debugPrint('📺 Event: $event');
             break;
@@ -257,60 +282,46 @@ class _DisplayScreenState extends State<DisplayScreen>
 
       // Carrega o vídeo
       await controller.loadVideo(
-        VideoSource(
-          path: videoUrl,
-          type: VideoSourceType.network,
-        ),
+        VideoSource(path: videoUrl, type: VideoSourceType.network),
       );
-      
+
       if (!mounted) return;
-      
+
       // IMPORTANTE: Dar play no vídeo após carregar
       await controller.play();
-      
-      setState(() {}); // Re-render para mostrar player
-      
     } catch (e) {
       debugPrint('🎥 Erro ao setup controller: $e');
+      _isVideoReady = false;
+      setState(() {});
       rethrow;
     }
   }
 
   Future<void> _playVideo(DisplayContent content) async {
     if (!mounted) return;
-    
-    // Limpa controller anterior
-    _eventsSubscription?.cancel();
-    _videoController?.dispose();
-    _videoController = null;
-    _hasStartedPlaying = false; // Reset flag de playing
-    
-    // Armazena URL para usar no onViewReady
-    _currentVideoUrl = content.url;
-    
-    setState(() {}); // Re-render para inicializar novo player
 
-    // Fallback timer de segurança
+    // Limpa controller anterior de forma completa
+    _cleanupVideoController();
+
+    setState(() {
+      _isVideoReady = false;
+    });
+
+    // Fallback timer de segurança - mais longo para vídeos
     _contentTimer?.cancel();
-    if (content.durationSeconds != null && content.durationSeconds! > 0) {
-      _contentTimer = Timer(Duration(seconds: content.durationSeconds!), () {
-        if (mounted) {
-          _goToNextContent();
-        }
-      });
-    }
+    final fallbackDuration =
+        content.durationSeconds ?? 30; // Default 30s para vídeos
+    _contentTimer = Timer(Duration(seconds: fallbackDuration), () {
+      if (mounted && _isVideoReady) {
+        _goToNextContent();
+      }
+    });
   }
-
-  // Preload não é mais necessário com nova API v4.0.0
-  // O NativeVideoPlayer é mais eficiente
 
   Future<void> _showImage(DisplayContent content) async {
     // Ao trocar para imagem, garante que não há vídeo tocando
-    _eventsSubscription?.cancel();
-    _videoController?.dispose();
-    _videoController = null;
-    _currentVideoUrl = null; // Limpa URL do vídeo
-    
+    _cleanupVideoController();
+
     if (mounted) setState(() {});
 
     // Duração padrão para imagens (5s) se não especificado
@@ -328,11 +339,13 @@ class _DisplayScreenState extends State<DisplayScreen>
 
     _contentTimer?.cancel();
     _progressTimer?.cancel();
+    _cleanupVideoController();
 
     if (_contents.isEmpty) return;
 
     setState(() {
       _currentIndex = (_currentIndex + 1) % _contents.length;
+      _isVideoReady = false;
     });
 
     await _startContentDisplay();
@@ -353,12 +366,9 @@ class _DisplayScreenState extends State<DisplayScreen>
             const Center(child: CircularProgressIndicator())
           else
             Positioned.fill(child: _buildContent(current!)),
-          // Opcional: overlay de debug
-          // Positioned(
-          //   left: 12,
-          //   bottom: 12,
-          //   child: _DebugBadge(index: _currentIndex, total: _contents.length),
-          // ),
+          // Mostra indicador de carregamento enquanto o vídeo não está pronto
+          if (current?.type == ContentType.video && !_isVideoReady)
+            const Center(child: CircularProgressIndicator()),
         ],
       ),
     );
@@ -367,26 +377,29 @@ class _DisplayScreenState extends State<DisplayScreen>
   Widget _buildContent(DisplayContent content) {
     switch (content.type) {
       case ContentType.video:
-        return _buildVideoPlayer();
+        return _buildVideoPlayer(content.url);
       case ContentType.image:
         return _buildImage(content.url);
     }
   }
 
   /// FULLSCREEN real do vídeo usando native video player v4.0.0
-  Widget _buildVideoPlayer() {
-    // Se não tem URL do vídeo, retorna tela preta
-    if (_currentVideoUrl == null || _disposed) {
-      return const ColoredBox(color: Colors.black);
-    }
-
-    // NativeVideoPlayerView direto, sem Positioned pois já está dentro de um
+  Widget _buildVideoPlayer(String videoUrl) {
     return NativeVideoPlayerView(
+      key: ValueKey(
+        videoUrl,
+      ), // Key única para cada vídeo força reconstrução correta
       onViewReady: (controller) async {
         try {
-          await _setupVideoController(controller, _currentVideoUrl!);
+          await _setupVideoController(controller, videoUrl);
         } catch (e) {
           debugPrint('⚠️ Erro ao setup video controller: $e');
+          // Em caso de erro, avança para próximo conteúdo após delay
+          Future.delayed(const Duration(seconds: 2), () {
+            if (mounted && !_disposed) {
+              _goToNextContent();
+            }
+          });
         }
       },
     );
@@ -495,10 +508,7 @@ class _DisplayScreenState extends State<DisplayScreen>
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          _buildSourceText(
-                            content.sourceName,
-                            content.author,
-                          ),
+                          _buildSourceText(content.sourceName, content.author),
                           style: const TextStyle(
                             fontSize: 18,
                             color: Color(0xFFB0B0B0),
@@ -557,34 +567,4 @@ class DisplayContent {
     this.sourceName,
     this.author,
   });
-}
-
-// ======== (Opcional) Widget de debug ======== //
-class _DebugBadge extends StatelessWidget {
-  final int index;
-  final int total;
-  const _DebugBadge({required this.index, required this.total});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: DefaultTextStyle(
-        style: const TextStyle(color: Colors.white70, fontSize: 12),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.bolt, size: 14, color: Colors.white70),
-            const SizedBox(width: 6),
-            Text('item ${index + 1} / $total'),
-          ],
-        ),
-      ),
-    );
-  }
 }

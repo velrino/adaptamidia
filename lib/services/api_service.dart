@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'logger_service.dart';
 
 class ApiService {
-  static const String _baseUrl = 'https://28b7d10e90e1.ngrok-free.app';
+  static const String _baseUrl = 'https://9aca430ada6d.ngrok-free.app';
   static const Duration _timeout = Duration(seconds: 30);
 
   static final Map<String, String> _defaultHeaders = {
