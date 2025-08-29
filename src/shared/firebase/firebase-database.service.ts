@@ -1,6 +1,9 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import * as admin from 'firebase-admin'; // Importar o Admin SDK
-import { FirebasePathsEnum } from './firebase.enum';
+import {
+  FirebasePathsEnum,
+  IFirebaseListenForNewRecords,
+} from './firebase.enum';
 import {
   GetGoogleCloudCredential,
   GoogleCloudCredential,
@@ -48,7 +51,7 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
     try {
       // Cleanup Firebase connections
       if (admin.apps.length) {
-        await Promise.all(admin.apps.map(app => app?.delete()));
+        await Promise.all(admin.apps.map((app) => app?.delete()));
       }
     } catch (error) {
       Log(
@@ -76,6 +79,88 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
         this.save.name,
         LogAction.FAILED,
         { data, error },
+      );
+      throw error;
+    }
+  }
+
+  // Adicione este método na classe FirebaseDatabaseService
+  async addRecord(path: FirebasePathsEnum, data: any): Promise<string> {
+    try {
+      const ref = this.database.ref(path);
+      const newRecordRef = ref.push(); // Cria uma referência com ID automático
+
+      await newRecordRef.set({
+        ...data,
+        timestamp: admin.database.ServerValue.TIMESTAMP,
+      });
+
+      return newRecordRef.key; // Retorna o ID do novo registro
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        FirebaseDatabaseService.name,
+        this.addRecord.name,
+        LogAction.FAILED,
+        { data, error },
+      );
+      throw error;
+    }
+  }
+
+  // Adicione este método na classe FirebaseDatabaseService
+  async listenForNewRecords(
+    parameters: IFirebaseListenForNewRecords,
+  ): Promise<() => void> {
+    try {
+      const ref = this.database.ref(parameters.path);
+
+      // Listener para novos registros
+      const childAddedHandler = ref.on('child_added', async (snapshot) => {
+        try {
+          const data = snapshot.val();
+          const key = snapshot.key;
+
+          if (data && key) {
+            await parameters.callback(data, key);
+          }
+        } catch (error) {
+          Log(
+            LogType.ERROR,
+            FirebaseDatabaseService.name,
+            'childAddedHandler',
+            LogAction.FAILED,
+            { error, parameters },
+          );
+        }
+      });
+
+      // Retorna uma função para remover o listener
+      return () => ref.off('child_added', childAddedHandler);
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        FirebaseDatabaseService.name,
+        this.listenForNewRecords.name,
+        LogAction.FAILED,
+        { error, parameters },
+      );
+      throw error;
+    }
+  }
+
+  // Método para deletar registro
+  async deleteRecord(path: FirebasePathsEnum, id: string): Promise<void> {
+    try {
+      const ref = this.database.ref(`${path}/${id}`);
+      await ref.remove();
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        FirebaseDatabaseService.name,
+        this.deleteRecord.name,
+        LogAction.FAILED,
+        { error, path, id },
       );
       throw error;
     }

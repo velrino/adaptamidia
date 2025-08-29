@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import {
@@ -34,10 +40,15 @@ import {
   DisplayType,
   IDisplayAdvertisementUnit,
 } from 'src/modules/display/unit/unit.interface';
+import { FirebaseDatabaseService } from 'src/shared/firebase/firebase-database.service';
+import { FirebasePathsEnum } from 'src/shared/firebase/firebase.enum';
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Processor(QueuesEnum.DISPLAY_LOG_CREATE)
 @Injectable()
-export class CreateDisplayLogService {
+export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
+  private unsubscribeListener: () => void;
+
   constructor(
     private readonly queueService: QueueService,
     @InjectModel(DisplayLog.name)
@@ -49,6 +60,7 @@ export class CreateDisplayLogService {
     @InjectModel(News.name)
     readonly newsModel: Model<NewsDocument>,
     private readonly redisService: RedisService,
+    private readonly firebaseService: FirebaseDatabaseService,
   ) {}
 
   prepareBody(currentRequest: CustomRequest, parameters: ICreateDisplayLogDto) {
@@ -94,14 +106,6 @@ export class CreateDisplayLogService {
       throw error;
     }
   }
-
-  // async onApplicationBootstrap() {
-  //   //  Debug
-  //   await this.queueService.addQueueDetectImage({
-  //     id: new Types.ObjectId('6881c38478913214f5aca561'),
-  //     // id: new Types.ObjectId('68837ac478913214f5aca84d'),
-  //   });
-  // }
 
   async executeFromGuestRequest(
     currentRequest: CustomRequest,
@@ -321,6 +325,74 @@ export class CreateDisplayLogService {
         error?.message || RESULT.DISPLAY_LOG_CREATE_FAILED,
         error?.status || HttpStatus.UNPROCESSABLE_ENTITY,
       );
+    }
+  }
+
+  async onModuleInit(): Promise<void> {
+    await this.startDisplayLogsListener();
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    if (this.unsubscribeListener) {
+      this.unsubscribeListener();
+    }
+  }
+
+  // @Cron(CronExpression.EVERY_5_SECONDS)
+  // async example() {
+  //   //  Debug
+  //   // await this.queueService.addQueueDetectImage({
+  //   //   id: new Types.ObjectId('6881c38478913214f5aca561'),
+  //   //   // id: new Types.ObjectId('68837ac478913214f5aca84d'),
+  //   // });
+  //   await this.firebaseService.addRecord(FirebasePathsEnum.DISPLAY_LOGS, {
+  //     lorem: `ipsum - ${new Date().toString()}`,
+  //   });
+  // }
+
+  private async startDisplayLogsListener(): Promise<void> {
+    try {
+      this.unsubscribeListener = await this.firebaseService.listenForNewRecords(
+        {
+          path: FirebasePathsEnum.DISPLAY_LOGS,
+          callback: async (data, key) => {
+            console.log('Novo registro encontrado:', { data, key });
+
+            // Processa o registro (faça o que precisar aqui)
+            await this.processDisplayLog(data, key);
+
+            // Deleta o registro após processamento
+            await this.firebaseService.deleteRecord(
+              FirebasePathsEnum.DISPLAY_LOGS,
+              key,
+            );
+
+            console.log('Registro processado e deletado:', key);
+          },
+        },
+      );
+
+      console.log('Listener iniciado para display_logs');
+    } catch (error) {
+      console.error('Erro ao iniciar listener:', error);
+      throw error;
+    }
+  }
+
+  private async processDisplayLog(data: any, key: string): Promise<void> {
+    try {
+      // Aqui você pode fazer o processamento do registro
+      console.log('Processando registro:', {
+        key,
+        data,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Exemplo: salvar em outro banco, enviar email, etc.
+      // await this.yourRepository.save(data);
+    } catch (error) {
+      console.error('Erro ao processar registro:', error);
+      throw error;
     }
   }
 }

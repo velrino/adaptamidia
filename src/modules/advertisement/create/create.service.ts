@@ -41,20 +41,23 @@ export class CreateAdvertisementService extends AdvertisementService {
       },
     );
 
-    // const records = await this.model.find();
+    // const records = await this.model.find().lean();
 
     // for (let index = 0; index < records.length; index++) {
-    //   const element = records[index];
+    //   const element: any = records[index];
 
-    //   await this.model.updateOne(
-    //     { _id: element._id },
-    //     {
-    //       source: element.items[0].source,
-    //       // Remove o array items original
-    //       $unset: { items: '' },
-    //     },
-    //   );
-    //   console.log({ _id: element._id, element: element.items[0].source });
+    //   if (element?.items?.[0]?.source) {
+    //     await this.model.updateOne(
+    //       { _id: element._id },
+    //       {
+    //         source: element.items[0].source,
+    //         // Remove o array items original
+    //         $unset: { items: '' },
+    //       },
+    //     );
+    //   }
+
+    // console.log({ _id: element._id, test: element?.items });
     // }
   }
 
