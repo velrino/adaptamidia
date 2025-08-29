@@ -7,7 +7,7 @@ import 'screens/configuration_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/authenticated/home_screen.dart';
 import 'screens/authenticated/display_screen.dart';
-// import 'screens/camera_screen.dart'; // Temporariamente desabilitado
+import 'screens/camera_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,7 +47,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/config': (context) => const ConfigurationScreen(),
-        // '/camera': (context) => const YoloUvcBboxScreen(), // Desabilitado
+        '/camera': (context) => const CameraScreen(),
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/display') {
