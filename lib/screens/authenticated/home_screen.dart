@@ -27,18 +27,18 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const MyHomePage()),
-              );
-            },
-            icon: Icon(
-              Icons.play_circle_fill,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-            ),
-            tooltip: 'VLC Player Demo',
-          ),
+          // IconButton(
+          //   onPressed: () {
+          //     Navigator.of(context).push(
+          //       MaterialPageRoute(builder: (context) => const MyHomePage()),
+          //     );
+          //   },
+          //   icon: Icon(
+          //     Icons.play_circle_fill,
+          //     color: isDark ? Colors.grey[400] : Colors.grey[600],
+          //   ),
+          //   tooltip: 'VLC Player Demo',
+          // ),
           IconButton(
             onPressed: () {
               ConfigurationService.instance.showConfigurationOptions(context);

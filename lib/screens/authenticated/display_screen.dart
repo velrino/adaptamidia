@@ -4,11 +4,11 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_vlc_player/flutter_vlc_player.dart';
 import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../services/storage_service.dart';
 import '../../services/media_cache_service.dart';
+import '../../components/video_player_screen.dart';
 
 /// TODO: ajuste este token se necessário.
 const _authToken =
@@ -79,11 +79,10 @@ class _DisplayPlaylistScreenState extends State<DisplayPlaylistScreen> {
   Timer? _progressTimer;
   double _playProgress = 0.0;
 
-  // VLC Player
-  VlcPlayerController? _vlc;
+  // Video state (simplified for WebView only)
   bool _isVideoReady = false;
 
-  // Cache service
+  // Services
   final MediaCacheService _cacheService = MediaCacheService.instance;
 
   @override
@@ -97,7 +96,6 @@ class _DisplayPlaylistScreenState extends State<DisplayPlaylistScreen> {
   void dispose() {
     _playTimer?.cancel();
     _progressTimer?.cancel();
-    _disposeVlc(); // Não posso usar await aqui no dispose()
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
@@ -213,32 +211,28 @@ class _DisplayPlaylistScreenState extends State<DisplayPlaylistScreen> {
       _loadingMessage = 'Baixando conteúdo...';
     });
 
-    // Coleta todas as URLs
-    final urlsToDownload = <String>[];
+    // Coleta URLs de imagens apenas (vídeos são tratados pelo WebView)
+    final imagesToDownload = <String>[];
 
     for (final item in _items) {
       if (item.type == ItemType.news && item.imageUrl != null) {
-        urlsToDownload.add(item.imageUrl!);
-      } else if (item.type == ItemType.ad && item.mediaUrl != null) {
-        // Por enquanto, não vamos pré-baixar vídeos grandes
-        // Apenas imagens de anúncios
-        if (!item.isVideo) {
-          urlsToDownload.add(item.mediaUrl!);
-        }
+        imagesToDownload.add(item.imageUrl!);
+      } else if (item.type == ItemType.ad && item.mediaUrl != null && !item.isVideo) {
+        imagesToDownload.add(item.mediaUrl!);
       }
     }
 
-    _totalFiles = urlsToDownload.length;
+    _totalFiles = imagesToDownload.length;
     _loadedFiles = 0;
 
-    // Baixa conteúdo com progresso
-    for (int i = 0; i < urlsToDownload.length; i++) {
-      final url = urlsToDownload[i];
+    // Baixa imagens
+    for (int i = 0; i < imagesToDownload.length; i++) {
+      final url = imagesToDownload[i];
 
       setState(() {
         _loadedFiles = i + 1;
         _loadingProgress = 0.3 + (0.6 * (_loadedFiles / _totalFiles));
-        _loadingMessage = 'Baixando conteúdo $_loadedFiles de $_totalFiles...';
+        _loadingMessage = 'Baixando imagens $_loadedFiles de $_totalFiles...';
       });
 
       final file = await _cacheService.downloadFile(url);
@@ -270,40 +264,15 @@ class _DisplayPlaylistScreenState extends State<DisplayPlaylistScreen> {
     _playCurrent();
   }
 
-  Future<void> _disposeVlc() async {
-    if (_vlc != null) {
-      try {
-        // Remove listener primeiro
-        _vlc!.removeListener(_onVlcPlayerStateChanged);
-        
-        // Para o vídeo se estiver tocando
-        if (_vlc!.value.isInitialized && _vlc!.value.isPlaying) {
-          await _vlc!.pause();
-        }
-        
-        // Aguarda um frame antes do dispose
-        await Future.delayed(const Duration(milliseconds: 100));
-        
-        // Dispose do controller
-        await _vlc!.dispose();
-      } catch (e) {
-        print('Erro ao fazer dispose do VLC: $e');
-      }
-      
-      _vlc = null;
-    }
-    _isVideoReady = false;
-  }
-
   Future<void> _playCurrent() async {
     if (!mounted) return;
 
     _playTimer?.cancel();
     _progressTimer?.cancel();
-    await _disposeVlc();
 
     setState(() {
       _playProgress = 0.0;
+      _isVideoReady = false;
     });
 
     final item = _items[_index];
@@ -312,84 +281,19 @@ class _DisplayPlaylistScreenState extends State<DisplayPlaylistScreen> {
     _preloadNextItem();
 
     if (item.type == ItemType.ad && item.isVideo && item.mediaUrl != null) {
-      // Configura VLC para vídeo
+      // Usa WebView para vídeos
+      print('🌐 Usando WebView para vídeo: ${item.mediaUrl}');
+      
       setState(() {
-        _isVideoReady = false;
+        _isVideoReady = true;
       });
-
-      try {
-        _vlc = VlcPlayerController.network(
-          item.mediaUrl!,
-          hwAcc: HwAcc.auto,
-          autoPlay: false, // Controle manual
-          options: VlcPlayerOptions(
-            advanced: VlcAdvancedOptions([
-              VlcAdvancedOptions.networkCaching(2000),
-              ':no-drop-late-frames',
-              ':no-skip-frames',
-            ]),
-          ),
-        );
-
-        // Aguarda vídeo estar pronto com timeout
-        _vlc!.addListener(_onVlcPlayerStateChanged);
-
-        // Aguarda um frame antes de inicializar
-        await Future.delayed(const Duration(milliseconds: 200));
-        
-        if (mounted && _vlc != null) {
-          await _vlc!.initialize();
-          
-          // Timeout para inicialização (10 segundos)
-          Timer(const Duration(seconds: 10), () {
-            if (!_isVideoReady && mounted) {
-              print('Timeout na inicialização do vídeo, pulando...');
-              _nextItem();
-            }
-          });
-        }
-      } catch (e) {
-        print('Erro ao inicializar VLC: $e');
-        // Se falhar, pula para o próximo item
-        if (mounted) {
-          Future.delayed(const Duration(milliseconds: 500), () {
-            if (mounted) _nextItem();
-          });
-        }
-        return;
-      }
+      
+      // Inicia timer imediatamente - WebView controla reprodução
+      _startPlayTimer(item.seconds);
       
     } else {
       // Imagem ou notícia - inicia timer direto
       _startPlayTimer(item.seconds);
-    }
-  }
-
-  void _onVlcPlayerStateChanged() {
-    if (!mounted || _vlc == null) return;
-    
-    try {
-      if (_vlc!.value.isInitialized && !_isVideoReady) {
-        setState(() {
-          _isVideoReady = true;
-        });
-        
-        // Inicia reprodução com pequeno delay
-        Future.delayed(const Duration(milliseconds: 300), () {
-          if (mounted && _vlc != null && _vlc!.value.isInitialized) {
-            _vlc!.play();
-            _startPlayTimer(_items[_index].seconds);
-          }
-        });
-      }
-    } catch (e) {
-      print('Erro no listener do VLC: $e');
-      // Se der erro, pula para o próximo
-      if (mounted) {
-        Future.delayed(const Duration(milliseconds: 500), () {
-          if (mounted) _nextItem();
-        });
-      }
     }
   }
 
@@ -432,11 +336,11 @@ class _DisplayPlaylistScreenState extends State<DisplayPlaylistScreen> {
 
     if (nextItem.type == ItemType.news && nextItem.imageUrl != null) {
       _cacheService.preloadNext(nextItem.imageUrl!);
-    } else if (nextItem.type == ItemType.ad &&
-        nextItem.mediaUrl != null &&
-        !nextItem.isVideo) {
+    } else if (nextItem.type == ItemType.ad && nextItem.mediaUrl != null && !nextItem.isVideo) {
+      // Pré-carrega imagem de anúncio
       _cacheService.preloadNext(nextItem.mediaUrl!);
     }
+    // Note: Videos são tratados pelo WebView, não precisam de preload
   }
 
   Widget _buildLoadingScreen() {
@@ -578,7 +482,7 @@ class _DisplayPlaylistScreenState extends State<DisplayPlaylistScreen> {
   }
 
   Widget _buildVideo() {
-    if (_vlc == null || !_isVideoReady) {
+    if (!_isVideoReady) {
       return Container(
         color: Colors.black,
         child: const Center(
@@ -587,24 +491,14 @@ class _DisplayPlaylistScreenState extends State<DisplayPlaylistScreen> {
       );
     }
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return Container(
-          color: Colors.black,
-          child: ClipRect(
-            child: Transform.scale(
-              scale: 1.02, // Pequeno zoom para eliminar bordas
-              child: AspectRatio(
-                aspectRatio: constraints.maxWidth / constraints.maxHeight,
-                child: VlcPlayer(
-                  controller: _vlc!,
-                  aspectRatio: constraints.maxWidth / constraints.maxHeight,
-                  placeholder: Container(color: Colors.black),
-                ),
-              ),
-            ),
-          ),
-        );
+    final item = _items[_index];
+    
+    // WebView Player (solução WebView)
+    return VideoPlayerScreen(
+      videoUrl: item.mediaUrl!,
+      duration: Duration(seconds: item.seconds),
+      onVideoEnded: () {
+        if (mounted) _nextItem();
       },
     );
   }

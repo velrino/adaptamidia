@@ -16,15 +16,16 @@ dependencies:
   firebase_database: ^11.1.4
   device_info_plus: ^10.1.2
   crypto: ^3.0.5
-  flutter_vlc_player: ^7.4.3
   cached_network_image: ^3.4.1
   wakelock_plus: ^1.2.8
   ultralytics_yolo: ^0.1.26
   flutter_uvc_camera: ^1.0.0
   image: ^4.5.4
   path_provider: ^2.1.1
-  video_player: ^2.10.0
   path: ^1.9.1
+  webview_flutter: ^4.13.0
+  webview_flutter_android: ^4.10.1
+  webview_flutter_wkwebview: ^3.23.0
 
 dev_dependencies:
   flutter_test:
