@@ -10,6 +10,11 @@ android {
     namespace = "com.seemidia.display"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
+    
+    aaptOptions {
+        noCompress("tflite")
+        noCompress("lite")
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -32,10 +37,9 @@ android {
         versionName = flutter.versionName
     }
 
-    packaging {
-        resources {
-            // Prevent compression of .tflite model files
-            doNotCompress += ["tflite"]
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = true
         }
     }
 

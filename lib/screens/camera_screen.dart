@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_uvc_camera/flutter_uvc_camera.dart';
 import 'package:ultralytics_yolo/ultralytics_yolo.dart';
 import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 
 /// SeeMidia Camera Screen - Displays USB webcam content on screen
 /// This screen shows the live feed from a USB webcam connected to the tablet
@@ -82,17 +84,28 @@ class _CameraScreenState extends State<CameraScreen>
     try {
       setState(() => _statusMsg = 'Iniciando modelo YOLO...');
 
-      // Use the asset model path directly (now that compression is disabled)
+      // Copy model from assets to temporary directory
+      final ByteData data = await rootBundle.load(
+        'assets/models/yolo11n.tflite',
+      );
+      final List<int> bytes = data.buffer.asUint8List();
+      final tempDir = await getTemporaryDirectory();
+      final modelFile = File('${tempDir.path}/yolo11n.tflite');
+      await modelFile.writeAsBytes(bytes);
+
+      // Use file path instead of asset path
       _yolo = YOLO(
-        modelPath: 'assets/models/yolo11n.tflite',  // Direct asset path
+        modelPath: modelFile.path, // Use the physical file path
         task: YOLOTask.detect,
-        useGpu: false, // Disable GPU for stability on some Android devices
+        useGpu: false,
       );
 
       await _yolo!.loadModel();
 
       setState(() => _statusMsg = 'Modelo YOLO carregado');
-      debugPrint('[CameraScreen] YOLO model loaded successfully');
+      debugPrint(
+        '[CameraScreen] YOLO model loaded successfully from: ${modelFile.path}',
+      );
     } catch (e) {
       setState(() => _statusMsg = 'Erro ao carregar YOLO: $e');
       debugPrint('[CameraScreen] YOLO initialization error: $e');
