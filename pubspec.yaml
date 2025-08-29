@@ -27,6 +27,7 @@ dependencies:
   webview_flutter_android: ^4.10.1
   webview_flutter_wkwebview: ^3.23.0
   flutter_vlc_player: ^7.4.3
+  video_player: ^2.9.1
 
 dev_dependencies:
   flutter_test:

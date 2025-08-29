@@ -47,17 +47,10 @@ class VideoCacheService {
     print('🎥 ${_cache.length} vídeos já em cache local');
   }
   
-  /// Gera chave única para URL (normaliza URLs sem .mp4)
+  /// Gera chave única para URL (SEM normalização)
   String _getCacheKey(String url) {
-    // Normaliza URL: adiciona .mp4 se não tiver extensão
-    String normalizedUrl = url;
-    if (!url.toLowerCase().endsWith('.mp4') && 
-        !url.toLowerCase().endsWith('.mov') &&
-        !url.toLowerCase().contains('?')) {
-      normalizedUrl = '$url.mp4';
-    }
-    
-    final bytes = utf8.encode(normalizedUrl);
+    // USA URL ORIGINAL - não adiciona .mp4 duplicado
+    final bytes = utf8.encode(url);
     final digest = md5.convert(bytes);
     return digest.toString();
   }

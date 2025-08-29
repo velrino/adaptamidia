@@ -53,8 +53,7 @@ class MyApp extends StatelessWidget {
         if (settings.name == '/display') {
           final unitId = settings.arguments as String;
           return MaterialPageRoute(
-            // builder: (context) => DisplayPlaylistScreen(),
-            builder: (context) => DisplayPlaylistScreen(unitId: unitId),
+            builder: (context) => DisplayScreen(unitId: unitId),
           );
         }
         return null;
