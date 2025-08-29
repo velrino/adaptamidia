@@ -2,8 +2,9 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_uvc_camera/flutter_uvc_camera.dart';
+import 'package:ultralytics_yolo/ultralytics_yolo.dart';
+import 'package:image/image.dart' as img;
 
 /// SeeMidia Camera Screen - Displays USB webcam content on screen
 /// This screen shows the live feed from a USB webcam connected to the tablet
@@ -25,6 +26,12 @@ class _CameraScreenState extends State<CameraScreen>
   Uint8List? _capturedImage; // Armazena a imagem capturada temporariamente
   bool _isCapturing = false; // Controla se está no processo de captura
 
+  // YOLO detection
+  YOLO? _yolo;
+  List<YOLOResult>? _detections;
+  bool _isProcessingYOLO = false;
+  Size? _imageSize;
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +50,9 @@ class _CameraScreenState extends State<CameraScreen>
     _controller.msgCallback = (String msg) {
       setState(() => _statusMsg = msg);
     };
+
+    // Initialize YOLO model
+    _initializeYOLO();
 
     // Auto-open when page appears
     _openCamera();
@@ -65,6 +75,27 @@ class _CameraScreenState extends State<CameraScreen>
       if (!_isOpened && !_opening) {
         _openCamera();
       }
+    }
+  }
+
+  Future<void> _initializeYOLO() async {
+    try {
+      setState(() => _statusMsg = 'Iniciando modelo YOLO...');
+
+      // Use the asset model path directly (now that compression is disabled)
+      _yolo = YOLO(
+        modelPath: 'assets/models/yolo11n.tflite',  // Direct asset path
+        task: YOLOTask.detect,
+        useGpu: false, // Disable GPU for stability on some Android devices
+      );
+
+      await _yolo!.loadModel();
+
+      setState(() => _statusMsg = 'Modelo YOLO carregado');
+      debugPrint('[CameraScreen] YOLO model loaded successfully');
+    } catch (e) {
+      setState(() => _statusMsg = 'Erro ao carregar YOLO: $e');
+      debugPrint('[CameraScreen] YOLO initialization error: $e');
     }
   }
 
@@ -125,6 +156,9 @@ class _CameraScreenState extends State<CameraScreen>
         } finally {
           debugPrint('[CameraScreen] Delete temp file: $imagePath');
         }
+
+        // Executar detecção YOLO na imagem capturada
+        _runYOLODetection(imageBytes);
       } else {
         setState(() {
           _statusMsg = 'Falha ao capturar imagem: caminho nulo';
@@ -140,17 +174,99 @@ class _CameraScreenState extends State<CameraScreen>
     }
   }
 
+  Future<void> _runYOLODetection(Uint8List imageBytes) async {
+    if (_yolo == null || _isProcessingYOLO) return;
+
+    setState(() {
+      _isProcessingYOLO = true;
+      _statusMsg = 'Processando detecção YOLO...';
+    });
+
+    try {
+      // Obter tamanho da imagem para os cálculos de bounding box
+      final decoded = img.decodeImage(imageBytes);
+      if (decoded != null) {
+        _imageSize = Size(decoded.width.toDouble(), decoded.height.toDouble());
+      }
+
+      // Executar predição YOLO
+      final result = await _yolo!.predict(
+        imageBytes,
+        confidenceThreshold: 0.5,
+        iouThreshold: 0.4,
+      );
+
+      // Converter detecções para YOLOResult objects
+      final detectionsList = result['detections'] as List<dynamic>?;
+      if (detectionsList != null) {
+        final yoloDetections = detectionsList
+            .map((detection) => YOLOResult.fromMap(detection))
+            .toList();
+
+        setState(() {
+          _detections = yoloDetections;
+          _statusMsg = 'Detectados ${yoloDetections.length} objetos';
+          _isProcessingYOLO = false;
+        });
+
+        debugPrint(
+          '[CameraScreen] YOLO detected ${yoloDetections.length} objects',
+        );
+        for (final detection in yoloDetections) {
+          debugPrint(
+            '[CameraScreen] - ${detection.className}: ${detection.confidence.toStringAsFixed(2)}',
+          );
+        }
+      } else {
+        setState(() {
+          _detections = [];
+          _statusMsg = 'Nenhum objeto detectado';
+          _isProcessingYOLO = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _statusMsg = 'Erro na detecção YOLO: $e';
+        _isProcessingYOLO = false;
+        _detections = null;
+      });
+      debugPrint('[CameraScreen] YOLO detection error: $e');
+    }
+  }
+
   void _clearCapturedImage() {
     setState(() {
       _capturedImage = null;
+      _detections = null;
+      _imageSize = null;
       _statusMsg = 'Imagem descartada';
     });
+  }
+
+  // Widget para desenhar bounding boxes YOLO
+  Widget _buildBoundingBoxOverlay(Size displaySize) {
+    if (_detections == null || _detections!.isEmpty || _imageSize == null) {
+      return const SizedBox.shrink();
+    }
+
+    return CustomPaint(
+      size: displaySize,
+      painter: BoundingBoxPainter(
+        detections: _detections!,
+        imageSize: _imageSize!,
+        displaySize: displaySize,
+      ),
+    );
   }
 
   @override
   void dispose() {
     _controller.closeCamera();
     _controller.dispose();
+
+    // Dispose YOLO resources
+    _yolo?.dispose();
+
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -220,27 +336,77 @@ class _CameraScreenState extends State<CameraScreen>
                   color: Colors.black,
                   padding: const EdgeInsets.all(8.0),
                   child: _capturedImage != null
-                      ? Stack(
-                          children: [
-                            Center(
-                              child: Image.memory(
-                                _capturedImage!,
-                                fit: BoxFit.contain,
-                              ),
-                            ),
-                            Positioned(
-                              top: 8,
-                              right: 8,
-                              child: IconButton(
-                                icon: const Icon(
-                                  Icons.close,
-                                  color: Colors.white,
+                      ? LayoutBuilder(
+                          builder: (context, constraints) {
+                            final displaySize = Size(
+                              constraints.maxWidth,
+                              constraints.maxHeight,
+                            );
+                            return Stack(
+                              children: [
+                                Center(
+                                  child: Image.memory(
+                                    _capturedImage!,
+                                    fit: BoxFit.contain,
+                                  ),
                                 ),
-                                onPressed: _clearCapturedImage,
-                                tooltip: 'Descartar imagem',
-                              ),
-                            ),
-                          ],
+                                // YOLO Bounding boxes overlay
+                                if (_detections != null &&
+                                    _detections!.isNotEmpty)
+                                  Center(
+                                    child: _buildBoundingBoxOverlay(
+                                      displaySize,
+                                    ),
+                                  ),
+                                // Processing indicator
+                                if (_isProcessingYOLO)
+                                  const Center(
+                                    child: CircularProgressIndicator(
+                                      color: Colors.orange,
+                                    ),
+                                  ),
+                                Positioned(
+                                  top: 8,
+                                  right: 8,
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                    ),
+                                    onPressed: _clearCapturedImage,
+                                    tooltip: 'Descartar imagem',
+                                  ),
+                                ),
+                                // Detection count info
+                                if (_detections != null &&
+                                    _detections!.isNotEmpty)
+                                  Positioned(
+                                    top: 8,
+                                    left: 8,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withValues(
+                                          alpha: 0.7,
+                                        ),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        '${_detections!.length} objetos detectados',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
                         )
                       : Center(
                           child: Text(
@@ -290,4 +456,105 @@ class _CameraScreenState extends State<CameraScreen>
       setState(() => _statusMsg = 'Falha ao alternar autofoco: $e');
     }
   }
+}
+
+/// Custom painter para desenhar bounding boxes das detecções YOLO
+class BoundingBoxPainter extends CustomPainter {
+  final List<YOLOResult> detections;
+  final Size imageSize;
+  final Size displaySize;
+
+  BoundingBoxPainter({
+    required this.detections,
+    required this.imageSize,
+    required this.displaySize,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3.0;
+
+    final textStyle = TextStyle(
+      color: Colors.white,
+      fontSize: 14,
+      fontWeight: FontWeight.bold,
+      shadows: [
+        Shadow(
+          offset: const Offset(1, 1),
+          blurRadius: 2,
+          color: Colors.black.withValues(alpha: 0.8),
+        ),
+      ],
+    );
+
+    // Calcular fator de escala para converter coordenadas da imagem para coordenadas de display
+    final scaleX = displaySize.width / imageSize.width;
+    final scaleY = displaySize.height / imageSize.height;
+
+    for (final detection in detections) {
+      // Converter coordenadas para o espaço de display
+      final box = detection.boundingBox;
+      final displayBox = Rect.fromLTRB(
+        box.left * scaleX,
+        box.top * scaleY,
+        box.right * scaleX,
+        box.bottom * scaleY,
+      );
+
+      // Cores diferentes para diferentes classes (baseado no hash do nome)
+      final colorIndex = detection.className.hashCode % _colors.length;
+      paint.color = _colors[colorIndex];
+
+      // Desenhar bounding box
+      canvas.drawRect(displayBox, paint);
+
+      // Desenhar label com confiança
+      final label =
+          '${detection.className} ${(detection.confidence * 100).toStringAsFixed(0)}%';
+      final textPainter = TextPainter(
+        text: TextSpan(text: label, style: textStyle),
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+
+      // Posicionar o label acima da bounding box, ou dentro se não couber
+      final labelY = displayBox.top - textPainter.height - 4;
+      final finalLabelY = labelY < 0 ? displayBox.top + 4 : labelY;
+
+      // Desenhar fundo semi-transparente para o texto
+      final labelBackground = Rect.fromLTWH(
+        displayBox.left - 2,
+        finalLabelY - 2,
+        textPainter.width + 4,
+        textPainter.height + 4,
+      );
+
+      canvas.drawRect(
+        labelBackground,
+        Paint()..color = _colors[colorIndex].withValues(alpha: 0.8),
+      );
+
+      // Desenhar o texto
+      textPainter.paint(canvas, Offset(displayBox.left, finalLabelY));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+
+  // Cores para diferentes classes
+  static const List<Color> _colors = [
+    Colors.red,
+    Colors.green,
+    Colors.blue,
+    Colors.yellow,
+    Colors.purple,
+    Colors.orange,
+    Colors.cyan,
+    Colors.pink,
+    Colors.lime,
+    Colors.indigo,
+  ];
 }

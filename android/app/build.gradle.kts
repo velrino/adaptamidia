@@ -32,6 +32,13 @@ android {
         versionName = flutter.versionName
     }
 
+    packaging {
+        resources {
+            // Prevent compression of .tflite model files
+            doNotCompress += ["tflite"]
+        }
+    }
+
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
