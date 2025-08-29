@@ -19,12 +19,28 @@ class MediaCacheService {
   
   /// Inicializa o diretório de cache
   Future<void> init() async {
-    final tempDir = await getTemporaryDirectory();
-    _cacheDir = Directory('${tempDir.path}/seemidia_cache');
+    final appDir = await getApplicationDocumentsDirectory();
+    _cacheDir = Directory('${appDir.path}/seemidia_videos');
     if (!await _cacheDir!.exists()) {
       await _cacheDir!.create(recursive: true);
     }
     await _cleanOldCache();
+    await _loadExistingCache();
+  }
+  
+  /// Carrega vídeos já existentes no cache
+  Future<void> _loadExistingCache() async {
+    if (_cacheDir == null) return;
+    
+    final files = await _cacheDir!.list().toList();
+    for (final file in files) {
+      if (file is File && file.path.endsWith('.mp4')) {
+        final fileName = file.uri.pathSegments.last;
+        // Reconstrói o mapeamento baseado no nome do arquivo (MD5)
+        _cache[fileName.replaceAll('.mp4', '')] = file;
+      }
+    }
+    print('📁 ${_cache.length} vídeos já em cache');
   }
   
   /// Limpa cache antigo (mais de 7 dias)
@@ -53,15 +69,20 @@ class MediaCacheService {
   
   /// Verifica se arquivo já está em cache
   Future<File?> getFromCache(String url) async {
-    if (_cache.containsKey(url)) {
-      return _cache[url];
-    }
+    if (_cacheDir == null) await init();
     
     final key = _getCacheKey(url);
-    final file = File('${_cacheDir!.path}/$key');
+    
+    // Verifica cache em memória primeiro
+    if (_cache.containsKey(key)) {
+      return _cache[key];
+    }
+    
+    // Procura por arquivo existente no disco
+    final file = File('${_cacheDir!.path}/$key.mp4');
     
     if (await file.exists()) {
-      _cache[url] = file;
+      _cache[key] = file;
       return file;
     }
     
@@ -88,7 +109,7 @@ class MediaCacheService {
       
       // Inicia download
       final key = _getCacheKey(url);
-      final file = File('${_cacheDir!.path}/$key');
+      final file = File('${_cacheDir!.path}/$key.mp4');
       
       final request = await HttpClient().getUrl(Uri.parse(url));
       request.headers.add('User-Agent', 'SeeMidia/1.0');

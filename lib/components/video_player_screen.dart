@@ -1,18 +1,23 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 
 /// Componente isolado para reprodução de vídeos via WebView
 /// Solução mais estável que VLC para vídeos fullscreen
+/// Suporta Portrait/Landscape com diferentes comportamentos de crop
 class VideoPlayerScreen extends StatefulWidget {
   final String videoUrl;
   final VoidCallback? onVideoEnded;
   final Duration? duration;
+  final bool isLandscape;
   
   const VideoPlayerScreen({
     Key? key,
     required this.videoUrl,
     this.onVideoEnded,
     this.duration,
+    this.isLandscape = true,
   }) : super(key: key);
   
   @override
@@ -52,8 +57,14 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
             }
           },
         ),
-      )
-      ..loadHtmlString(_generateVideoHtml());
+      );
+    
+    // Permite debugging para URLs file://
+    if (Platform.isAndroid) {
+      AndroidWebViewController.enableDebugging(true);
+    }
+    
+    _controller.loadHtmlString(_generateVideoHtml());
   }
   
   /// Gera HTML otimizado para reprodução fullscreen
@@ -92,7 +103,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
     #mainVideo {
       width: 100%;
       height: 100%;
-      object-fit: cover; /* Garante fullscreen sem bordas */
+      object-fit: ${widget.isLandscape ? 'contain' : 'cover'}; /* Landscape: normal, Portrait: crop fullscreen */
       background-color: #000000;
     }
     
@@ -132,17 +143,25 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       video.currentTime = 0;
       video.muted = true; // Garantir sem áudio
       
-      // Tenta reproduzir
-      video.play().then(() => {
-        console.log('✅ Vídeo iniciado com sucesso');
-      }).catch((error) => {
-        console.error('❌ Erro ao iniciar vídeo:', error);
-        
-        // Fallback: tenta novamente após pequeno delay
-        setTimeout(() => {
-          video.play().catch(e => console.error('❌ Fallback falhou:', e));
-        }, 500);
-      });
+      // Força load antes de play (necessário para file://)
+      video.load();
+      
+      // Aguarda um pouco para carregar metadados
+      setTimeout(() => {
+        video.play().then(() => {
+          console.log('✅ Vídeo iniciado com sucesso');
+        }).catch((error) => {
+          console.error('❌ Erro ao iniciar vídeo:', error);
+          console.log('Video readyState:', video.readyState);
+          console.log('Video src:', video.src);
+          console.log('Video currentSrc:', video.currentSrc);
+          
+          // Fallback: tenta novamente após pequeno delay
+          setTimeout(() => {
+            video.play().catch(e => console.error('❌ Fallback falhou:', e));
+          }, 1000);
+        });
+      }, 200);
     }
     
     // Event listeners para debugging

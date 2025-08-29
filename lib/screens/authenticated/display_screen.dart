@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../services/storage_service.dart';
 import '../../services/media_cache_service.dart';
+import '../../services/video_cache_service.dart';
 import '../../components/video_player_screen.dart';
 
 /// TODO: ajuste este token se necessário.
@@ -84,6 +85,7 @@ class _DisplayPlaylistScreenState extends State<DisplayPlaylistScreen> {
 
   // Services
   final MediaCacheService _cacheService = MediaCacheService.instance;
+  final VideoCacheService _videoCacheService = VideoCacheService.instance;
 
   @override
   void initState() {
@@ -109,6 +111,7 @@ class _DisplayPlaylistScreenState extends State<DisplayPlaylistScreen> {
 
       // Inicializa cache
       await _cacheService.init();
+      await _videoCacheService.init();
 
       // Configura orientação
       final config = await StorageService.getDeviceConfig();
@@ -211,28 +214,33 @@ class _DisplayPlaylistScreenState extends State<DisplayPlaylistScreen> {
       _loadingMessage = 'Baixando conteúdo...';
     });
 
-    // Coleta URLs de imagens apenas (vídeos são tratados pelo WebView)
+    // Coleta URLs de imagens e vídeos separadamente
     final imagesToDownload = <String>[];
+    final videosToDownload = <String>[];
 
     for (final item in _items) {
       if (item.type == ItemType.news && item.imageUrl != null) {
         imagesToDownload.add(item.imageUrl!);
-      } else if (item.type == ItemType.ad && item.mediaUrl != null && !item.isVideo) {
-        imagesToDownload.add(item.mediaUrl!);
+      } else if (item.type == ItemType.ad && item.mediaUrl != null) {
+        if (item.isVideo) {
+          videosToDownload.add(item.mediaUrl!);
+        } else {
+          imagesToDownload.add(item.mediaUrl!);
+        }
       }
     }
 
-    _totalFiles = imagesToDownload.length;
+    _totalFiles = imagesToDownload.length + videosToDownload.length;
     _loadedFiles = 0;
 
-    // Baixa imagens
+    // 1. Baixa imagens primeiro
     for (int i = 0; i < imagesToDownload.length; i++) {
       final url = imagesToDownload[i];
 
       setState(() {
         _loadedFiles = i + 1;
-        _loadingProgress = 0.3 + (0.6 * (_loadedFiles / _totalFiles));
-        _loadingMessage = 'Baixando imagens $_loadedFiles de $_totalFiles...';
+        _loadingProgress = 0.3 + (0.4 * (_loadedFiles / _totalFiles));
+        _loadingMessage = 'Baixando imagens $_loadedFiles de ${imagesToDownload.length}...';
       });
 
       final file = await _cacheService.downloadFile(url);
@@ -240,6 +248,27 @@ class _DisplayPlaylistScreenState extends State<DisplayPlaylistScreen> {
       // Associa arquivo baixado ao item
       for (final item in _items) {
         if (item.imageUrl == url || item.mediaUrl == url) {
+          item.cachedFile = file;
+        }
+      }
+    }
+
+    // 2. Baixa vídeos depois das imagens
+    for (int i = 0; i < videosToDownload.length; i++) {
+      final url = videosToDownload[i];
+      final videoIndex = imagesToDownload.length + i + 1;
+
+      setState(() {
+        _loadedFiles = videoIndex;
+        _loadingProgress = 0.3 + (0.6 * (_loadedFiles / _totalFiles));
+        _loadingMessage = 'Baixando vídeos ${i + 1} de ${videosToDownload.length}...';
+      });
+
+      final file = await _videoCacheService.downloadVideo(url);
+      
+      // Associa arquivo baixado ao item
+      for (final item in _items) {
+        if (item.mediaUrl == url) {
           item.cachedFile = file;
         }
       }
@@ -493,10 +522,17 @@ class _DisplayPlaylistScreenState extends State<DisplayPlaylistScreen> {
 
     final item = _items[_index];
     
+    // Determina URL do vídeo (local se em cache, remoto caso contrário)
+    String videoUrl = item.mediaUrl!;
+    if (item.cachedFile != null) {
+      videoUrl = 'file://${item.cachedFile!.path}';
+    }
+    
     // WebView Player (solução WebView)
     return VideoPlayerScreen(
-      videoUrl: item.mediaUrl!,
+      videoUrl: videoUrl,
       duration: Duration(seconds: item.seconds),
+      isLandscape: _isLandscape,
       onVideoEnded: () {
         if (mounted) _nextItem();
       },
