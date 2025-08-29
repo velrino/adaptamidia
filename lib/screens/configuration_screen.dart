@@ -113,7 +113,10 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
       onKey: handleRemoteKeyPress,
       child: Scaffold(
         backgroundColor: isDark ? Colors.grey[900] : Colors.grey[50],
-        body: SafeArea(
+        body: Padding(
+          padding: EdgeInsets.only(
+            top: MediaQuery.of(context).padding.top,
+          ),
           child: FadeTransition(
             opacity: _fadeAnimation,
             child: Padding(

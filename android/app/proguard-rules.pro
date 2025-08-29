@@ -9,3 +9,6 @@
 -keep interface com.jiangdg.uvc.IButtonCallback {
     *;
 }
+
+# VLC Player ProGuard Rules
+-keep class org.videolan.libvlc.** { *; }

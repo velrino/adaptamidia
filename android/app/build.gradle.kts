@@ -31,8 +31,8 @@ android {
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 24
-        // Reduced targetSdk to 27 for flutter_uvc_camera compatibility with Android 10+
-        targetSdk = 27
+        // Updated targetSdk for cleartext traffic support
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -41,6 +41,11 @@ android {
         jniLibs {
             useLegacyPackaging = true
         }
+        // Resolve library conflicts between VLC and YOLO
+        pickFirst("lib/arm64-v8a/libc++_shared.so")
+        pickFirst("lib/armeabi-v7a/libc++_shared.so")
+        pickFirst("lib/x86_64/libc++_shared.so")
+        pickFirst("lib/x86/libc++_shared.so")
     }
 
     buildTypes {
