@@ -113,6 +113,8 @@ dependencies:
   # Firebase (Autenticação)
   firebase_core: ^3.6.0
   firebase_database: ^11.1.4
+  firebase_auth: ^5.3.1
+  firebase_storage: ^12.3.4
   
   # Media Player NOVO ⭐ [AGOSTO 2025]
   webview_flutter: ^4.13.0 # WebView core
@@ -129,6 +131,8 @@ dependencies:
   # YOLO & Camera (futuros)
   ultralytics_yolo: ^0.1.26
   flutter_uvc_camera: ^1.0.0
+  connectivity_plus: ^6.0.5
+  package_info_plus: ^8.0.2
 ```
 
 ## Dependências Futuras (ainda não implementadas)
@@ -202,6 +206,63 @@ Estas notas documentam ajustes críticos realizados para estabilidade do app em 
   - Conferir regras do RTDB para `DISPLAY_LOGS/*` (ex.: permitir escrita anônima, ou habilitar autenticação anônima no app e manter regras restritivas).
   - Validar `google-services.json` (package `com.seemidia.display` e projeto correto).
   - Garantir conectividade e hora do dispositivo corretas.
+
+### Captura de Foto + Upload (NOVO)
+
+- Objetivo: ao finalizar cada exibição (NEWS/ADVERTISEMENT), capturar uma foto da câmera UVC, subir para Firebase Storage e anexar a URL (`photo_url`) no log (`DISPLAY_LOGS`). Nunca perder logs, mesmo offline.
+
+- Requisitos de UI/Plugin:
+  - O plugin `flutter_uvc_camera` exige um `UVCCameraView` presente no widget tree para inicializar o contexto GL. Mantemos um preview oculto `320x240` com `opacity: 0.0` para estabilidade.
+  - Abertura da câmera ocorre após o primeiro frame (`addPostFrameCallback`) e esperamos ~800ms antes da primeira captura para garantir buffer pronto.
+  - Guarda de concorrência: `_isCapturingPhoto` impede capturas sobrepostas.
+
+- Fluxo resumido:
+  1) `_logCurrentDisplayFinished()` é chamado na transição de conteúdo e no `dispose()` da tela.
+  2) Se UVC disponível: `takePicture()` → persiste arquivo no diretório do app → tenta upload.
+  3) Upload para Firebase Storage em `DISPLAY_PHOTOS/<captureId>.<ext>` com `contentType=image/jpeg`.
+  4) Obtém `downloadURL` e envia log para RTDB com `photo_url`.
+  5) Em caso de erro (offline, regras, etc.): cria item pendente em disco para retry e NÃO perde o log (eventual consistency: upload + log serão enviados depois).
+
+- Serviço dedicado: `lib/services/photo_log_service.dart`
+  - Persistência local: salva fotos em `app_documents/captured_photos/`.
+  - Fila de pendências: `app_documents/pending_logs/<captureId>.json` contendo `localPath` e `body` do log.
+  - Retry automático: a cada 2 min (`Timer.periodic`) roda `processQueue()` e tenta re‑enviar uploads + logs.
+  - Bucket de Storage: usa `Firebase.app().options.storageBucket`; se vier inválido (ex.: termina com `firebasestorage.app`), faz fallback para `<projectId>.appspot.com` via `FirebaseStorage.instanceFor(bucket: ...)`.
+  - Autenticação: garante `Anonymous Auth` antes de enviar (`FirebaseAuth.signInAnonymously()`); também chamada durante retries.
+  - Metadados: define `contentType: image/jpeg` para casar com as regras do Storage.
+
+- Autenticação e Regras do Storage:
+  - Habilitar `Anonymous Auth` (Console → Authentication → Sign‑in method → Anonymous → Enable).
+  - Regras recomendadas:
+    ```
+    rules_version = '2';
+    service firebase.storage {
+      match /b/{bucket}/o {
+        match /DISPLAY_PHOTOS/{filePath=**} {
+          allow write: if request.auth != null
+                       && request.resource.size < 5 * 1024 * 1024
+                       && request.resource.contentType.matches('image/.*');
+          allow read: if request.auth != null; // necessário para getDownloadURL
+        }
+        match /{allPaths=**} {
+          allow read, write: if false;
+        }
+      }
+    }
+    ```
+  - Ajuste o limite de tamanho se fotos > 5MB.
+  - Caso necessite URLs públicas, pode definir `allow read: if true` apenas para `DISPLAY_PHOTOS`.
+
+- Erros comuns e diagnóstico:
+  - 403/unauthorized, 404/object‑not‑found: indicam falta de `auth` nas requisições; confirme Anonymous Auth habilitado e veja logs com `uid`.
+  - `no auth token for request`: reforço de que o cliente não estava autenticado; agora resolvido com sign‑in antes do upload e nos retries.
+  - App Check: aviso de placeholder token é esperado se App Check não está configurado; não bloqueia upload com regras acima.
+
+- Arquivos principais desta feature:
+  - `lib/screens/authenticated/display_screen.dart` — mantém UVC aberto oculto, chama captura e delega upload+log ao serviço.
+  - `lib/services/photo_log_service.dart` — persistência local, upload para Storage, retry e envio do log com `photo_url`.
+  - `lib/services/firebase_service.dart` — inicialização do Firebase, cache do RTDB e sign‑in anônimo no boot.
+  - `android/app/proguard-rules.pro` — regras para manter classes do Firebase em release.
 
 ### YOLO + Câmera (contexto)
 
