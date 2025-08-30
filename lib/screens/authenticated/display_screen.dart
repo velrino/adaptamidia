@@ -470,6 +470,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
     final endAt = DateTime.now();
     final startAt = _currentStartAt ?? endAt.subtract(Duration(seconds: _currentDurationSecs));
 
+    final deviceId = await StorageService.getOrCreateDeviceId();
+
     final body = <String, dynamic>{
       'identifier': captureId,
       'id': currentId,
@@ -478,6 +480,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
       'status': 'FINISHED',
       'start_at': startAt.toIso8601String(),
       'end_at': endAt.toIso8601String(),
+      'device_id': deviceId,
     };
 
     await DisplayLogService.instance.createLog(identifier: captureId, body: body);

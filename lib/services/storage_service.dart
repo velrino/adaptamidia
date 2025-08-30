@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:math';
 import '../models/device_config.dart';
 
 class StorageService {
@@ -8,6 +10,7 @@ class StorageService {
   static const String _isConfiguredKey = 'is_configured';
   static const String _authTokenKey = 'auth_token';
   static const String _userDataKey = 'user_data';
+  static const String _deviceIdKey = 'device_id';
 
   static Future<void> saveDeviceConfig(DeviceConfig config) async {
     final prefs = await SharedPreferences.getInstance();
@@ -78,5 +81,21 @@ class StorageService {
   static Future<void> clearAll() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+  }
+
+  // Persistent device ID (stable across restarts)
+  static Future<String> getOrCreateDeviceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString(_deviceIdKey);
+    if (existing != null && existing.isNotEmpty) return existing;
+
+    // Generate a random-based ID and hash for consistent length
+    final rnd = Random();
+    final randBytes = List<int>.generate(32, (_) => rnd.nextInt(256));
+    final seed = '${DateTime.now().microsecondsSinceEpoch}-${base64Url.encode(randBytes)}';
+    final digest = sha256.convert(utf8.encode(seed)).toString();
+    final deviceId = digest.substring(0, 16);
+    await prefs.setString(_deviceIdKey, deviceId);
+    return deviceId;
   }
 }
