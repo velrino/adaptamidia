@@ -38,11 +38,23 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer> {
         debugPrint('🎬 Flutter Video Player loading local file: ${cachedFile.path}');
         
         // Create controller with local file
-        _controller = VideoPlayerController.file(cachedFile);
+        _controller = VideoPlayerController.file(
+          cachedFile,
+          videoPlayerOptions: VideoPlayerOptions(
+            mixWithOthers: false,
+            allowBackgroundPlayback: false,
+          ),
+        );
       } else {
         // Fallback to network
         debugPrint('⚠️ Cache miss, falling back to network: ${widget.videoUrl}');
-        _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
+        _controller = VideoPlayerController.networkUrl(
+          Uri.parse(widget.videoUrl),
+          videoPlayerOptions: VideoPlayerOptions(
+            mixWithOthers: false,
+            allowBackgroundPlayback: false,
+          ),
+        );
       }
       
       // Add listener for completion
@@ -53,6 +65,7 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer> {
       
       // Mute and play
       await _controller!.setVolume(0.0);
+      await _controller!.setLooping(false);
       await _controller!.play();
       
       if (mounted) {

@@ -175,10 +175,14 @@ class _DisplayScreenState extends State<DisplayScreen> {
       await Future.wait([
         () async {
           if (imageUrls.isEmpty) return;
-          await ImageCacheService.instance.preloadAll(imageUrls, concurrency: 6, onProgress: (p) {
-            done = (total * 0).toInt() + (p * imageSet.length).round();
-            tick();
-          });
+          await ImageCacheService.instance.preloadAll(
+            imageUrls,
+            concurrency: 6,
+            onProgress: (p) {
+              done = (total * 0).toInt() + (p * imageSet.length).round();
+              tick();
+            },
+          );
         }(),
         () async {
           if (videoUrls.isEmpty) return;
@@ -217,7 +221,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
           }
         });
       }
-
     } catch (e) {
       debugPrint('⚠️ Erro no pré-carregamento: $e');
       // Continua mesmo com falhas parciais
@@ -249,14 +252,17 @@ class _DisplayScreenState extends State<DisplayScreen> {
       duration = content['ads']['seconds'] ?? 30;
     }
 
-    // Start progress timer
-    _progressTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+    // Start progress timer (250ms para reduzir pressão de UI)
+    const periodMs = 100;
+    _progressTimer = Timer.periodic(const Duration(milliseconds: periodMs), (
+      timer,
+    ) {
       if (!mounted) {
         timer.cancel();
         return;
       }
       setState(() {
-        _progress = timer.tick * 100 / (duration * 1000);
+        _progress = (timer.tick * periodMs) / (duration * 1000);
       });
     });
 
@@ -320,7 +326,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
       // Pré-carrega novos itens
       await Future.wait([
         if (imageSet.isNotEmpty)
-          ImageCacheService.instance.preloadAll(imageSet.toList(), concurrency: 6),
+          ImageCacheService.instance.preloadAll(
+            imageSet.toList(),
+            concurrency: 6,
+          ),
         if (videoSet.isNotEmpty)
           VideoCacheService.instance.preloadVideos(videoSet.toList()),
       ]);
@@ -392,6 +401,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
     final description = news['description'] ?? '';
     final sourceName = news['source_name'] ?? '';
     final author = news['author'] ?? '';
+    final mq = MediaQuery.of(context);
+    final memW = (mq.size.width * mq.devicePixelRatio).round();
+    final memH = (mq.size.height * mq.devicePixelRatio).round();
 
     return Stack(
       fit: StackFit.expand,
@@ -403,6 +415,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
+            fadeInDuration: Duration.zero,
+            fadeOutDuration: Duration.zero,
+            memCacheWidth: memW,
+            memCacheHeight: memH,
             placeholder: (context, url) => Container(color: Colors.black),
             errorWidget: (context, url, error) =>
                 Container(color: Colors.black),
@@ -632,7 +648,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
                       child: LinearProgressIndicator(
                         value: _prepareProgress.clamp(0.0, 1.0),
                         backgroundColor: Colors.white24,
-                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Colors.white,
+                        ),
                         minHeight: 6,
                       ),
                     ),
@@ -642,7 +660,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
             ),
 
           // Progress bar
-          if (!_isLoading && !_isPreparing && _error == null && _contents.isNotEmpty)
+          if (!_isLoading &&
+              !_isPreparing &&
+              _error == null &&
+              _contents.isNotEmpty)
             Positioned(
               bottom: 0,
               left: 0,
