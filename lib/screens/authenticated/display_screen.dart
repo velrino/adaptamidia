@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,6 +11,8 @@ import '../../services/video_cache_service.dart';
 import '../../services/image_cache_service.dart';
 import '../../services/display_log_service.dart';
 import '../../services/device_context_service.dart';
+import 'package:flutter_uvc_camera/flutter_uvc_camera.dart';
+import '../../services/photo_log_service.dart';
 // import '../../components/video_player_screen.dart';
 // import '../../components/vlc_video_player.dart'; // VLC has _viewId bug
 import '../../components/flutter_video_player.dart'; // Testing Flutter native video player
@@ -45,6 +48,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
   DateTime? _currentStartAt;
   int _currentDurationSecs = 0;
 
+  // UVC Camera for capture-after-display
+  UVCCameraController? _uvc;
+  bool _uvcAvailable = false;
+  bool _isCapturingPhoto = false;
+  DateTime? _uvcOpenedAt;
+
   @override
   void initState() {
     super.initState();
@@ -52,12 +61,29 @@ class _DisplayScreenState extends State<DisplayScreen> {
     _loadContent();
     _startClock();
     WakelockPlus.enable();
+    // Prepare UVC controller and open after first frame when PlatformView exists
+    _uvc = UVCCameraController();
+    _uvc!.cameraStateCallback = (state) {
+      debugPrint('[DisplayScreen] UVC state: $state');
+      if (!mounted) return;
+      setState(() => _uvcAvailable = state == UVCCameraState.opened);
+    };
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_initUvcCamera());
+    });
+    // Try to flush any pending photo+log on start
+    unawaited(PhotoLogService.instance.processQueue());
   }
 
   @override
   void dispose() {
     // tentar registrar o último conteúdo em exibição
     unawaited(_logCurrentDisplayFinished());
+    // Close UVC if opened
+    try {
+      _uvc?.closeCamera();
+      _uvc?.dispose();
+    } catch (_) {}
     _timer?.cancel();
     _progressTimer?.cancel();
     _clockTimer?.cancel();
@@ -65,6 +91,24 @@ class _DisplayScreenState extends State<DisplayScreen> {
     _exitFullScreen();
     WakelockPlus.disable();
     super.dispose();
+  }
+
+  Future<void> _initUvcCamera() async {
+    try {
+      if (_uvc == null) return;
+      _uvc!.msgCallback = (msg) {
+        debugPrint('[DisplayScreen] UVC msg: $msg');
+      };
+      await _uvc!.initializeCamera();
+      await _uvc!.openUVCCamera();
+      _uvcOpenedAt = DateTime.now();
+      debugPrint('[DisplayScreen] UVC camera initialized and kept open');
+    } catch (e) {
+      debugPrint('[DisplayScreen] UVC init failed (camera may be absent): $e');
+      setState(() {
+        _uvcAvailable = false;
+      });
+    }
   }
 
   void _enterFullScreen() {
@@ -500,7 +544,37 @@ class _DisplayScreenState extends State<DisplayScreen> {
       'device_context': deviceContext,
     };
 
-    debugPrint('[DisplayScreen] Sending log to Firebase with identifier=$captureId');
+    // If we have a UVC camera, capture a photo and include its Storage URL
+    if (_uvc != null && _uvcAvailable && !_isCapturingPhoto) {
+      try {
+        // ensure GL surface had time to initialize
+        final openedAgo = _uvcOpenedAt == null
+            ? const Duration(seconds: 0)
+            : DateTime.now().difference(_uvcOpenedAt!);
+        if (openedAgo < const Duration(seconds: 1)) {
+          await Future.delayed(const Duration(milliseconds: 800));
+        }
+
+        _isCapturingPhoto = true;
+        final tmpPath = await _uvc!.takePicture();
+        if (tmpPath != null) {
+          final file = File(tmpPath);
+          debugPrint('[DisplayScreen] Captured photo for $captureId at $tmpPath');
+          await PhotoLogService.instance.uploadAndLog(captureId, file, body);
+          _isCapturingPhoto = false;
+          return; // either logged or queued; do not double-log
+        } else {
+          debugPrint('[DisplayScreen] takePicture returned null, fallback to log without photo');
+        }
+      } catch (e) {
+        debugPrint('[DisplayScreen] Photo capture failed: $e');
+      } finally {
+        _isCapturingPhoto = false;
+      }
+    }
+
+    // Fallback: log without photo
+    debugPrint('[DisplayScreen] Sending log to Firebase with identifier=$captureId (no photo)');
     await DisplayLogService.instance.createLog(identifier: captureId, body: body);
     debugPrint('[DisplayScreen] Log sent');
   }
@@ -918,23 +992,42 @@ class _DisplayScreenState extends State<DisplayScreen> {
             ),
 
           // Progress bar
-          if (!_isLoading &&
-              !_isPreparing &&
-              _error == null &&
-              _contents.isNotEmpty)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: LinearProgressIndicator(
-                value: _progress.clamp(0.0, 1.0),
-                backgroundColor: Colors.white.withOpacity(0.1),
-                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                minHeight: 3,
+      if (!_isLoading &&
+          !_isPreparing &&
+          _error == null &&
+          _contents.isNotEmpty)
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: LinearProgressIndicator(
+            value: _progress.clamp(0.0, 1.0),
+            backgroundColor: Colors.white.withOpacity(0.1),
+            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+            minHeight: 3,
+          ),
+        ),
+
+          // Hidden UVC preview to satisfy plugin's PlatformView requirement
+          if (_uvc != null)
+            Align(
+              alignment: Alignment.bottomRight,
+              child: Opacity(
+                opacity: 0.0,
+                child: SizedBox(
+                  width: 320,
+                  height: 240,
+                  child: UVCCameraView(
+                    cameraController: _uvc!,
+                    width: 320,
+                    height: 240,
+                    autoDispose: false,
+                  ),
+                ),
               ),
             ),
-        ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
 }

@@ -1,5 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../interfaces/auth_data.dart';
 
@@ -22,12 +24,38 @@ class FirebaseService {
       '[FirebaseService] Firebase initialized projectId=${opts.projectId} appId=${opts.appId} databaseURL=${opts.databaseURL ?? 'null'}',
     );
 
+    // Ensure anonymous auth early so Storage/RTDB rules with auth work
+    try {
+      final auth = FirebaseAuth.instance;
+      if (auth.currentUser == null) {
+        final cred = await auth.signInAnonymously();
+        debugPrint('[FirebaseService] Signed in anonymously uid=${cred.user?.uid}');
+      } else {
+        debugPrint('[FirebaseService] Already signed in uid=${auth.currentUser?.uid}');
+      }
+    } catch (e) {
+      debugPrint('[FirebaseService] Anonymous sign-in failed: $e');
+    }
+
+    // Ensure anonymous auth for Storage and RTDB rules
+    try {
+      final auth = FirebaseAuth.instance;
+      if (auth.currentUser == null) {
+        final cred = await auth.signInAnonymously();
+        debugPrint('[FirebaseService] Signed in anonymously uid=${cred.user?.uid}');
+      } else {
+        debugPrint('[FirebaseService] Already signed in uid=${auth.currentUser?.uid}');
+      }
+    } catch (e) {
+      debugPrint('[FirebaseService] Anonymous sign-in failed: $e');
+    }
+
     _database = FirebaseDatabase.instance;
     // Enable offline disk persistence for Realtime Database (mobile only)
     try {
       _database.setPersistenceEnabled(true);
-      // Set cache size within Firebase limit (<= 100MB). Use 100MB by default.
-      const cacheSizeBytes = 100 * 1024 * 1024; // 100 MB
+      // Set cache size within Firebase limit (<= 100MB). Use 20MB by default.
+      const cacheSizeBytes = 20 * 1024 * 1024; // 20 MB
       _database.setPersistenceCacheSizeBytes(cacheSizeBytes);
     } catch (e) {
       debugPrint('[FirebaseService] Persistence setup failed: $e');
