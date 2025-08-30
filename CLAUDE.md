@@ -209,27 +209,23 @@ Estas notas documentam ajustes críticos realizados para estabilidade do app em 
 
 ### Captura de Foto + Upload (NOVO)
 
-- Objetivo: ao finalizar cada exibição (NEWS/ADVERTISEMENT), capturar uma foto da câmera UVC, subir para Firebase Storage e anexar a URL (`photo_url`) no log (`DISPLAY_LOGS`). Nunca perder logs, mesmo offline.
+- Objetivo: ao finalizar cada exibição (NEWS/ADVERTISEMENT), capturar uma foto da câmera UVC e anexar informações ao log (`DISPLAY_LOGS`).
+  - ATUALIZAÇÃO (LGPD): para cumprir a LGPD, o fluxo automático do DisplayScreen NÃO envia mais fotos ao Storage. O app executa detecção de pessoas (YOLO) e registra apenas metadados (ex.: `people_count`). Fotos temporárias são apagadas após o processamento.
 
 - Requisitos de UI/Plugin:
   - O plugin `flutter_uvc_camera` exige um `UVCCameraView` presente no widget tree para inicializar o contexto GL. Mantemos um preview oculto `320x240` com `opacity: 0.0` para estabilidade.
   - Abertura da câmera ocorre após o primeiro frame (`addPostFrameCallback`) e esperamos ~800ms antes da primeira captura para garantir buffer pronto.
   - Guarda de concorrência: `_isCapturingPhoto` impede capturas sobrepostas.
 
-- Fluxo resumido:
+- Fluxo resumido (LGPD):
   1) `_logCurrentDisplayFinished()` é chamado na transição de conteúdo e no `dispose()` da tela.
-  2) Se UVC disponível: `takePicture()` → persiste arquivo no diretório do app → tenta upload.
-  3) Upload para Firebase Storage em `DISPLAY_PHOTOS/<captureId>.<ext>` com `contentType=image/jpeg`.
-  4) Obtém `downloadURL` e envia log para RTDB com `photo_url`.
-  5) Em caso de erro (offline, regras, etc.): cria item pendente em disco para retry e NÃO perde o log (eventual consistency: upload + log serão enviados depois).
+  2) Se UVC disponível: `takePicture()` → enfileira processamento em background (não bloqueia UI).
+  3) Serviço de background executa YOLO (contagem de pessoas) e grava o log no RTDB com `people_count` (sem `photo_url`).
+  4) A foto temporária é removida do armazenamento local após o processamento.
 
-- Serviço dedicado: `lib/services/photo_log_service.dart`
-  - Persistência local: salva fotos em `app_documents/captured_photos/`.
-  - Fila de pendências: `app_documents/pending_logs/<captureId>.json` contendo `localPath` e `body` do log.
-  - Retry automático: a cada 2 min (`Timer.periodic`) roda `processQueue()` e tenta re‑enviar uploads + logs.
-  - Bucket de Storage: usa `Firebase.app().options.storageBucket`; se vier inválido (ex.: termina com `firebasestorage.app`), faz fallback para `<projectId>.appspot.com` via `FirebaseStorage.instanceFor(bucket: ...)`.
-  - Autenticação: garante `Anonymous Auth` antes de enviar (`FirebaseAuth.signInAnonymously()`); também chamada durante retries.
-  - Metadados: define `contentType: image/jpeg` para casar com as regras do Storage.
+- Serviços envolvidos:
+  - `lib/services/background_detection_service.dart` — carrega YOLO uma única vez, mantém uma fila e processa capturas fora da UI; adiciona `people_count` ao body, grava no RTDB e remove a foto temporária (LGPD).
+  - `lib/services/photo_log_service.dart` — permanece disponível para fluxos que exigirem upload de fotos (não utilizado pelo DisplayScreen em LGPD).
 
 - Autenticação e Regras do Storage:
   - Habilitar `Anonymous Auth` (Console → Authentication → Sign‑in method → Anonymous → Enable).
@@ -268,6 +264,22 @@ Estas notas documentam ajustes críticos realizados para estabilidade do app em 
 
 - YOLO (`ultralytics_yolo`) carrega o modelo TFLite de `assets/models/yolo11n.tflite` para diretório temporário e roda detecção sob demanda na imagem capturada.
 - A prévia da câmera (UVC) é independente do RTDB; quedas de frames ou operações de preview não interferem nas escritas do Firebase.
+
+### YOLO em Background + LGPD (Agosto/2025)
+
+- Objetivo: não impactar o ciclo de exibição e cumprir a LGPD.
+- Implementação:
+  - `BackgroundDetectionService`:
+    - `ensureLoaded()`: carrega `ultralytics_yolo: ^0.1.36` uma única vez a partir de `assets/models/yolo11n.tflite` (copiado para o tmp) e mantém instância viva.
+    - `enqueue(captureId, imageFile, body)`: adiciona job em fila. O worker processa sequencialmente: executa `predict()`, computa `people_count` (classe `person`) e chama `DisplayLogService.createLog(...)`. Ao final, apaga `imageFile`.
+  - `DisplayScreen`: após `takePicture()`, apenas enfileira o job (não aguarda). Pré-aquece o modelo chamando `ensureLoaded()` sem bloquear.
+  - Upload de fotos: desabilitado no fluxo do DisplayScreen; apenas metadados são salvos (conforme LGPD).
+- Política da câmera:
+  - UVC permanece aberta durante o ciclo do DisplayScreen e fecha apenas no `dispose()` da tela.
+  - No `CameraScreen`, removido o `closeCamera()` em mudanças de ciclo de vida (mantém aberta durante pause/inactive); continua fechando em `dispose()` para evitar leaks.
+- Dependências:
+  - Atualizado `ultralytics_yolo` para `^0.1.36`.
+  - Modelo: `assets/models/yolo11n.tflite` listado no `pubspec.yaml`.
 
 ### Próximos Passos (se necessário)
 
