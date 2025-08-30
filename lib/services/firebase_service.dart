@@ -18,6 +18,14 @@ class FirebaseService {
     await Firebase.initializeApp();
 
     _database = FirebaseDatabase.instance;
+    // Enable offline disk persistence for Realtime Database (mobile only)
+    try {
+      _database.setPersistenceEnabled(true);
+      // Optional: limit local cache to ~20MB (adjust as needed)
+      _database.setPersistenceCacheSizeBytes(20 * 1024 * 1024);
+    } catch (_) {
+      // Ignore if not supported on this platform
+    }
     _initialized = true;
   }
 
