@@ -17,6 +17,7 @@ dependencies:
   device_info_plus: ^10.1.2
   crypto: ^3.0.5
   cached_network_image: ^3.4.1
+  flutter_cache_manager: ^3.3.2
   wakelock_plus: ^1.2.8
   ultralytics_yolo: ^0.1.26
   flutter_uvc_camera: ^1.0.0

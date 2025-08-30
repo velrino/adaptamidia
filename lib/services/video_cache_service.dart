@@ -31,6 +31,40 @@ class VideoCacheService {
     // Inicia servidor HTTP local para servir vídeos
     await LocalVideoServer.instance.start();
   }
+
+  /// Remove arquivos do cache mais antigos que [maxAge] e não referenciados
+  /// pelos URLs atuais de conteúdo (keepUrls)
+  Future<void> cleanupCache({
+    required Set<String> keepUrls,
+    Duration maxAge = const Duration(days: 15),
+  }) async {
+    if (_cacheDir == null) await init();
+
+    final now = DateTime.now();
+    final keepKeys = keepUrls.map(_getCacheKey).toSet();
+
+    final entries = await _cacheDir!.list().toList();
+    for (final e in entries) {
+      if (e is! File) continue;
+      if (!e.path.endsWith('.mp4')) continue;
+
+      final fileName = e.uri.pathSegments.last;
+      final key = fileName.replaceAll('.mp4', '');
+
+      if (keepKeys.contains(key)) continue; // ainda em uso
+
+      final stat = await e.stat();
+      if (now.difference(stat.modified) > maxAge) {
+        try {
+          await e.delete();
+          _cache.remove(key);
+          print('🧹 Removido vídeo antigo do cache: ${e.path}');
+        } catch (err) {
+          print('⚠️ Falha ao remover ${e.path}: $err');
+        }
+      }
+    }
+  }
   
   /// Carrega vídeos já existentes no cache
   Future<void> _loadExistingCache() async {

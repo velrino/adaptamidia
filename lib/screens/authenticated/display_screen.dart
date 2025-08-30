@@ -7,6 +7,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../services/storage_service.dart';
 import '../../services/video_cache_service.dart';
+import '../../services/image_cache_service.dart';
 // import '../../components/video_player_screen.dart';
 // import '../../components/vlc_video_player.dart'; // VLC has _viewId bug
 import '../../components/flutter_video_player.dart'; // Testing Flutter native video player
@@ -27,8 +28,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
   Timer? _progressTimer;
   double _progress = 0.0;
   bool _isLoading = true;
+  bool _isPreparing = false;
+  double _prepareProgress = 0.0;
   String? _error;
   Map<String, dynamic>? _unitData;
+  Timer? _backgroundTimer;
 
   @override
   void initState() {
@@ -42,6 +46,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   void dispose() {
     _timer?.cancel();
     _progressTimer?.cancel();
+    _backgroundTimer?.cancel();
     _exitFullScreen();
     WakelockPlus.disable();
     super.dispose();
@@ -106,7 +111,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
           });
 
           if (_contents.isNotEmpty) {
-            _startContent();
+            // Pré-carrega mídias para garantir reprodução offline
+            unawaited(_prepareAssetsAndStart());
+            // Inicia sincronização em background
+            _startBackgroundSync();
           }
         } else {
           throw Exception('Invalid response format - no data field found');
@@ -120,6 +128,106 @@ class _DisplayScreenState extends State<DisplayScreen> {
         _isLoading = false;
         _error = e.toString();
       });
+    }
+  }
+
+  Future<void> _prepareAssetsAndStart() async {
+    if (!mounted) return;
+    setState(() {
+      _isPreparing = true;
+      _prepareProgress = 0.0;
+    });
+
+    try {
+      // Coleta URLs de vídeos e imagens
+      final videoUrls = <String>[];
+      final imageUrls = <String>[];
+
+      for (final c in _contents) {
+        if (c['type'] == 'ADVERTISEMENT' && c['ads'] != null) {
+          final v = c['ads']['source'];
+          if (v is String && v.isNotEmpty) videoUrls.add(v);
+        } else if (c['type'] == 'NEWS' && c['news'] != null) {
+          final img = c['news']['image'];
+          if (img is String && img.isNotEmpty) imageUrls.add(img);
+        }
+      }
+
+      final videoSet = videoUrls.toSet();
+      final imageSet = imageUrls.toSet();
+
+      // 1) Limpa cache antigo antes de baixar (retém somente o que será usado)
+      await Future.wait([
+        VideoCacheService.instance.cleanupCache(keepUrls: videoSet),
+        ImageCacheService.instance.cleanupOld(keepUrls: imageSet),
+      ]);
+
+      final total = (videoSet.length + imageSet.length).clamp(1, 1 << 30);
+      int done = 0;
+      void tick() {
+        if (!mounted) return;
+        setState(() {
+          _prepareProgress = done / total;
+        });
+      }
+
+      // Pré-carrega imagens e vídeos com progresso combinado
+      await Future.wait([
+        () async {
+          if (imageUrls.isEmpty) return;
+          await ImageCacheService.instance.preloadAll(imageUrls, concurrency: 6, onProgress: (p) {
+            done = (total * 0).toInt() + (p * imageSet.length).round();
+            tick();
+          });
+        }(),
+        () async {
+          if (videoUrls.isEmpty) return;
+          // Usa serviço especializado para vídeos (com controle de concorrência interno)
+          await VideoCacheService.instance.preloadVideos(videoUrls);
+          // Conta todos os vídeos como concluídos
+          done += videoSet.length;
+          tick();
+        }(),
+      ]);
+
+      // Após pré-carregar, mantém apenas conteúdos com mídia garantida em cache
+      final filtered = <dynamic>[];
+      for (final c in _contents) {
+        if (c['type'] == 'ADVERTISEMENT' && c['ads'] != null) {
+          final v = c['ads']['source'];
+          if (v is String && v.isNotEmpty) {
+            final file = await VideoCacheService.instance.getVideoFromCache(v);
+            if (file != null) filtered.add(c);
+          }
+        } else if (c['type'] == 'NEWS' && c['news'] != null) {
+          final img = c['news']['image'];
+          if (img is String && img.isNotEmpty) {
+            if (await ImageCacheService.instance.isCached(img)) {
+              filtered.add(c);
+            }
+          }
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          if (filtered.isNotEmpty) {
+            _contents = filtered;
+            _currentIndex = 0;
+          }
+        });
+      }
+
+    } catch (e) {
+      debugPrint('⚠️ Erro no pré-carregamento: $e');
+      // Continua mesmo com falhas parciais
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isPreparing = false;
+        _prepareProgress = 1.0;
+      });
+      _startContent();
     }
   }
 
@@ -157,6 +265,96 @@ class _DisplayScreenState extends State<DisplayScreen> {
       if (!mounted) return;
       _nextContent();
     });
+  }
+
+  void _startBackgroundSync() {
+    _backgroundTimer?.cancel();
+    _backgroundTimer = Timer.periodic(const Duration(minutes: 10), (_) {
+      _backgroundRefresh();
+    });
+  }
+
+  Future<void> _backgroundRefresh() async {
+    try {
+      final token = await StorageService.getAuthToken();
+      if (token == null) return;
+
+      final url =
+          'https://9aca430ada6d.ngrok-free.app/display/unit/${widget.unitId}';
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      );
+      if (response.statusCode != 200) return;
+
+      final data = json.decode(response.body);
+      if (data['data'] == null || data['data'] is! List) return;
+
+      final newContents = List<dynamic>.from(data['data']);
+
+      // Coleta URLs novas
+      final newVideos = <String>[];
+      final newImages = <String>[];
+      for (final c in newContents) {
+        if (c['type'] == 'ADVERTISEMENT' && c['ads'] != null) {
+          final v = c['ads']['source'];
+          if (v is String && v.isNotEmpty) newVideos.add(v);
+        } else if (c['type'] == 'NEWS' && c['news'] != null) {
+          final img = c['news']['image'];
+          if (img is String && img.isNotEmpty) newImages.add(img);
+        }
+      }
+
+      final videoSet = newVideos.toSet();
+      final imageSet = newImages.toSet();
+
+      // Limpa cache antigo antes de baixar novos
+      await Future.wait([
+        VideoCacheService.instance.cleanupCache(keepUrls: videoSet),
+        ImageCacheService.instance.cleanupOld(keepUrls: imageSet),
+      ]);
+
+      // Pré-carrega novos itens
+      await Future.wait([
+        if (imageSet.isNotEmpty)
+          ImageCacheService.instance.preloadAll(imageSet.toList(), concurrency: 6),
+        if (videoSet.isNotEmpty)
+          VideoCacheService.instance.preloadVideos(videoSet.toList()),
+      ]);
+
+      // Filtra para apenas itens com mídia disponível
+      final filtered = <dynamic>[];
+      for (final c in newContents) {
+        if (c['type'] == 'ADVERTISEMENT' && c['ads'] != null) {
+          final v = c['ads']['source'];
+          if (v is String && v.isNotEmpty) {
+            final file = await VideoCacheService.instance.getVideoFromCache(v);
+            if (file != null) filtered.add(c);
+          }
+        } else if (c['type'] == 'NEWS' && c['news'] != null) {
+          final img = c['news']['image'];
+          if (img is String && img.isNotEmpty) {
+            if (await ImageCacheService.instance.isCached(img)) {
+              filtered.add(c);
+            }
+          }
+        }
+      }
+
+      if (!mounted || filtered.isEmpty) return;
+
+      setState(() {
+        _contents = filtered;
+        if (_currentIndex >= _contents.length) {
+          _currentIndex = 0;
+        }
+      });
+    } catch (e) {
+      debugPrint('⚠️ Erro no background refresh: $e');
+    }
   }
 
   void _nextContent() {
@@ -416,8 +614,35 @@ class _DisplayScreenState extends State<DisplayScreen> {
           else
             _buildContent(),
 
+          // Overlay de preparação (pré-carregando mídias)
+          if (!_isLoading && _error == null && _isPreparing)
+            Container(
+              color: Colors.black.withOpacity(0.7),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Preparando conteúdo para modo offline...',
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: 260,
+                      child: LinearProgressIndicator(
+                        value: _prepareProgress.clamp(0.0, 1.0),
+                        backgroundColor: Colors.white24,
+                        valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                        minHeight: 6,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
           // Progress bar
-          if (!_isLoading && _error == null && _contents.isNotEmpty)
+          if (!_isLoading && !_isPreparing && _error == null && _contents.isNotEmpty)
             Positioned(
               bottom: 0,
               left: 0,

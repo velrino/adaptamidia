@@ -227,6 +227,34 @@ lib/
 - ✅ Sistema de logging para tracking
 - ✅ Otimizado para Android 10+
 
+### 🔒 Offline‑First e Sincronização (NOVO)
+
+- ✅ Pré‑carregamento inicial: antes de começar a tocar, o app baixa todos os vídeos (MP4) e imagens da playlist atual.
+- ✅ Exibe somente conteúdo garantido no disco: após o download, a playlist é filtrada para manter apenas itens 100% em cache.
+- ✅ Overlay de preparação: tela de "Preparando conteúdo para modo offline..." com progresso combinado (imagens + vídeos).
+- ✅ Sincronização em background: a cada 10 minutos, busca a playlist, baixa mídias novas e só então atualiza a lista em memória, sem interromper a reprodução atual.
+- ✅ Limpeza automática de cache: remove mídias não referenciadas e com mais de 15 dias para evitar ocupar armazenamento.
+- ✅ Execução 24/7: timers e controladores são sempre cancelados no dispose; UI permanece imersiva e com wakelock ativo.
+
+Componentes envolvidos:
+- `lib/screens/authenticated/display_screen.dart`
+  - Fluxo: load → cleanup (15d) → preload (imagens+vídeos) → filtra offline → start → background sync 10min.
+  - Overlay de preparação com `LinearProgressIndicator` enquanto baixa.
+- `lib/services/video_cache_service.dart`
+  - `preloadVideos(urls)`: baixa MP4s com verificação e evita duplicidades.
+  - `getVideoFromCache(url)`: retorna `File` do cache local se existir.
+  - `cleanupCache(keepUrls, maxAge: 15 dias)`: remove vídeos antigos não utilizados.
+- `lib/services/image_cache_service.dart`
+  - Baseado em `flutter_cache_manager`; mantém `manifest.json` com `lastSeen` por URL.
+  - `preloadAll(urls)`: pré‑baixa imagens e persiste no cache de disco.
+  - `isCached(url)`: checagem rápida de presença no cache.
+  - `cleanupOld(keepUrls, maxAge: 15 dias)`: remove imagens obsoletas.
+
+Resultados esperados:
+- Primeira execução pode demorar mais (download inicial), mas depois roda offline.
+- Novos conteúdos entram no ciclo apenas quando 100% baixados.
+- Armazenamento controlado automaticamente (retenção de 15 dias).
+
 ### Arquitetura do Player
 
 O sistema de display é o **CORAÇÃO** da aplicação SeeMidia. Funciona 24/7 exibindo conteúdo em tablets comerciais.
