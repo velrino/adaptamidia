@@ -26,6 +26,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   int _currentIndex = 0;
   Timer? _timer;
   Timer? _progressTimer;
+  Timer? _clockTimer;
   double _progress = 0.0;
   bool _isLoading = true;
   bool _isPreparing = false;
@@ -33,12 +34,18 @@ class _DisplayScreenState extends State<DisplayScreen> {
   String? _error;
   Map<String, dynamic>? _unitData;
   Timer? _backgroundTimer;
+  Map<String, dynamic>? _infoData;
+  double? _usdBid;
+  String? _weatherText;
+  double? _weatherTempC;
+  DateTime _now = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     _enterFullScreen();
     _loadContent();
+    _startClock();
     WakelockPlus.enable();
   }
 
@@ -46,6 +53,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   void dispose() {
     _timer?.cancel();
     _progressTimer?.cancel();
+    _clockTimer?.cancel();
     _backgroundTimer?.cancel();
     _exitFullScreen();
     WakelockPlus.disable();
@@ -54,6 +62,45 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
   void _enterFullScreen() {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+  }
+
+  void _startClock() {
+    _clockTimer?.cancel();
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() {
+        _now = DateTime.now();
+      });
+    });
+  }
+
+  Future<void> _fetchInfo() async {
+    try {
+      final token = await StorageService.getAuthToken();
+      if (token == null) return;
+
+      final url =
+          'https://9aca430ada6d.ngrok-free.app/display/unit/${widget.unitId}/info';
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      );
+      if (response.statusCode != 200) return;
+
+      final data = json.decode(response.body);
+      if (!mounted) return;
+      setState(() {
+        _infoData = data;
+        _usdBid = (data['currency'] != null) ? (data['currency']['bid'] as num?)?.toDouble() : null;
+        _weatherText = (data['weather'] != null) ? (data['weather']['text'] as String?) : null;
+        _weatherTempC = (data['weather'] != null) ? (data['weather']['temperature_c'] as num?)?.toDouble() : null;
+      });
+    } catch (e) {
+      // Silencioso: se offline, apenas mantém último valor
+    }
   }
 
   void _exitFullScreen() {
@@ -115,6 +162,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
             unawaited(_prepareAssetsAndStart());
             // Inicia sincronização em background
             _startBackgroundSync();
+            // Busca informações de rodapé (câmbio/tempo)
+            unawaited(_fetchInfo());
           }
         } else {
           throw Exception('Invalid response format - no data field found');
@@ -277,6 +326,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
     _backgroundTimer?.cancel();
     _backgroundTimer = Timer.periodic(const Duration(minutes: 10), (_) {
       _backgroundRefresh();
+      _fetchInfo();
     });
   }
 
@@ -405,6 +455,15 @@ class _DisplayScreenState extends State<DisplayScreen> {
     final memW = (mq.size.width * mq.devicePixelRatio).round();
     final memH = (mq.size.height * mq.devicePixelRatio).round();
 
+    String _fmt2(int v) => v.toString().padLeft(2, '0');
+    final dateStr = '${_fmt2(_now.day)}/${_fmt2(_now.month)}/${_now.year}';
+    final timeStr = '${_fmt2(_now.hour)}:${_fmt2(_now.minute)}:${_fmt2(_now.second)}';
+    final rightDateTime = '$dateStr $timeStr';
+    final centerWeather = (_weatherTempC != null || (_weatherText ?? '').isNotEmpty)
+        ? '${_weatherTempC != null ? _weatherTempC!.toStringAsFixed(0) + '°C ' : ''}${_weatherText ?? ''}'
+        : '';
+    final leftCurrency = _usdBid != null ? 'USD ${_usdBid!.toStringAsFixed(2)}' : 'USD --';
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -453,9 +512,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
                 width: 1,
               ),
             ),
-            child: IntrinsicHeight(
-              child: Row(
-                children: [
+              child: IntrinsicHeight(
+                child: Row(
+                  children: [
                   // Logo
                   Container(
                     width: 200,
@@ -550,6 +609,58 @@ class _DisplayScreenState extends State<DisplayScreen> {
                             ],
                           ),
                         ],
+                        const SizedBox(height: 14),
+                        Container(
+                          padding: const EdgeInsets.only(top: 12),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              top: BorderSide(color: Colors.white.withOpacity(0.15), width: 1),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              // Left: currency
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.attach_money, color: Colors.white70, size: 18),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        leftCurrency,
+                                        style: const TextStyle(color: Colors.white70, fontSize: 16),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Center: weather
+                              Expanded(
+                                child: Center(
+                                  child: Text(
+                                    centerWeather.isNotEmpty ? centerWeather : '-',
+                                    style: const TextStyle(color: Colors.white70, fontSize: 16),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                              // Right: date/time now
+                              Expanded(
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Text(
+                                    rightDateTime,
+                                    style: const TextStyle(color: Colors.white70, fontSize: 16),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ),
