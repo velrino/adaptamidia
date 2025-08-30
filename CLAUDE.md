@@ -1,5 +1,7 @@
 # SeeMidia - Contexto do Projeto
 
+> Nota rápida: veja também a seção “Notas Importantes (Agosto/2025)” para detalhes críticos de configuração Android (câmera UVC), cache do Firebase RTDB e logs de exibição.
+
 SEMPRE SER PENSADO EM landscape e portait
 LAYOUT Elegante e minimalista. Sempre pensando em dark e light mode
 
@@ -10,6 +12,11 @@ LAYOUT Elegante e minimalista. Sempre pensando em dark e light mode
 - **Package**: com.seemidia.display
 - **Framework**: Flutter
 - **Tipo**: Aplicação de Display Digital para Estabelecimentos Comerciais
+
+### Changelog (Agosto/2025)
+- Android/UVC: `targetSdk = 27` conforme docs do plugin `flutter_uvc_camera`; manifesto com intent-filter/meta-data USB e `device_filter.xml` conforme guia do pacote.
+- Firebase RTDB: cache local ajustado para 20 MB (≤ 100 MB) e logs de diagnóstico no init.
+- Logs de exibição: rastreamento detalhado de `_logCurrentDisplayFinished` e resultado das escritas no RTDB.
 
 ## Descrição do Sistema
 
@@ -135,6 +142,88 @@ dependencies:
   permission_handler: ^11.0.1 # Permissões
   connectivity_plus: ^5.0.1 # Verificar conexão
 ```
+
+---
+
+## Notas Importantes (Agosto/2025)
+
+Estas notas documentam ajustes críticos realizados para estabilidade do app em campo: integração de câmera UVC, limites do Firebase Realtime Database e rastreabilidade de logs.
+
+### Android – Câmera UVC (flutter_uvc_camera)
+
+- targetSdkVersion: definido como `27` em `android/app/build.gradle.kts`.
+  - Motivo: a lib `flutter_uvc_camera` (baseada em AndroidUSBCamera) falha no fluxo de permissão USB quando o `targetSdk >= 31` (Android 12+) devido às mudanças de `PendingIntent` (IM/MUTABLE). Com `27`, o fluxo volta a funcionar (comprovado em produção).
+  - Futuro: se for obrigatório subir `targetSdk`, será necessário patch no plugin Android para usar `PendingIntent` com flags corretas e revisar o BroadcastReceiver. Sugestão: adicionar `FLAG_IMMUTABLE` no `PendingIntent.getBroadcast` e garantir uso de `Context.registerReceiver`/`android:exported` conforme API 31+.
+
+- Manifesto Android (`android/app/src/main/AndroidManifest.xml`):
+  - Mantido o bloco conforme README do plugin, incluindo a permissão `android.permission.USB_PERMISSION` (mesmo não sendo uma permissão real do sistema, a doc do plugin a referencia) e o `intent-filter` + `meta-data` para USB:
+    - `<action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />`
+    - `<meta-data android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" android:resource="@xml/device_filter" />`
+  - `uses-feature` incluído para `android.hardware.usb.host`.
+
+- Filtro de dispositivos (`android/app/src/main/res/xml/device_filter.xml`):
+  - Usamos a entrada de exemplo do plugin (VID/PID placeholders) para manter compatibilidade com a documentação do pacote.
+  - Em produção, substitua por:
+    - seus VID/PID reais (melhor compatibilidade), e/ou
+    - um filtro genérico UVC via `<usb-interface class="14" />` para pegar câmeras UVC compatíveis.
+
+### Firebase Realtime Database – Cache e Logs
+
+- Limite de cache local: o SDK do RTDB não permite `setPersistenceCacheSizeBytes` > 100 MB.
+  - Causa raiz: valores maiores causam exceção no cliente e falham todas as operações subsequentes (incluindo `.set()`), sem relação com câmera.
+  - Ajuste: configurado para `20 MB` (seguro e dentro do limite) em `lib/services/firebase_service.dart`:
+    - `setPersistenceEnabled(true)`
+    - `setPersistenceCacheSizeBytes(20 * 1024 * 1024)`
+
+- Diagnósticos adicionados:
+  - `FirebaseService.initialize()` agora faz `debugPrint` do `projectId`, `appId` e `databaseURL` após `Firebase.initializeApp()`.
+  - Em caso de falha ao ativar persistência/cache, registra a exceção e prossegue (não bloqueia app).
+
+### Rastreamento de Exibição (DISPLAY_LOGS)
+
+- Fluxo de logging:
+  - O método `_logCurrentDisplayFinished()` é chamado:
+    - ao trocar para o próximo conteúdo (`_nextContent()`), e
+    - no `dispose()` da tela de display (garantia de último registro).
+  - Só registra para `ADVERTISEMENT` e `NEWS` com `_id` válido.
+  - Identificador do log: `captureId = DateTime.now().millisecondsSinceEpoch.toString()`.
+  - Payload inclui: `identifier`, `id` (conteúdo), `local` (unit data), `type`, `status=FINISHED`, `start_at`, `end_at`, `device_id`, `device_context`.
+  - Caminho no RTDB: `DISPLAY_LOGS/<identifier>`.
+
+- Logs detalhados (para diagnóstico):
+  - `lib/screens/authenticated/display_screen.dart`
+    - Entradas quando o log é invocado, motivos de “skip”, IDs, timestamps e `deviceId`.
+  - `lib/services/display_log_service.dart`
+    - Antes/depois do `.set()` e, em caso de erro, imprime `FirebaseException.code/message` e stack trace.
+  - `lib/services/firebase_service.dart`
+    - Opções do app Firebase e status do RTDB.
+
+- Verificações recomendadas se não aparecer no Firebase:
+  - Conferir regras do RTDB para `DISPLAY_LOGS/*` (ex.: permitir escrita anônima, ou habilitar autenticação anônima no app e manter regras restritivas).
+  - Validar `google-services.json` (package `com.seemidia.display` e projeto correto).
+  - Garantir conectividade e hora do dispositivo corretas.
+
+### YOLO + Câmera (contexto)
+
+- YOLO (`ultralytics_yolo`) carrega o modelo TFLite de `assets/models/yolo11n.tflite` para diretório temporário e roda detecção sob demanda na imagem capturada.
+- A prévia da câmera (UVC) é independente do RTDB; quedas de frames ou operações de preview não interferem nas escritas do Firebase.
+
+### Próximos Passos (se necessário)
+
+- Elevar `targetSdk` mantendo câmera UVC:
+  - Parchar o código nativo do `flutter_uvc_camera` adicionando flags de `PendingIntent` compatíveis com Android 12+ e revisando receptores/exported.
+  - Após patch, restaurar `targetSdk` alto (ex.: 34) e revalidar fluxo de permissão.
+
+- Regras RTDB + Autenticação:
+  - Se desejar regras estritas, habilitar `firebase_auth` (ex.: Anonymous Auth no boot) e ajustar regras para `auth != null`.
+
+Referências rápidas:
+- `android/app/build.gradle.kts`: `targetSdk = 27`
+- `android/app/src/main/AndroidManifest.xml`: USB intent-filter/meta-data
+- `android/app/src/main/res/xml/device_filter.xml`: filtro USB
+- `lib/services/firebase_service.dart`: init do Firebase + persistência RTDB
+- `lib/services/display_log_service.dart`: escrita no RTDB (DISPLAY_LOGS)
+- `lib/screens/authenticated/display_screen.dart`: gatilho de logs e ciclo de conteúdo
 
 ## Ambiente de Desenvolvimento
 
