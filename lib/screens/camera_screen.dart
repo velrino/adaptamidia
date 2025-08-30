@@ -62,17 +62,7 @@ class _CameraScreenState extends State<CameraScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.detached) {
-      _controller.closeCamera();
-      // Limpa a imagem capturada ao sair da tela
-      if (_capturedImage != null) {
-        setState(() {
-          _capturedImage = null;
-        });
-      }
-    } else if (state == AppLifecycleState.resumed) {
+    if (state == AppLifecycleState.resumed) {
       // Try to reopen if returning to the screen
       if (!_isOpened && !_opening) {
         _openCamera();

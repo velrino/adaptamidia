@@ -22,7 +22,9 @@ class PhotoLogService {
     if (auth.currentUser == null) {
       try {
         final cred = await auth.signInAnonymously();
-        debugPrint('[PhotoLogService] Signed in anonymously uid=${cred.user?.uid}');
+        debugPrint(
+          '[PhotoLogService] Signed in anonymously uid=${cred.user?.uid}',
+        );
       } catch (e) {
         debugPrint('[PhotoLogService] Anonymous sign-in failed: $e');
       }
@@ -40,7 +42,9 @@ class PhotoLogService {
 
   Future<File> _persistPhoto(File src, String captureId) async {
     final photosDir = await _ensureDir('captured_photos');
-    final dst = File(p.join(photosDir.path, '$captureId${p.extension(src.path, 3)}'));
+    final dst = File(
+      p.join(photosDir.path, '$captureId${p.extension(src.path, 3)}'),
+    );
     try {
       return await src.copy(dst.path);
     } catch (_) {
@@ -59,18 +63,22 @@ class PhotoLogService {
     return File(p.join(pendingDir.path, '$captureId.json'));
   }
 
-  Future<void> _savePending(String captureId, String localPath, Map<String, dynamic> body) async {
+  Future<void> _savePending(
+    String captureId,
+    String localPath,
+    Map<String, dynamic> body,
+  ) async {
     final file = await _pendingMetaFile(captureId);
-    final data = {
-      'captureId': captureId,
-      'localPath': localPath,
-      'body': body,
-    };
+    final data = {'captureId': captureId, 'localPath': localPath, 'body': body};
     await file.writeAsString(json.encode(data), flush: true);
     debugPrint('[PhotoLogService] Queued pending log: $captureId');
   }
 
-  Future<void> uploadAndLog(String captureId, File imageFile, Map<String, dynamic> body) async {
+  Future<void> uploadAndLog(
+    String captureId,
+    File imageFile,
+    Map<String, dynamic> body,
+  ) async {
     try {
       await _ensureAuth();
       // persist photo locally under app dir to avoid temp cleanup
@@ -88,19 +96,24 @@ class PhotoLogService {
           : FirebaseStorage.instance;
       final uid = FirebaseAuth.instance.currentUser?.uid;
 
-      final ref = storage.ref().child('DISPLAY_PHOTOS').child('$captureId${p.extension(persisted.path, 3)}');
-      debugPrint('[PhotoLogService] Uploading photo for $captureId to ${ref.fullPath} (bucket=${bucket ?? 'default'}) uid=${uid ?? 'null'}');
-      await ref.putFile(
-        persisted,
-        SettableMetadata(contentType: 'image/jpeg'),
+      final ref = storage
+          .ref()
+          .child('DISPLAY_PHOTOS')
+          .child('$captureId${p.extension(persisted.path, 3)}');
+      debugPrint(
+        '[PhotoLogService] Uploading photo for $captureId to ${ref.fullPath} (bucket=${bucket ?? 'default'}) uid=${uid ?? 'null'}',
       );
+      await ref.putFile(persisted, SettableMetadata(contentType: 'image/jpeg'));
       final url = await ref.getDownloadURL();
       debugPrint('[PhotoLogService] Upload success for $captureId, url=$url');
 
       final enriched = Map<String, dynamic>.from(body);
       enriched['photo_url'] = url;
 
-      await DisplayLogService.instance.createLog(identifier: captureId, body: enriched);
+      await DisplayLogService.instance.createLog(
+        identifier: captureId,
+        body: enriched,
+      );
     } catch (e, st) {
       debugPrint('[PhotoLogService] Upload failed for $captureId: $e');
       debugPrint('[PhotoLogService] Stack: $st');
@@ -126,7 +139,9 @@ class PhotoLogService {
     try {
       await _ensureAuth();
       final pendingDir = await _ensureDir('pending_logs');
-      final entries = pendingDir.listSync().whereType<File>().where((f) => f.path.endsWith('.json'));
+      final entries = pendingDir.listSync().whereType<File>().where(
+        (f) => f.path.endsWith('.json'),
+      );
       for (final file in entries) {
         try {
           final raw = await file.readAsString();
@@ -137,14 +152,22 @@ class PhotoLogService {
 
           final imageFile = File(localPath);
           if (!await imageFile.exists()) {
-            debugPrint('[PhotoLogService] Missing image for pending $captureId, sending log without photo');
-            await DisplayLogService.instance.createLog(identifier: captureId, body: body);
+            debugPrint(
+              '[PhotoLogService] Missing image for pending $captureId, sending log without photo',
+            );
+            await DisplayLogService.instance.createLog(
+              identifier: captureId,
+              body: body,
+            );
             await file.delete();
             continue;
           }
 
           // Retry upload
-          final ref = FirebaseStorage.instance.ref().child('DISPLAY_PHOTOS').child('$captureId${p.extension(imageFile.path, 3)}');
+          final ref = FirebaseStorage.instance
+              .ref()
+              .child('DISPLAY_PHOTOS')
+              .child('$captureId${p.extension(imageFile.path, 3)}');
           debugPrint('[PhotoLogService] Retrying upload for $captureId');
           await ref.putFile(
             imageFile,
@@ -154,7 +177,10 @@ class PhotoLogService {
 
           final enriched = Map<String, dynamic>.from(body);
           enriched['photo_url'] = url;
-          await DisplayLogService.instance.createLog(identifier: captureId, body: enriched);
+          await DisplayLogService.instance.createLog(
+            identifier: captureId,
+            body: enriched,
+          );
 
           await file.delete();
         } catch (e, st) {

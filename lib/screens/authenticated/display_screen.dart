@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../services/background_detection_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -53,6 +54,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   bool _uvcAvailable = false;
   bool _isCapturingPhoto = false;
   DateTime? _uvcOpenedAt;
+  // YOLO handled by BackgroundDetectionService
 
   @override
   void initState() {
@@ -84,6 +86,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
       _uvc?.closeCamera();
       _uvc?.dispose();
     } catch (_) {}
+    // Background YOLO service cleanup (optional)
+    try {
+      BackgroundDetectionService.instance.dispose();
+    } catch (_) {}
     _timer?.cancel();
     _progressTimer?.cancel();
     _clockTimer?.cancel();
@@ -109,6 +115,13 @@ class _DisplayScreenState extends State<DisplayScreen> {
         _uvcAvailable = false;
       });
     }
+  }
+
+  // Pre-warm background YOLO model without blocking UI
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    unawaited(BackgroundDetectionService.instance.ensureLoaded());
   }
 
   void _enterFullScreen() {
@@ -491,7 +504,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
   void _nextContent() {
     // Log do conteúdo finalizado antes de avançar
-    debugPrint('[DisplayScreen] _nextContent called. Will log current display as finished. index=$_currentIndex total=${_contents.length}');
+    debugPrint(
+      '[DisplayScreen] _nextContent called. Will log current display as finished. index=$_currentIndex total=${_contents.length}',
+    );
     unawaited(_logCurrentDisplayFinished());
 
     setState(() {
@@ -510,12 +525,16 @@ class _DisplayScreenState extends State<DisplayScreen> {
     final isAd = content['type'] == 'ADVERTISEMENT' && content['ads'] != null;
     final isNews = content['type'] == 'NEWS' && content['news'] != null;
     if (!isAd && !isNews) {
-      debugPrint('[DisplayScreen] Current content is neither ADS nor NEWS. type=${content['type']} Skip logging.');
+      debugPrint(
+        '[DisplayScreen] Current content is neither ADS nor NEWS. type=${content['type']} Skip logging.',
+      );
       return;
     }
 
     // Identificadores
-    final currentId = isAd ? (content['ads']['_id']?.toString() ?? '') : (content['news']['_id']?.toString() ?? '');
+    final currentId = isAd
+        ? (content['ads']['_id']?.toString() ?? '')
+        : (content['news']['_id']?.toString() ?? '');
     if (currentId.isEmpty) {
       debugPrint('[DisplayScreen] currentId empty. Skip logging.');
       return;
@@ -524,8 +543,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
     // Datas
     final endAt = DateTime.now();
-    final startAt = _currentStartAt ?? endAt.subtract(Duration(seconds: _currentDurationSecs));
-    debugPrint('[DisplayScreen] Logging $currentId type=${isAd ? 'ADVERTISEMENT' : 'NEWS'} startAt=$startAt endAt=$endAt');
+    final startAt =
+        _currentStartAt ??
+        endAt.subtract(Duration(seconds: _currentDurationSecs));
+    debugPrint(
+      '[DisplayScreen] Logging $currentId type=${isAd ? 'ADVERTISEMENT' : 'NEWS'} startAt=$startAt endAt=$endAt',
+    );
 
     final deviceId = await StorageService.getOrCreateDeviceId();
     debugPrint('[DisplayScreen] deviceId=$deviceId');
@@ -559,12 +582,21 @@ class _DisplayScreenState extends State<DisplayScreen> {
         final tmpPath = await _uvc!.takePicture();
         if (tmpPath != null) {
           final file = File(tmpPath);
-          debugPrint('[DisplayScreen] Captured photo for $captureId at $tmpPath');
-          await PhotoLogService.instance.uploadAndLog(captureId, file, body);
+          debugPrint(
+            '[DisplayScreen] Captured photo for $captureId at $tmpPath',
+          );
+          // Enqueue background YOLO + upload + log
+          BackgroundDetectionService.instance.enqueue(
+            captureId: captureId,
+            imageFile: file,
+            body: body,
+          );
           _isCapturingPhoto = false;
           return; // either logged or queued; do not double-log
         } else {
-          debugPrint('[DisplayScreen] takePicture returned null, fallback to log without photo');
+          debugPrint(
+            '[DisplayScreen] takePicture returned null, fallback to log without photo',
+          );
         }
       } catch (e) {
         debugPrint('[DisplayScreen] Photo capture failed: $e');
@@ -574,8 +606,13 @@ class _DisplayScreenState extends State<DisplayScreen> {
     }
 
     // Fallback: log without photo
-    debugPrint('[DisplayScreen] Sending log to Firebase with identifier=$captureId (no photo)');
-    await DisplayLogService.instance.createLog(identifier: captureId, body: body);
+    debugPrint(
+      '[DisplayScreen] Sending log to Firebase with identifier=$captureId (no photo)',
+    );
+    await DisplayLogService.instance.createLog(
+      identifier: captureId,
+      body: body,
+    );
     debugPrint('[DisplayScreen] Log sent');
   }
 
@@ -992,21 +1029,21 @@ class _DisplayScreenState extends State<DisplayScreen> {
             ),
 
           // Progress bar
-      if (!_isLoading &&
-          !_isPreparing &&
-          _error == null &&
-          _contents.isNotEmpty)
-        Positioned(
-          bottom: 0,
-          left: 0,
-          right: 0,
-          child: LinearProgressIndicator(
-            value: _progress.clamp(0.0, 1.0),
-            backgroundColor: Colors.white.withOpacity(0.1),
-            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-            minHeight: 3,
-          ),
-        ),
+          if (!_isLoading &&
+              !_isPreparing &&
+              _error == null &&
+              _contents.isNotEmpty)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: LinearProgressIndicator(
+                value: _progress.clamp(0.0, 1.0),
+                backgroundColor: Colors.white.withOpacity(0.1),
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                minHeight: 3,
+              ),
+            ),
 
           // Hidden UVC preview to satisfy plugin's PlatformView requirement
           if (_uvc != null)
@@ -1026,8 +1063,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
                 ),
               ),
             ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 }

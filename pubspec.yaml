@@ -21,7 +21,7 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_cache_manager: ^3.3.2
   wakelock_plus: ^1.2.8
-  ultralytics_yolo: ^0.1.26
+  ultralytics_yolo: ^0.1.36
   flutter_uvc_camera: ^1.0.0
   image: ^4.5.4
   path_provider: ^2.1.1
