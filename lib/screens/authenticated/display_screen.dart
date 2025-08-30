@@ -9,6 +9,7 @@ import '../../services/storage_service.dart';
 import '../../services/video_cache_service.dart';
 import '../../services/image_cache_service.dart';
 import '../../services/display_log_service.dart';
+import '../../services/device_context_service.dart';
 // import '../../components/video_player_screen.dart';
 // import '../../components/vlc_video_player.dart'; // VLC has _viewId bug
 import '../../components/flutter_video_player.dart'; // Testing Flutter native video player
@@ -472,6 +473,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
     final deviceId = await StorageService.getOrCreateDeviceId();
 
+    final deviceContext = await DeviceContextService.gather();
+
     final body = <String, dynamic>{
       'identifier': captureId,
       'id': currentId,
@@ -481,6 +484,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
       'start_at': startAt.toIso8601String(),
       'end_at': endAt.toIso8601String(),
       'device_id': deviceId,
+      'device_context': deviceContext,
     };
 
     await DisplayLogService.instance.createLog(identifier: captureId, body: body);
