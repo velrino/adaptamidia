@@ -3,7 +3,7 @@
     <!-- VLC Player Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     
-    <!-- UVC Camera Permissions -->
+    <!-- UVC Camera Permissions (per plugin docs) -->
     <uses-permission android:name="android.permission.USB_PERMISSION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.CAMERA"/>
