@@ -7,12 +7,12 @@ class FlutterVideoPlayer extends StatefulWidget {
   final String videoUrl;
   final VoidCallback? onComplete;
   final double overscanScale; // small upscale to hide decoder padding artifacts
-  
+
   const FlutterVideoPlayer({
     super.key,
     required this.videoUrl,
     this.onComplete,
-    this.overscanScale = 1.02,
+    this.overscanScale = 1.05,
   });
 
   @override
@@ -35,11 +35,15 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer> {
   Future<void> _initializePlayer() async {
     try {
       // Get cached video file
-      final cachedFile = await VideoCacheService.instance.getVideoFromCache(widget.videoUrl);
-      
+      final cachedFile = await VideoCacheService.instance.getVideoFromCache(
+        widget.videoUrl,
+      );
+
       if (cachedFile != null && await cachedFile.exists()) {
-        debugPrint('🎬 Flutter Video Player loading local file: ${cachedFile.path}');
-        
+        debugPrint(
+          '🎬 Flutter Video Player loading local file: ${cachedFile.path}',
+        );
+
         // Create controller with local file
         _controller = VideoPlayerController.file(
           cachedFile,
@@ -50,7 +54,9 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer> {
         );
       } else {
         // Fallback to network
-        debugPrint('⚠️ Cache miss, falling back to network: ${widget.videoUrl}');
+        debugPrint(
+          '⚠️ Cache miss, falling back to network: ${widget.videoUrl}',
+        );
         _controller = VideoPlayerController.networkUrl(
           Uri.parse(widget.videoUrl),
           videoPlayerOptions: VideoPlayerOptions(
@@ -59,13 +65,13 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer> {
           ),
         );
       }
-      
+
       // Add listener for completion
       _controller!.addListener(_videoListener);
-      
+
       // Initialize
       await _controller!.initialize();
-      
+
       // Mute and play
       await _controller!.setVolume(0.0);
       await _controller!.setLooping(false);
@@ -78,13 +84,14 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer> {
           // Heurística: aplica overscan mínimo apenas quando o vídeo
           // não tem dimensões múltiplas de 16 (mais propenso a padding do decoder)
           final sz = _controller!.value.size;
-          final needsOverscan = Platform.isAndroid && ((sz.width % 16) != 0 || (sz.height % 16) != 0);
+          final needsOverscan =
+              Platform.isAndroid &&
+              ((sz.width % 16) != 0 || (sz.height % 16) != 0);
           _effectiveScale = needsOverscan ? widget.overscanScale : 1.0;
         });
       }
-      
+
       debugPrint('✅ Flutter Video Player initialized successfully');
-      
     } catch (e) {
       debugPrint('❌ Error with Flutter Video Player: $e');
       setState(() {
@@ -96,14 +103,14 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer> {
 
   void _videoListener() {
     if (!mounted || _controller == null) return;
-    
+
     final value = _controller!.value;
-    
+
     // Check for end of video
     if (value.position >= value.duration && value.duration.inMilliseconds > 0) {
       widget.onComplete?.call();
     }
-    
+
     // Update buffering state
     if (value.isBuffering != _isBuffering) {
       setState(() {
@@ -130,11 +137,7 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer> {
       return Container(
         color: Colors.black,
         child: Center(
-          child: Icon(
-            Icons.error_outline,
-            color: Colors.grey[600],
-            size: 48,
-          ),
+          child: Icon(Icons.error_outline, color: Colors.grey[600], size: 48),
         ),
       );
     }
