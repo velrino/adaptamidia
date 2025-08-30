@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 import '../interfaces/auth_data.dart';
 
 class FirebaseService {
@@ -16,17 +17,26 @@ class FirebaseService {
     if (_initialized) return;
 
     await Firebase.initializeApp();
+    final opts = Firebase.app().options;
+    debugPrint(
+      '[FirebaseService] Firebase initialized projectId=${opts.projectId} appId=${opts.appId} databaseURL=${opts.databaseURL ?? 'null'}',
+    );
 
     _database = FirebaseDatabase.instance;
     // Enable offline disk persistence for Realtime Database (mobile only)
     try {
       _database.setPersistenceEnabled(true);
-      // Optional: limit local cache to ~20MB (adjust as needed)
-      _database.setPersistenceCacheSizeBytes(256 * 1024 * 1024); // 256 MB
-    } catch (_) {
+      // Set cache size within Firebase limit (<= 100MB). Use 100MB by default.
+      const cacheSizeBytes = 100 * 1024 * 1024; // 100 MB
+      _database.setPersistenceCacheSizeBytes(cacheSizeBytes);
+    } catch (e) {
+      debugPrint('[FirebaseService] Persistence setup failed: $e');
       // Ignore if not supported on this platform
     }
     _initialized = true;
+    debugPrint(
+      '[FirebaseService] Realtime Database ready (persistence enabled)',
+    );
   }
 
   /// Listen for auth device data once and remove after reading

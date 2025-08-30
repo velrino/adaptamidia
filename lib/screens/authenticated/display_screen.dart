@@ -447,6 +447,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
   void _nextContent() {
     // Log do conteúdo finalizado antes de avançar
+    debugPrint('[DisplayScreen] _nextContent called. Will log current display as finished. index=$_currentIndex total=${_contents.length}');
     unawaited(_logCurrentDisplayFinished());
 
     setState(() {
@@ -456,22 +457,34 @@ class _DisplayScreenState extends State<DisplayScreen> {
   }
 
   Future<void> _logCurrentDisplayFinished() async {
-    if (_contents.isEmpty) return;
+    debugPrint('[DisplayScreen] _logCurrentDisplayFinished invoked');
+    if (_contents.isEmpty) {
+      debugPrint('[DisplayScreen] No contents. Skip logging.');
+      return;
+    }
     final content = _contents[_currentIndex];
     final isAd = content['type'] == 'ADVERTISEMENT' && content['ads'] != null;
     final isNews = content['type'] == 'NEWS' && content['news'] != null;
-    if (!isAd && !isNews) return;
+    if (!isAd && !isNews) {
+      debugPrint('[DisplayScreen] Current content is neither ADS nor NEWS. type=${content['type']} Skip logging.');
+      return;
+    }
 
     // Identificadores
     final currentId = isAd ? (content['ads']['_id']?.toString() ?? '') : (content['news']['_id']?.toString() ?? '');
-    if (currentId.isEmpty) return;
+    if (currentId.isEmpty) {
+      debugPrint('[DisplayScreen] currentId empty. Skip logging.');
+      return;
+    }
     final captureId = DateTime.now().millisecondsSinceEpoch.toString();
 
     // Datas
     final endAt = DateTime.now();
     final startAt = _currentStartAt ?? endAt.subtract(Duration(seconds: _currentDurationSecs));
+    debugPrint('[DisplayScreen] Logging $currentId type=${isAd ? 'ADVERTISEMENT' : 'NEWS'} startAt=$startAt endAt=$endAt');
 
     final deviceId = await StorageService.getOrCreateDeviceId();
+    debugPrint('[DisplayScreen] deviceId=$deviceId');
 
     final deviceContext = await DeviceContextService.gather();
 
@@ -487,7 +500,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
       'device_context': deviceContext,
     };
 
+    debugPrint('[DisplayScreen] Sending log to Firebase with identifier=$captureId');
     await DisplayLogService.instance.createLog(identifier: captureId, body: body);
+    debugPrint('[DisplayScreen] Log sent');
   }
 
   Widget _buildContent() {
