@@ -483,9 +483,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
         '${_fmt2(_now.hour)}:${_fmt2(_now.minute)}:${_fmt2(_now.second)}';
     final rightDateTime = '$dateStr $timeStr';
     final hasCenter = _weatherIcon != null || _weatherTempC != null;
-    final leftCurrency = _usdBid != null
-        ? _usdBid!.toStringAsFixed(2)
-        : '--';
+    final leftCurrency = _usdBid != null ? _usdBid!.toStringAsFixed(2) : '--';
 
     return Stack(
       fit: StackFit.expand,
@@ -539,109 +537,109 @@ class _DisplayScreenState extends State<DisplayScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IntrinsicHeight(
-              child: Row(
-                children: [
-                  // Logo
-                  Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          blurRadius: 10,
-                        ),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(15),
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey[800],
-                            child: const Icon(
-                              Icons.image,
-                              color: Colors.white54,
-                              size: 80,
+                  child: Row(
+                    children: [
+                      // Logo
+                      Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.3),
+                              blurRadius: 10,
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  // Divider
-                  Container(
-                    width: 1,
-                    height: double.infinity,
-                    margin: const EdgeInsets.symmetric(horizontal: 20),
-                    color: Colors.white.withOpacity(0.2),
-                  ),
-                  // Text content
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          title,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: (36 * scale),
-                            fontWeight: FontWeight.bold,
-                            height: 1.2,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                          ],
                         ),
-                        const SizedBox(height: 12),
-                        Text(
-                          description,
-                          style: TextStyle(
-                            color: Colors.grey[300],
-                            fontSize: (26 * scale),
-                            height: 1.3,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (sourceName.isNotEmpty || author.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.newspaper,
-                                color: Colors.grey[400],
-                                size: (18 * scale),
-                              ),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  [
-                                    sourceName,
-                                    author,
-                                  ].where((s) => s.isNotEmpty).join(' • '),
-                                  style: TextStyle(
-                                    color: Colors.grey[400],
-                                    fontSize: (18 * scale),
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(15),
+                          child: Image.asset(
+                            'assets/images/logo.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[800],
+                                child: const Icon(
+                                  Icons.image,
+                                  color: Colors.white54,
+                                  size: 80,
                                 ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      // Divider
+                      Container(
+                        width: 1,
+                        height: double.infinity,
+                        margin: const EdgeInsets.symmetric(horizontal: 20),
+                        color: Colors.white.withOpacity(0.2),
+                      ),
+                      // Text content
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              title,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: (36 * scale),
+                                fontWeight: FontWeight.bold,
+                                height: 1.2,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              description,
+                              style: TextStyle(
+                                color: Colors.grey[300],
+                                fontSize: (26 * scale),
+                                height: 1.3,
+                              ),
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (sourceName.isNotEmpty || author.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.newspaper,
+                                    color: Colors.grey[400],
+                                    size: (18 * scale),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      [
+                                        sourceName,
+                                        author,
+                                      ].where((s) => s.isNotEmpty).join(' • '),
+                                      style: TextStyle(
+                                        color: Colors.grey[400],
+                                        fontSize: (18 * scale),
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
-                          ),
-                        ],
-                        const SizedBox(height: 8),
-                      ],
-                    ),
+                            const SizedBox(height: 8),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
                 const SizedBox(height: 12),
                 // Full-width footer inside the card
                 Container(
@@ -701,7 +699,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
                                           size: (22 * scale),
                                         ),
                                       ),
-                                    if (_weatherIcon != null && _weatherTempC != null)
+                                    if (_weatherIcon != null &&
+                                        _weatherTempC != null)
                                       SizedBox(width: 8),
                                     if (_weatherTempC != null)
                                       Text(
