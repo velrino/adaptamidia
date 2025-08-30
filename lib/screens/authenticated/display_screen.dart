@@ -8,6 +8,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../services/storage_service.dart';
 import '../../services/video_cache_service.dart';
 import '../../services/image_cache_service.dart';
+import '../../services/display_log_service.dart';
 // import '../../components/video_player_screen.dart';
 // import '../../components/vlc_video_player.dart'; // VLC has _viewId bug
 import '../../components/flutter_video_player.dart'; // Testing Flutter native video player
@@ -40,6 +41,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
   String? _weatherIcon;
   double? _weatherTempC;
   DateTime _now = DateTime.now();
+  DateTime? _currentStartAt;
+  int _currentDurationSecs = 0;
 
   @override
   void initState() {
@@ -52,6 +55,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
   @override
   void dispose() {
+    // tentar registrar o último conteúdo em exibição
+    unawaited(_logCurrentDisplayFinished());
     _timer?.cancel();
     _progressTimer?.cancel();
     _clockTimer?.cancel();
@@ -318,6 +323,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
       duration = content['ads']['seconds'] ?? 30;
     }
 
+    // Registra início do conteúdo atual
+    _currentStartAt = DateTime.now();
+    _currentDurationSecs = duration;
+
     // Start progress timer (250ms para reduzir pressão de UI)
     const periodMs = 100;
     _progressTimer = Timer.periodic(const Duration(milliseconds: periodMs), (
@@ -436,10 +445,42 @@ class _DisplayScreenState extends State<DisplayScreen> {
   }
 
   void _nextContent() {
+    // Log do conteúdo finalizado antes de avançar
+    unawaited(_logCurrentDisplayFinished());
+
     setState(() {
       _currentIndex = (_currentIndex + 1) % _contents.length;
     });
     _startContent();
+  }
+
+  Future<void> _logCurrentDisplayFinished() async {
+    if (_contents.isEmpty) return;
+    final content = _contents[_currentIndex];
+    final isAd = content['type'] == 'ADVERTISEMENT' && content['ads'] != null;
+    final isNews = content['type'] == 'NEWS' && content['news'] != null;
+    if (!isAd && !isNews) return;
+
+    // Identificadores
+    final currentId = isAd ? (content['ads']['_id']?.toString() ?? '') : (content['news']['_id']?.toString() ?? '');
+    if (currentId.isEmpty) return;
+    final captureId = DateTime.now().millisecondsSinceEpoch.toString();
+
+    // Datas
+    final endAt = DateTime.now();
+    final startAt = _currentStartAt ?? endAt.subtract(Duration(seconds: _currentDurationSecs));
+
+    final body = <String, dynamic>{
+      'identifier': captureId,
+      'id': currentId,
+      'local': _unitData, // unit data as received from API
+      'type': isAd ? 'ADVERTISEMENT' : 'NEWS',
+      'status': 'FINISHED',
+      'start_at': startAt.toIso8601String(),
+      'end_at': endAt.toIso8601String(),
+    };
+
+    await DisplayLogService.instance.createLog(identifier: captureId, body: body);
   }
 
   Widget _buildContent() {
