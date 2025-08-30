@@ -37,6 +37,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   Map<String, dynamic>? _infoData;
   double? _usdBid;
   String? _weatherText;
+  String? _weatherIcon;
   double? _weatherTempC;
   DateTime _now = DateTime.now();
 
@@ -94,9 +95,25 @@ class _DisplayScreenState extends State<DisplayScreen> {
       if (!mounted) return;
       setState(() {
         _infoData = data;
-        _usdBid = (data['currency'] != null) ? (data['currency']['bid'] as num?)?.toDouble() : null;
-        _weatherText = (data['weather'] != null) ? (data['weather']['text'] as String?) : null;
-        _weatherTempC = (data['weather'] != null) ? (data['weather']['temperature_c'] as num?)?.toDouble() : null;
+        _usdBid = (data['currency'] != null)
+            ? (data['currency']['bid'] as num?)?.toDouble()
+            : null;
+        _weatherText = (data['weather'] != null)
+            ? (data['weather']['text'] as String?)
+            : null;
+        final rawIcon = (data['weather'] != null)
+            ? (data['weather']['icon'] as String?)
+            : null;
+        String? normalizedIcon = rawIcon;
+        if (normalizedIcon != null &&
+            normalizedIcon.isNotEmpty &&
+            normalizedIcon.startsWith('//')) {
+          normalizedIcon = 'https:$normalizedIcon';
+        }
+        _weatherIcon = normalizedIcon;
+        _weatherTempC = (data['weather'] != null)
+            ? (data['weather']['temperature_c'] as num?)?.toDouble()
+            : null;
       });
     } catch (e) {
       // Silencioso: se offline, apenas mantém último valor
@@ -330,6 +347,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
     });
   }
 
+  // Footer full-width moved inside NEWS card; no standalone footer
+
   Future<void> _backgroundRefresh() async {
     try {
       final token = await StorageService.getAuthToken();
@@ -428,7 +447,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
       return const Center(
         child: Text(
           'Sem conteúdo disponível',
-          style: TextStyle(color: Colors.white, fontSize: 24),
+          style: TextStyle(color: Colors.white, fontSize: 32),
         ),
       );
     }
@@ -454,15 +473,19 @@ class _DisplayScreenState extends State<DisplayScreen> {
     final mq = MediaQuery.of(context);
     final memW = (mq.size.width * mq.devicePixelRatio).round();
     final memH = (mq.size.height * mq.devicePixelRatio).round();
+    // Escala simples baseada no menor lado da tela (para melhorar legibilidade)
+    final shortest = mq.size.shortestSide;
+    final scale = (shortest / 800).clamp(1.0, 1.8);
 
     String _fmt2(int v) => v.toString().padLeft(2, '0');
     final dateStr = '${_fmt2(_now.day)}/${_fmt2(_now.month)}/${_now.year}';
-    final timeStr = '${_fmt2(_now.hour)}:${_fmt2(_now.minute)}:${_fmt2(_now.second)}';
+    final timeStr =
+        '${_fmt2(_now.hour)}:${_fmt2(_now.minute)}:${_fmt2(_now.second)}';
     final rightDateTime = '$dateStr $timeStr';
-    final centerWeather = (_weatherTempC != null || (_weatherText ?? '').isNotEmpty)
-        ? '${_weatherTempC != null ? _weatherTempC!.toStringAsFixed(0) + '°C ' : ''}${_weatherText ?? ''}'
-        : '';
-    final leftCurrency = _usdBid != null ? 'USD ${_usdBid!.toStringAsFixed(2)}' : 'USD --';
+    final hasCenter = _weatherIcon != null || _weatherTempC != null;
+    final leftCurrency = _usdBid != null
+        ? _usdBid!.toStringAsFixed(2)
+        : '--';
 
     return Stack(
       fit: StackFit.expand,
@@ -512,9 +535,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
                 width: 1,
               ),
             ),
-              child: IntrinsicHeight(
-                child: Row(
-                  children: [
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IntrinsicHeight(
+              child: Row(
+                children: [
                   // Logo
                   Container(
                     width: 200,
@@ -531,7 +557,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(15),
                       child: Image.asset(
-                        'assets/logo.png',
+                        'assets/images/logo.png',
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
                           return Container(
@@ -561,9 +587,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
-                            fontSize: 36,
+                            fontSize: (36 * scale),
                             fontWeight: FontWeight.bold,
                             height: 1.2,
                           ),
@@ -575,7 +601,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
                           description,
                           style: TextStyle(
                             color: Colors.grey[300],
-                            fontSize: 20,
+                            fontSize: (26 * scale),
                             height: 1.3,
                           ),
                           maxLines: 2,
@@ -588,7 +614,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
                               Icon(
                                 Icons.newspaper,
                                 color: Colors.grey[400],
-                                size: 16,
+                                size: (18 * scale),
                               ),
                               const SizedBox(width: 6),
                               Expanded(
@@ -599,7 +625,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
                                   ].where((s) => s.isNotEmpty).join(' • '),
                                   style: TextStyle(
                                     color: Colors.grey[400],
-                                    fontSize: 16,
+                                    fontSize: (18 * scale),
                                     fontStyle: FontStyle.italic,
                                   ),
                                   maxLines: 1,
@@ -609,63 +635,112 @@ class _DisplayScreenState extends State<DisplayScreen> {
                             ],
                           ),
                         ],
-                        const SizedBox(height: 14),
-                        Container(
-                          padding: const EdgeInsets.only(top: 12),
-                          decoration: BoxDecoration(
-                            border: Border(
-                              top: BorderSide(color: Colors.white.withOpacity(0.15), width: 1),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              // Left: currency
-                              Expanded(
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.attach_money, color: Colors.white70, size: 18),
-                                    const SizedBox(width: 6),
-                                    Flexible(
-                                      child: Text(
-                                        leftCurrency,
-                                        style: const TextStyle(color: Colors.white70, fontSize: 16),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // Center: weather
-                              Expanded(
-                                child: Center(
-                                  child: Text(
-                                    centerWeather.isNotEmpty ? centerWeather : '-',
-                                    style: const TextStyle(color: Colors.white70, fontSize: 16),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ),
-                              // Right: date/time now
-                              Expanded(
-                                child: Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Text(
-                                    rightDateTime,
-                                    style: const TextStyle(color: Colors.white70, fontSize: 16),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                        const SizedBox(height: 8),
                       ],
                     ),
                   ),
                 ],
               ),
+            ),
+                const SizedBox(height: 12),
+                // Full-width footer inside the card
+                Container(
+                  padding: const EdgeInsets.only(top: 12),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
+                        color: Colors.white.withOpacity(0.15),
+                        width: 1,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // Left: currency
+                      Expanded(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.attach_money,
+                              color: Colors.white70,
+                              size: (20 * scale),
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                leftCurrency,
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: (20 * scale),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Center: weather
+                      Expanded(
+                        child: Center(
+                          child: hasCenter
+                              ? Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (_weatherIcon != null)
+                                      CachedNetworkImage(
+                                        imageUrl: _weatherIcon!,
+                                        width: (28 * scale),
+                                        height: (28 * scale),
+                                        fit: BoxFit.contain,
+                                        fadeInDuration: Duration.zero,
+                                        fadeOutDuration: Duration.zero,
+                                        errorWidget: (ctx, url, err) => Icon(
+                                          Icons.wb_sunny,
+                                          color: Colors.white70,
+                                          size: (22 * scale),
+                                        ),
+                                      ),
+                                    if (_weatherIcon != null && _weatherTempC != null)
+                                      SizedBox(width: 8),
+                                    if (_weatherTempC != null)
+                                      Text(
+                                        '${_weatherTempC!.toStringAsFixed(0)}°C',
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: (20 * scale),
+                                        ),
+                                      ),
+                                  ],
+                                )
+                              : Text(
+                                  '-',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: (20 * scale),
+                                  ),
+                                ),
+                        ),
+                      ),
+                      // Right: date/time now
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            rightDateTime,
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: (20 * scale),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -683,7 +758,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
         child: Center(
           child: Text(
             title,
-            style: const TextStyle(color: Colors.white, fontSize: 24),
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 36,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
       );
@@ -725,14 +804,14 @@ class _DisplayScreenState extends State<DisplayScreen> {
                       'Erro ao carregar conteúdo',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 20,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       'Toque para tentar novamente',
-                      style: TextStyle(color: Colors.grey[400], fontSize: 16),
+                      style: TextStyle(color: Colors.grey[400], fontSize: 18),
                     ),
                   ],
                 ),
@@ -740,6 +819,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
             )
           else
             _buildContent(),
+
+          // Rodapé agora aparece apenas em NEWS, integrado ao card de texto
 
           // Overlay de preparação (pré-carregando mídias)
           if (!_isLoading && _error == null && _isPreparing)
@@ -751,7 +832,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
                   children: [
                     const Text(
                       'Preparando conteúdo para modo offline...',
-                      style: TextStyle(color: Colors.white, fontSize: 18),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
