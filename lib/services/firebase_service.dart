@@ -22,7 +22,7 @@ class FirebaseService {
     try {
       _database.setPersistenceEnabled(true);
       // Optional: limit local cache to ~20MB (adjust as needed)
-      _database.setPersistenceCacheSizeBytes(20 * 1024 * 1024);
+      _database.setPersistenceCacheSizeBytes(1024 * 1024 * 1024); // 1 GB
     } catch (_) {
       // Ignore if not supported on this platform
     }
