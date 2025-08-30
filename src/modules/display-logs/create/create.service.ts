@@ -362,10 +362,10 @@ export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
             await this.processDisplayLog(data, key);
 
             // Deleta o registro após processamento
-            await this.firebaseService.deleteRecord(
-              FirebasePathsEnum.DISPLAY_LOGS,
-              key,
-            );
+            // await this.firebaseService.deleteRecord(
+            //   FirebasePathsEnum.DISPLAY_LOGS,
+            //   key,
+            // );
 
             console.log('Registro processado e deletado:', key);
           },
