@@ -7,7 +7,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../services/storage_service.dart';
 import '../../services/video_cache_service.dart';
-import '../../components/video_player_screen.dart';
+// import '../../components/video_player_screen.dart';
+// import '../../components/vlc_video_player.dart'; // VLC has _viewId bug
+import '../../components/flutter_video_player.dart'; // Testing Flutter native video player
 
 class DisplayScreen extends StatefulWidget {
   final String unitId;
@@ -65,10 +67,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
         throw Exception('No auth token');
       }
 
-      final url = 'https://9aca430ada6d.ngrok-free.app/display/unit/${widget.unitId}';
-      
+      final url =
+          'https://9aca430ada6d.ngrok-free.app/display/unit/${widget.unitId}';
+
       debugPrint('📡 Fetching content from: $url');
-      
+
       final response = await http.get(
         Uri.parse(url),
         headers: {
@@ -78,11 +81,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
       );
 
       debugPrint('Response status: ${response.statusCode}');
-      
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         debugPrint('Response data: ${json.encode(data).substring(0, 200)}...');
-        
+
         // Check if response has data array (new format)
         if (data['data'] != null && data['data'] is List) {
           // Pre-cache videos
@@ -95,13 +98,13 @@ class _DisplayScreenState extends State<DisplayScreen> {
               }
             }
           }
-          
+
           setState(() {
             _unitData = data['unit'];
             _contents = data['data'];
             _isLoading = false;
           });
-          
+
           if (_contents.isNotEmpty) {
             _startContent();
           }
@@ -122,22 +125,22 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
   void _startContent() {
     if (_contents.isEmpty) return;
-    
+
     _timer?.cancel();
     _progressTimer?.cancel();
     _progress = 0.0;
-    
+
     final content = _contents[_currentIndex];
     final type = content['type'];
-    
+
     debugPrint('🎬 Starting content: $type at index $_currentIndex');
-    
+
     int duration = 5; // default for news
-    
+
     if (type == 'ADVERTISEMENT' && content['ads'] != null) {
       duration = content['ads']['seconds'] ?? 30;
     }
-    
+
     // Start progress timer
     _progressTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
       if (!mounted) {
@@ -148,14 +151,14 @@ class _DisplayScreenState extends State<DisplayScreen> {
         _progress = timer.tick * 100 / (duration * 1000);
       });
     });
-    
+
     // Auto advance timer
     _timer = Timer(Duration(seconds: duration), () {
       if (!mounted) return;
       _nextContent();
     });
   }
-  
+
   void _nextContent() {
     setState(() {
       _currentIndex = (_currentIndex + 1) % _contents.length;
@@ -172,16 +175,16 @@ class _DisplayScreenState extends State<DisplayScreen> {
         ),
       );
     }
-    
+
     final content = _contents[_currentIndex];
     final type = content['type'];
-    
+
     if (type == 'NEWS' && content['news'] != null) {
       return _buildNews(content['news']);
     } else if (type == 'ADVERTISEMENT' && content['ads'] != null) {
       return _buildAdvertisement(content['ads']);
     }
-    
+
     return Container();
   }
 
@@ -191,7 +194,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
     final description = news['description'] ?? '';
     final sourceName = news['source_name'] ?? '';
     final author = news['author'] ?? '';
-    
+
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -203,7 +206,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
             width: double.infinity,
             height: double.infinity,
             placeholder: (context, url) => Container(color: Colors.black),
-            errorWidget: (context, url, error) => Container(color: Colors.black),
+            errorWidget: (context, url, error) =>
+                Container(color: Colors.black),
           ),
         ),
         // Overlay with content
@@ -316,9 +320,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
                               const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
-                                  [sourceName, author]
-                                      .where((s) => s.isNotEmpty)
-                                      .join(' • '),
+                                  [
+                                    sourceName,
+                                    author,
+                                  ].where((s) => s.isNotEmpty).join(' • '),
                                   style: TextStyle(
                                     color: Colors.grey[400],
                                     fontSize: 16,
@@ -346,7 +351,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   Widget _buildAdvertisement(Map<String, dynamic> ads) {
     final videoUrl = ads['source'] ?? '';
     final title = ads['title'] ?? '';
-    
+
     if (videoUrl.isEmpty) {
       return Container(
         color: Colors.black,
@@ -358,10 +363,13 @@ class _DisplayScreenState extends State<DisplayScreen> {
         ),
       );
     }
-    
-    // Use the dedicated video player screen
-    return VideoPlayerScreen(
+
+    // Use Flutter native video player with local files
+    return FlutterVideoPlayer(
       videoUrl: videoUrl,
+      onComplete: () {
+        debugPrint('Flutter video completed');
+      },
     );
   }
 
@@ -374,11 +382,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
         children: [
           // Main content
           if (_isLoading)
-            const Center(
-              child: CircularProgressIndicator(
-                color: Colors.white,
-              ),
-            )
+            const Center(child: CircularProgressIndicator(color: Colors.white))
           else if (_error != null)
             GestureDetector(
               onTap: _loadContent,
@@ -403,10 +407,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
                     const SizedBox(height: 8),
                     Text(
                       'Toque para tentar novamente',
-                      style: TextStyle(
-                        color: Colors.grey[400],
-                        fontSize: 16,
-                      ),
+                      style: TextStyle(color: Colors.grey[400], fontSize: 16),
                     ),
                   ],
                 ),
@@ -414,7 +415,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
             )
           else
             _buildContent(),
-          
+
           // Progress bar
           if (!_isLoading && _error == null && _contents.isNotEmpty)
             Positioned(
