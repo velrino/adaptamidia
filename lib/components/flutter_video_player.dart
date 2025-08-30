@@ -6,11 +6,13 @@ import '../services/video_cache_service.dart';
 class FlutterVideoPlayer extends StatefulWidget {
   final String videoUrl;
   final VoidCallback? onComplete;
+  final double overscanScale; // small upscale to hide decoder padding artifacts
   
   const FlutterVideoPlayer({
     super.key,
     required this.videoUrl,
     this.onComplete,
+    this.overscanScale = 1.02,
   });
 
   @override
@@ -22,6 +24,7 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer> {
   bool _isInitialized = false;
   bool _isBuffering = true;
   String? _error;
+  double _effectiveScale = 1.0;
 
   @override
   void initState() {
@@ -67,11 +70,16 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer> {
       await _controller!.setVolume(0.0);
       await _controller!.setLooping(false);
       await _controller!.play();
-      
+
       if (mounted) {
         setState(() {
           _isInitialized = true;
           _isBuffering = false;
+          // Heurística: aplica overscan mínimo apenas quando o vídeo
+          // não tem dimensões múltiplas de 16 (mais propenso a padding do decoder)
+          final sz = _controller!.value.size;
+          final needsOverscan = Platform.isAndroid && ((sz.width % 16) != 0 || (sz.height % 16) != 0);
+          _effectiveScale = needsOverscan ? widget.overscanScale : 1.0;
         });
       }
       
@@ -149,13 +157,19 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer> {
         Container(color: Colors.black),
         if (_controller != null && _controller!.value.isInitialized)
           Positioned.fill(
-            child: FittedBox(
-              fit: BoxFit.cover,
-              alignment: Alignment.center,
-              child: SizedBox(
-                width: _controller!.value.size.width,
-                height: _controller!.value.size.height,
-                child: VideoPlayer(_controller!),
+            child: ClipRect(
+              child: FittedBox(
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+                child: SizedBox(
+                  width: _controller!.value.size.width,
+                  height: _controller!.value.size.height,
+                  child: Transform.scale(
+                    scale: _effectiveScale,
+                    alignment: Alignment.center,
+                    child: VideoPlayer(_controller!),
+                  ),
+                ),
               ),
             ),
           ),
