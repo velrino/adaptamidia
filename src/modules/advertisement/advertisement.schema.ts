@@ -41,8 +41,11 @@ export class Advertisement {
   @Prop({ type: String, required: false, default: String() })
   description: string;
 
-  @Prop({ type: String, required: false, default: String() })
-  source: string;
+  @Prop({ type: String, required: false, default: null })
+  source_landscape: string;
+
+  @Prop({ type: String, required: false, default: null })
+  source_portrait: string;
 
   @Prop({ required: true, enum: AdvertisementType, uppercase: true })
   type: AdvertisementType;
