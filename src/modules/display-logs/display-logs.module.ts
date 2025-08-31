@@ -6,7 +6,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { DisplayLogController } from './display-logs.controller';
 import { DetectionDisplayLogService } from './detection/detection.service';
 import { GetDisplayLogService } from './get/get.service';
-import { DetectionService } from 'src/shared/detection/detection.service';
+import { DetectionModule } from 'src/shared/detection/detection.module';
 import { GoogleCloudStorageService } from 'src/shared/google/cloud/google-cloud-storage.service';
 import { ListDisplayLogService } from './list/list.service';
 import { GoogleGenAiProvider } from 'src/shared/google/llm/llm.service';
@@ -22,13 +22,13 @@ import { InsightDisplayLogService } from './insights/insights.service';
       MongoCollection.news,
     ]),
     JwtModule,
+    DetectionModule,
   ],
   controllers: [DisplayLogController],
   providers: [
     CreateDisplayLogService,
     GetDisplayLogService,
     DetectionDisplayLogService,
-    DetectionService,
     GoogleCloudStorageService,
     ListDisplayLogService,
     GoogleGenAiProvider,

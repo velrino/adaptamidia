@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { DateTime } from 'luxon';
@@ -32,7 +32,7 @@ export interface IAggregationResult {
 }
 
 @Injectable()
-export class DashboardDisplayLogsProcessService {
+export class DashboardDisplayLogsProcessService implements OnModuleInit {
   constructor(
     @InjectModel(DashboardDisplayLogsAggregation.name)
     private dashboardModel: Model<DashboardDisplayLogsAggregationDocument>,
@@ -41,7 +41,7 @@ export class DashboardDisplayLogsProcessService {
     private readonly firebaseDb: FirebaseDatabaseService,
   ) {}
 
-  async onApplicationBootstrap() {
+  async onModuleInit() {
     // await this.dashboardModel.deleteMany({});
 
     await this.execute();

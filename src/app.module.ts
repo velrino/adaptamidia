@@ -23,7 +23,7 @@ import { WeatherModule } from './modules/weather/weather.module';
 import { DisplayModule } from './modules/display/display.module';
 import { LeadsModule } from './modules/leads/leads.module';
 import { HealthCheckService } from './app.service';
-import { DetectionService } from './shared/detection/detection.service';
+import { DetectionModule } from './shared/detection/detection.module';
 import { DashboardDisplayLogsModule } from './modules/dashboard-display-logs/dashboard-display-logs.module';
 
 @Module({
@@ -82,9 +82,10 @@ import { DashboardDisplayLogsModule } from './modules/dashboard-display-logs/das
     UserModule,
     WeatherModule,
     LeadsModule,
+    DetectionModule,
   ],
   controllers: [AppController],
-  providers: [HealthCheckService, DetectionService],
+  providers: [HealthCheckService],
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {

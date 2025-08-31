@@ -1,4 +1,9 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  HttpException,
+  HttpStatus,
+  OnModuleInit,
+} from '@nestjs/common';
 import {
   // IApiDeepFaceAnalysisResult,
   IApiDetectInsightface,
@@ -7,11 +12,11 @@ import {
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 
 @Injectable()
-export class DetectionService {
+export class DetectionService implements OnModuleInit {
   private readonly baseUrl =
     process.env.DETECTION_API_URL || 'http://localhost:8000';
 
-  async onApplicationBootstrap() {
+  async onModuleInit() {
     if (!process.env.DETECTION_API_URL) return;
 
     try {
@@ -19,7 +24,7 @@ export class DetectionService {
       Log(
         LogType.INFO,
         DetectionService.name,
-        this.onApplicationBootstrap.name,
+        this.onModuleInit.name,
         LogAction.STARTED,
         { response },
       );
@@ -27,7 +32,7 @@ export class DetectionService {
       Log(
         LogType.ERROR,
         DetectionService.name,
-        this.onApplicationBootstrap.name,
+        this.onModuleInit.name,
         LogAction.FAILED,
         { error },
       );
