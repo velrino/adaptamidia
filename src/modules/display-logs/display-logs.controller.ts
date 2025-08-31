@@ -53,7 +53,7 @@ export class DisplayLogController {
   }
 
   @Post('display/log/device')
-  @Throttle({ default: { limit: 100, ttl: 60000 } })
+  @SkipThrottle()
   createLogFromDevice(
     @Req() req: CustomRequest,
     @Body() body: IFirebaseDisplayLog,
