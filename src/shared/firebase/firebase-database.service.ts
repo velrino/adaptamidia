@@ -19,7 +19,9 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit(): Promise<void> {
     try {
       const keyFilename = GetGoogleCloudCredential(
-        GoogleCloudCredential['seemidia-display-android-82d570aeef50.json'],
+        GoogleCloudCredential[
+          'see-midia-firebase-adminsdk-fbsvc-5f17c7af46.json'
+        ],
       );
 
       const serviceAccount = require(keyFilename);
@@ -28,8 +30,8 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
       if (!admin.apps.length) {
         admin.initializeApp({
           credential: admin.credential.cert(serviceAccount),
-          databaseURL:
-            'https://seemidia-display-android-default-rtdb.firebaseio.com/',
+          databaseURL: 'https://see-midia-default-rtdb.firebaseio.com/',
+          // 'https://seemidia-display-android-default-rtdb.firebaseio.com/',
         });
       }
 
