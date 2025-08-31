@@ -4,13 +4,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../services/background_detection_service.dart';
-import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../services/storage_service.dart';
 import '../../services/video_cache_service.dart';
 import '../../services/image_cache_service.dart';
 import '../../services/display_log_service.dart';
+import '../../services/api_service.dart';
 import '../../services/device_context_service.dart';
 // Global UVC handled by UvcCameraService
 import '../../services/uvc_camera_service.dart';
@@ -112,19 +112,16 @@ class _DisplayScreenState extends State<DisplayScreen> {
     try {
       final token = await StorageService.getAuthToken();
       if (token == null) return;
-
-      final url =
-          'https://9aca430ada6d.ngrok-free.app/display/unit/${widget.unitId}/info';
-      final response = await http.get(
-        Uri.parse(url),
+      final res = await ApiService.get<Map<String, dynamic>>(
+        '/display/unit/${widget.unitId}/info',
+        (m) => m,
         headers: {
           'Authorization': 'Bearer $token',
           'ngrok-skip-browser-warning': 'true',
         },
       );
-      if (response.statusCode != 200) return;
-
-      final data = json.decode(response.body);
+      if (!res.success || res.data == null) return;
+      final data = res.data!;
       if (!mounted) return;
       setState(() {
         _infoData = data;
@@ -168,24 +165,17 @@ class _DisplayScreenState extends State<DisplayScreen> {
       if (token == null) {
         throw Exception('No auth token');
       }
-
-      final url =
-          'https://9aca430ada6d.ngrok-free.app/display/unit/${widget.unitId}';
-
-      debugPrint('📡 Fetching content from: $url');
-
-      final response = await http.get(
-        Uri.parse(url),
+      final res = await ApiService.get<Map<String, dynamic>>(
+        '/display/unit/${widget.unitId}',
+        (m) => m,
         headers: {
           'Authorization': 'Bearer $token',
           'ngrok-skip-browser-warning': 'true',
         },
       );
-
-      debugPrint('Response status: ${response.statusCode}');
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+      if (res.success && res.data != null) {
+        final data = res.data!;
+        debugPrint('Response status: 200');
         debugPrint('Response data: ${json.encode(data).substring(0, 200)}...');
 
         // Check if response has data array (new format)
@@ -219,7 +209,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
           throw Exception('Invalid response format - no data field found');
         }
       } else {
-        throw Exception('Failed to load content: ${response.statusCode}');
+        throw Exception('Failed to load content');
       }
     } catch (e) {
       debugPrint('❌ Error loading content: $e');
@@ -390,19 +380,16 @@ class _DisplayScreenState extends State<DisplayScreen> {
     try {
       final token = await StorageService.getAuthToken();
       if (token == null) return;
-
-      final url =
-          'https://9aca430ada6d.ngrok-free.app/display/unit/${widget.unitId}';
-      final response = await http.get(
-        Uri.parse(url),
+      final res = await ApiService.get<Map<String, dynamic>>(
+        '/display/unit/${widget.unitId}',
+        (m) => m,
         headers: {
           'Authorization': 'Bearer $token',
           'ngrok-skip-browser-warning': 'true',
         },
       );
-      if (response.statusCode != 200) return;
-
-      final data = json.decode(response.body);
+      if (!res.success || res.data == null) return;
+      final data = res.data!;
       if (data['data'] == null || data['data'] is! List) return;
 
       final newContents = List<dynamic>.from(data['data']);
