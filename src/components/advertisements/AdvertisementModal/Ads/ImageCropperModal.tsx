@@ -5,8 +5,8 @@ import { AdType } from "@/interfaces/ads";
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import Cropper from "react-easy-crop";
 import { LuImageUp } from "react-icons/lu";
-import { FFmpeg } from "@ffmpeg/ffmpeg";
-import { fetchFile } from "@ffmpeg/util";
+// import { FFmpeg } from "@ffmpeg/ffmpeg";
+// import { fetchFile } from "@ffmpeg/util";
 
 // Função para recortar imagens
 export async function getCroppedImg(
@@ -147,75 +147,75 @@ export const MediaCropperModal: React.FC<MediaCropperModalProps> = ({
     []
   );
 
-  const compressVideoInBrowser = async (
-    src: string,
-    isPortrait: boolean
-  ): Promise<Blob> => {
-    const ffmpeg = new FFmpeg();
-    await ffmpeg.load();
+  // const compressVideoInBrowser = async (
+  //   src: string,
+  //   isPortrait: boolean
+  // ): Promise<Blob> => {
+  //   const ffmpeg = new FFmpeg();
+  //   await ffmpeg.load();
 
-    setProgress(0);
-    ffmpeg.on("progress", ({ progress }: { progress: number }) => {
-      if (typeof progress === "number")
-        setProgress(Math.min(1, Math.max(0, progress)));
-    });
+  //   setProgress(0);
+  //   ffmpeg.on("progress", ({ progress }: { progress: number }) => {
+  //     if (typeof progress === "number")
+  //       setProgress(Math.min(1, Math.max(0, progress)));
+  //   });
 
-    await ffmpeg.writeFile("in.mp4", await fetchFile(src));
+  //   await ffmpeg.writeFile("in.mp4", await fetchFile(src));
 
-    const scaleFilter = isPortrait ? "scale=-2:1920" : "scale=1920:-2";
+  //   const scaleFilter = isPortrait ? "scale=-2:1920" : "scale=1920:-2";
 
-    try {
-      await ffmpeg.exec([
-        "-y",
-        "-i",
-        "in.mp4",
-        "-vf",
-        scaleFilter,
-        "-c:v",
-        "libx264",
-        "-preset",
-        "veryfast",
-        "-crf",
-        "23",
-        "-pix_fmt",
-        "yuv420p",
-        "-movflags",
-        "+faststart",
-        "-c:a",
-        "aac",
-        "-b:a",
-        "128k",
-        "out.mp4",
-      ]);
-    } catch (error) {
-      try {
-        await ffmpeg.exec([
-          "-y",
-          "-i",
-          "in.mp4",
-          "-vf",
-          scaleFilter,
-          "-c:v",
-          "libx264",
-          "-preset",
-          "ultrafast",
-          "-crf",
-          "28",
-          "-pix_fmt",
-          "yuv420p",
-          "-c:a",
-          "copy",
-          "out.mp4",
-        ]);
-      } catch (e2) {
-        const response = await fetch(src);
-        return await response.blob();
-      }
-    }
+  //   try {
+  //     await ffmpeg.exec([
+  //       "-y",
+  //       "-i",
+  //       "in.mp4",
+  //       "-vf",
+  //       scaleFilter,
+  //       "-c:v",
+  //       "libx264",
+  //       "-preset",
+  //       "veryfast",
+  //       "-crf",
+  //       "23",
+  //       "-pix_fmt",
+  //       "yuv420p",
+  //       "-movflags",
+  //       "+faststart",
+  //       "-c:a",
+  //       "aac",
+  //       "-b:a",
+  //       "128k",
+  //       "out.mp4",
+  //     ]);
+  //   } catch (error) {
+  //     try {
+  //       await ffmpeg.exec([
+  //         "-y",
+  //         "-i",
+  //         "in.mp4",
+  //         "-vf",
+  //         scaleFilter,
+  //         "-c:v",
+  //         "libx264",
+  //         "-preset",
+  //         "ultrafast",
+  //         "-crf",
+  //         "28",
+  //         "-pix_fmt",
+  //         "yuv420p",
+  //         "-c:a",
+  //         "copy",
+  //         "out.mp4",
+  //       ]);
+  //     } catch (e2) {
+  //       const response = await fetch(src);
+  //       return await response.blob();
+  //     }
+  //   }
 
-    const data: any = await ffmpeg.readFile("out.mp4");
-    return new Blob([data], { type: "video/mp4" });
-  };
+  //   const data: any = await ffmpeg.readFile("out.mp4");
+  //   return new Blob([data], { type: "video/mp4" });
+  // };
 
   const handleCrop = async () => {
     if (fileSrc && croppedAreaPixels) {
@@ -226,8 +226,10 @@ export const MediaCropperModal: React.FC<MediaCropperModalProps> = ({
       } else if (fileType === "video") {
         try {
           setIsProcessing(true);
-          const isPortrait = orientation !== CropOrientation.Landscape;
-          croppedMediaBlob = await compressVideoInBrowser(fileSrc, isPortrait);
+          // const isPortrait = orientation !== CropOrientation.Landscape;
+          const response = await fetch(fileSrc);
+          croppedMediaBlob = await response.blob();
+          // croppedMediaBlob = await compressVideoInBrowser(fileSrc, isPortrait);
         } catch {
           const response = await fetch(fileSrc);
           croppedMediaBlob = await response.blob();
