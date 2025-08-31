@@ -8,6 +8,7 @@ import 'screens/login_screen.dart';
 import 'screens/authenticated/home_screen.dart';
 import 'screens/authenticated/display_screen.dart';
 import 'screens/camera_screen.dart';
+import 'components/uvc_camera_host.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       themeMode: ThemeMode.system,
+      builder: (context, child) => UvcCameraHost(child: child ?? const SizedBox.shrink()),
       home: const AppWrapper(),
       routes: {
         '/home': (context) => const HomeScreen(),

@@ -12,7 +12,8 @@ import '../../services/video_cache_service.dart';
 import '../../services/image_cache_service.dart';
 import '../../services/display_log_service.dart';
 import '../../services/device_context_service.dart';
-import 'package:flutter_uvc_camera/flutter_uvc_camera.dart';
+// Global UVC handled by UvcCameraService
+import '../../services/uvc_camera_service.dart';
 // Removed PhotoLogService (no image uploads by LGPD)
 // import '../../components/video_player_screen.dart';
 // import '../../components/vlc_video_player.dart'; // VLC has _viewId bug
@@ -49,11 +50,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   DateTime? _currentStartAt;
   int _currentDurationSecs = 0;
 
-  // UVC Camera for capture-after-display
-  UVCCameraController? _uvc;
-  bool _uvcAvailable = false;
-  bool _isCapturingPhoto = false;
-  DateTime? _uvcOpenedAt;
+  // UVC handled globally via UvcCameraService
   // YOLO handled by BackgroundDetectionService
 
   @override
@@ -63,15 +60,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
     _loadContent();
     _startClock();
     WakelockPlus.enable();
-    // Prepare UVC controller and open after first frame when PlatformView exists
-    _uvc = UVCCameraController();
-    _uvc!.cameraStateCallback = (state) {
-      debugPrint('[DisplayScreen] UVC state: $state');
-      if (!mounted) return;
-      setState(() => _uvcAvailable = state == UVCCameraState.opened);
-    };
+    // Ensure global UVC is opened
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_initUvcCamera());
+      unawaited(UvcCameraService.instance.ensureOpen());
     });
     // No uploads to Storage per LGPD; skip photo upload queue
   }
@@ -80,11 +71,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   void dispose() {
     // tentar registrar o último conteúdo em exibição
     unawaited(_logCurrentDisplayFinished());
-    // Close UVC if opened
-    try {
-      _uvc?.closeCamera();
-      _uvc?.dispose();
-    } catch (_) {}
+    // Do not close global UVC; service keeps it alive
     // Background YOLO service cleanup (optional)
     try {
       BackgroundDetectionService.instance.dispose();
@@ -98,23 +85,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
     super.dispose();
   }
 
-  Future<void> _initUvcCamera() async {
-    try {
-      if (_uvc == null) return;
-      _uvc!.msgCallback = (msg) {
-        debugPrint('[DisplayScreen] UVC msg: $msg');
-      };
-      await _uvc!.initializeCamera();
-      await _uvc!.openUVCCamera();
-      _uvcOpenedAt = DateTime.now();
-      debugPrint('[DisplayScreen] UVC camera initialized and kept open');
-    } catch (e) {
-      debugPrint('[DisplayScreen] UVC init failed (camera may be absent): $e');
-      setState(() {
-        _uvcAvailable = false;
-      });
-    }
-  }
+  // Global UVC initialization handled by service
 
   // Pre-warm background YOLO model without blocking UI
   @override
@@ -566,19 +537,13 @@ class _DisplayScreenState extends State<DisplayScreen> {
       'device_context': deviceContext,
     };
 
-    // If we have a UVC camera, capture a photo and include its Storage URL
-    if (_uvc != null && _uvcAvailable && !_isCapturingPhoto) {
+    // If we have a UVC camera, capture a photo via global service
+    {
       try {
-        // ensure GL surface had time to initialize
-        final openedAgo = _uvcOpenedAt == null
-            ? const Duration(seconds: 0)
-            : DateTime.now().difference(_uvcOpenedAt!);
-        if (openedAgo < const Duration(seconds: 1)) {
-          await Future.delayed(const Duration(milliseconds: 500));
-        }
-
-        _isCapturingPhoto = true;
-        final tmpPath = await _uvc!.takePicture();
+        final tmpPath = await UvcCameraService.instance.takePicture(
+          width: 640,
+          height: 480,
+        );
         if (tmpPath != null) {
           final file = File(tmpPath);
           debugPrint(
@@ -590,7 +555,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
             imageFile: file,
             body: body,
           );
-          _isCapturingPhoto = false;
           return; // either logged or queued; do not double-log
         } else {
           debugPrint(
@@ -599,8 +563,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
         }
       } catch (e) {
         debugPrint('[DisplayScreen] Photo capture failed: $e');
-      } finally {
-        _isCapturingPhoto = false;
       }
     }
 
@@ -1044,24 +1006,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
               ),
             ),
 
-          // Hidden UVC preview to satisfy plugin's PlatformView requirement
-          if (_uvc != null)
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Opacity(
-                opacity: 0,
-                child: SizedBox(
-                  width: 640,
-                  height: 480,
-                  child: UVCCameraView(
-                    cameraController: _uvc!,
-                    width: 640,
-                    height: 480,
-                    autoDispose: false,
-                  ),
-                ),
-              ),
-            ),
+          // Global hidden UVC preview lives in UvcCameraHost (root)
         ],
       ),
     );
