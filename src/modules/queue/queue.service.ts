@@ -6,6 +6,7 @@ import { Log, LogAction, LogType } from '../logs/log.helper';
 import {
   ICreateDisplayLog,
   ICreateDisplayLogProcessor,
+  IFirebaseDisplayLog,
 } from '../display-logs/create/create.interface';
 import {
   IDetectionDisplayLog,
@@ -17,7 +18,7 @@ import { IDisplayLogInsightExecute } from '../display-logs/insights/insights.int
 export class QueueService {
   constructor(
     @InjectQueue(QueuesEnum.DISPLAY_LOG_CREATE)
-    readonly displayLogCreateQueue: Queue<ICreateDisplayLogProcessor>,
+    readonly displayLogCreateQueue: Queue<IFirebaseDisplayLog>,
     @InjectQueue(QueuesEnum.DISPLAY_LOG_DETECT_IMAGE)
     readonly displayLogDetectImageQueueQueue: Queue<IDetectionDisplayLogProcessor>,
     @InjectQueue(QueuesEnum.DISPLAY_LOG_INSIGHT)
@@ -38,11 +39,11 @@ export class QueueService {
     },
   };
 
-  async addDisplayLogCreateQueue(parameters: ICreateDisplayLog) {
+  async addDisplayLogCreateQueue(parameters: IFirebaseDisplayLog) {
     const currentEvent = this.addDisplayLogCreateQueue.name;
 
     return await this.displayLogCreateQueue
-      .add({ parameters }, this.defaultQueueOptions)
+      .add(parameters, this.defaultQueueOptions)
       .then((result) => {
         Log(LogType.INFO, QueueService.name, currentEvent, LogAction.SUCCESS, {
           result: result.id,

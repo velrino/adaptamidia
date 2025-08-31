@@ -10,7 +10,10 @@ import {
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
 import { AuthenticatedRequest, CustomRequest } from 'src/shared/request';
 import { CreateDisplayLogService } from './create/create.service';
-import { ICreateDisplayLogDto } from './create/create.interface';
+import {
+  ICreateDisplayLogDto,
+  IFirebaseDisplayLog,
+} from './create/create.interface';
 import { ListDisplayLogService } from './list/list.service';
 import { ListDisplayLogsPaginateDto } from './list/list.interface';
 import { AuthJwtGuard } from '../auth/auth.guard';
@@ -47,6 +50,15 @@ export class DisplayLogController {
     @Body() body: ListDisplayLogsPaginateDto,
   ) {
     return this.listDisplayLogService.executeFromRequest(req, body);
+  }
+
+  @Post('display/log/device')
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
+  createLogFromDevice(
+    @Req() req: CustomRequest,
+    @Body() body: IFirebaseDisplayLog,
+  ) {
+    return this.createDisplayLogService.executeFromDevice(req, body);
   }
 
   @Post('display/log')

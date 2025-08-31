@@ -53,8 +53,8 @@ import {
 
 @Processor(QueuesEnum.DISPLAY_LOG_CREATE)
 @Injectable()
-export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
-  private unsubscribeListener: () => void;
+export class CreateDisplayLogService {
+  // private unsubscribeListener: () => void;
 
   constructor(
     private readonly queueService: QueueService,
@@ -97,9 +97,9 @@ export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
   }
 
   @Process({ concurrency: 1 })
-  async processJob(job: Job<ICreateDisplayLogProcessor>) {
+  async processJob(job: Job<IFirebaseDisplayLog>) {
     try {
-      await this.execute(job.data.parameters);
+      await this.processDisplayLog(job.data);
       await job.isCompleted();
     } catch (error) {
       Log(
@@ -135,10 +135,6 @@ export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
         ]);
         return result;
       } catch (error) {
-        if (error.message === 'timeout') {
-          // Se deu timeout, adiciona na fila
-          return await this.queueService.addDisplayLogCreateQueue(body);
-        }
         throw error;
       }
 
@@ -335,16 +331,20 @@ export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async onModuleInit(): Promise<void> {
+  async onApplicationBootstrap() {
     await this.displayLogModel.deleteMany({});
-    await this.startDisplayLogsListener();
   }
 
-  async onModuleDestroy(): Promise<void> {
-    if (this.unsubscribeListener) {
-      this.unsubscribeListener();
-    }
-  }
+  // async onModuleInit(): Promise<void> {
+  //   // await this.displayLogModel.deleteMany({});
+  //   await this.startDisplayLogsListener();
+  // }
+
+  // async onModuleDestroy(): Promise<void> {
+  //   if (this.unsubscribeListener) {
+  //     this.unsubscribeListener();
+  //   }
+  // }
 
   // @Cron(CronExpression.EVERY_5_SECONDS)
   // async example() {
@@ -358,29 +358,72 @@ export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
   //   });
   // }
 
-  private async startDisplayLogsListener(): Promise<void> {
+  // private async startDisplayLogsListener(): Promise<void> {
+  //   try {
+  //     this.unsubscribeListener = await this.firebaseService.listenForNewRecords(
+  //       {
+  //         path: FirebasePathsEnum.DISPLAY_LOGS,
+  //         callback: async (data, key) => {
+  //           console.log('FIREBASE', { data, key });
+
+  //           await this.processDisplayLog(data);
+
+  //           // Deleta o registro após processamento
+  //           await this.firebaseService.deleteRecord(
+  //             FirebasePathsEnum.DISPLAY_LOGS,
+  //             key,
+  //           );
+  //         },
+  //       },
+  //     );
+
+  //     console.log('Listener iniciado para display_logs');
+  //   } catch (error) {
+  //     console.error('Erro ao iniciar listener:', error);
+  //     throw error;
+  //   }
+  // }
+
+  async executeFromDevice(
+    currentRequest: CustomRequest,
+    parameters: IFirebaseDisplayLog,
+  ) {
     try {
-      this.unsubscribeListener = await this.firebaseService.listenForNewRecords(
-        {
-          path: FirebasePathsEnum.DISPLAY_LOGS,
-          callback: async (data, key) => {
-            console.log('FIREBASE', { data, key });
+      // const body = this.prepareBody(currentRequest, parameters);
 
-            await this.processDisplayLog(data);
+      parameters.device_context.ips = [currentRequest.custom_client.ip];
 
-            // Deleta o registro após processamento
-            await this.firebaseService.deleteRecord(
-              FirebasePathsEnum.DISPLAY_LOGS,
-              key,
-            );
-          },
-        },
-      );
+      // Cria um timeout de 5 segundos
+      const timeout = new Promise((resolve) => setTimeout(resolve, 5000));
 
-      console.log('Listener iniciado para display_logs');
+      try {
+        // Tenta executar e competir com o timeout
+        const result = await Promise.race([
+          this.processDisplayLog(parameters),
+          timeout.then(() => {
+            throw new Error('timeout');
+          }),
+        ]);
+        return result;
+      } catch (error) {
+        if (error.message === 'timeout') {
+          // Se deu timeout, adiciona na fila
+          return await this.queueService.addDisplayLogCreateQueue(parameters);
+        }
+        throw error;
+      }
     } catch (error) {
-      console.error('Erro ao iniciar listener:', error);
-      throw error;
+      Log(
+        LogType.ERROR,
+        CreateDisplayLogService.name,
+        this.executeFromDevice.name,
+        LogAction.FAILED,
+        { error },
+      );
+      throw new HttpException(
+        error?.message || RESULT.DISPLAY_LOG_CREATE_EXECUTE_FAILED,
+        error?.status || HttpStatus.UNPROCESSABLE_ENTITY,
+      );
     }
   }
 
@@ -462,7 +505,13 @@ export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
 
       return record;
     } catch (error) {
-      console.error('Erro ao processar registro:', error);
+      Log(
+        LogType.ERROR,
+        CreateDisplayLogService.name,
+        this.processDisplayLog.name,
+        LogAction.FAILED,
+        { error },
+      );
       throw error;
     }
   }

@@ -23,7 +23,11 @@ export class CreateAdvertisementDto {
 
   @IsNotEmpty()
   @IsString()
-  source: string;
+  source_landscape: string;
+
+  @IsNotEmpty()
+  @IsString()
+  source_portrait: string;
 
   @IsOptional()
   @IsMongoId()
