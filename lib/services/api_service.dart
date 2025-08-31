@@ -145,8 +145,9 @@ class ApiService {
     String endpoint,
     Map<String, dynamic> data,
     T Function(Map<String, dynamic>) fromJson,
+    {Map<String, String>? headers}
   ) {
-    return _makeRequest('POST', endpoint, data, fromJson);
+    return _makeRequest('POST', endpoint, data, fromJson, headers: headers);
   }
 
   // PUT request
@@ -154,16 +155,18 @@ class ApiService {
     String endpoint,
     Map<String, dynamic> data,
     T Function(Map<String, dynamic>) fromJson,
+    {Map<String, String>? headers}
   ) {
-    return _makeRequest('PUT', endpoint, data, fromJson);
+    return _makeRequest('PUT', endpoint, data, fromJson, headers: headers);
   }
 
   // DELETE request
   static Future<ApiResponse<T>> delete<T>(
     String endpoint,
     T Function(Map<String, dynamic>) fromJson,
+    {Map<String, String>? headers}
   ) {
-    return _makeRequest('DELETE', endpoint, null, fromJson);
+    return _makeRequest('DELETE', endpoint, null, fromJson, headers: headers);
   }
 }
 

@@ -11,7 +11,9 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart' as http_parser;
 import 'package:path/path.dart' as p;
 
-import 'display_log_service.dart';
+import 'display_log_service.dart'; // manter import; chamada comentada abaixo
+import 'api_service.dart';
+import 'storage_service.dart';
 
 class BackgroundDetectionService {
   BackgroundDetectionService._internal();
@@ -225,10 +227,19 @@ class BackgroundDetectionService {
         debugPrint('[BackgroundDetection] Job failed: $e\n$st');
         // Best-effort: log metadata without photo
         try {
-          await DisplayLogService.instance.createLog(
-            identifier: job.captureId,
-            body: job.body,
-          );
+          final token = await StorageService.getAuthToken();
+          if (token != null) {
+            await ApiService.post<Map<String, dynamic>>(
+              '/display/log/device',
+              job.body,
+              (m) => m,
+              headers: {
+                'Authorization': 'Bearer $token',
+                'ngrok-skip-browser-warning': 'true',
+              },
+            );
+          }
+          // await DisplayLogService.instance.createLog(identifier: job.captureId, body: job.body);
         } catch (_) {}
         // Ensure temp file is removed
         try {
@@ -301,10 +312,19 @@ class BackgroundDetectionService {
 
     // LGPD: log only metadata (no photo upload)
     try {
-      await DisplayLogService.instance.createLog(
-        identifier: job.captureId,
-        body: job.body,
-      );
+      final token = await StorageService.getAuthToken();
+      if (token != null) {
+        await ApiService.post<Map<String, dynamic>>(
+          '/display/log/device',
+          job.body,
+          (m) => m,
+          headers: {
+            'Authorization': 'Bearer $token',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        );
+      }
+      // await DisplayLogService.instance.createLog(identifier: job.captureId, body: job.body);
     } finally {
       // Clean up temporary photo to avoid retention
       try {

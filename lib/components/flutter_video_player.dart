@@ -73,7 +73,7 @@ class _FlutterVideoPlayerState extends State<FlutterVideoPlayer> {
       await _controller!.initialize();
 
       // Mute and play
-      await _controller!.setVolume(0.0);
+      await _controller!.setVolume(100);
       await _controller!.setLooping(false);
       await _controller!.play();
 

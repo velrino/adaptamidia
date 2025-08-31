@@ -9,7 +9,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../services/storage_service.dart';
 import '../../services/video_cache_service.dart';
 import '../../services/image_cache_service.dart';
-import '../../services/display_log_service.dart';
+// import '../../services/display_log_service.dart';
 import '../../services/api_service.dart';
 import '../../services/device_context_service.dart';
 // Global UVC handled by UvcCameraService
@@ -49,6 +49,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   DateTime _now = DateTime.now();
   DateTime? _currentStartAt;
   int _currentDurationSecs = 0;
+  bool _deviceIsLandscape = true;
 
   // UVC handled globally via UvcCameraService
   // YOLO handled by BackgroundDetectionService
@@ -57,6 +58,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   void initState() {
     super.initState();
     _enterFullScreen();
+    _initDeviceConfig();
     _loadContent();
     _startClock();
     WakelockPlus.enable();
@@ -65,6 +67,16 @@ class _DisplayScreenState extends State<DisplayScreen> {
       unawaited(UvcCameraService.instance.ensureOpen());
     });
     // No uploads to Storage per LGPD; skip photo upload queue
+  }
+
+  Future<void> _initDeviceConfig() async {
+    try {
+      final config = await StorageService.getDeviceConfig();
+      if (!mounted) return;
+      setState(() {
+        _deviceIsLandscape = config?.isLandscape ?? true;
+      });
+    } catch (_) {}
   }
 
   @override
@@ -165,6 +177,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
       if (token == null) {
         throw Exception('No auth token');
       }
+      final config = await StorageService.getDeviceConfig();
+      final isLandscape = config?.isLandscape ?? _deviceIsLandscape;
       final res = await ApiService.get<Map<String, dynamic>>(
         '/display/unit/${widget.unitId}',
         (m) => m,
@@ -183,7 +197,14 @@ class _DisplayScreenState extends State<DisplayScreen> {
           // Pre-cache videos
           for (var content in data['data']) {
             if (content['type'] == 'ADVERTISEMENT' && content['ads'] != null) {
-              final videoUrl = content['ads']['source'];
+              final dynamic ads = content['ads'];
+              String? videoUrl = isLandscape
+                  ? (ads['source_landscape'] as String?)
+                  : (ads['source_portrait'] as String?);
+              // Fallback se não existir a fonte específica
+              videoUrl ??=
+                  (ads['source_landscape'] as String?) ??
+                  (ads['source_portrait'] as String?);
               if (videoUrl != null) {
                 debugPrint('📥 Pre-caching video: $videoUrl');
                 VideoCacheService.instance.getVideoFromCache(videoUrl);
@@ -232,9 +253,17 @@ class _DisplayScreenState extends State<DisplayScreen> {
       final videoUrls = <String>[];
       final imageUrls = <String>[];
 
+      final config = await StorageService.getDeviceConfig();
+      final isLandscape = config?.isLandscape ?? _deviceIsLandscape;
       for (final c in _contents) {
         if (c['type'] == 'ADVERTISEMENT' && c['ads'] != null) {
-          final v = c['ads']['source'];
+          final ads = c['ads'];
+          String? v = isLandscape
+              ? (ads['source_landscape'] as String?)
+              : (ads['source_portrait'] as String?);
+          v ??=
+              (ads['source_landscape'] as String?) ??
+              (ads['source_portrait'] as String?);
           if (v is String && v.isNotEmpty) videoUrls.add(v);
         } else if (c['type'] == 'NEWS' && c['news'] != null) {
           final img = c['news']['image'];
@@ -287,7 +316,13 @@ class _DisplayScreenState extends State<DisplayScreen> {
       final filtered = <dynamic>[];
       for (final c in _contents) {
         if (c['type'] == 'ADVERTISEMENT' && c['ads'] != null) {
-          final v = c['ads']['source'];
+          final ads = c['ads'];
+          String? v = isLandscape
+              ? (ads['source_landscape'] as String?)
+              : (ads['source_portrait'] as String?);
+          v ??=
+              (ads['source_landscape'] as String?) ??
+              (ads['source_portrait'] as String?);
           if (v is String && v.isNotEmpty) {
             final file = await VideoCacheService.instance.getVideoFromCache(v);
             if (file != null) filtered.add(c);
@@ -380,6 +415,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
     try {
       final token = await StorageService.getAuthToken();
       if (token == null) return;
+      final config = await StorageService.getDeviceConfig();
+      final isLandscape = config?.isLandscape ?? _deviceIsLandscape;
       final res = await ApiService.get<Map<String, dynamic>>(
         '/display/unit/${widget.unitId}',
         (m) => m,
@@ -399,7 +436,13 @@ class _DisplayScreenState extends State<DisplayScreen> {
       final newImages = <String>[];
       for (final c in newContents) {
         if (c['type'] == 'ADVERTISEMENT' && c['ads'] != null) {
-          final v = c['ads']['source'];
+          final ads = c['ads'];
+          String? v = isLandscape
+              ? (ads['source_landscape'] as String?)
+              : (ads['source_portrait'] as String?);
+          v ??=
+              (ads['source_landscape'] as String?) ??
+              (ads['source_portrait'] as String?);
           if (v is String && v.isNotEmpty) newVideos.add(v);
         } else if (c['type'] == 'NEWS' && c['news'] != null) {
           final img = c['news']['image'];
@@ -554,13 +597,23 @@ class _DisplayScreenState extends State<DisplayScreen> {
     }
 
     // Fallback: log without photo
-    debugPrint(
-      '[DisplayScreen] Sending log to Firebase with identifier=$captureId (no photo)',
-    );
-    await DisplayLogService.instance.createLog(
-      identifier: captureId,
-      body: body,
-    );
+    debugPrint('[DisplayScreen] Sending log to API (no photo) id=$captureId');
+    try {
+      final token = await StorageService.getAuthToken();
+      if (token != null) {
+        await ApiService.post<Map<String, dynamic>>(
+          '/display/log/device',
+          body,
+          (m) => m,
+          headers: {
+            'Authorization': 'Bearer $token',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        );
+      }
+    } catch (e) {
+      debugPrint('[DisplayScreen] API log failed: $e');
+    }
     debugPrint('[DisplayScreen] Log sent');
   }
 
@@ -870,7 +923,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
   }
 
   Widget _buildAdvertisement(Map<String, dynamic> ads) {
-    final videoUrl = ads['source'] ?? '';
+    final String? landscape = ads['source_landscape'] as String?;
+    final String? portrait = ads['source_portrait'] as String?;
+    final String videoUrl = _deviceIsLandscape
+        ? (landscape ?? portrait ?? '')
+        : (portrait ?? landscape ?? '');
     final title = ads['title'] ?? '';
 
     if (videoUrl.isEmpty) {

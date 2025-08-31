@@ -6,12 +6,8 @@ import '../services/video_cache_service.dart';
 class VlcVideoPlayer extends StatefulWidget {
   final String videoUrl;
   final VoidCallback? onComplete;
-  
-  const VlcVideoPlayer({
-    super.key,
-    required this.videoUrl,
-    this.onComplete,
-  });
+
+  const VlcVideoPlayer({super.key, required this.videoUrl, this.onComplete});
 
   @override
   State<VlcVideoPlayer> createState() => _VlcVideoPlayerState();
@@ -32,11 +28,13 @@ class _VlcVideoPlayerState extends State<VlcVideoPlayer> {
   Future<void> _initializePlayer() async {
     try {
       // Get cached video file
-      final cachedFile = await VideoCacheService.instance.getVideoFromCache(widget.videoUrl);
-      
+      final cachedFile = await VideoCacheService.instance.getVideoFromCache(
+        widget.videoUrl,
+      );
+
       if (cachedFile != null && await cachedFile.exists()) {
         debugPrint('🎬 VLC loading local file: ${cachedFile.path}');
-        
+
         // Use VlcPlayerController.file() with File object as documented
         _controller = VlcPlayerController.file(
           cachedFile,
@@ -54,27 +52,29 @@ class _VlcVideoPlayerState extends State<VlcVideoPlayer> {
             ]),
           ),
         );
-        
+
         // Add listeners
         _controller!.addListener(_videoListener);
-        
+
         // Initialize
         await _controller!.initialize();
-        
+
         // Mute
-        await _controller!.setVolume(0);
-        
+        await _controller!.setVolume(100);
+
         if (mounted) {
           setState(() {
             _isInitialized = true;
             _isBuffering = false;
           });
         }
-        
+
         debugPrint('✅ VLC initialized with file://${cachedFile.path}');
       } else {
         // Fallback to network if cache fails
-        debugPrint('⚠️ Cache miss, falling back to network: ${widget.videoUrl}');
+        debugPrint(
+          '⚠️ Cache miss, falling back to network: ${widget.videoUrl}',
+        );
         _initializeNetworkPlayer();
       }
     } catch (e) {
@@ -96,10 +96,10 @@ class _VlcVideoPlayerState extends State<VlcVideoPlayer> {
           ]),
         ),
       );
-      
+
       _controller!.addListener(_videoListener);
       _controller!.initialize().then((_) {
-        _controller!.setVolume(0);
+        _controller!.setVolume(100);
         if (mounted) {
           setState(() {
             _isInitialized = true;
@@ -118,14 +118,14 @@ class _VlcVideoPlayerState extends State<VlcVideoPlayer> {
 
   void _videoListener() {
     if (!mounted) return;
-    
+
     final value = _controller!.value;
-    
+
     // Check for end of video
     if (value.isEnded) {
       widget.onComplete?.call();
     }
-    
+
     // Update buffering state
     if (value.isBuffering != _isBuffering) {
       setState(() {
@@ -154,11 +154,7 @@ class _VlcVideoPlayerState extends State<VlcVideoPlayer> {
       return Container(
         color: Colors.black,
         child: Center(
-          child: Icon(
-            Icons.error_outline,
-            color: Colors.grey[600],
-            size: 48,
-          ),
+          child: Icon(Icons.error_outline, color: Colors.grey[600], size: 48),
         ),
       );
     }
