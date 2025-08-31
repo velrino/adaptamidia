@@ -15,6 +15,9 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --only=production
 
+# Add ffmpeg system binary (used for video optimization)
+RUN apk add --no-cache ffmpeg
+
 COPY resources/ ./resources/
 
 COPY --from=builder /app/dist ./dist
@@ -25,4 +28,5 @@ COPY --from=builder /app/dist ./dist
 EXPOSE 8080
 
 ENV NODE_ENV=production
+ENV FFMPEG_PATH=/usr/bin/ffmpeg
 CMD ["node", "dist/main"]
