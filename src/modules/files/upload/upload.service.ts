@@ -131,37 +131,37 @@ export class UploadFileService {
       const fileName = `${uuidv4()}${fileExtension}`;
 
       // Otimiza vídeo MP4 se habilitado (default: true)
-      const shouldOptimize =
-        parameters.optimize_video === undefined ? true : !!parameters.optimize_video;
+      // const shouldOptimize =
+      // parameters.optimize_video === undefined ? true : !!parameters.optimize_video;
       let fileToUpload = parameters.file;
 
-      if (
-        shouldOptimize &&
-        parameters.file.mimetype === 'video/mp4'
-      ) {
-        try {
-          const optimizedBuffer = await this.transcodeMp4Buffer(parameters.file.buffer);
-          if (optimizedBuffer && optimizedBuffer.length > 0) {
-            fileToUpload = this.googleCloudStorageService.bufferToMulterFile(
-              optimizedBuffer,
-              fileName,
-              'video/mp4',
-            );
-          }
-        } catch (err) {
-          Log(
-            LogType.INFO,
-            UploadFileService.name,
-            this.execute.name,
-            LogAction.SKIP,
-            {
-              message:
-                'FFmpeg not available or failed. Using original file. Set FFMPEG_PATH or install ffmpeg to enable optimization.',
-              error: err?.message || err,
-            },
-          );
-        }
-      }
+      // if (
+      //   shouldOptimize &&
+      //   parameters.file.mimetype === 'video/mp4'
+      // ) {
+      //   try {
+      //     const optimizedBuffer = await this.transcodeMp4Buffer(parameters.file.buffer);
+      //     if (optimizedBuffer && optimizedBuffer.length > 0) {
+      //       fileToUpload = this.googleCloudStorageService.bufferToMulterFile(
+      //         optimizedBuffer,
+      //         fileName,
+      //         'video/mp4',
+      //       );
+      //     }
+      //   } catch (err) {
+      //     Log(
+      //       LogType.INFO,
+      //       UploadFileService.name,
+      //       this.execute.name,
+      //       LogAction.SKIP,
+      //       {
+      //         message:
+      //           'FFmpeg not available or failed. Using original file. Set FFMPEG_PATH or install ffmpeg to enable optimization.',
+      //         error: err?.message || err,
+      //       },
+      //     );
+      //   }
+      // }
 
       const storage = await this.googleCloudStorageService.uploadFile(
         parameters.company
@@ -210,7 +210,9 @@ export class UploadFileService {
 
     const crf = process.env.FFMPEG_CRF || '22';
     const preset = process.env.FFMPEG_PRESET || 'slow';
-    const extraArgs = (process.env.FFMPEG_EXTRA_ARGS || '').split(' ').filter(Boolean);
+    const extraArgs = (process.env.FFMPEG_EXTRA_ARGS || '')
+      .split(' ')
+      .filter(Boolean);
 
     const args = [
       '-y',
