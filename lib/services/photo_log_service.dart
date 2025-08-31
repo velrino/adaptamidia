@@ -15,7 +15,7 @@ class PhotoLogService {
   PhotoLogService._internal();
   static final PhotoLogService instance = PhotoLogService._internal();
 
-  Timer? _retryTimer;
+  // Timer? _retryTimer;
 
   Future<void> _ensureAuth() async {
     final auth = FirebaseAuth.instance;
@@ -40,100 +40,100 @@ class PhotoLogService {
     return target;
   }
 
-  Future<File> _persistPhoto(File src, String captureId) async {
-    final photosDir = await _ensureDir('captured_photos');
-    final dst = File(
-      p.join(photosDir.path, '$captureId${p.extension(src.path, 3)}'),
-    );
-    try {
-      return await src.copy(dst.path);
-    } catch (_) {
-      // fallback: move
-      try {
-        return await src.rename(dst.path);
-      } catch (e) {
-        debugPrint('[PhotoLogService] Failed to persist photo: $e');
-        return src;
-      }
-    }
-  }
+  // Future<File> _persistPhoto(File src, String captureId) async {
+  //   final photosDir = await _ensureDir('captured_photos');
+  //   final dst = File(
+  //     p.join(photosDir.path, '$captureId${p.extension(src.path, 3)}'),
+  //   );
+  //   try {
+  //     return await src.copy(dst.path);
+  //   } catch (_) {
+  //     // fallback: move
+  //     try {
+  //       return await src.rename(dst.path);
+  //     } catch (e) {
+  //       debugPrint('[PhotoLogService] Failed to persist photo: $e');
+  //       return src;
+  //     }
+  //   }
+  // }
 
   Future<File> _pendingMetaFile(String captureId) async {
     final pendingDir = await _ensureDir('pending_logs');
     return File(p.join(pendingDir.path, '$captureId.json'));
   }
 
-  Future<void> _savePending(
-    String captureId,
-    String localPath,
-    Map<String, dynamic> body,
-  ) async {
-    final file = await _pendingMetaFile(captureId);
-    final data = {'captureId': captureId, 'localPath': localPath, 'body': body};
-    await file.writeAsString(json.encode(data), flush: true);
-    debugPrint('[PhotoLogService] Queued pending log: $captureId');
-  }
+  // Future<void> _savePending(
+  //   String captureId,
+  //   String localPath,
+  //   Map<String, dynamic> body,
+  // ) async {
+  //   final file = await _pendingMetaFile(captureId);
+  //   final data = {'captureId': captureId, 'localPath': localPath, 'body': body};
+  //   await file.writeAsString(json.encode(data), flush: true);
+  //   debugPrint('[PhotoLogService] Queued pending log: $captureId');
+  // }
 
-  Future<void> uploadAndLog(
-    String captureId,
-    File imageFile,
-    Map<String, dynamic> body,
-  ) async {
-    try {
-      await _ensureAuth();
-      // persist photo locally under app dir to avoid temp cleanup
-      final persisted = await _persistPhoto(imageFile, captureId);
+  // Future<void> uploadAndLog(
+  //   String captureId,
+  //   File imageFile,
+  //   Map<String, dynamic> body,
+  // ) async {
+  //   try {
+  //     await _ensureAuth();
+  //     // persist photo locally under app dir to avoid temp cleanup
+  //     final persisted = await _persistPhoto(imageFile, captureId);
 
-      // Choose correct Storage bucket (fix misconfigured google-services.json)
-      final app = Firebase.app();
-      String? bucket = app.options.storageBucket;
-      if (bucket == null || bucket.endsWith('firebasestorage.app')) {
-        final projectId = app.options.projectId;
-        if (projectId != null) bucket = '$projectId.appspot.com';
-      }
-      final storage = bucket != null
-          ? FirebaseStorage.instanceFor(bucket: bucket)
-          : FirebaseStorage.instance;
-      final uid = FirebaseAuth.instance.currentUser?.uid;
+  //     // Choose correct Storage bucket (fix misconfigured google-services.json)
+  //     final app = Firebase.app();
+  //     String? bucket = app.options.storageBucket;
+  //     if (bucket == null || bucket.endsWith('firebasestorage.app')) {
+  //       final projectId = app.options.projectId;
+  //       if (projectId != null) bucket = '$projectId.appspot.com';
+  //     }
+  //     final storage = bucket != null
+  //         ? FirebaseStorage.instanceFor(bucket: bucket)
+  //         : FirebaseStorage.instance;
+  //     final uid = FirebaseAuth.instance.currentUser?.uid;
 
-      final ref = storage
-          .ref()
-          .child('DISPLAY_PHOTOS')
-          .child('$captureId${p.extension(persisted.path, 3)}');
-      debugPrint(
-        '[PhotoLogService] Uploading photo for $captureId to ${ref.fullPath} (bucket=${bucket ?? 'default'}) uid=${uid ?? 'null'}',
-      );
-      await ref.putFile(persisted, SettableMetadata(contentType: 'image/jpeg'));
-      final url = await ref.getDownloadURL();
-      debugPrint('[PhotoLogService] Upload success for $captureId, url=$url');
+  //     final ref = storage
+  //         .ref()
+  //         .child('DISPLAY_PHOTOS')
+  //         .child('$captureId${p.extension(persisted.path, 3)}');
+  //     debugPrint(
+  //       '[PhotoLogService] Uploading photo for $captureId to ${ref.fullPath} (bucket=${bucket ?? 'default'}) uid=${uid ?? 'null'}',
+  //     );
+  //     await ref.putFile(persisted, SettableMetadata(contentType: 'image/jpeg'));
+  //     final url = await ref.getDownloadURL();
+  //     debugPrint('[PhotoLogService] Upload success for $captureId, url=$url');
 
-      final enriched = Map<String, dynamic>.from(body);
-      enriched['photo_url'] = url;
+  //     final enriched = Map<String, dynamic>.from(body);
+  //     enriched['photo_url'] = url;
 
-      await DisplayLogService.instance.createLog(
-        identifier: captureId,
-        body: enriched,
-      );
-    } catch (e, st) {
-      debugPrint('[PhotoLogService] Upload failed for $captureId: $e');
-      debugPrint('[PhotoLogService] Stack: $st');
-      // queue for later (upload + log together)
-      // ensure we point to the persisted path so the image remains available
-      try {
-        final persisted = await _persistPhoto(imageFile, captureId);
-        await _savePending(captureId, persisted.path, body);
-      } catch (_) {
-        await _savePending(captureId, imageFile.path, body);
-      }
-      _ensureRetryLoop();
-    }
-  }
+  //     await DisplayLogService.instance.createLog(
+  //       identifier: captureId,
+  //       body: enriched,
+  //     );
+  //   } catch (e, st) {
+  //     debugPrint('[PhotoLogService] Upload failed for $captureId: $e');
+  //     debugPrint('[PhotoLogService] Stack: $st');
+  //     // queue for later (upload + log together)
+  //     // ensure we point to the persisted path so the image remains available
+  //     try {
+  //       final persisted = await _persistPhoto(imageFile, captureId);
+  //       await _savePending(captureId, persisted.path, body);
+  //     } catch (_) {
+  //       await _savePending(captureId, imageFile.path, body);
+  //     }
+  //     _ensureRetryLoop();
+  //   }
+  // }
 
-  void _ensureRetryLoop() {
-    _retryTimer ??= Timer.periodic(const Duration(minutes: 2), (_) {
-      unawaited(processQueue());
-    });
-  }
+  // void _ensureRetryLoop() {
+  //   _retryTimer ??= Timer.periodic(const Duration(minutes: 2), (_) {
+  //     unawaited(processQueue());
+  //   });
+  // }
 
   Future<void> processQueue() async {
     try {

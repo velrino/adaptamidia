@@ -1,13 +1,16 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ultralytics_yolo/ultralytics_yolo.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart' as http_parser;
+import 'package:path/path.dart' as p;
 
-import 'photo_log_service.dart';
 import 'display_log_service.dart';
 
 class BackgroundDetectionService {
@@ -20,9 +23,116 @@ class BackgroundDetectionService {
   String? _modelPath;
 
   final List<_Job> _queue = [];
+  static const int _priorityThreshold = 10; // fila "muito cheia"
+  static const int _maxQueue = 30; // limite duro de fila
   bool _processing = false;
+  bool _recovered = false;
+
+  Future<Directory> _queueDir() async {
+    final dir = await getApplicationDocumentsDirectory();
+    final d = Directory('${dir.path}/pending_detections');
+    if (!await d.exists()) await d.create(recursive: true);
+    return d;
+  }
+
+  Future<Directory> _photoDir() async {
+    final d = Directory('${(await _queueDir()).path}/photos');
+    if (!await d.exists()) await d.create(recursive: true);
+    return d;
+  }
+
+  Future<File> _jobMetaFile(String captureId) async {
+    final d = await _queueDir();
+    return File('${d.path}/$captureId.json');
+  }
+
+  Future<File> _persistPhoto(File src, String captureId) async {
+    final photos = await _photoDir();
+    final parts = src.path.split('.');
+    final ext = parts.isNotEmpty ? parts.last : 'jpg';
+    final dst = File('${photos.path}/$captureId.$ext');
+    try {
+      return await src.rename(dst.path);
+    } catch (_) {
+      try {
+        await src.copy(dst.path);
+        return File(dst.path);
+      } catch (e) {
+        debugPrint('[BackgroundDetection] Failed to persist photo: $e');
+        return src; // fallback
+      }
+    }
+  }
+
+  Future<void> _saveJobMeta(_Job job) async {
+    final f = await _jobMetaFile(job.captureId);
+    final data = {
+      'captureId': job.captureId,
+      'imagePath': job.imageFile.path,
+      'body': job.body,
+      'isAd': job.isAd,
+    };
+    await f.writeAsString(json.encode(data), flush: true);
+  }
+
+  Future<void> _deleteJobMeta(String captureId) async {
+    try {
+      final f = await _jobMetaFile(captureId);
+      if (await f.exists()) await f.delete();
+    } catch (_) {}
+  }
+
+  Future<void> _recoverPending() async {
+    if (_recovered) return;
+    _recovered = true;
+    try {
+      final d = await _queueDir();
+      final files = d
+          .listSync()
+          .whereType<File>()
+          .where((f) => f.path.endsWith('.json'))
+          .toList();
+      if (files.isEmpty) return;
+      final ads = <_Job>[];
+      final news = <_Job>[];
+      for (final f in files) {
+        try {
+          final raw = await f.readAsString();
+          final map = json.decode(raw) as Map<String, dynamic>;
+          final captureId = (map['captureId'] ?? '') as String;
+          final imagePath = (map['imagePath'] ?? '') as String;
+          final body = Map<String, dynamic>.from(map['body'] as Map);
+          final isAd = map['isAd'] == true || (body['type'] == 'ADVERTISEMENT');
+          final img = File(imagePath);
+          if (captureId.isEmpty || !await img.exists()) {
+            unawaited(_deleteJobMeta(captureId));
+            continue;
+          }
+          final job = _Job(captureId, img, body, isAd);
+          if (isAd) {
+            ads.add(job);
+          } else {
+            news.add(job);
+          }
+        } catch (e) {
+          debugPrint('[BackgroundDetection] Failed to recover a job: $e');
+        }
+      }
+      // Prioritize ads first on recovery
+      _queue.insertAll(0, news);
+      _queue.insertAll(0, ads);
+      if (_queue.isNotEmpty && !_processing) {
+        _processing = true;
+        unawaited(_drainQueue());
+      }
+      debugPrint('[BackgroundDetection] Recovered ${_queue.length} pending jobs');
+    } catch (e) {
+      debugPrint('[BackgroundDetection] _recoverPending error: $e');
+    }
+  }
 
   Future<void> ensureLoaded() async {
+    await _recoverPending();
     if (_yolo != null || _loading) return;
     _loading = true;
     try {
@@ -59,12 +169,51 @@ class BackgroundDetectionService {
     required File imageFile,
     required Map<String, dynamic> body,
   }) {
-    _queue.add(_Job(captureId, imageFile, Map<String, dynamic>.from(body)));
-    if (!_processing) {
-      _processing = true;
-      // Kick off processing without awaiting
-      unawaited(_drainQueue());
-    }
+    final cloned = Map<String, dynamic>.from(body);
+    final String type = (cloned['type'] ?? '').toString();
+    final bool isAd = type == 'ADVERTISEMENT';
+
+    // Persist and enqueue asynchronously
+    unawaited(() async {
+      final persisted = await _persistPhoto(imageFile, captureId);
+      final job = _Job(captureId, persisted, cloned, isAd);
+      await _saveJobMeta(job);
+
+      if (_queue.length >= _priorityThreshold && isAd) {
+        _queue.insert(0, job);
+      } else {
+        _queue.add(job);
+      }
+
+      // Se estourar o limite, descartamos do final priorizando remoção de NEWS
+      if (_queue.length > _maxQueue) {
+        int removeIndex = -1;
+        for (int i = _queue.length - 1; i >= 0; i--) {
+          if (!_queue[i].isAd) {
+            removeIndex = i;
+            break;
+          }
+        }
+        if (removeIndex == -1) removeIndex = _queue.length - 1;
+        final removed = _queue.removeAt(removeIndex);
+        // Limpa arquivo e meta do item descartado
+        unawaited(() async {
+          try {
+            await _deleteJobMeta(removed.captureId);
+          } catch (_) {}
+          try {
+            if (await removed.imageFile.exists()) {
+              await removed.imageFile.delete();
+            }
+          } catch (_) {}
+        }());
+      }
+      if (!_processing) {
+        _processing = true;
+        // Kick off processing without awaiting
+        unawaited(_drainQueue());
+      }
+    }());
   }
 
   Future<void> _drainQueue() async {
@@ -76,8 +225,10 @@ class BackgroundDetectionService {
         debugPrint('[BackgroundDetection] Job failed: $e\n$st');
         // Best-effort: log metadata without photo
         try {
-          await DisplayLogService.instance
-              .createLog(identifier: job.captureId, body: job.body);
+          await DisplayLogService.instance.createLog(
+            identifier: job.captureId,
+            body: job.body,
+          );
         } catch (_) {}
         // Ensure temp file is removed
         try {
@@ -85,6 +236,7 @@ class BackgroundDetectionService {
             await job.imageFile.delete();
           }
         } catch (_) {}
+        unawaited(_deleteJobMeta(job.captureId));
       }
     }
     _processing = false;
@@ -115,14 +267,44 @@ class BackgroundDetectionService {
       debugPrint('[BackgroundDetection] Detection error: $e\n$st');
     }
 
+    job.body['people_count'] = peopleCount;
+
     if (peopleCount >= 0) {
       job.body['people_count'] = peopleCount;
+
+      // InsightFace enrichment
+      if (peopleCount == 0) {
+        job.body['insightface'] = {
+          'gender': {
+            'Woman': 0,
+            'Man': 0,
+          },
+          'men': 0,
+          'women': 0,
+          'total': 0,
+          'age': {
+            'max': 0,
+            'min': 0,
+            'average': 0,
+          },
+        };
+      } else {
+        try {
+          final insight = await _fetchInsightface(job.imageFile);
+          job.body['insightface'] = insight;
+        } catch (e, st) {
+          debugPrint('[BackgroundDetection] InsightFace request failed: $e\n$st');
+          // Intencionalmente não define insightface em erro (>0) para não mascarar falhas
+        }
+      }
     }
 
     // LGPD: log only metadata (no photo upload)
     try {
-      await DisplayLogService.instance
-          .createLog(identifier: job.captureId, body: job.body);
+      await DisplayLogService.instance.createLog(
+        identifier: job.captureId,
+        body: job.body,
+      );
     } finally {
       // Clean up temporary photo to avoid retention
       try {
@@ -130,6 +312,81 @@ class BackgroundDetectionService {
           await job.imageFile.delete();
         }
       } catch (_) {}
+      unawaited(_deleteJobMeta(job.captureId));
+    }
+  }
+
+  Map<String, dynamic> _emptyInsightface(String method) => {
+        'gender': {
+          'Woman': 0,
+          'Man': 0,
+        },
+        'men': 0,
+        'women': 0,
+        'total': 0,
+        'age': {
+          'max': 0,
+          'min': 0,
+          'average': 0,
+        },
+        'method': method,
+      };
+
+  Future<Map<String, dynamic>> _fetchInsightface(File imageFile) async {
+    final uri = Uri.parse(
+        'https://vision-2057331207.us-central1.run.app/detect-insightface');
+    try {
+      final request = http.MultipartRequest('POST', uri);
+      final filename = p.basename(imageFile.path).isNotEmpty
+          ? p.basename(imageFile.path)
+          : 'capture.jpg';
+      final ext = p.extension(filename).toLowerCase();
+      http_parser.MediaType contentType;
+      switch (ext) {
+        case '.jpg':
+        case '.jpeg':
+          contentType = http_parser.MediaType('image', 'jpeg');
+          break;
+        case '.png':
+          contentType = http_parser.MediaType('image', 'png');
+          break;
+        case '.webp':
+          contentType = http_parser.MediaType('image', 'webp');
+          break;
+        default:
+          contentType = http_parser.MediaType('image', 'jpeg');
+      }
+
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          imageFile.path,
+          filename: filename,
+          contentType: contentType,
+        ),
+      );
+      final streamed =
+          await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.Response.fromStream(streamed)
+          .timeout(const Duration(seconds: 30));
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        final decoded = json.decode(response.body);
+        if (decoded is Map<String, dynamic>) {
+          // Garante campo method, caso a API não retorne
+          decoded.putIfAbsent('method', () => 'InsightFace');
+          return decoded;
+        }
+        debugPrint('[BackgroundDetection] InsightFace: unexpected response type');
+        return _emptyInsightface('invalid_response');
+      } else {
+        debugPrint('[BackgroundDetection] InsightFace HTTP ${response.statusCode}: ${response.body}');
+        return _emptyInsightface('http_${response.statusCode}');
+      }
+    } on TimeoutException {
+      return _emptyInsightface('timeout');
+    } catch (e, st) {
+      debugPrint('[BackgroundDetection] InsightFace error: $e\n$st');
+      return _emptyInsightface('error');
     }
   }
 }
@@ -138,5 +395,6 @@ class _Job {
   final String captureId;
   final File imageFile;
   final Map<String, dynamic> body;
-  _Job(this.captureId, this.imageFile, this.body);
+  final bool isAd;
+  _Job(this.captureId, this.imageFile, this.body, this.isAd);
 }

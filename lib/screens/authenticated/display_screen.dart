@@ -13,7 +13,7 @@ import '../../services/image_cache_service.dart';
 import '../../services/display_log_service.dart';
 import '../../services/device_context_service.dart';
 import 'package:flutter_uvc_camera/flutter_uvc_camera.dart';
-import '../../services/photo_log_service.dart';
+// Removed PhotoLogService (no image uploads by LGPD)
 // import '../../components/video_player_screen.dart';
 // import '../../components/vlc_video_player.dart'; // VLC has _viewId bug
 import '../../components/flutter_video_player.dart'; // Testing Flutter native video player
@@ -73,8 +73,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_initUvcCamera());
     });
-    // Try to flush any pending photo+log on start
-    unawaited(PhotoLogService.instance.processQueue());
+    // No uploads to Storage per LGPD; skip photo upload queue
   }
 
   @override
@@ -575,7 +574,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
             ? const Duration(seconds: 0)
             : DateTime.now().difference(_uvcOpenedAt!);
         if (openedAgo < const Duration(seconds: 1)) {
-          await Future.delayed(const Duration(milliseconds: 800));
+          await Future.delayed(const Duration(milliseconds: 500));
         }
 
         _isCapturingPhoto = true;
@@ -1050,14 +1049,14 @@ class _DisplayScreenState extends State<DisplayScreen> {
             Align(
               alignment: Alignment.bottomRight,
               child: Opacity(
-                opacity: 0.0,
+                opacity: 1,
                 child: SizedBox(
-                  width: 320,
-                  height: 240,
+                  width: 640,
+                  height: 480,
                   child: UVCCameraView(
                     cameraController: _uvc!,
-                    width: 320,
-                    height: 240,
+                    width: 640,
+                    height: 480,
                     autoDispose: false,
                   ),
                 ),
