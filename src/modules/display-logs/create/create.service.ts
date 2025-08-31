@@ -22,6 +22,7 @@ import {
   ICreateDisplayLog,
   ICreateDisplayLogDto,
   ICreateDisplayLogProcessor,
+  IFirebaseDisplayLog,
 } from './create.interface';
 import { DateTime } from 'luxon';
 import { RESULT } from 'src/shared/result.enum';
@@ -43,6 +44,12 @@ import {
 import { FirebaseDatabaseService } from 'src/shared/firebase/firebase-database.service';
 import { FirebasePathsEnum } from 'src/shared/firebase/firebase.enum';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { DisplayLogStatus } from '../display-logs.interface';
+import {
+  ApiDetectInsightfaceDefault,
+  ApiYoloResultDefault,
+  IApiDetectInsightface,
+} from 'src/shared/detection/detection.interface';
 
 @Processor(QueuesEnum.DISPLAY_LOG_CREATE)
 @Injectable()
@@ -329,6 +336,7 @@ export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleInit(): Promise<void> {
+    await this.displayLogModel.deleteMany({});
     await this.startDisplayLogsListener();
   }
 
@@ -358,16 +366,13 @@ export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
           callback: async (data, key) => {
             console.log('FIREBASE', { data, key });
 
-            // Processa o registro (faça o que precisar aqui)
-            await this.processDisplayLog(data, key);
+            await this.processDisplayLog(data);
 
             // Deleta o registro após processamento
-            // await this.firebaseService.deleteRecord(
-            //   FirebasePathsEnum.DISPLAY_LOGS,
-            //   key,
-            // );
-
-            console.log('Registro processado e deletado:', key);
+            await this.firebaseService.deleteRecord(
+              FirebasePathsEnum.DISPLAY_LOGS,
+              key,
+            );
           },
         },
       );
@@ -379,17 +384,83 @@ export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async processDisplayLog(data: any, key: string): Promise<void> {
+  private async processDisplayLog(payload: IFirebaseDisplayLog) {
     try {
-      // Aqui você pode fazer o processamento do registro
-      console.log('Processando registro:', {
-        key,
-        data,
-        timestamp: new Date().toISOString(),
+      const parameters: ICreateDisplayLog = {
+        id: new Types.ObjectId(payload.id),
+        local: new Types.ObjectId(payload.local._id),
+        type: payload.type as DisplayType,
+        status: payload.status as DisplayLogStatus,
+        start_at: DateTime.fromJSDate(new Date(payload.start_at as any)),
+        identifier: payload.identifier,
+        user_agent: payload.device_context.user_agent,
+        ip: payload?.device_context?.ips?.[0] || String(),
+        data: payload.device_context,
+        orientation: payload.device_context.display.orientation,
+      };
+
+      if (parameters.end_at) {
+        parameters.end_at = DateTime.fromJSDate(
+          new Date(parameters.end_at as any),
+        );
+      }
+
+      const currentBody: Partial<DisplayLog> = {};
+
+      if (parameters.type === DisplayType.ADVERTISEMENT) {
+        const advertisement = await this.getAdvertisement(parameters.id);
+        currentBody.advertisement = new Types.ObjectId(advertisement._id);
+        currentBody.advertiser = new Types.ObjectId(advertisement.company._id);
+      } else if (parameters.type === DisplayType.NEWS) {
+        await this.getNews(parameters.id);
+        currentBody.news = new Types.ObjectId(parameters.id);
+      }
+
+      const localUnit = await this.getUnit(parameters.local);
+      const localID = new Types.ObjectId(localUnit.company?._id);
+
+      currentBody.seconds = 0;
+
+      if (parameters.end_at) {
+        currentBody.seconds = CalculateTimeDifferenceInSeconds(
+          parameters.start_at,
+          parameters.end_at,
+        );
+      }
+
+      currentBody.yolo = ApiYoloResultDefault;
+
+      if (payload.people_count) {
+        currentBody.yolo = {
+          people: Number(payload.people_count),
+          confidence: 99,
+        };
+      }
+
+      currentBody.insightface = ApiDetectInsightfaceDefault;
+
+      if (payload.insightface) {
+        currentBody.insightface = {
+          ...ApiDetectInsightfaceDefault,
+          ...payload.insightface,
+        };
+      }
+
+      const record = await this.displayLogModel.create({
+        ...currentBody,
+        local: localID,
+        local_unit: new Types.ObjectId(localUnit?._id),
+        start_at: parameters.start_at,
+        end_at: parameters.end_at,
+        identifier: parameters.identifier,
+        ip: parameters.ip,
+        user_agent: parameters.user_agent,
+        data: parameters.data,
+        type: parameters.type,
+        status: parameters.status,
       });
 
-      // Exemplo: salvar em outro banco, enviar email, etc.
-      // await this.yourRepository.save(data);
+      return record;
     } catch (error) {
       console.error('Erro ao processar registro:', error);
       throw error;

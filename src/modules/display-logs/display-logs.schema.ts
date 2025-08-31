@@ -101,6 +101,9 @@ export class DisplayLog {
   @Prop({ type: String, required: false, default: null })
   bucket: string;
 
+  @Prop({ type: String, required: false, default: null })
+  orientation: string;
+
   @Prop({ type: mongoose.Schema.Types.Mixed, required: false, default: null })
   yolo: IApiYoloResult;
 

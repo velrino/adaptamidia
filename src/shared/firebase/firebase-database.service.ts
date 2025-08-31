@@ -1,4 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import * as admin from 'firebase-admin'; // Importar o Admin SDK
 import {
   FirebasePathsEnum,
@@ -13,6 +14,7 @@ import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 @Injectable()
 export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
   public database: admin.database.Database;
+  private readonly workerId = randomUUID();
 
   constructor() {}
 
@@ -124,7 +126,19 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
           const key = snapshot.key;
 
           if (data && key) {
-            await parameters.callback(data, key);
+            // Tenta fazer o claim atômico do registro para evitar processamento duplicado
+            const claimed = await this.tryClaimRecord(parameters.path, key);
+
+            if (!claimed) return; // Outra instância já pegou ou já processado
+
+            try {
+              await parameters.callback(data, key);
+              // await this.markRecordProcessed(parameters.path, key);
+            } catch (callbackError) {
+              // Se falhar no processamento, libera o claim para retry futuro
+              await this.releaseClaim(parameters.path, key);
+              throw callbackError;
+            }
           }
         } catch (error) {
           Log(
@@ -148,6 +162,110 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
         { error, parameters },
       );
       throw error;
+    }
+  }
+
+  // Implementa um "claim" com lease para evitar processamento em paralelo
+  private async tryClaimRecord(
+    path: FirebasePathsEnum,
+    id: string,
+    leaseMs = 60_000, // 1 minuto de lease por padrão
+  ): Promise<boolean> {
+    const now = Date.now();
+    const ref = this.database.ref(`${path}/${id}`);
+
+    try {
+      const result = await new Promise<{
+        committed: boolean;
+        snapshot?: admin.database.DataSnapshot;
+      }>((resolve, reject) => {
+        ref.transaction(
+          (current: any) => {
+            if (!current) return; // registro removido
+            if (current.processed) return; // já processado -> não altera (committed: false)
+
+            const claimedAt = Number(current.claimed_at || 0);
+            const hasClaim = Boolean(current.claimed_by);
+            const isLeaseValid =
+              hasClaim && claimedAt && now - claimedAt < leaseMs;
+
+            if (isLeaseValid && current.claimed_by !== this.workerId) {
+              // Outro worker ainda detém o lease
+              return; // nenhum update -> committed false
+            }
+
+            // Faz o claim/renova o lease
+            return {
+              ...current,
+              claimed_by: this.workerId,
+              claimed_at: now,
+            };
+          },
+          (error, committed, snapshot) => {
+            if (error) return reject(error);
+            resolve({
+              committed: Boolean(committed),
+              snapshot: snapshot as any,
+            });
+          },
+          false,
+        );
+      });
+
+      return result.committed;
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        FirebaseDatabaseService.name,
+        'tryClaimRecord',
+        LogAction.FAILED,
+        { error, path, id },
+      );
+      return false;
+    }
+  }
+
+  private async markRecordProcessed(
+    path: FirebasePathsEnum,
+    id: string,
+  ): Promise<void> {
+    try {
+      const ref = this.database.ref(`${path}/${id}`);
+      await ref.update({
+        processed: true,
+        processed_at: Date.now(),
+        processed_by: this.workerId,
+      });
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        FirebaseDatabaseService.name,
+        'markRecordProcessed',
+        LogAction.FAILED,
+        { error, path, id },
+      );
+    }
+  }
+
+  private async releaseClaim(
+    path: FirebasePathsEnum,
+    id: string,
+  ): Promise<void> {
+    try {
+      const ref = this.database.ref(`${path}/${id}`);
+      const snapshot = await ref.once('value');
+      const value = snapshot.val();
+      if (value?.claimed_by === this.workerId && !value?.processed) {
+        await ref.update({ claimed_by: null, claimed_at: null });
+      }
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        FirebaseDatabaseService.name,
+        'releaseClaim',
+        LogAction.FAILED,
+        { error, path, id },
+      );
     }
   }
 
