@@ -1049,7 +1049,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
             Align(
               alignment: Alignment.bottomRight,
               child: Opacity(
-                opacity: 1,
+                opacity: 0,
                 child: SizedBox(
                   width: 640,
                   height: 480,
