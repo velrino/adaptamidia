@@ -161,7 +161,7 @@ export default function CompanieUnitsTable() {
 
   return (
     <>
-      <div className="overflow-hidden bg-white dark:bg-white/[0.03] rounded-xl">
+      <div className="bg-white dark:bg-white/[0.03] w-full max-w-[90vw] overflow-x-auto custom-scrollbar">
         <div className="flex flex-col gap-2 px-4 py-4 border border-b-0 border-gray-100 dark:border-white/[0.05] rounded-t-xl sm:flex-row sm:items-center ">
           <div className="relative">
             <button className="absolute text-gray-500 -translate-y-1/2 left-4 top-1/2 dark:text-gray-400">
@@ -211,9 +211,9 @@ export default function CompanieUnitsTable() {
           </div>
         </div>
 
-        <div className="max-w-full overflow-x-auto custom-scrollbar">
+        <div className="w-full max-w-[90vw]">
           <div>
-            <Table>
+            <Table className="min-w-max">
               <TableHeader className="border-t border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
                   {[

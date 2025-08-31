@@ -153,7 +153,7 @@ export function Display({
   useEffect(() => {
     if (!list.length) return;
 
-    const displaySeconds = currentItem.ads?.seconds || 5;
+    const displaySeconds = currentItem.ads?.seconds ? 3 : 5;
 
     setTotalTime(displaySeconds);
     setCurrentDisplay(currentItem);

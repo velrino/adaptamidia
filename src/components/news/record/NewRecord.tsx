@@ -182,6 +182,7 @@ export default function NewRecord({
           // company_id: "",
           foldername: `news/${record.provider}`,
           bucket: "adapta-midia",
+          optimize_video: true,
         }
       );
 

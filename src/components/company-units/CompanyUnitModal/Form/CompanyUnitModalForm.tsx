@@ -224,7 +224,7 @@ ICompanyUnitModalPrincipalProps) => {
               />
             </div>
 
-            <div className="col-span-3">
+            {/* <div className="col-span-3">
               <Label htmlFor="devices">Dispositivos</Label>
               <Input
                 type="text"
@@ -247,7 +247,7 @@ ICompanyUnitModalPrincipalProps) => {
                 }}
                 maxLength={5}
               />
-            </div>
+            </div> */}
             <div className="col-span-3">
               <Label htmlFor="max_capacity">Máximo de capacidade</Label>
               <Input

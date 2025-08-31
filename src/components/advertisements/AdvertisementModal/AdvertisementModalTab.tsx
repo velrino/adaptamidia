@@ -3,11 +3,7 @@ import React from "react";
 import AdvertisementModalLocal from "./AdvertisementModalLocal";
 import AdvertisementModalAbout from "./AdvertisementModalAbout";
 import { AdvertisementFormProps } from "./interface";
-import { Display } from "../Ads/Display";
-import { AdsCurrentType, DisplayThemes } from "@/interfaces/ads";
 import { AdvertisementComponent } from "./AdvertisementModalItems";
-import { useSession } from "next-auth/react";
-import { IApiDisplayResponseItem } from "@/backend/api/api.interface";
 import { AdvertisementMetricsTab } from "./Metrics/Tab";
 import DisplaysTable from "@/components/displays/DisplaysTable";
 
@@ -16,16 +12,6 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
   data,
   onUpdate,
 }: AdvertisementFormProps) => {
-  const { data: session } = useSession();
-
-  const openPreview = () => {
-    if (!session?.api_session || !data._id) {
-      return;
-    }
-
-    window.open(`/display?id=${data._id}`, "_blank");
-  };
-
   const tabs = [
     {
       id: "ADS",
@@ -33,7 +19,7 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
       content: (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
           <div className="text-black dark:text-white text-center">
-            {data._id && (
+            {/* {data._id && (
               <div className="cursor-pointer">
                 <div className="h-10 cursor-pointer" onClick={openPreview}>
                   Abrir no Display
@@ -44,25 +30,47 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
               <div>
                 <div className="h-10">Salve para ver no Display</div>
               </div>
-            )}
-            <div className="flex justify-center w-full">
-              <div>
-                <Display
-                  list={
-                    [data].map((item) => ({
-                      ads: item,
-                      type: AdsCurrentType.ADVERTISEMENT,
-                    })) as IApiDisplayResponseItem[]
-                  }
-                  theme={DisplayThemes.brand}
-                  style={{
-                    container: "relative",
-                  }}
-                  preview={true}
-                  useWebcam={false}
-                />
+            )} */}
+            {/* <div className="flex justify-center w-full gap-4">
+              <div className="w-full max-w-[640px]">
+                <div
+                  className="relative w-full bg-black rounded-lg"
+                  style={{ aspectRatio: "16 / 9" }}
+                >
+                  {data.source_landscape ? (
+                    <video
+                      src={data.source_landscape}
+                      controls
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-contain rounded-lg"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-500 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                      Sem vídeo landscape
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+              <div className="w-full max-w-[360px]">
+                <div
+                  className="relative w-full bg-black rounded-lg overflow-hidden"
+                  style={{ aspectRatio: "9 / 16" }}
+                >
+                  {data.source_portrait ? (
+                    <video
+                      src={data.source_portrait}
+                      controls
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-cover object-center"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-500 bg-gray-100 dark:bg-gray-800 rounded-lg">
+                      Sem vídeo portrait
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div> */}
             <div className="justify-center w-full text-center mt-5">
               <AdvertisementComponent data={data} onUpdate={onUpdate} />
             </div>

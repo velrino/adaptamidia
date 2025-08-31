@@ -32,21 +32,21 @@ export const AdDisplay: React.FC<{
       <div className="absolute top-20 text-white text-2xl bg-brand-500 px-4 py-2 z-50 rounded-r-sm left-0">
         {ad.title}
       </div>
-      {ad.type === AdType.VIDEO ? (
+      {ad.type === AdType.VIDEO && ad.source_landscape ? (
         <video
-          src={ad.source}
+          src={ad.source_landscape}
           autoPlay
           loop
           muted
           className="h-full w-full object-cover"
         ></video>
-      ) : (
+      ) : ad.type === AdType.IMAGE && ad.source_landscape ? (
         <img
-          src={ad.source}
+          src={ad.source_landscape}
           alt={ad.title}
           className="h-full w-full object-cover"
         />
-      )}
+      ) : null}
       <div className="absolute bottom-30 text-white text-2xl bg-black bg-opacity-75 px-4 py-2 rounded-sm mx-10">
         {ad.description}
       </div>

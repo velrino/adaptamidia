@@ -111,7 +111,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
           "0"
         )}`;
       } else {
-        key = item.date.split("T")[0]; // daily
+        key = item?.date?.split("T")?.[0]; // daily
       }
 
       if (!acc[key]) {

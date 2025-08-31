@@ -10,8 +10,8 @@ export const cleanHtmlDescription = (htmlString?: string): string => {
 export const getAssetUrl = (item: IApiDisplayResponseItem): string | null => {
   if (item?.news?.image) {
     return item.news.image;
-  } else if (item?.ads?.source) {
-    return item.ads.source;
+  } else if (item?.ads?.source_landscape) {
+    return item.ads.source_landscape;
   }
   return null;
 };

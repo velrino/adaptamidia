@@ -440,7 +440,9 @@ export default function DisplayLogModalInfo({
                                   <>
                                     <video
                                       src={
-                                        record.advertisement?.source ||
+                                        record.advertisement
+                                          ?.source_landscape ||
+                                        record.advertisement?.source_portrait ||
                                         "/placeholder.svg"
                                       }
                                       autoPlay

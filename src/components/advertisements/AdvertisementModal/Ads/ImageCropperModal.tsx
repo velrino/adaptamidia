@@ -83,6 +83,11 @@ export async function getCroppedImg(
 //   });
 // }
 
+export enum CropOrientation {
+  Landscape = "landscape",
+  Portrait = "portrait",
+}
+
 interface MediaCropperModalProps {
   open: boolean;
   currentModal: IUseModal;
@@ -91,6 +96,8 @@ interface MediaCropperModalProps {
     source: string;
     type: "image" | "video";
   };
+  orientation: CropOrientation; // Define se 16:9 (landscape) ou 9:16 (portrait)
+  buttonLabel?: string;
 }
 
 export const MediaCropperModal: React.FC<MediaCropperModalProps> = ({
@@ -98,6 +105,8 @@ export const MediaCropperModal: React.FC<MediaCropperModalProps> = ({
   currentModal,
   onCropComplete,
   file,
+  orientation,
+  buttonLabel,
 }) => {
   const [fileSrc, setFileSrc] = useState<string | null>(null);
   const [fileType, setFileType] = useState<"image" | "video" | null>(null);
@@ -179,7 +188,7 @@ export const MediaCropperModal: React.FC<MediaCropperModalProps> = ({
         className="w-full md:w-100 border-2 border-dashed border-gray-300 dark:border-gray-600 p-3 md:p-4 hover:border-blue-500 dark:hover:border-blue-400 transition-colors text-sm md:text-base"
       >
         <LuImageUp size={16} className="md:w-5 md:h-5 mr-2" />
-        Fazer Upload
+        {buttonLabel || "Fazer Upload"}
       </Button>
 
       {fileSrc && (
@@ -193,14 +202,22 @@ export const MediaCropperModal: React.FC<MediaCropperModalProps> = ({
             {fileType === "image" ? "Recorte de Imagem" : "Recorte de Vídeo"}
           </div> */}
 
-          <div className="relative w-full max-h-[60vh] bg-gray-900 aspect-video">
+          <div
+            className="relative w-full max-h-[60vh] bg-gray-900"
+            style={{
+              aspectRatio:
+                orientation === CropOrientation.Landscape ? "16 / 9" : "9 / 16",
+            }}
+          >
             <Cropper
               {...(fileType === "image"
                 ? { image: fileSrc }
                 : { video: fileSrc })}
               crop={crop}
               zoom={zoom}
-              aspect={16 / 9}
+              aspect={
+                orientation === CropOrientation.Landscape ? 16 / 9 : 9 / 16
+              }
               onCropChange={setCrop}
               onZoomChange={setZoom}
               onCropComplete={onCropCompleteHandler}

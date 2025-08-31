@@ -40,7 +40,12 @@ export const useAdvertisementForm = (
       title: data.title,
       description: data.description,
       type: data.type,
-      source: data.source,
+      source_landscape: data.source_landscape
+        ? String(data.source_landscape)
+        : String(data.source_portrait),
+      source_portrait: data.source_portrait
+        ? String(data.source_portrait)
+        : String(data.source_landscape),
       seconds: data.seconds,
       status: data.status,
       neighborhood: data.neighborhood,

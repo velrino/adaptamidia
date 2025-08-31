@@ -111,7 +111,8 @@ export interface IApiAdvertisementItem {
   spotlight: boolean;
   seconds: number;
   status: AdStatus;
-  source: string;
+  source_landscape: string | null;
+  source_portrait: string | null;
   start_date: string;
   end_date: string;
   created_at: string;
@@ -125,7 +126,8 @@ export interface IApiAdvertisementItem {
 export interface IApiCreateAdvertisementRequest {
   company: string;
   title: string;
-  source: string;
+  source_landscape: string;
+  source_portrait: string;
   description: string;
   type: AdType;
   seconds: number;
@@ -142,7 +144,8 @@ export interface IApiUpdateAdvertisementRequest {
   company: string;
   title: string;
   description: string;
-  source: string;
+  source_landscape: string;
+  source_portrait: string;
   type: AdType;
   seconds: number;
   status: AdStatus;
@@ -414,6 +417,7 @@ export interface IApiUploadFileRequest {
   company_id?: string;
   foldername: string;
   bucket: string;
+  optimize_video: boolean;
 }
 
 export interface IApiUplodadCameraFileRequest {
@@ -505,7 +509,8 @@ export interface IApiDisplayResponseItemAds {
   title: string;
   type: string;
   seconds: number;
-  source: string;
+  source_landscape: string | null;
+  source_portrait: string | null;
   status: string;
   start_date: string;
   end_date: string;
@@ -794,7 +799,8 @@ export interface IApiDisplayLogItem {
     _id: string;
     title: string;
     description: string;
-    source: string;
+    source_landscape: string;
+    source_portrait: string;
   };
   advertiser?: string;
   local: string;
@@ -805,6 +811,7 @@ export interface IApiDisplayLogItem {
     type: string;
   };
   seconds: number;
+  orientation: string;
   start_at: string;
   end_at: string;
   identifier: string;

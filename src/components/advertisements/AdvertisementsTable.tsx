@@ -260,7 +260,11 @@ export default function AdvertisementsTable() {
                             <Image
                               width={100} // Ajustado para manter proporção com o container
                               height={100}
-                              src={item?.source || "/placeholder.svg"}
+                              src={
+                                item?.source_landscape ||
+                                item?.source_portrait ||
+                                "/placeholder.svg"
+                              }
                               alt="title"
                               className="w-full h-full object-cover"
                               style={{ objectPosition: "center" }}
@@ -271,7 +275,11 @@ export default function AdvertisementsTable() {
                               // src={`/api/proxy?url=${encodeURIComponent(
                               //   item.items[0]?.source || "/placeholder.svg"
                               // )}`}
-                              src={item?.source || "/placeholder.svg"}
+                              src={
+                                item?.source_landscape ||
+                                item?.source_portrait ||
+                                "/placeholder.svg"
+                              }
                               // autoPlay
                               loop
                               muted
