@@ -57,12 +57,54 @@ class BackgroundDetectionService {
       return await src.rename(dst.path);
     } catch (_) {
       try {
-        await src.copy(dst.path);
-        return File(dst.path);
+        final copied = await src.copy(dst.path);
+        // best-effort: remove original in DCIM to avoid gallery buildup
+        try {
+          if (await src.exists()) {
+            await src.delete();
+          }
+          // Sweep residual plugin files in the same DCIM directory (LGPD)
+          unawaited(_sweepDcimResiduals(File(src.path).parent));
+        } catch (_) {}
+        return copied;
       } catch (e) {
         debugPrint('[BackgroundDetection] Failed to persist photo: $e');
         return src; // fallback
       }
+    }
+  }
+
+  Future<void> _sweepDcimResiduals(Directory dcimDir) async {
+    try {
+      final re = RegExp(r'^IMG_\d{17}\.jpg$');
+      final now = DateTime.now();
+      final entries = dcimDir
+          .listSync(followLinks: false)
+          .whereType<File>()
+          .toList();
+      int removed = 0;
+      for (final f in entries) {
+        final name = f.uri.pathSegments.isNotEmpty
+            ? f.uri.pathSegments.last
+            : f.path.split('/').last;
+        if (!re.hasMatch(name)) continue;
+        // Skip extremely recent files (< 60s) to avoid racing with MediaScanner
+        try {
+          final stat = await f.stat();
+          if (now.difference(stat.changed) < const Duration(seconds: 60)) {
+            continue;
+          }
+        } catch (_) {}
+        try {
+          await f.delete();
+          removed++;
+        } catch (_) {}
+      }
+      if (removed > 0) {
+        debugPrint('[BackgroundDetection] LGPD sweep removed $removed residual DCIM photos');
+      }
+    } catch (e) {
+      debugPrint('[BackgroundDetection] LGPD sweep error: $e');
     }
   }
 

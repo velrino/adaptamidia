@@ -92,6 +92,7 @@ class UvcCameraService {
   }
 
   Future<String?> takePicture({int width = 640, int height = 480}) async {
+    debugPrint('[UvcCameraService] Start takePicture');
     await ensureOpen();
     if (!_isOpened) return null;
 
@@ -109,6 +110,7 @@ class UvcCameraService {
       // Some plugins accept target size via view; capture keeps sensor size.
       // We rely on the preview view fixed at 640x480 in the host.
       final path = await _controller.takePicture();
+      debugPrint('[UvcCameraService] Finished takePicture');
       return path;
     } catch (e) {
       debugPrint('[UvcCameraService] takePicture failed: $e');

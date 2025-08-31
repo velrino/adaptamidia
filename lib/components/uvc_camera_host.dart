@@ -30,7 +30,7 @@ class _UvcCameraHostState extends State<UvcCameraHost> {
           child: Align(
             alignment: Alignment.bottomRight,
             child: Opacity(
-              opacity: 1,
+              opacity: 0, //CAMERA
               child: SizedBox(
                 width: 640,
                 height: 480,

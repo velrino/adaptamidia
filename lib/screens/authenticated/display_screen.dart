@@ -370,10 +370,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
     debugPrint('🎬 Starting content: $type at index $_currentIndex');
 
-    int duration = 5; // default for news
+    int duration = 10; // NEWS default is 10s
 
     if (type == 'ADVERTISEMENT' && content['ads'] != null) {
-      duration = content['ads']['seconds'] ?? 30;
+      duration = content['ads']['seconds'] ?? 10;
     }
 
     // Registra início do conteúdo atual
