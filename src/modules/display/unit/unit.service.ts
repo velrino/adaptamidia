@@ -161,8 +161,8 @@ export class DisplayByUnitService {
     adsList,
     min_news_before_ad = 2,
     max_news_before_ad = 4,
-    min_ads_in_sequence = 1,
-    max_ads_in_sequence = 1,
+    min_ads_in_sequence = 1, // ignored to prevent consecutive ads
+    max_ads_in_sequence = 1, // ignored to prevent consecutive ads
     target_size,
   }: {
     newsList: NewsDocument[];
@@ -179,8 +179,7 @@ export class DisplayByUnitService {
       ads: number;
     };
   } {
-    const result: IDisplayItem[] = new Array(target_size);
-    let resultIndex = 0;
+    const result: IDisplayItem[] = [];
     let newsIndex = 0;
     let adsIndex = 0;
     let totalNews = 0;
@@ -189,47 +188,93 @@ export class DisplayByUnitService {
     const randBetween = (min: number, max: number) =>
       Math.floor(Math.random() * (max - min + 1)) + min;
 
-    while (resultIndex < target_size) {
-      // --- ADD NEWS  ---
-      const newsCount = randBetween(min_news_before_ad, max_news_before_ad);
-      const newsToAdd = Math.min(
-        newsCount,
-        newsList.length - newsIndex,
-        target_size - resultIndex,
-      );
+    // Helper to get next news, cycling if needed
+    const nextNews = (): NewsDocument | null => {
+      if (newsList.length === 0) return null;
+      const item = newsList[newsIndex % newsList.length];
+      newsIndex++;
+      return item;
+    };
 
-      for (let i = 0; i < newsToAdd; i++) {
-        result[resultIndex++] = {
-          type: DisplayType.NEWS,
-          news: newsList[newsIndex++],
-        };
+    // Helper to get next ad, avoiding repeating same consecutive ad
+    let lastAdId: string | null = null;
+    const nextAd = (): AdvertisementDocument | null => {
+      if (adsList.length === 0) return null;
+      // Try up to adsList.length times to avoid repeating the last ad
+      for (let i = 0; i < adsList.length; i++) {
+        const candidate = adsList[adsIndex % adsList.length];
+        adsIndex++;
+        if (!lastAdId || String(candidate._id) !== lastAdId) {
+          lastAdId = String(candidate._id);
+          return candidate;
+        }
+      }
+      // If all are the same (e.g., only one ad), return it, caller ensures no consecutive ads
+      const fallback = adsList[adsIndex % adsList.length];
+      adsIndex++;
+      lastAdId = String(fallback._id);
+      return fallback;
+    };
+
+    while (result.length < target_size) {
+      // Add between min..max news
+      const countNews = randBetween(min_news_before_ad, max_news_before_ad);
+      for (let i = 0; i < countNews && result.length < target_size; i++) {
+        const n = nextNews();
+        if (!n) break; // no news available
+        result.push({ type: DisplayType.NEWS, news: n });
         totalNews++;
       }
 
-      // Only add ads if you've added some content first and there's still space
-      if (newsToAdd > 0 && resultIndex < target_size) {
-        const adsCount = randBetween(min_ads_in_sequence, max_ads_in_sequence);
-        const adsToAdd = Math.min(adsCount, target_size - resultIndex);
+      if (result.length >= target_size) break;
 
-        for (let i = 0; i < adsToAdd; i++) {
-          result[resultIndex++] = {
-            type: DisplayType.ADVERTISEMENT,
-            ads: adsList[adsIndex],
-          };
-          totalAds++;
-          adsIndex = (adsIndex + 1) % adsList.length;
+      // Add a single ad (never allow two ads in a row)
+      const last = result[result.length - 1];
+      if (last?.type === DisplayType.ADVERTISEMENT) {
+        // Ensure there is a news between ads: try to inject one news if available
+        const n = nextNews();
+        if (n) {
+          result.push({ type: DisplayType.NEWS, news: n });
+          totalNews++;
+        } else {
+          // No news to separate -> stop adding more to avoid consecutive ads
+          break;
         }
       }
 
-      // If filled less than targetSize, trim the array.
-      if (newsIndex >= newsList.length) {
-        break;
+      if (result.length >= target_size) break;
+
+      const ad = nextAd();
+      if (ad) {
+        // Double-check we are not placing two ads consecutively
+        if (result.length === 0 || result[result.length - 1].type !== DisplayType.ADVERTISEMENT) {
+          result.push({ type: DisplayType.ADVERTISEMENT, ads: ad });
+          totalAds++;
+        } else {
+          // Should not happen due to guard above, but keep safety
+          const n = nextNews();
+          if (n) {
+            result.push({ type: DisplayType.NEWS, news: n });
+            totalNews++;
+          } else {
+            break;
+          }
+        }
+      } else {
+        // No ad available, continue filling with news if possible
+        const n = nextNews();
+        if (n) {
+          result.push({ type: DisplayType.NEWS, news: n });
+          totalNews++;
+        } else {
+          break;
+        }
       }
     }
 
-    // If there are no more news, exit the loop
-    if (resultIndex < target_size) {
-      result.length = resultIndex;
+    // Trim in case exceeded
+    if (result.length > target_size) {
+      result.length = target_size;
     }
 
     return {

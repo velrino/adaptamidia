@@ -331,9 +331,9 @@ export class CreateDisplayLogService {
     }
   }
 
-  async onApplicationBootstrap() {
-    await this.displayLogModel.deleteMany({});
-  }
+  // async onApplicationBootstrap() {
+  //   await this.displayLogModel.deleteMany({});
+  // }
 
   // async onModuleInit(): Promise<void> {
   //   // await this.displayLogModel.deleteMany({});

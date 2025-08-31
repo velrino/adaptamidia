@@ -4,6 +4,7 @@ import { DisplayByUnitService } from './unit/unit.service';
 import { DisplayAdvertisementPaginateDto } from './unit/unit.interface';
 import { DisplayUnitInfoService } from './info/info.service';
 import { DisplayUnitInfoDto } from './info/info.interface';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('display')
 export class DisplayController {
@@ -13,6 +14,7 @@ export class DisplayController {
   ) {}
 
   @Get('unit/:id/info')
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
   info(@Param() params: FindByIdParamsDto, @Query() query: DisplayUnitInfoDto) {
     return this.displayUnitInfoService.executeFromRequest({
       ...query,
@@ -21,7 +23,7 @@ export class DisplayController {
   }
 
   @Get('unit/:id')
-  // @Throttle({ default: { limit: 50, ttl: 60000 } })
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
   display(
     @Param() params: FindByIdParamsDto,
     @Query() query: DisplayAdvertisementPaginateDto,
