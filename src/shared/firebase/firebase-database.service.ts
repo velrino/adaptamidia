@@ -269,6 +269,72 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  // Distributed lock helpers (para crons e jobs únicos)
+  async acquireLock(
+    name: string,
+    leaseMs = 30 * 60 * 1000, // 30 minutos por padrão
+  ): Promise<boolean> {
+    const now = Date.now();
+    const ref = this.database.ref(`${FirebasePathsEnum.LOCKS}/${name}`);
+    try {
+      const result = await new Promise<{ committed: boolean }>((resolve, reject) => {
+        ref.transaction(
+          (current: any) => {
+            const claimedAt = Number(current?.claimed_at || 0);
+            const claimedBy = current?.claimed_by as string | undefined;
+            const isLeaseValid = claimedBy && claimedAt && now - claimedAt < leaseMs;
+
+            if (isLeaseValid && claimedBy !== this.workerId) {
+              // Outro worker ainda mantém o lease
+              return; // não altera
+            }
+
+            // Adquire ou renova lease
+            return {
+              claimed_by: this.workerId,
+              claimed_at: now,
+            };
+          },
+          (error, committed) => {
+            if (error) return reject(error);
+            resolve({ committed: Boolean(committed) });
+          },
+          false,
+        );
+      });
+      return result.committed;
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        FirebaseDatabaseService.name,
+        'acquireLock',
+        LogAction.FAILED,
+        { error, name },
+      );
+      return false;
+    }
+  }
+
+  async releaseLock(name: string): Promise<void> {
+    const ref = this.database.ref(`${FirebasePathsEnum.LOCKS}/${name}`);
+    try {
+      await ref.transaction((current: any) => {
+        if (current?.claimed_by === this.workerId) {
+          return null; // remove lock
+        }
+        return; // não altera se não é o dono
+      });
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        FirebaseDatabaseService.name,
+        'releaseLock',
+        LogAction.FAILED,
+        { error, name },
+      );
+    }
+  }
+
   // Método para deletar registro
   async deleteRecord(path: FirebasePathsEnum, id: string): Promise<void> {
     try {

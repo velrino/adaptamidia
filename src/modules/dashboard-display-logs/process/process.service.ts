@@ -12,7 +12,7 @@ import {
   DisplayLogDocument,
 } from '../../display-logs/display-logs.schema';
 import { EntityFieldEnum } from '../dashboard-display-logs.interface';
-import { RedisService } from 'src/shared/redis/redis.service';
+import { FirebaseDatabaseService } from 'src/shared/firebase/firebase-database.service';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { Milliseconds } from 'src/shared/general';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -38,7 +38,7 @@ export class DashboardDisplayLogsProcessService {
     private dashboardModel: Model<DashboardDisplayLogsAggregationDocument>,
     @InjectModel(DisplayLog.name)
     private displayLogModel: Model<DisplayLogDocument>,
-    private readonly redisService: RedisService,
+    private readonly firebaseDb: FirebaseDatabaseService,
   ) {}
 
   async onApplicationBootstrap() {
@@ -49,16 +49,22 @@ export class DashboardDisplayLogsProcessService {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async execute() {
-    const lockKey = `dashboard-process-${new Date().toISOString().split('T')[0]}`;
-    // const lockAcquired = await this.acquireLock(
-    //   lockKey,
-    //   Milliseconds({ minutes: 5 }),
-    // );
+    const lockKey = 'dashboard-display-logs:process';
+    const acquired = await this.firebaseDb.acquireLock(
+      lockKey,
+      Milliseconds({ minutes: 5 }),
+    );
 
-    // if (!lockAcquired) {
-    //   console.log('Dashboard processing already running on another instance');
-    //   return;
-    // }
+    if (!acquired) {
+      Log(
+        LogType.INFO,
+        DashboardDisplayLogsProcessService.name,
+        this.execute.name,
+        LogAction.SKIP,
+        { about: 'LOCK_NOT_ACQUIRED', lockKey },
+      );
+      return;
+    }
 
     try {
       Log(
@@ -83,7 +89,7 @@ export class DashboardDisplayLogsProcessService {
         }
       }
     } finally {
-      await this.releaseLock(lockKey);
+      await this.firebaseDb.releaseLock(lockKey);
       Log(
         LogType.INFO,
         DashboardDisplayLogsProcessService.name,
@@ -92,23 +98,6 @@ export class DashboardDisplayLogsProcessService {
         { lockKey },
       );
     }
-  }
-
-  private async acquireLock(key: string, ttlMs: number): Promise<boolean> {
-    const existing = await this.redisService.get(key);
-    if (existing) {
-      return false;
-    }
-
-    await this.redisService.set(key, 'locked', ttlMs);
-
-    // Verifica novamente para evitar race condition
-    const doubleCheck = await this.redisService.get(key);
-    return doubleCheck === 'locked';
-  }
-
-  private async releaseLock(key: string): Promise<void> {
-    await this.redisService.del(key);
   }
 
   private getDateRange(date: Date): { startDate: Date; endDate: Date } {

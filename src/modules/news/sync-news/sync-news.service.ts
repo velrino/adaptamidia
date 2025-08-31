@@ -15,6 +15,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { DateTime } from 'luxon';
 import { RESULT } from 'src/shared/result.enum';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { FirebaseDatabaseService } from 'src/shared/firebase/firebase-database.service';
 
 @Injectable()
 export class SyncNewsService {
@@ -25,6 +26,7 @@ export class SyncNewsService {
   constructor(
     @InjectModel(News.name)
     readonly model: Model<NewsDocument>,
+    private readonly firebaseDb: FirebaseDatabaseService,
   ) {
     // this.providerNewsApi = new NewsAPI('SUA_API_KEY');
   }
@@ -35,7 +37,26 @@ export class SyncNewsService {
 
   @Cron(CronExpression.EVERY_3_HOURS)
   async handleCron() {
-    await this.execute();
+    const lockName = 'sync-news';
+    const leaseMs = 30 * 60 * 1000; // 30 minutos (ajuste conforme duração esperada)
+    const acquired = await this.firebaseDb.acquireLock(lockName, leaseMs);
+
+    if (!acquired) {
+      Log(
+        LogType.INFO,
+        SyncNewsService.name,
+        this.handleCron.name,
+        LogAction.SKIP,
+        { about: 'LOCK_NOT_ACQUIRED', lockName },
+      );
+      return;
+    }
+
+    try {
+      await this.execute();
+    } finally {
+      await this.firebaseDb.releaseLock(lockName);
+    }
   }
 
   async getNewsEverythingAbout(q: string): Promise<INewsApiResponse> {
