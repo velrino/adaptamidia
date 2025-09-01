@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
 import 'services/storage_service.dart';
 import 'services/firebase_service.dart';
+import 'services/theme_service.dart';
 import 'screens/configuration_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/authenticated/home_screen.dart';
@@ -19,6 +20,22 @@ void main() async {
   // Disable debug borders and overlays
   debugPaintSizeEnabled = false;
 
+  // Set fullscreen mode immediately
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.immersiveSticky,
+    overlays: [],
+  );
+
+  // Additional system UI settings
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness: Brightness.light,
+    ),
+  );
+
   runApp(const MyApp());
 }
 
@@ -27,24 +44,27 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'SeeMidia Display',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        brightness: Brightness.light,
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
-          brightness: Brightness.dark,
-        ),
-        brightness: Brightness.dark,
-        useMaterial3: true,
-      ),
-      themeMode: ThemeMode.system,
-      builder: (context, child) => UvcCameraHost(child: child ?? const SizedBox.shrink()),
-      home: const AppWrapper(),
+    return AnimatedBuilder(
+      animation: ThemeService.instance,
+      builder: (context, child) {
+        return MaterialApp(
+          title: 'SeeMidia Display',
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+            brightness: Brightness.light,
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.blue,
+              brightness: Brightness.dark,
+            ),
+            brightness: Brightness.dark,
+            useMaterial3: true,
+          ),
+          themeMode: ThemeService.instance.themeMode,
+          builder: (context, child) => UvcCameraHost(child: child ?? const SizedBox.shrink()),
+          home: const AppWrapper(),
       routes: {
         '/home': (context) => const HomeScreen(),
         '/login': (context) => const LoginScreen(),
@@ -60,7 +80,9 @@ class MyApp extends StatelessWidget {
         }
         return null;
       },
-      debugShowCheckedModeBanner: false,
+          debugShowCheckedModeBanner: false,
+        );
+      },
     );
   }
 }

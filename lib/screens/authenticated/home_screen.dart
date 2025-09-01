@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/storage_service.dart';
 import '../../services/configuration_service.dart';
+import '../../services/theme_service.dart';
 import '../../widgets/company_units_list.dart';
 import '../example.dart';
 
@@ -40,6 +41,24 @@ class HomeScreen extends StatelessWidget {
               color: isDark ? Colors.grey[400] : Colors.grey[600],
             ),
             tooltip: 'VLC Player Demo',
+          ),
+          IconButton(
+            onPressed: () async {
+              await ThemeService.instance.toggleTheme();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Tema: ${ThemeService.instance.getThemeModeName()}'),
+                    duration: const Duration(seconds: 1),
+                  ),
+                );
+              }
+            },
+            icon: Icon(
+              ThemeService.instance.getThemeIcon(),
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
+            ),
+            tooltip: 'Alternar tema: ${ThemeService.instance.getThemeModeName()}',
           ),
           IconButton(
             onPressed: () {
