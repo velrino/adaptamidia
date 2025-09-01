@@ -42,6 +42,7 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
                       src={data.source_landscape}
                       controls
                       playsInline
+                      preload="metadata"
                       className="absolute inset-0 w-full h-full object-contain rounded-lg"
                     />
                   ) : (
@@ -61,6 +62,7 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
                       src={data.source_portrait}
                       controls
                       playsInline
+                      preload="metadata"
                       className="absolute inset-0 w-full h-full object-cover object-center"
                     />
                   ) : (
