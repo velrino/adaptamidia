@@ -56,7 +56,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
   DateTime? _currentStartAt;
   int _currentDurationSecs = 0;
   bool _deviceIsLandscape = true;
-  final GlobalKey<AdVideoLayerState> _adLayerKey = GlobalKey<AdVideoLayerState>();
+  final GlobalKey<AdVideoLayerState> _adLayerKey =
+      GlobalKey<AdVideoLayerState>();
 
   // UVC handled globally via UvcCameraService
   // YOLO handled by BackgroundDetectionService
@@ -331,19 +332,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
         );
       }();
 
-      final combined = Future.wait([imageFuture, videoFuture]);
-      // Quando terminar em background, faça um refresh para incluir mídias recém baixadas
-      unawaited(combined.then((_) {
-        if (mounted) {
-          unawaited(_backgroundRefresh());
-        }
-      }));
-
-      // Aguarda no máximo 30s para a preparação inicial
-      await Future.any([
-        combined,
-        Future.delayed(const Duration(seconds: 30)),
-      ]);
+      // Primeira preparação: aguarda baixar TUDO (vídeos e imagens)
+      await Future.wait([imageFuture, videoFuture]);
 
       // Após pré-carregar, mantém apenas conteúdos com mídia garantida em cache
       final filtered = <dynamic>[];
@@ -433,7 +423,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
       String? v = _deviceIsLandscape
           ? (ads['source_landscape'] as String?)
           : (ads['source_portrait'] as String?);
-      v ??= (ads['source_landscape'] as String?) ?? (ads['source_portrait'] as String?);
+      v ??=
+          (ads['source_landscape'] as String?) ??
+          (ads['source_portrait'] as String?);
       if (v is String && v.isNotEmpty) {
         // play current ad
         VideoCacheService.instance.getVideoFromCache(v).then((file) async {
@@ -449,7 +441,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
           String? nv = _deviceIsLandscape
               ? (nads['source_landscape'] as String?)
               : (nads['source_portrait'] as String?);
-          nv ??= (nads['source_landscape'] as String?) ?? (nads['source_portrait'] as String?);
+          nv ??=
+              (nads['source_landscape'] as String?) ??
+              (nads['source_portrait'] as String?);
           if (nv is String && nv.isNotEmpty) {
             VideoCacheService.instance.getVideoFromCache(nv).then((nfile) {
               if (nfile != null) {
@@ -463,12 +457,44 @@ class _DisplayScreenState extends State<DisplayScreen> {
       // Hide/mute layer for NEWS
       unawaited(_adLayerKey.currentState?.hide());
     }
+    // Proactively prepare the NEXT content to avoid black gaps
+    unawaited(_prepareNextContent());
 
     // Auto advance timer
     _timer = Timer(Duration(seconds: duration), () {
       if (!mounted) return;
       _nextContent();
     });
+  }
+
+  Future<void> _prepareNextContent() async {
+    if (_contents.isEmpty) return;
+    final nextIndex = (_currentIndex + 1) % _contents.length;
+    final next = _contents[nextIndex];
+    final isNextAd = next['type'] == 'ADVERTISEMENT' && next['ads'] != null;
+    final isNextNews = next['type'] == 'NEWS' && next['news'] != null;
+    if (isNextAd) {
+      final nads = next['ads'];
+      String? nv = _deviceIsLandscape
+          ? (nads['source_landscape'] as String?)
+          : (nads['source_portrait'] as String?);
+      nv ??=
+          (nads['source_landscape'] as String?) ??
+          (nads['source_portrait'] as String?);
+      if (nv is String && nv.isNotEmpty) {
+        final file = await VideoCacheService.instance.getVideoFromCache(nv);
+        if (file != null) {
+          await _adLayerKey.currentState?.prepareNext(file);
+        }
+      }
+    } else if (isNextNews) {
+      final img = next['news']['image'];
+      if (img is String && img.isNotEmpty && mounted) {
+        // Warm the image into memory cache to avoid black flicker
+        final provider = CachedNetworkImageProvider(img);
+        unawaited(precacheImage(provider, context));
+      }
+    }
   }
 
   void _startBackgroundSync() {
@@ -806,7 +832,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(15),
                           child: Image.asset(
-                            'assets/images/logo.png',
+                            // 'assets/images/logo.png',
+                            'assets/images/logo-white.png',
                             fit: BoxFit.contain,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
@@ -1090,7 +1117,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
                     const SizedBox(height: 8),
                     Text(
                       'Vídeos: \\${_videoDone}/\\${_videoTotal}   Imagens: \\${_imageDone}/\\${_imageTotal}',
-                      style: const TextStyle(color: Colors.white70, fontSize: 16),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
