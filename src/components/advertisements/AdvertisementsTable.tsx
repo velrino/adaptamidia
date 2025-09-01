@@ -280,7 +280,7 @@ export default function AdvertisementsTable() {
                                 item?.source_portrait ||
                                 "/placeholder.svg"
                               }
-                              // autoPlay
+                              autoPlay
                               loop
                               muted
                               className="w-full h-full object-cover"

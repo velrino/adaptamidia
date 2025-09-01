@@ -434,9 +434,9 @@ export default function DisplayLogModalInfo({
                               )}
                             </div>
                             <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded-lg p-3 flex items-center justify-center">
-                              <div className="text-center">
+                              <div className="text-center ">
                                 {record.advertisement &&
-                                record.type === "VIDEO" ? (
+                                record.type === "ADVERTISEMENT" ? (
                                   <>
                                     <video
                                       src={
@@ -448,7 +448,7 @@ export default function DisplayLogModalInfo({
                                       autoPlay
                                       loop
                                       muted
-                                      className="w-100 h-full object-cover"
+                                      className="w-100 max-h-[400px]"
                                       style={{ objectPosition: "center" }}
                                     />
                                   </>
