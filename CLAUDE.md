@@ -592,6 +592,7 @@ O sistema de display é o **CORAÇÃO** da aplicação SeeMidia. Funciona 24/7 e
 - Filtro: exibimos apenas itens cuja mídia já está disponível localmente.
 - Refresh em background: a cada 10 minutos, limpamos o que não será usado, baixamos novos e atualizamos a playlist sem travar a UI.
 - Offline: após baixar, o player segue funcionando sem internet.
+ - Preparação com timeout: overlay de "Preparando conteúdo" mostra contadores (Ex.: Vídeos X/Y, Imagens A/B) e barra combinada; aguarda no máximo 30s e inicia a exibição mesmo que não termine 100%. Downloads continuam em background e, ao concluir, um refresh incorpora as mídias faltantes.
   
 Notas de orientação em refresh:
 - Para ADs, a seleção do arquivo leva em conta a orientação (`source_landscape`/`source_portrait`) tanto no pré‑carregamento quanto no filtro do refresh. Evita remoções indevidas de anúncios após sincronização.
