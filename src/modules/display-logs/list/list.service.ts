@@ -165,7 +165,13 @@ export class ListDisplayLogService {
       })
       .populate({
         path: 'advertisement',
-        select: ['_id', 'description', 'title', 'items'],
+        select: [
+          '_id',
+          'description',
+          'title',
+          'source_portrait',
+          'source_landscape',
+        ],
       })
       .populate({
         path: 'local_unit',
