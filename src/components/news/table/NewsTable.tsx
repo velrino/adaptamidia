@@ -315,7 +315,7 @@ export default function NewsTable() {
                           </div>
 
                           {/* Texto */}
-                          <div className="font-medium text-gray-800 text-theme-sm dark:text-white/90 break-words max-w-[200px]">
+                          <div className="font-medium text-gray-800 text-theme-sm dark:text-white/90 break-words max-w-[100px]">
                             {item.title || "N/A"}
                           </div>
                         </div>

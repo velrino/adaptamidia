@@ -61,10 +61,7 @@ const AdvertisementModalLocal = memo(
       []
     );
 
-    const tomorrow = useMemo(
-      () => DateHelper.dayjs().add(1, "day").toDate(),
-      []
-    );
+    const tomorrow = useMemo(() => DateHelper.dayjs().toDate(), []);
 
     // Inicializa as datas apenas uma vez, quando o componente é montado ou quando `data` muda
     useEffect(() => {
@@ -236,7 +233,7 @@ const AdvertisementModalLocal = memo(
       []
     );
 
-    const options = GenerateNumberRangeAsOptions(10, 30);
+    const options = GenerateNumberRangeAsOptions(5, 60);
 
     const handleNeighborhoodChange = useCallback((neighborhoods: string[]) => {
       updateForm("neighborhood", neighborhoods);

@@ -8,6 +8,7 @@ import { ContentAction, IToastType } from "@/interfaces/general";
 import { useToast } from "@/context/ToastContext";
 import { useSession } from "next-auth/react";
 import { useLoading } from "@/context/LoadingContext";
+import { Default } from "@/backend/mock/advertisements";
 
 export const useAdvertisementForm = (
   initialData: IApiAdvertisementItem,
@@ -40,12 +41,14 @@ export const useAdvertisementForm = (
       title: data.title,
       description: data.description,
       type: data.type,
-      source_landscape: data.source_landscape
-        ? String(data.source_landscape)
-        : String(data.source_portrait),
-      source_portrait: data.source_portrait
-        ? String(data.source_portrait)
-        : String(data.source_landscape),
+      source_landscape:
+        data.source_landscape !== Default.video.landscape
+          ? String(data.source_landscape)
+          : String(data.source_portrait),
+      source_portrait:
+        data.source_portrait !== Default.video.portrait
+          ? String(data.source_portrait)
+          : String(data.source_landscape),
       seconds: data.seconds,
       status: data.status,
       neighborhood: data.neighborhood,

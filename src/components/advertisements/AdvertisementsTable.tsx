@@ -290,9 +290,11 @@ export default function AdvertisementsTable() {
                         </div>
 
                         {/* Texto */}
-                        <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90">
-                          {item.title || `Rascunho #${i + 1}`}
-                        </span>
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90 line-clamp-2 break-words">
+                            {item.title || `Rascunho #${i + 1}`}
+                          </span>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">

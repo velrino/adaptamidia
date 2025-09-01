@@ -33,6 +33,15 @@ export const SegmentOptionsMock: IReactSelectOption[] = Object.entries(
   .map(([value, label]) => ({ value: value as BrandSegment, label }))
   .sort((a, b) => a.label.localeCompare(b.label));
 
+export const Default = {
+  video: {
+    landscape:
+      "https://storage.googleapis.com/adapta-midia/default/landscape.mp4",
+    portrait:
+      "https://storage.googleapis.com/adapta-midia/default/portrait.mp4",
+  },
+};
+
 export const AdsRecordDefault: IApiAdvertisementItem = {
   _id: String(),
   company: {
@@ -49,8 +58,8 @@ export const AdsRecordDefault: IApiAdvertisementItem = {
   description: String(),
   type: AdType.VIDEO,
   spotlight: false,
-  source_landscape: "/videos/demo/0.mp4",
-  source_portrait: "/videos/demo/0.mp4",
+  source_landscape: Default.video.landscape,
+  source_portrait: Default.video.portrait,
   seconds: 10,
   status: AdStatus.REVIEW,
   start_date: DateHelper.addDays(new Date(), 1, "days").toISOString(),
