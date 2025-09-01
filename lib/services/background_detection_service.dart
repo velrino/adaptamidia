@@ -296,16 +296,24 @@ class BackgroundDetectionService {
   }
 
   Future<void> _processJob(_Job job) async {
+    final bdTrace = FirebasePerformance.instance.newTrace('bd_job');
+    await bdTrace.start();
+    bdTrace.putAttribute('capture_id', job.captureId);
+    final _typeAttr = (job.body['type'] ?? '').toString();
+    if (_typeAttr.isNotEmpty) bdTrace.putAttribute('type', _typeAttr);
     await ensureLoaded();
     int peopleCount = 0;
     try {
       if (_yolo != null) {
+        final swYolo = Stopwatch()..start();
         final Uint8List bytes = await job.imageFile.readAsBytes();
         final result = await _yolo!.predict(
           bytes,
           confidenceThreshold: 0.5,
           iouThreshold: 0.4,
         );
+        swYolo.stop();
+        try { bdTrace.incrementMetric('yolo_ms', swYolo.elapsedMilliseconds); } catch (_) {}
         final detections = (result['detections'] as List<dynamic>? ?? [])
             .map((e) => YOLOResult.fromMap(e))
             .toList();
@@ -343,7 +351,10 @@ class BackgroundDetectionService {
         };
       } else {
         try {
+          final swFace = Stopwatch()..start();
           final insight = await _fetchInsightface(job.imageFile);
+          swFace.stop();
+          try { bdTrace.incrementMetric('insight_ms', swFace.elapsedMilliseconds); } catch (_) {}
           job.body['insightface'] = insight;
         } catch (e, st) {
           debugPrint('[BackgroundDetection] InsightFace request failed: $e\n$st');
@@ -356,6 +367,7 @@ class BackgroundDetectionService {
     try {
       final token = await StorageService.getAuthToken();
       if (token != null) {
+        final swLog = Stopwatch()..start();
         await ApiService.post<Map<String, dynamic>>(
           '/display/log/device',
           job.body,
@@ -365,6 +377,11 @@ class BackgroundDetectionService {
             'ngrok-skip-browser-warning': 'true',
           },
         );
+        swLog.stop();
+        try {
+          bdTrace.incrementMetric('log_ms', swLog.elapsedMilliseconds);
+          bdTrace.putAttribute('people_count', peopleCount.toString());
+        } catch (_) {}
       }
       // await DisplayLogService.instance.createLog(identifier: job.captureId, body: job.body);
     } finally {
@@ -375,6 +392,7 @@ class BackgroundDetectionService {
         }
       } catch (_) {}
       unawaited(_deleteJobMeta(job.captureId));
+      await bdTrace.stop();
     }
   }
 

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'logger_service.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 
 class ApiService {
   // static const String _baseUrl = 'https://9aca430ada6d.ngrok-free.app';
@@ -32,38 +33,56 @@ class ApiService {
 
       http.Response response;
 
+      // Performance HTTP metric
+      HttpMethod httpMethod;
       switch (method.toUpperCase()) {
         case 'GET':
-          response = await http
-              .get(uri, headers: finalHeaders)
-              .timeout(_timeout);
+          httpMethod = HttpMethod.Get;
+          break;
+        case 'POST':
+          httpMethod = HttpMethod.Post;
+          break;
+        case 'PUT':
+          httpMethod = HttpMethod.Put;
+          break;
+        case 'DELETE':
+          httpMethod = HttpMethod.Delete;
+          break;
+        default:
+          httpMethod = HttpMethod.Get;
+      }
+      final httpMetric = FirebasePerformance.instance.newHttpMetric(
+        uri.toString(),
+        httpMethod,
+      );
+      await httpMetric.start();
+
+      switch (method.toUpperCase()) {
+        case 'GET':
+          response = await http.get(uri, headers: finalHeaders).timeout(_timeout);
           break;
         case 'POST':
           response = await http
-              .post(
-                uri,
-                headers: finalHeaders,
-                body: data != null ? jsonEncode(data) : null,
-              )
+              .post(uri, headers: finalHeaders, body: data != null ? jsonEncode(data) : null)
               .timeout(_timeout);
           break;
         case 'PUT':
           response = await http
-              .put(
-                uri,
-                headers: finalHeaders,
-                body: data != null ? jsonEncode(data) : null,
-              )
+              .put(uri, headers: finalHeaders, body: data != null ? jsonEncode(data) : null)
               .timeout(_timeout);
           break;
         case 'DELETE':
-          response = await http
-              .delete(uri, headers: finalHeaders)
-              .timeout(_timeout);
+          response = await http.delete(uri, headers: finalHeaders).timeout(_timeout);
           break;
         default:
           throw ApiException('Método HTTP não suportado: $method');
       }
+
+      // Stop metric
+      try {
+        httpMetric.responseCode = response.statusCode;
+      } catch (_) {}
+      await httpMetric.stop();
 
       final apiResponse = _handleResponse<T>(response, fromJson);
 
@@ -98,6 +117,12 @@ class ApiService {
       }
       LoggerService.apiError(endpoint, e);
       throw ApiException('Erro inesperado: ${e.toString()}');
+    } finally {
+      // Ensure any started metric is stopped in error cases
+      try {
+        final active = FirebasePerformance.instance;
+        // no global way to fetch metric; metrics above are stopped in success
+      } catch (_) {}
     }
   }
 

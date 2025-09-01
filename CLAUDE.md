@@ -281,6 +281,14 @@ Estas notas documentam ajustes críticos realizados para estabilidade do app em 
   - Overlay visível/oculto: controlado por `UvcCameraService.previewVisible` (ValueNotifier) e alternado via Configurações.
   - A `DisplayScreen` chama `hidePreview()` ao entrar, garantindo que o público nunca veja a câmera.
 
+### Observabilidade (Android)
+
+- Crashlytics (release): coletamos erros e adicionamos `device_id` como custom key.
+- Performance (release):
+  - Trace `prepare_assets` (pré‑carregamento de mídia).
+  - Trace `bd_job` (processamento de captura): métricas `yolo_ms`, `insight_ms`, `log_ms` e atributos `capture_id`, `type`, `people_count`.
+  - HTTP metrics: `ApiService` usa `HttpMetric` (latência e status das chamadas GET/POST/PUT/DELETE).
+
 ### UI – Configuração e Controles de Câmera (Atualizado)
 
 - Configurações do Display (bottom sheet):
@@ -330,6 +338,7 @@ Referências rápidas:
 - **Conectividade**: ADB WiFi via app WADB
 - **IP do tablet**: 192.168.1.14:5555
 - **Desenvolvimento**: macOS com Flutter
+- **Plataforma alvo**: Somente Android (hardware de fornecedores chineses); sem suporte iOS
 
 ## Arquitetura do Sistema
 

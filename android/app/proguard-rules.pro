@@ -20,3 +20,8 @@
 -dontwarn com.google.android.gms.**
 -keep class com.google.android.datatransport.** { *; }
 -dontwarn com.google.android.datatransport.**
+
+# SnakeYAML / java.beans (Android does not ship java.beans; suppress warnings and keep YAML if present)
+-dontwarn java.beans.**
+-dontwarn org.yaml.snakeyaml.**
+-keep class org.yaml.snakeyaml.** { *; }

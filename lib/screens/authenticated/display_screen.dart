@@ -14,6 +14,7 @@ import '../../services/api_service.dart';
 import '../../services/device_context_service.dart';
 // Global UVC handled by UvcCameraService
 import '../../services/uvc_camera_service.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 // Removed PhotoLogService (no image uploads by LGPD)
 // import '../../components/video_player_screen.dart';
 // import '../../components/vlc_video_player.dart'; // VLC has _viewId bug
@@ -243,6 +244,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
   }
 
   Future<void> _prepareAssetsAndStart() async {
+    final trace = FirebasePerformance.instance.newTrace('prepare_assets');
+    await trace.start();
     if (!mounted) return;
     setState(() {
       _isPreparing = true;
@@ -355,6 +358,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
         _isPreparing = false;
         _prepareProgress = 1.0;
       });
+      await trace.stop();
       _startContent();
     }
   }

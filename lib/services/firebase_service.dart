@@ -1,4 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_performance/firebase_performance.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -65,6 +67,35 @@ class FirebaseService {
     debugPrint(
       '[FirebaseService] Realtime Database ready (persistence enabled)',
     );
+
+    // Crashlytics + Performance setup
+    try {
+      // Collect in debug only if explicitly enabled; default to release
+      await FirebaseCrashlytics.instance
+          .setCrashlyticsCollectionEnabled(!kDebugMode);
+
+      // Flutter framework errors
+      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterError;
+
+      // Dart zone/PlatformDispatcher errors
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+
+      // Enable Performance Monitoring
+      await FirebasePerformance.instance
+          .setPerformanceCollectionEnabled(!kDebugMode);
+
+      // Set common Crashlytics keys
+      try {
+        final deviceId = await StorageService.getOrCreateDeviceId();
+        await FirebaseCrashlytics.instance.setCustomKey('device_id', deviceId);
+      } catch (_) {}
+      debugPrint('[FirebaseService] Crashlytics & Performance enabled');
+    } catch (e) {
+      debugPrint('[FirebaseService] Crashlytics/Performance setup failed: $e');
+    }
   }
 
   /// Listen for auth device data once and remove after reading
@@ -144,3 +175,4 @@ class FirebaseService {
     );
   }
 }
+import 'dart:ui';
