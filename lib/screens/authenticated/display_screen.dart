@@ -74,6 +74,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(UvcCameraService.instance.ensureOpen());
       UvcCameraService.instance.hidePreview();
+      // DCIM sweep is scheduled in UvcCameraService.initialize()
     });
     // No uploads to Storage per LGPD; skip photo upload queue
   }
@@ -833,7 +834,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
                           borderRadius: BorderRadius.circular(15),
                           child: Image.asset(
                             // 'assets/images/logo.png',
-                            'assets/images/logo-white.png',
+                            // 'assets/images/logo-white.png',
+                            'assets/images/logo-flex.png',
                             fit: BoxFit.contain,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(
