@@ -4,7 +4,9 @@ import 'package:http/http.dart' as http;
 import 'logger_service.dart';
 
 class ApiService {
-  static const String _baseUrl = 'https://9aca430ada6d.ngrok-free.app';
+  // static const String _baseUrl = 'https://9aca430ada6d.ngrok-free.app';
+  static const String _baseUrl =
+      'https://api-2057331207.southamerica-east1.run.app';
   static const Duration _timeout = Duration(seconds: 30);
 
   static final Map<String, String> _defaultHeaders = {
@@ -144,9 +146,9 @@ class ApiService {
   static Future<ApiResponse<T>> post<T>(
     String endpoint,
     Map<String, dynamic> data,
-    T Function(Map<String, dynamic>) fromJson,
-    {Map<String, String>? headers}
-  ) {
+    T Function(Map<String, dynamic>) fromJson, {
+    Map<String, String>? headers,
+  }) {
     return _makeRequest('POST', endpoint, data, fromJson, headers: headers);
   }
 
@@ -154,18 +156,18 @@ class ApiService {
   static Future<ApiResponse<T>> put<T>(
     String endpoint,
     Map<String, dynamic> data,
-    T Function(Map<String, dynamic>) fromJson,
-    {Map<String, String>? headers}
-  ) {
+    T Function(Map<String, dynamic>) fromJson, {
+    Map<String, String>? headers,
+  }) {
     return _makeRequest('PUT', endpoint, data, fromJson, headers: headers);
   }
 
   // DELETE request
   static Future<ApiResponse<T>> delete<T>(
     String endpoint,
-    T Function(Map<String, dynamic>) fromJson,
-    {Map<String, String>? headers}
-  ) {
+    T Function(Map<String, dynamic>) fromJson, {
+    Map<String, String>? headers,
+  }) {
     return _makeRequest('DELETE', endpoint, null, fromJson, headers: headers);
   }
 }

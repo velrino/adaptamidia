@@ -85,7 +85,7 @@ O SeeMidia é uma plataforma de mídia digital que será instalada em tablets/di
   - [x] **Cache inteligente** evita re-downloads duplicados
   - [x] **URLs normalizadas** funciona com/sem .mp4 na URL
   - [x] **Modo offline** funciona sem internet após downloads
-  - [x] **Servidor HTTP local** serve vídeos cached via http://127.0.0.1:8080
+  - [x] Exibição direta de arquivos locais (sem servidor HTTP local)
   - [x] **Portrait/Landscape** adaptativo: Portrait=crop, Landscape=contain
   - [x] **Performance otimizada** para tablets Android 10+ comerciais 24/7
 
@@ -498,7 +498,7 @@ O sistema de display é o **CORAÇÃO** da aplicação SeeMidia. Funciona 24/7 e
 - **Sem Cálculos Complexos**: Solução simples e robusta que sempre funciona
 
 ##### 🖼️ Sistema de Imagens (NEWS) - OVERLAY UNIFICADO ELEGANTE ⭐
-- **Widget**: `CachedNetworkImage` com cache inteligente
+- **Widget**: `CachedNetworkImage` com cache local (pré-carregado por `ImageCacheService`)
 - **Fit**: `BoxFit.cover` - preenche toda a tela
 - **Overlay Corporativo Unificado**: 
   - **Logo SeeMidia** à esquerda (200x200px) com shadow
@@ -517,7 +517,8 @@ O sistema de display é o **CORAÇÃO** da aplicação SeeMidia. Funciona 24/7 e
 - **Branding**: Espaço dedicado à marca SeeMidia (lado esquerdo)
 
 ##### 🎥 Sistema de Vídeos (ADVERTISEMENT) - SOLUÇÃO UNIVERSAL
-- **Widget**: `VideoPlayer` dentro de `FittedBox(fit: BoxFit.cover)` + `AspectRatio`
+- **Widget**: `VideoPlayerController.file` em `FittedBox(fit: BoxFit.cover)` com `VideoPlayer`
+- **Origem**: arquivos de vídeo baixados por `VideoCacheService` (caminho local)
 - **Fullscreen Garantido**: Funciona com QUALQUER dimensão (876×496, 1920×1080, etc)
 - **Sem Áudio**: `setVolume(0.0)` ANTES da inicialização
 - **Autoplay**: Inicia automaticamente após inicialização
@@ -546,6 +547,14 @@ O sistema de display é o **CORAÇÃO** da aplicação SeeMidia. Funciona 24/7 e
   - `mixWithOthers: false`
   - `setVolume(0.0)` antes de inicializar
   - Headers `Connection: keep-alive`
+
+##### 📦 Cache e Modo Offline (Atualizado)
+- Pré-carregamento: após `/display/unit/{id}`, coletamos as URLs e baixamos tudo antes de iniciar o ciclo.
+- Vídeos: baixados e servidos via arquivo local (`VideoCacheService.getVideoFromCache` + `VideoPlayerController.file`).
+- Imagens: baixadas/armazenadas com `CachedNetworkImage` e utilitários de `ImageCacheService`.
+- Filtro: exibimos apenas itens cuja mídia já está disponível localmente.
+- Refresh em background: a cada 10 minutos, limpamos o que não será usado, baixamos novos e atualizamos a playlist sem travar a UI.
+- Offline: após baixar, o player segue funcionando sem internet.
 
 #### 📊 Logging de Conteúdo:
 ```dart
