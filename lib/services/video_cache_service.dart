@@ -223,12 +223,21 @@ class VideoCacheService {
   }
   
   /// Pré-carrega lista de vídeos em background
-  Future<void> preloadVideos(List<String> urls) async {
+  Future<void> preloadVideos(List<String> urls, {void Function(int done, int total)? onProgress}) async {
     print('📦 Pré-carregando ${urls.length} vídeos...');
+    final unique = urls.where((u) => u.isNotEmpty).toSet().toList();
+    if (unique.isEmpty) {
+      onProgress?.call(0, 0);
+      return;
+    }
+    int completed = 0;
     
     final futures = <Future>[];
-    for (final url in urls) {
-      futures.add(downloadVideo(url));
+    for (final url in unique) {
+      futures.add(downloadVideo(url).then((_) {
+        completed++;
+        onProgress?.call(completed, unique.length);
+      }));
       
       // Limita downloads simultâneos
       if (futures.length >= 2) {

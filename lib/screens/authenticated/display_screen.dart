@@ -19,6 +19,7 @@ import 'package:firebase_performance/firebase_performance.dart';
 // import '../../components/video_player_screen.dart';
 // import '../../components/vlc_video_player.dart'; // VLC has _viewId bug
 import '../../components/flutter_video_player.dart'; // Testing Flutter native video player
+import '../../components/ad_video_layer.dart';
 
 class DisplayScreen extends StatefulWidget {
   final String unitId;
@@ -39,6 +40,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
   bool _isLoading = true;
   bool _isPreparing = false;
   double _prepareProgress = 0.0;
+  int _videoTotal = 0;
+  int _videoDone = 0;
+  int _imageTotal = 0;
+  int _imageDone = 0;
   String? _error;
   Map<String, dynamic>? _unitData;
   Timer? _backgroundTimer;
@@ -51,6 +56,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   DateTime? _currentStartAt;
   int _currentDurationSecs = 0;
   bool _deviceIsLandscape = true;
+  final GlobalKey<AdVideoLayerState> _adLayerKey = GlobalKey<AdVideoLayerState>();
 
   // UVC handled globally via UvcCameraService
   // YOLO handled by BackgroundDetectionService
@@ -250,6 +256,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
     setState(() {
       _isPreparing = true;
       _prepareProgress = 0.0;
+      _videoTotal = 0;
+      _videoDone = 0;
+      _imageTotal = 0;
+      _imageDone = 0;
     });
 
     try {
@@ -277,6 +287,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
       final videoSet = videoUrls.toSet();
       final imageSet = imageUrls.toSet();
+      _videoTotal = videoSet.length;
+      _imageTotal = imageSet.length;
 
       // 1) Limpa cache antigo antes de baixar (retém somente o que será usado)
       await Future.wait([
@@ -293,27 +305,44 @@ class _DisplayScreenState extends State<DisplayScreen> {
         });
       }
 
-      // Pré-carrega imagens e vídeos com progresso combinado
-      await Future.wait([
-        () async {
-          if (imageUrls.isEmpty) return;
-          await ImageCacheService.instance.preloadAll(
-            imageUrls,
-            concurrency: 6,
-            onProgress: (p) {
-              done = (total * 0).toInt() + (p * imageSet.length).round();
-              tick();
-            },
-          );
-        }(),
-        () async {
-          if (videoUrls.isEmpty) return;
-          // Usa serviço especializado para vídeos (com controle de concorrência interno)
-          await VideoCacheService.instance.preloadVideos(videoUrls);
-          // Conta todos os vídeos como concluídos
-          done += videoSet.length;
-          tick();
-        }(),
+      // Pré-carrega imagens e vídeos com progresso combinado (timeout 30s)
+      Future<void> imageFuture = () async {
+        if (imageUrls.isEmpty) return;
+        await ImageCacheService.instance.preloadAll(
+          imageUrls,
+          concurrency: 6,
+          onProgress: (p) {
+            _imageDone = (p * _imageTotal).round();
+            done = _imageDone + _videoDone;
+            tick();
+          },
+        );
+      }();
+
+      Future<void> videoFuture = () async {
+        if (videoUrls.isEmpty) return;
+        await VideoCacheService.instance.preloadVideos(
+          videoUrls,
+          onProgress: (d, t) {
+            _videoDone = d;
+            done = _imageDone + _videoDone;
+            tick();
+          },
+        );
+      }();
+
+      final combined = Future.wait([imageFuture, videoFuture]);
+      // Quando terminar em background, faça um refresh para incluir mídias recém baixadas
+      unawaited(combined.then((_) {
+        if (mounted) {
+          unawaited(_backgroundRefresh());
+        }
+      }));
+
+      // Aguarda no máximo 30s para a preparação inicial
+      await Future.any([
+        combined,
+        Future.delayed(const Duration(seconds: 30)),
       ]);
 
       // Após pré-carregar, mantém apenas conteúdos com mídia garantida em cache
@@ -376,7 +405,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
     debugPrint('🎬 Starting content: $type at index $_currentIndex');
 
     int duration = 10; // NEWS default is 10s
-
     if (type == 'ADVERTISEMENT' && content['ads'] != null) {
       duration = content['ads']['seconds'] ?? 10;
     }
@@ -385,7 +413,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
     _currentStartAt = DateTime.now();
     _currentDurationSecs = duration;
 
-    // Start progress timer (250ms para reduzir pressão de UI)
+    // Start progress timer (100ms)
     const periodMs = 100;
     _progressTimer = Timer.periodic(const Duration(milliseconds: periodMs), (
       timer,
@@ -398,6 +426,43 @@ class _DisplayScreenState extends State<DisplayScreen> {
         _progress = (timer.tick * periodMs) / (duration * 1000);
       });
     });
+
+    // Control Ad video layer visibility and source
+    if (type == 'ADVERTISEMENT' && content['ads'] != null) {
+      final ads = content['ads'];
+      String? v = _deviceIsLandscape
+          ? (ads['source_landscape'] as String?)
+          : (ads['source_portrait'] as String?);
+      v ??= (ads['source_landscape'] as String?) ?? (ads['source_portrait'] as String?);
+      if (v is String && v.isNotEmpty) {
+        // play current ad
+        VideoCacheService.instance.getVideoFromCache(v).then((file) async {
+          if (file != null) {
+            await _adLayerKey.currentState?.playFile(file);
+          }
+        });
+        // prepare next ad
+        final nextIndex = (_currentIndex + 1) % _contents.length;
+        final next = _contents[nextIndex];
+        if (next['type'] == 'ADVERTISEMENT' && next['ads'] != null) {
+          final nads = next['ads'];
+          String? nv = _deviceIsLandscape
+              ? (nads['source_landscape'] as String?)
+              : (nads['source_portrait'] as String?);
+          nv ??= (nads['source_landscape'] as String?) ?? (nads['source_portrait'] as String?);
+          if (nv is String && nv.isNotEmpty) {
+            VideoCacheService.instance.getVideoFromCache(nv).then((nfile) {
+              if (nfile != null) {
+                _adLayerKey.currentState?.prepareNext(nfile);
+              }
+            });
+          }
+        }
+      }
+    } else {
+      // Hide/mute layer for NEWS
+      unawaited(_adLayerKey.currentState?.hide());
+    }
 
     // Auto advance timer
     _timer = Timer(Duration(seconds: duration), () {
@@ -957,13 +1022,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
       );
     }
 
-    // Use Flutter native video player with local files
-    return FlutterVideoPlayer(
-      videoUrl: videoUrl,
-      onComplete: () {
-        debugPrint('Flutter video completed');
-      },
-    );
+    // Layer-based playback handles rendering; return empty container here
+    return const SizedBox.shrink();
   }
 
   @override
@@ -1027,6 +1087,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Vídeos: \\${_videoDone}/\\${_videoTotal}   Imagens: \\${_imageDone}/\\${_imageTotal}',
+                      style: const TextStyle(color: Colors.white70, fontSize: 16),
+                    ),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: 260,
@@ -1060,6 +1125,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
                 minHeight: 3,
               ),
             ),
+
+          // Persistent Ad video layer (double-buffered), hidden by default
+          AdVideoLayer(key: _adLayerKey),
 
           // Global hidden UVC preview lives in UvcCameraHost (root)
         ],

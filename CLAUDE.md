@@ -552,8 +552,10 @@ O sistema de display é o **CORAÇÃO** da aplicação SeeMidia. Funciona 24/7 e
 - **Branding**: Espaço dedicado à marca SeeMidia (lado esquerdo)
 
 ##### 🎥 Sistema de Vídeos (ADVERTISEMENT) - SOLUÇÃO UNIVERSAL
-- **Widget**: `VideoPlayerController.file` em `FittedBox(fit: BoxFit.cover)` com `VideoPlayer`
-- **Origem**: arquivos de vídeo baixados por `VideoCacheService` (caminho local)
+- **Camada Persistente (AdVideoLayer)**: layer global com dois controladores (active/standby), sempre presente e controlado por opacidade.
+- **Crossfade**: quando o próximo anúncio já está pré‑carregado (standby), o layer faz crossfade suave (~250ms) entre vídeos.
+- **Pré‑carregamento (double buffer)**: o próximo anúncio é inicializado no standby durante a reprodução do atual.
+- **Origem**: arquivos de vídeo baixados por `VideoCacheService` (caminho local), controlados por `AdVideoLayer` (sem reconstruir player a cada troca).
 - **Fullscreen Garantido**: Funciona com QUALQUER dimensão (876×496, 1920×1080, etc)
 - **Sem Áudio**: `setVolume(0.0)` ANTES da inicialização
 - **Autoplay**: Inicia automaticamente após inicialização
@@ -590,6 +592,9 @@ O sistema de display é o **CORAÇÃO** da aplicação SeeMidia. Funciona 24/7 e
 - Filtro: exibimos apenas itens cuja mídia já está disponível localmente.
 - Refresh em background: a cada 10 minutos, limpamos o que não será usado, baixamos novos e atualizamos a playlist sem travar a UI.
 - Offline: após baixar, o player segue funcionando sem internet.
+  
+Notas de orientação em refresh:
+- Para ADs, a seleção do arquivo leva em conta a orientação (`source_landscape`/`source_portrait`) tanto no pré‑carregamento quanto no filtro do refresh. Evita remoções indevidas de anúncios após sincronização.
 
 #### 📊 Logging de Conteúdo:
 ```dart
