@@ -21,8 +21,10 @@ class HomeScreen extends StatelessWidget {
         title: Padding(
           padding: const EdgeInsets.only(top: 8),
           child: Image.asset(
-            'assets/images/logo.png',
-            height: 100,
+            isDark
+                ? 'assets/images/logo-landscape-white.png'
+                : 'assets/images/logo-landscape.png',
+            height: 50,
             // fit: BoxFit.contain,
           ),
         ),
