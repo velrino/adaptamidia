@@ -247,7 +247,10 @@ export class DisplayByUnitService {
       const ad = nextAd();
       if (ad) {
         // Double-check we are not placing two ads consecutively
-        if (result.length === 0 || result[result.length - 1].type !== DisplayType.ADVERTISEMENT) {
+        if (
+          result.length === 0 ||
+          result[result.length - 1].type !== DisplayType.ADVERTISEMENT
+        ) {
           result.push({ type: DisplayType.ADVERTISEMENT, ads: ad });
           totalAds++;
         } else {
@@ -298,7 +301,7 @@ export class DisplayByUnitService {
           currentUnit?.preferences?.include_source_name || [],
         exclude_source_name:
           currentUnit?.preferences?.exclude_source_name || [],
-        limit: parameters.news_limit || 50,
+        limit: parameters.news_limit || 200,
         cache: parameters.cache,
       };
 
