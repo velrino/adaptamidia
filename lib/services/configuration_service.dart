@@ -1,20 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:seemidia/services/uvc_camera_service.dart';
 import '../services/storage_service.dart';
 import '../screens/configuration_screen.dart';
 
 class ConfigurationService {
   static ConfigurationService? _instance;
-  static ConfigurationService get instance => _instance ??= ConfigurationService._internal();
-  
+  static ConfigurationService get instance =>
+      _instance ??= ConfigurationService._internal();
+
   ConfigurationService._internal();
+  bool _cameraStateChangedDuringSheet = false;
 
   /// Shows the configuration bottom sheet
   void showConfigurationOptions(BuildContext context) {
+    // Ensure the config sheet overlays everything (including camera preview)
+    // by temporarily hiding the camera overlay and restoring after dismiss,
+    // unless the user explicitly changes it inside the sheet.
+    final wasCameraVisible = UvcCameraService.instance.previewVisible.value;
+    if (wasCameraVisible) {
+      UvcCameraService.instance.hidePreview();
+    }
+    _cameraStateChangedDuringSheet = false;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => _buildConfigurationBottomSheet(context),
-    );
+    ).whenComplete(() {
+      if (!_cameraStateChangedDuringSheet) {
+        if (wasCameraVisible) {
+          UvcCameraService.instance.showPreview();
+        } else {
+          UvcCameraService.instance.hidePreview();
+        }
+      }
+      _cameraStateChangedDuringSheet = false;
+    });
   }
 
   Widget _buildConfigurationBottomSheet(BuildContext context) {
@@ -72,16 +93,40 @@ class ConfigurationService {
             isDark,
           ),
           const SizedBox(height: 12),
-          _buildConfigOption(
-            context,
-            'Câmera USB',
-            'Visualizar webcam conectada via USB',
-            Icons.camera_alt,
-            () {
-              Navigator.pop(context);
-              Navigator.of(context).pushNamed('/camera');
+          ValueListenableBuilder<bool>(
+            valueListenable: UvcCameraService.instance.previewVisible,
+            builder: (context, visible, _) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildConfigOption(
+                    context,
+                    'Exibir Câmera USB',
+                    'Mostra a webcam como overlay',
+                    Icons.visibility,
+                    () {
+                      _cameraStateChangedDuringSheet = true;
+                      UvcCameraService.instance.showPreview();
+                      Navigator.pop(context);
+                    },
+                    isDark,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildConfigOption(
+                    context,
+                    'Ocultar Câmera USB',
+                    'Esconde a webcam (overlay)',
+                    Icons.visibility_off,
+                    () {
+                      _cameraStateChangedDuringSheet = true;
+                      UvcCameraService.instance.hidePreview();
+                      Navigator.pop(context);
+                    },
+                    isDark,
+                  ),
+                ],
+              );
             },
-            isDark,
           ),
           const SizedBox(height: 12),
           _buildConfigOption(

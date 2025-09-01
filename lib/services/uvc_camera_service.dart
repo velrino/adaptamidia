@@ -22,6 +22,26 @@ class UvcCameraService {
   Future<void>? _openOp;
   DateTime _nextRetryAt = DateTime.fromMillisecondsSinceEpoch(0);
   Duration _retryBackoff = const Duration(seconds: 3);
+  final ValueNotifier<bool> previewVisible = ValueNotifier<bool>(false);
+
+  void togglePreview() {
+    final newVal = !previewVisible.value;
+    previewVisible.value = newVal;
+    if (newVal) {
+      unawaited(ensureOpen());
+    }
+  }
+
+  void showPreview() {
+    if (!previewVisible.value) {
+      previewVisible.value = true;
+      unawaited(ensureOpen());
+    }
+  }
+
+  void hidePreview() {
+    if (previewVisible.value) previewVisible.value = false;
+  }
 
   void initialize() {
     if (_initialized) return;

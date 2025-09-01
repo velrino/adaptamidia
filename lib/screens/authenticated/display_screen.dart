@@ -65,6 +65,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
     // Ensure global UVC is opened
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(UvcCameraService.instance.ensureOpen());
+      UvcCameraService.instance.hidePreview();
     });
     // No uploads to Storage per LGPD; skip photo upload queue
   }

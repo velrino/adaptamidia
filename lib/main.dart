@@ -7,7 +7,7 @@ import 'screens/configuration_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/authenticated/home_screen.dart';
 import 'screens/authenticated/display_screen.dart';
-import 'screens/camera_screen.dart';
+// import 'screens/camera_screen.dart'; // removed: using overlay toggle
 import 'components/uvc_camera_host.dart';
 
 void main() async {
@@ -49,7 +49,7 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomeScreen(),
         '/login': (context) => const LoginScreen(),
         '/config': (context) => const ConfigurationScreen(),
-        '/camera': (context) => const CameraScreen(),
+        // '/camera': (context) => const CameraScreen(), // removed
       },
       onGenerateRoute: (settings) {
         if (settings.name == '/display') {

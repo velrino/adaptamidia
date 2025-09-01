@@ -25,12 +25,18 @@ class _UvcCameraHostState extends State<UvcCameraHost> {
       fit: StackFit.expand,
       children: [
         widget.child,
-        // Hidden preview to keep GL/context alive
+        // Preview overlay (toggled by service.previewVisible)
         IgnorePointer(
           child: Align(
             alignment: Alignment.bottomRight,
-            child: Opacity(
-              opacity: 0, //CAMERA
+            child: ValueListenableBuilder<bool>(
+              valueListenable: UvcCameraService.instance.previewVisible,
+              builder: (context, visible, child) {
+                return Opacity(
+                  opacity: visible ? 1.0 : 0.0, //CAMERA
+                  child: child,
+                );
+              },
               child: SizedBox(
                 width: 640,
                 height: 480,
