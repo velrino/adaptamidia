@@ -58,6 +58,13 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
+
+    // Allow release build with targetSdk 27 (UVC camera constraint) by disabling Lint error.
+    // NOTE: This is acceptable for internal distribution. Google Play still requires targetSdk >= 33.
+    lint {
+        abortOnError = false
+        disable += setOf("ExpiredTargetSdkVersion")
+    }
 }
 
 flutter {

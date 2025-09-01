@@ -1,11 +1,13 @@
+import 'dart:ui';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_performance/firebase_performance.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../interfaces/auth_data.dart';
+import 'storage_service.dart';
 
 class FirebaseService {
   static FirebaseService? _instance;
@@ -175,4 +177,3 @@ class FirebaseService {
     );
   }
 }
-import 'dart:ui';

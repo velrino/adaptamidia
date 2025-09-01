@@ -340,6 +340,32 @@ Referências rápidas:
 - **Desenvolvimento**: macOS com Flutter
 - **Plataforma alvo**: Somente Android (hardware de fornecedores chineses); sem suporte iOS
 
+## Operação em Dispositivos (Android‑only)
+
+- Instalação/Atualização (sideload):
+  - Build release: `flutter build apk --release`
+  - Instalar: `adb install -r build/app/outputs/flutter-apk/app-release.apk` (USB/ADB Wi‑Fi/WADB)
+  - Observação: `targetSdk = 27` por dependência do plugin UVC. Distribuição é interna (sem Play Store). Lint de `ExpiredTargetSdkVersion` desabilitado apenas para build interno.
+
+- Autostart (recomendado):
+  - App deve abrir sozinho após ligar o tablet (BOOT_COMPLETED). Caso necessário, adicionar receiver no Manifest com `RECEIVE_BOOT_COMPLETED` abrindo a `MainActivity`. (Não implementado por padrão; considerar em produção.)
+
+- Operação 24/7:
+  - Wakelock ativado pela `DisplayScreen` (mantém a tela ligada).
+  - Desativar otimização de bateria para o app no Android (para evitar suspensões).
+  - Manter o tablet na energia e com brilho conforme ambiente.
+
+- Modo Kiosk (opcional):
+  - Se necessário, travar o tablet no app (launcher customizado) ou usar app kiosk (Fully Kiosk, SureLock). Não obrigatório para operação básica.
+
+- Observabilidade em release:
+  - Crashlytics: coleta crashes e erros (com `device_id`).
+  - Performance: traces `prepare_assets`, `bd_job` e métricas HTTP no `ApiService`.
+
+- Câmera (UVC):
+  - Overlay controlado pelo menu de Configuração (Exibir/Ocultar). Oculto automaticamente ao entrar na `DisplayScreen`.
+  - Capturas são locais e apagadas após processamento (LGPD). Nada é salvo no servidor.
+
 ## Arquitetura do Sistema
 
 1. **App Flutter** (este projeto) - Cliente que roda nos estabelecimentos

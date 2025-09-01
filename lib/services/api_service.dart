@@ -80,7 +80,7 @@ class ApiService {
 
       // Stop metric
       try {
-        httpMetric.responseCode = response.statusCode;
+        httpMetric.httpResponseCode = response.statusCode;
       } catch (_) {}
       await httpMetric.stop();
 
