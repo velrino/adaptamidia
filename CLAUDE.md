@@ -21,6 +21,10 @@ LAYOUT Elegante e minimalista. Sempre pensando em dark e light mode
 - Detecção: `BackgroundDetectionService` com fila persistente em disco (`pending_detections/`), recuperação no boot, prioridade para ADs e limite de 30 itens (descarta NEWS primeiro).
 - InsightFace: enriquecimento do log com `/detect-insightface` via multipart (arquivo + content-type correto), timeout 30s e fallback com `method` (timeout/http_XXX/error/invalid_response).
 - LGPD: removido upload de fotos para Storage no fluxo do Display; apenas metadados (`people_count`, `insightface`) vão para o RTDB.
+- Display logging: a gravação do log final agora vai para a API `POST /display/log/device` com Bearer (via `ApiService`), substituindo a escrita direta no RTDB para o fluxo primário.
+- API centralizada: `lib/services/api_service.dart` centraliza `baseUrl` e wrappers `get/post/put/delete` (com timeout 30s e logging), e novas helpers `getUnit`, `getUnitInfo` removidas do `DisplayScreen`.
+- Câmera como overlay: removida a tela dedicada (CameraScreen); exibir/ocultar câmera é feito via overlay global (Opacity) e opções na folha de Configuração; a `DisplayScreen` sempre esconde a câmera ao entrar.
+- LGPD (fotos): ao copiar a foto do DCIM para pasta interna, o arquivo original do DCIM é apagado (e varremos resíduos antigos por padrão); após YOLO/InsightFace, a cópia interna é removida e o metadado do job é apagado.
 
 ## Descrição do Sistema
 
@@ -224,7 +228,7 @@ Estas notas documentam ajustes críticos realizados para estabilidade do app em 
   1) `_logCurrentDisplayFinished()` é chamado na transição e no `dispose()` da tela.
   2) `UvcCameraService.takePicture()` salva arquivo (o plugin grava em DCIM; o serviço de background persiste para pasta interna do app) e enfileira job.
   3) `BackgroundDetectionService` processa em segundo plano: roda YOLO para `people_count` e chama InsightFace para enriquecer `insightface`.
-  4) Grava o log no RTDB e APAGA a foto local e o JSON do job (LGPD).
+  4) Log final vai para a API `POST /display/log/device` (Bearer obrigatório) e APAGAMOS a foto local e o JSON do job (LGPD). O RTDB permanece como utilitário/apoio (opcional).
 
 - Enriquecimento InsightFace:
   - Endpoint: `POST https://vision-2057331207.us-central1.run.app/detect-insightface`
@@ -251,6 +255,7 @@ Estas notas documentam ajustes críticos realizados para estabilidade do app em 
   - Recuperação: `ensureLoaded()` revarre pendências no boot, carrega ADs primeiro e reinicia o processamento.
   - Prioridade/limite: ADVERTISEMENTS entram na frente quando fila ≥ 10; limite duro de 30, descartando NEWS primeiro. Ao descartar, apaga foto + JSON.
   - Limpeza: após processar/logar, apaga foto + JSON (LGPD).
+  - Varredura DCIM: após copiar a foto para a pasta interna, removemos o arquivo original em DCIM e varremos resíduos com padrão `IMG_<timestamp>.jpg` (espera ≥ 60s para não conflitar com MediaScanner).
 
 - Dependências:
   - `http_parser: ^4.0.2` e `path` para multipart com `content-type` correto.
@@ -273,6 +278,31 @@ Estas notas documentam ajustes críticos realizados para estabilidade do app em 
 - Política da câmera (global):
   - UVC permanece aberta no app inteiro (host global). `UvcCameraService` controla abertura única e reabertura com backoff (evita err=-99/libusb).
   - Preview oculto fixo 640×480 para satisfazer o plugin; capturas ocorrem sob demanda.
+  - Overlay visível/oculto: controlado por `UvcCameraService.previewVisible` (ValueNotifier) e alternado via Configurações.
+  - A `DisplayScreen` chama `hidePreview()` ao entrar, garantindo que o público nunca veja a câmera.
+
+### UI – Configuração e Controles de Câmera (Atualizado)
+
+- Configurações do Display (bottom sheet):
+  - Exibir Câmera USB: liga overlay (opacity=1) e fecha a folha.
+  - Ocultar Câmera USB: desliga overlay (opacity=0) e fecha a folha.
+  - Ao abrir o sheet, escondemos o overlay para cobrir tudo; ao sair, restauramos o estado anterior se o usuário não mudou explicitamente.
+- Overlay técnico:
+  - Host: `lib/components/uvc_camera_host.dart` usa `ValueListenableBuilder` para aplicar `opacity`.
+  - Serviço: `lib/services/uvc_camera_service.dart` expõe `showPreview()/hidePreview()/togglePreview()` e mantém a câmera aberta (sem “thrash”).
+
+### Display – Durações e Captura
+
+- NEWS: duração padrão 10 segundos (comentado no código para lembrar).
+- ADVERTISEMENT: duração vem da API (`seconds`).
+- Captura: 1 `takePicture` no fim de cada conteúdo (NEWS e AD). Sem cooldown extra.
+
+### Logs – API Service
+
+- `lib/services/api_service.dart`:
+  - BaseUrl centralizada; métodos `get/post/put/delete` com timeout (30s) e logs (LoggerService).
+  - Chamadas no `DisplayScreen` para `/display/unit/:id` e `/display/unit/:id/info` foram movidas para o service.
+  - Endpoint de logs: `POST /display/log/device` com Bearer.
 - Dependências:
   - Atualizado `ultralytics_yolo` para `^0.1.36`.
   - Modelo: `assets/models/yolo11n.tflite` listado no `pubspec.yaml`.
