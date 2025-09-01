@@ -475,11 +475,17 @@ class _DisplayScreenState extends State<DisplayScreen> {
           VideoCacheService.instance.preloadVideos(videoSet.toList()),
       ]);
 
-      // Filtra para apenas itens com mídia disponível
+      // Filtra para apenas itens com mídia disponível (respeitando orientação)
       final filtered = <dynamic>[];
       for (final c in newContents) {
         if (c['type'] == 'ADVERTISEMENT' && c['ads'] != null) {
-          final v = c['ads']['source'];
+          final ads = c['ads'];
+          String? v = isLandscape
+              ? (ads['source_landscape'] as String?)
+              : (ads['source_portrait'] as String?);
+          v ??=
+              (ads['source_landscape'] as String?) ??
+              (ads['source_portrait'] as String?);
           if (v is String && v.isNotEmpty) {
             final file = await VideoCacheService.instance.getVideoFromCache(v);
             if (file != null) filtered.add(c);
