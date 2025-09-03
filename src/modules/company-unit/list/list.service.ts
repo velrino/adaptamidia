@@ -3,7 +3,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, QueryOptions, Types } from 'mongoose';
 import { CompanyUnit, CompanyUnitDocument } from '../company-unit.schema';
-import { AuthenticatedRequest } from 'src/shared/request';
+import { AuthenticatedRequest, CustomRequest } from 'src/shared/request';
 // import { GetCompanyService } from 'src/modules/company/get/get.service';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { RESULT } from 'src/shared/result.enum';
@@ -35,7 +35,7 @@ export class ListCompanyUnitService {
   // }
 
   executeFromRequest(
-    currentRequest: AuthenticatedRequest,
+    currentRequest: CustomRequest,
     parameters: ListCompanyUnitPaginateDto,
   ) {
     try {

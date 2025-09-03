@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthJwtGuard } from '../auth/auth.guard';
-import { AuthenticatedRequest } from 'src/shared/request';
+import { AuthenticatedRequest, CustomRequest } from 'src/shared/request';
 import { PermissionsAllowed } from '../permissions/permissions.decorator';
 import { PermissionsGuard } from '../permissions/permissions.guard';
 import { CreateCompanyUnitService } from './create/create.service';
@@ -46,13 +46,10 @@ export class CompanyUnitController {
   }
 
   @Get('company/unit')
-  @UseGuards(AuthJwtGuard, PermissionsGuard)
+  // @UseGuards(AuthJwtGuard, PermissionsGuard)
   @SkipThrottle()
   @PermissionsAllowed([...defaultPermissions, PermissionsEnum.ADVERTISER])
-  list(
-    @Req() req: AuthenticatedRequest,
-    @Query() query: ListCompanyUnitPaginateDto,
-  ) {
+  list(@Req() req: CustomRequest, @Query() query: ListCompanyUnitPaginateDto) {
     return this.listCompanyUnitService.executeFromRequest(req, query);
   }
 

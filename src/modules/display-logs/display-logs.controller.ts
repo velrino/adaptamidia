@@ -69,10 +69,10 @@ export class DisplayLogController {
 
   @Post('display/log/detect')
   @Throttle({ default: { limit: 100, ttl: 60000 } })
-  @UseGuards(AuthJwtGuard, PermissionsGuard)
-  @PermissionsAllowed(defaultPermissions)
+  // @UseGuards(AuthJwtGuard, PermissionsGuard)
+  // @PermissionsAllowed(defaultPermissions)
   detectDisplayLog(
-    @Req() req: AuthenticatedRequest,
+    @Req() req: CustomRequest,
     @Body() body: IDetectionDisplayLogDto,
   ) {
     return this.detectionDisplayLogService.executeFromAuthenticatedRequest(

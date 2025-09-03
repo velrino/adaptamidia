@@ -24,7 +24,7 @@ import {
 import { DisplayLogStatus } from '../display-logs.interface';
 import { DisplayLog, DisplayLogDocument } from '../display-logs.schema';
 import { RESULT } from 'src/shared/result.enum';
-import { AuthenticatedRequest } from 'src/shared/request';
+import { AuthenticatedRequest, CustomRequest } from 'src/shared/request';
 import { ConvertToObjectId } from 'src/shared/general';
 import { QueueService } from 'src/modules/queue/queue.service';
 
@@ -60,7 +60,7 @@ export class DetectionDisplayLogService {
   }
 
   executeFromAuthenticatedRequest(
-    currentRequest: AuthenticatedRequest,
+    currentRequest: CustomRequest, //AuthenticatedRequest,
     parameters: IDetectionDisplayLogDto,
   ) {
     try {
