@@ -432,10 +432,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
           (ads['source_landscape'] as String?) ??
           (ads['source_portrait'] as String?);
       if (v is String && v.isNotEmpty) {
-        // Esconde o backdrop imediatamente para não "piscar" a última NEWS
+        // Esconde o backdrop imediatamente e remove a imagem para nunca piscar
         if (mounted) {
           setState(() {
             _backdropOpacity = 0.0;
+            _backdropProvider = null;
+            _backdropId = null;
           });
         }
         // play current ad com pequeno delay para evitar travamento inicial

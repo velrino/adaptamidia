@@ -33,6 +33,11 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.forward();
+    
+    // Garante que o foco está ativo para capturar teclas do controle remoto
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+    });
   }
 
   @override
@@ -44,22 +49,66 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
 
   @override
   bool onRemoteKeyPressed(String keyName, int keyCode) {
+    // Debug para verificar as teclas
+    debugPrint('[ConfigurationScreen] Remote key pressed: $keyName (0x${keyCode.toRadixString(16)})');
+    
     switch (keyName) {
       case 'DPAD_UP':
+        setState(() {
+          _selectedIndex = 0; // Portrait
+          selectedOrientation = 'portrait';
+        });
+        HapticFeedback.selectionClick();
+        return true;
+        
       case 'DPAD_DOWN':
+        setState(() {
+          _selectedIndex = 1; // Landscape
+          selectedOrientation = 'landscape';
+        });
+        HapticFeedback.selectionClick();
+        return true;
+        
+      case 'DPAD_LEFT':
+      case 'DPAD_RIGHT':
+        // Alterna entre as opções com esquerda/direita também
         setState(() {
           _selectedIndex = _selectedIndex == 0 ? 1 : 0;
           selectedOrientation = _selectedIndex == 0 ? 'portrait' : 'landscape';
         });
         HapticFeedback.selectionClick();
         return true;
+        
       case 'DPAD_CENTER':
+      case 'NUMBER_5': // Alguns controles usam 5 como OK
         if (!_isLoading) {
+          HapticFeedback.heavyImpact();
           _saveConfiguration();
         }
         return true;
+        
       case 'BACK':
-        // Handle back button if needed
+      case 'MENU':
+        // Por enquanto não faz nada na tela inicial
+        HapticFeedback.lightImpact();
+        return true;
+        
+      case 'NUMBER_1':
+        // Atalho direto para Portrait
+        setState(() {
+          _selectedIndex = 0;
+          selectedOrientation = 'portrait';
+        });
+        HapticFeedback.selectionClick();
+        return true;
+        
+      case 'NUMBER_2':
+        // Atalho direto para Landscape
+        setState(() {
+          _selectedIndex = 1;
+          selectedOrientation = 'landscape';
+        });
+        HapticFeedback.selectionClick();
         return true;
     }
     return false;
@@ -205,7 +254,7 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
     bool isDark,
     bool isRemoteSelected,
   ) {
-    final isSelected = selectedOrientation == orientation || isRemoteSelected;
+    final isSelected = selectedOrientation == orientation && isRemoteSelected;
 
     return GestureDetector(
       onTap: () {
@@ -216,18 +265,22 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
         HapticFeedback.lightImpact();
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: isSelected
-              ? Colors.blue.withOpacity(0.1)
-              : (isDark ? Colors.grey[800] : Colors.white),
+              ? Colors.blue.withOpacity(0.15)
+              : isRemoteSelected
+                  ? Colors.blue.withOpacity(0.05)
+                  : (isDark ? Colors.grey[800] : Colors.white),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected
                 ? Colors.blue
-                : (isDark ? Colors.grey[700]! : Colors.grey[300]!),
-            width: isSelected ? 2 : 1,
+                : isRemoteSelected
+                    ? Colors.blue.withOpacity(0.5)
+                    : (isDark ? Colors.grey[700]! : Colors.grey[300]!),
+            width: isSelected ? 3 : (isRemoteSelected ? 2 : 1),
           ),
           boxShadow: [
             if (!isDark)
@@ -280,15 +333,22 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
                 ],
               ),
             ),
-            if (isSelected)
-              Container(
+            AnimatedOpacity(
+              opacity: isSelected ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 200),
+              child: Container(
                 padding: const EdgeInsets.all(4),
-                decoration: const BoxDecoration(
-                  color: Colors.blue,
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.blue : Colors.transparent,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.check, size: 16, color: Colors.white),
+                child: Icon(
+                  Icons.check, 
+                  size: 16, 
+                  color: isSelected ? Colors.white : Colors.transparent,
+                ),
               ),
+            ),
           ],
         ),
       ),
@@ -316,7 +376,7 @@ class _ConfigurationScreenState extends State<ConfigurationScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Controle Remoto: Use ↑↓ para navegar, OK para confirmar',
+                      'Controle Remoto: ↑↓ navegar | OK confirmar | 1/2 atalhos',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
