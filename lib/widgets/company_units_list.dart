@@ -364,28 +364,38 @@ class _CompanyUnitsListState extends State<CompanyUnitsList> {
   }
 
   Widget _buildNetflixCard(ICompanyUnit unit, bool isDark, double cardWidth, double cardHeight) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).pushNamed('/display', arguments: unit.id);
-      },
-      child: Container(
-        width: cardWidth,
-        height: cardHeight,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: isDark ? Colors.grey[800] : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isDark ? Colors.grey[700]! : Colors.grey[200]!,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+    return Focus(
+      child: Builder(
+        builder: (context) {
+          final isFocused = Focus.of(context).hasFocus;
+          return InkWell(
+            onTap: () {
+              Navigator.of(context).pushNamed('/display', arguments: unit.id);
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              width: cardWidth,
+              height: cardHeight,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isDark ? Colors.grey[800] : Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isFocused 
+                    ? Colors.blue 
+                    : isDark ? Colors.grey[700]! : Colors.grey[200]!,
+                  width: isFocused ? 3 : 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: isFocused 
+                      ? Colors.blue.withValues(alpha: 0.3)
+                      : Colors.black.withValues(alpha: 0.1),
+                    blurRadius: isFocused ? 20 : 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -459,6 +469,9 @@ class _CompanyUnitsListState extends State<CompanyUnitsList> {
           ),
         ],
       ),
+            ),
+          );
+        },
       ),
     );
   }
