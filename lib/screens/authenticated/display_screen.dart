@@ -432,6 +432,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
           (ads['source_landscape'] as String?) ??
           (ads['source_portrait'] as String?);
       if (v is String && v.isNotEmpty) {
+        // Esconde o backdrop imediatamente para não "piscar" a última NEWS
+        if (mounted) {
+          setState(() {
+            _backdropOpacity = 0.0;
+          });
+        }
         // play current ad com pequeno delay para evitar travamento inicial
         final videoUrl = v;
         Future.delayed(const Duration(milliseconds: 100), () async {
@@ -441,13 +447,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
           if (file != null) {
             await _adLayerKey.currentState?.playFile(file);
           }
-        });
-        // Crossfade: inicia fade-out suave do backdrop levemente após o vídeo começar
-        Future.delayed(const Duration(milliseconds: 160), () {
-          if (!mounted) return;
-          setState(() {
-            _backdropOpacity = 0.0;
-          });
         });
         // prepare next ad
         final nextIndex = (_currentIndex + 1) % _contents.length;
@@ -476,8 +475,15 @@ class _DisplayScreenState extends State<DisplayScreen> {
         final news = content['news'];
         final String imageUrl = (news?['image'] as String?) ?? '';
         if (imageUrl.isNotEmpty) {
-          // Recupera arquivo do cache (não baixa, pois já filtramos no prepare)
-          final file = await ImageCacheService.instance.prefetch(imageUrl);
+          // Antes de trocar imagem, mantém opacidade 0 para evitar flicker
+          if (mounted) {
+            setState(() {
+              _backdropOpacity = 0.0;
+            });
+          }
+          // Recupera arquivo do cache ou baixa se necessário
+          final file = await ImageCacheService.instance.getFileFromCache(imageUrl)
+              ?? await ImageCacheService.instance.prefetch(imageUrl);
           if (file != null && mounted) {
             final provider = FileImage(file);
             // Decodifica antes de mostrar para evitar piscar
@@ -486,7 +492,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
               setState(() {
                 _backdropProvider = provider;
                 _backdropId = file.path;
-                _backdropOpacity = 1.0; // garante visível para NEWS
+                _backdropOpacity = 1.0; // mostra após decodificar
               });
             }
           }
@@ -1105,20 +1111,16 @@ class _DisplayScreenState extends State<DisplayScreen> {
         children: [
           // Backdrop persistente (imagem do NEWS atual mais recente)
           if (_backdropProvider != null)
-            AnimatedSwitcher(
+            AnimatedOpacity(
               duration: const Duration(milliseconds: 250),
-              child: AnimatedOpacity(
-                key: ValueKey(_backdropId),
-                duration: const Duration(milliseconds: 350),
-                curve: Curves.easeInOut,
-                opacity: _backdropOpacity,
-                child: SizedBox.expand(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        image: _backdropProvider!,
-                        fit: BoxFit.cover,
-                      ),
+              curve: Curves.easeInOut,
+              opacity: _backdropOpacity,
+              child: SizedBox.expand(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: _backdropProvider!,
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
