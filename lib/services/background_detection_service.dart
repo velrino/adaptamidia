@@ -13,6 +13,7 @@ import 'package:http_parser/http_parser.dart' as http_parser;
 import 'package:path/path.dart' as p;
 
 import 'display_log_service.dart';
+import 'insightface_service.dart';
 // import 'api_service.dart'; // comentado pois não está sendo usado
 import 'storage_service.dart';
 
@@ -365,7 +366,9 @@ class BackgroundDetectionService {
           // Só faz InsightFace se tem imagem
           if (job.imageFile != null) {
             final swFace = Stopwatch()..start();
-            final insight = await _fetchInsightface(job.imageFile!);
+            // Local on-device analysis via InsightFaceService (Android)
+            final insight = await InsightFaceService.instance
+                .analyzeImage(job.imageFile!);
             swFace.stop();
             try {
               bdTrace.incrementMetric('insight_ms', swFace.elapsedMilliseconds);
@@ -426,6 +429,8 @@ class BackgroundDetectionService {
     }
   }
 
+  /*
+  // Legacy remote InsightFace (HTTP) — mantido comentado para referência futura
   Map<String, dynamic> _emptyInsightface(String method) => {
     'gender': {'Woman': 0, 'Man': 0},
     'men': 0,
@@ -436,69 +441,11 @@ class BackgroundDetectionService {
   };
 
   Future<Map<String, dynamic>> _fetchInsightface(File imageFile) async {
-    final uri = Uri.parse(
-      'https://vision-2057331207.us-central1.run.app/detect-insightface',
-    );
-    try {
-      final request = http.MultipartRequest('POST', uri);
-      final filename = p.basename(imageFile.path).isNotEmpty
-          ? p.basename(imageFile.path)
-          : 'capture.jpg';
-      final ext = p.extension(filename).toLowerCase();
-      http_parser.MediaType contentType;
-      switch (ext) {
-        case '.jpg':
-        case '.jpeg':
-          contentType = http_parser.MediaType('image', 'jpeg');
-          break;
-        case '.png':
-          contentType = http_parser.MediaType('image', 'png');
-          break;
-        case '.webp':
-          contentType = http_parser.MediaType('image', 'webp');
-          break;
-        default:
-          contentType = http_parser.MediaType('image', 'jpeg');
-      }
-
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'file',
-          imageFile.path,
-          filename: filename,
-          contentType: contentType,
-        ),
-      );
-      final streamed = await request.send().timeout(
-        const Duration(seconds: 30),
-      );
-      final response = await http.Response.fromStream(
-        streamed,
-      ).timeout(const Duration(seconds: 30));
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        final decoded = json.decode(response.body);
-        if (decoded is Map<String, dynamic>) {
-          // Garante campo method, caso a API não retorne
-          decoded.putIfAbsent('method', () => 'InsightFace');
-          return decoded;
-        }
-        debugPrint(
-          '[BackgroundDetection] InsightFace: unexpected response type',
-        );
-        return _emptyInsightface('invalid_response');
-      } else {
-        debugPrint(
-          '[BackgroundDetection] InsightFace HTTP ${response.statusCode}: ${response.body}',
-        );
-        return _emptyInsightface('http_${response.statusCode}');
-      }
-    } on TimeoutException {
-      return _emptyInsightface('timeout');
-    } catch (e, st) {
-      debugPrint('[BackgroundDetection] InsightFace error: $e\n$st');
-      return _emptyInsightface('error');
-    }
+    // POST https://vision-.../detect-insightface (multipart/form-data)
+    // Substituído por InsightFaceService (on-device). Manter como fallback se necessário.
+    ...
   }
+  */
 }
 
 class _Job {
