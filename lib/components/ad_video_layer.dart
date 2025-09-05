@@ -41,24 +41,16 @@ class AdVideoLayerState extends State<AdVideoLayer> {
     // If standby prepared for this file, crossfade
     if (_standby != null && _standbyPath == file.path) {
       try {
-        // Ao iniciar reprodução, garante áudio ligado
+        // Ao iniciar reprodução, garante áudio ligado e exibe imediatamente
         await _standby!.setVolume(1.0);
-        // Pequeno delay para garantir que o vídeo está pronto
-        await Future.delayed(const Duration(milliseconds: 50));
         await _standby!.play();
       } catch (_) {}
       if (mounted) {
-        // Fade-in suave do novo vídeo
+        // Garante que a camada standby fica visível sem gap
         setState(() {
-          _standbyOpacity = 0.0;
+          _standbyOpacity = 1.0;
+          _activeOpacity = 0.0;
         });
-        await Future.delayed(const Duration(milliseconds: 50));
-        if (mounted) {
-          setState(() {
-            _standbyOpacity = 1.0;
-            _activeOpacity = 0.0;
-          });
-        }
       }
       Future.delayed(_fadeDuration, () {
         final old = _active;
@@ -94,26 +86,18 @@ class AdVideoLayerState extends State<AdVideoLayer> {
     _active = ctrl;
     _activePath = file.path;
     await _active!.setVolume(1.0);
-    
-    // Inicia com opacidade 0 para fade-in suave
-    if (mounted) {
-      setState(() {
-        _activeOpacity = 0.0;
-        _standbyOpacity = 0.0;
-      });
-    }
-    
-    // Pequeno delay antes de iniciar para garantir buffering
-    await Future.delayed(const Duration(milliseconds: 100));
-    await _active!.play();
-    
-    // Fade-in suave do vídeo
-    await Future.delayed(const Duration(milliseconds: 50));
+
+    // Mantém a camada ativa visível já no início para não expor o fundo
     if (mounted) {
       setState(() {
         _activeOpacity = 1.0;
+        _standbyOpacity = 0.0;
       });
     }
+
+    // Pequeno delay antes de iniciar para garantir buffering, mas sem esconder a camada
+    await Future.delayed(const Duration(milliseconds: 100));
+    await _active!.play();
   }
 
   Future<void> prepareNext(File file) async {
