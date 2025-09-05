@@ -133,7 +133,9 @@ class MainActivity : FlutterActivity() {
 
             val maxAge = ages.maxOrNull() ?: 0
             val minAge = ages.minOrNull() ?: 0
-            val avgAge = if (ages.isNotEmpty()) ages.sum() / ages.size else 0
+            val avgAge = if (ages.isNotEmpty()) {
+                kotlin.math.round(ages.sum().toDouble() / ages.size).toInt()
+            } else 0
 
             InspireFace.ReleaseImageStream(stream)
 
