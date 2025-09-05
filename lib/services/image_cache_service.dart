@@ -47,6 +47,17 @@ class ImageCacheService {
     return cached != null && await cached.file.exists();
   }
 
+  /// Retorna o arquivo em cache (se existir) para a [url].
+  /// Não dispara download; retorna null se não estiver em cache.
+  Future<File?> getFileFromCache(String url) async {
+    if (url.isEmpty) return null;
+    final info = await _cache.getFileFromCache(url);
+    if (info != null && await info.file.exists()) {
+      return info.file;
+    }
+    return null;
+  }
+
   /// Faz download e armazena a imagem no cache de disco
   Future<File?> prefetch(String url) async {
     if (url.isEmpty) return null;

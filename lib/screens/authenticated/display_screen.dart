@@ -58,6 +58,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
   bool _deviceIsLandscape = true;
   final GlobalKey<AdVideoLayerState> _adLayerKey =
       GlobalKey<AdVideoLayerState>();
+  // Backdrop persistente para evitar tela preta entre transições
+  ImageProvider? _backdropProvider;
+  String? _backdropId; // usa o path ou a URL para AnimatedSwitcher keys
 
   // UVC handled globally via UvcCameraService
   // YOLO handled by BackgroundDetectionService
@@ -379,11 +382,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
         _prepareProgress = 1.0;
       });
       await trace.stop();
-      _startContent();
+      unawaited(_startContent());
     }
   }
 
-  void _startContent() {
+  Future<void> _startContent() async {
     if (_contents.isEmpty) return;
 
     _timer?.cancel();
@@ -459,8 +462,27 @@ class _DisplayScreenState extends State<DisplayScreen> {
         }
       }
     } else {
-      // Hide/mute layer for NEWS
+      // NEWS: garantir backdrop pronto a partir do arquivo local em cache
       unawaited(_adLayerKey.currentState?.hide());
+      try {
+        final news = content['news'];
+        final String imageUrl = (news?['image'] as String?) ?? '';
+        if (imageUrl.isNotEmpty) {
+          // Recupera arquivo do cache (não baixa, pois já filtramos no prepare)
+          final file = await ImageCacheService.instance.prefetch(imageUrl);
+          if (file != null && mounted) {
+            final provider = FileImage(file);
+            // Decodifica antes de mostrar para evitar piscar
+            await precacheImage(provider, context);
+            if (mounted) {
+              setState(() {
+                _backdropProvider = provider;
+                _backdropId = file.path;
+              });
+            }
+          }
+        }
+      } catch (_) {}
     }
     // Proactively prepare the NEXT content to avoid black gaps
     unawaited(_prepareNextContent());
@@ -500,9 +522,15 @@ class _DisplayScreenState extends State<DisplayScreen> {
     } else if (isNextNews) {
       final img = next['news']['image'];
       if (img is String && img.isNotEmpty && mounted) {
-        // Pré-carrega a imagem com maior antecedência
-        final provider = CachedNetworkImageProvider(img);
-        unawaited(precacheImage(provider, context));
+        // Pré-carrega via arquivo local em cache para evitar uso de rede/placeholder
+        try {
+          final file = await ImageCacheService.instance.getFileFromCache(img) ??
+              await ImageCacheService.instance.prefetch(img);
+          if (file != null) {
+            final provider = FileImage(file);
+            unawaited(precacheImage(provider, context));
+          }
+        } catch (_) {}
       }
     }
   }
@@ -627,7 +655,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
       setState(() {
         _currentIndex = (_currentIndex + 1) % _contents.length;
       });
-      _startContent();
+      unawaited(_startContent());
     });
   }
 
@@ -771,25 +799,16 @@ class _DisplayScreenState extends State<DisplayScreen> {
     final hasCenter = _weatherIcon != null || _weatherTempC != null;
     final leftCurrency = _usdBid != null ? _usdBid!.toStringAsFixed(2) : '--';
 
+    // Apenas renderiza o overlay de texto; o fundo usa o backdrop persistente
+    // Se o backdrop ainda não estiver pronto, não mostra o texto para evitar
+    // a sensação de que o texto aparece antes da imagem.
+    if (_backdropProvider == null) {
+      return const SizedBox.shrink();
+    }
+
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Background image
-        Positioned.fill(
-          child: CachedNetworkImage(
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: double.infinity,
-            fadeInDuration: const Duration(milliseconds: 300),
-            fadeOutDuration: const Duration(milliseconds: 300),
-            memCacheWidth: memW,
-            memCacheHeight: memH,
-            placeholder: (context, url) => Container(color: Colors.black),
-            errorWidget: (context, url, error) =>
-                Container(color: Colors.black),
-          ),
-        ),
         // Overlay with content
         Positioned(
           bottom: 24,
@@ -1063,7 +1082,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
       );
     }
 
-    // Layer-based playback handles rendering; return empty container here
+    // Layer-based playback handles rendering; mantemos o backdrop visível
+    // para evitar tela preta até o vídeo fazer fade-in por cima.
     return const SizedBox.shrink();
   }
 
@@ -1074,6 +1094,22 @@ class _DisplayScreenState extends State<DisplayScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
+          // Backdrop persistente (imagem do NEWS atual mais recente)
+          if (_backdropProvider != null)
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: SizedBox.expand(
+                key: ValueKey(_backdropId),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: _backdropProvider!,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           // Main content
           if (_isLoading)
             const Center(child: CircularProgressIndicator(color: Colors.white))
