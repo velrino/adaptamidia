@@ -116,13 +116,16 @@ class MainActivity : FlutterActivity() {
                 val ok = InspireFace.MultipleFacePipelineProcess(sess, stream, multi, need)
                 if (ok) {
                     val attr: FaceAttributeResult = InspireFace.GetFaceAttributeResult(sess)
-                    // Heuristic mapping: 0 -> Man, 1 -> Woman (adjust if SDK differs)
+                    // Gender mapping per SDK: 0 = Woman, 1 = Man
+                    // If results look inverted, swap the mapping below.
                     for (i in 0 until total) {
                         try {
                             val g = attr.gender[i]
-                            if (g == 0) men++ else women++
-                            val a = attr.ageBracket[i]
-                            ages.add(a)
+                            if (g == 1) men++ else women++
+                            val b = attr.ageBracket[i]
+                            // Convert bracket index to approximate age (midpoint of range)
+                            val approx = bracketToAge(b)
+                            ages.add(approx)
                         } catch (_: Throwable) {}
                     }
                 }
@@ -154,6 +157,27 @@ class MainActivity : FlutterActivity() {
         } catch (e: Throwable) {
             e.printStackTrace()
             return emptyResult()
+        }
+    }
+
+    private fun bracketToAge(bracket: Int): Int {
+        // Typical buckets; adjust to SDK docs if available
+        val ranges = listOf(
+            4..12,   // 0: child
+            13..17,  // 1: teen
+            18..24,  // 2: young adult
+            25..34,  // 3
+            35..44,  // 4
+            45..54,  // 5
+            55..64,  // 6
+            65..80   // 7+
+        )
+        return if (bracket in ranges.indices) {
+            val r = ranges[bracket]
+            (r.first + r.last) / 2
+        } else {
+            // Fallback linear estimate
+            5 + bracket * 10
         }
     }
 
