@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../../services/storage_service.dart';
 import '../../services/configuration_service.dart';
 import '../../services/theme_service.dart';
 import '../../widgets/company_units_list.dart';
 import '../example.dart';
+import '../../debug/debug_insightface_button.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -30,6 +32,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         actions: [
+          if (kDebugMode) const DebugInsightFaceButton(),
           IconButton(
             onPressed: () {
               Navigator.of(context).push(
