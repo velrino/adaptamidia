@@ -230,7 +230,7 @@ Estas notas documentam ajustes críticos realizados para estabilidade do app em 
   3) `BackgroundDetectionService` processa em segundo plano: roda YOLO para `people_count` e chama InsightFace para enriquecer `insightface`.
   4) Log final vai para a API `POST /display/log/device` (Bearer obrigatório) e APAGAMOS a foto local e o JSON do job (LGPD). O RTDB permanece como utilitário/apoio (opcional).
 
-- Enriquecimento InsightFace:
+  - Enriquecimento InsightFace:
   - Endpoint: `POST https://vision-2057331207.us-central1.run.app/detect-insightface`
   - Envio: `multipart/form-data` com campo `file` via `MultipartFile.fromPath`, `filename` real e `content-type` coerente (`image/jpeg|png|webp`).
   - Timeout: 30 segundos (envio e leitura).
@@ -249,6 +249,55 @@ Estas notas documentam ajustes críticos realizados para estabilidade do app em 
     - Resposta inválida → `method: "invalid_response"` com zeros.
     - Erro genérico → `method: "error"` com zeros.
     - `people_count == 0` → objeto zerado (sem necessidade de chamada remota).
+
+### InspireFace (On‑Device, Android) — Integração via MethodChannel [Agosto/2025]
+
+- Objetivo: executar atributos faciais (gênero e idade) on‑device em Android usando o SDK "InspireFace" (bindings Java do motor C/C++), evitando round‑trip de rede quando desejado, e retornar o mesmo JSON de enriquecimento usado no backend.
+
+- Canais e Serviço Flutter:
+  - Canal: `com.seemidia/insightface` (MethodChannel).
+  - Dart: `lib/services/insightface_service.dart` expõe:
+    - `ensureInitialized()`: inicializa o SDK do lado Android.
+    - `analyzeImage(File)`: processa um arquivo local e retorna o JSON no padrão esperado.
+    - `captureAndAnalyze()`: tira foto via `UvcCameraService` e analisa.
+  - Em plataformas não‑Android, o serviço retorna objeto "vazio" com contagens 0 e `method: InsightFace`.
+
+- Implementação nativa (Android):
+  - Arquivo: `android/app/src/main/kotlin/com/seemidia/display/MainActivity.kt`.
+  - Dependência Gradle: `implementation("com.github.HyperInspire:inspireface-android-sdk:1.2.0")` em `android/app/build.gradle.kts`.
+  - Inicialização:
+    - `InspireFace.GlobalLaunch(this, InspireFace.PIKACHU)` carrega modelos.
+    - Cria `Session` com `CustomParameter.enableFaceAttribute(true)`; demais módulos (reconhecimento, liveness etc.) desligados para custo mínimo.
+  - Análise (`analyze(path)`):
+    - Lê bitmap do caminho fornecido, cria `ImageStream` com rotação 0.
+    - `ExecuteFaceTrack(session, stream)` para obter tokens das faces.
+    - Executa `MultipleFacePipelineProcess(..., enableFaceAttribute=true)` para popular `FaceAttributeResult`.
+    - Extrai `gender[]` e `ageBracket[]` e agrega:
+      - Gênero: mapeamento alinhado com o SDK atual: `1 = Man`, `0 = Woman`.
+      - Idade: converte `ageBracket` para idade aproximada usando ponto médio de faixas:
+        - 0: 4–12 → 8; 1: 13–17 → 15; 2: 18–24 → 21; 3: 25–34 → 29;
+        - 4: 35–44 → 40; 5: 45–54 → 49; 6: 55–64 → 59; 7+: 65–80 → 72.
+      - Agregação final: `min` (menor), `max` (maior) e `average` (média arredondada) sobre todas as faces detectadas.
+    - Retorna JSON:
+      - `{"gender": {"Woman": W, "Man": M}, "men": M, "women": W, "total": N, "age": {"max": X, "min": Y, "average": Z}, "method": "InsightFace"}`.
+  - Liberação: libera `ImageStream` após uso; `Session` é mantida em memória e reutilizada entre chamadas.
+
+- Uso típico no app:
+  - Inicializar uma vez: `await InsightFaceService.instance.ensureInitialized()`.
+  - Tirar foto e analisar: `final res = await InsightFaceService.instance.captureAndAnalyze();`
+  - Ou analisar arquivo existente: `final res = await InsightFaceService.instance.analyzeImage(File(path));`
+
+- Botão de debug (removível):
+  - Arquivo: `lib/debug/debug_insightface_button.dart`.
+  - Adicionado na `HomeScreen` apenas em `kDebugMode`; aciona `captureAndAnalyze()` e exibe o JSON em bottom sheet.
+  - Para remover: delete o import e a linha do botão; não há acoplamento com produção.
+
+- Requisitos/Notas:
+  - Executar em device ARM real. Emuladores x86/x86_64 podem falhar ao carregar os `.so` do SDK.
+  - A câmera usada é a UVC já integrada no app via `UvcCameraService` (preview oculto). `captureAndAnalyze()` usa resolução 640×480 por padrão.
+  - Se o mapeamento de gênero no SDK mudar em versões futuras, ajustar a regra `1=Man/0=Woman` em `MainActivity.kt`.
+  - É possível estender para pipeline completo (qualidade, máscara, liveness) apenas habilitando os flags em `CustomParameter` e lendo as estruturas correspondentes.
+
 
 - Fila persistente de detecção:
   - Persistência: jobs salvos em `app_docs/pending_detections/` com foto em `photos/` + JSON `<captureId>.json`.
