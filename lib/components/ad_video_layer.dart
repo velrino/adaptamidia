@@ -18,25 +18,46 @@ class AdVideoLayerState extends State<AdVideoLayer> {
   String? _standbyPath;
   double _activeOpacity = 0.0;
   double _standbyOpacity = 0.0;
-  final Duration _fadeDuration = const Duration(milliseconds: 250);
+  bool _isPreBuffering = false;
+  final Duration _fadeDuration = const Duration(milliseconds: 500);
+  final Duration _initialFadeDuration = const Duration(milliseconds: 800);
 
   Future<void> _initController(VideoPlayerController controller) async {
     await controller.initialize();
     controller.setLooping(false);
+    // Sempre mudo para evitar problemas com codec de áudio
+    await controller.setVolume(0.0);
+    
+    // Pré-buffer: avança um frame para carregar o vídeo na memória
+    await controller.seekTo(Duration.zero);
+    
+    // Aguarda o primeiro frame estar pronto
+    if (!controller.value.isInitialized) {
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
   }
 
   Future<void> playFile(File file) async {
     // If standby prepared for this file, crossfade
     if (_standby != null && _standbyPath == file.path) {
       try {
-        await _standby!.setVolume(1.0);
+        await _standby!.setVolume(0.0);
+        // Pequeno delay para garantir que o vídeo está pronto
+        await Future.delayed(const Duration(milliseconds: 50));
         await _standby!.play();
       } catch (_) {}
       if (mounted) {
+        // Fade-in suave do novo vídeo
         setState(() {
-          _standbyOpacity = 1.0;
-          _activeOpacity = 0.0;
+          _standbyOpacity = 0.0;
         });
+        await Future.delayed(const Duration(milliseconds: 50));
+        if (mounted) {
+          setState(() {
+            _standbyOpacity = 1.0;
+            _activeOpacity = 0.0;
+          });
+        }
       }
       Future.delayed(_fadeDuration, () {
         final old = _active;
@@ -71,12 +92,25 @@ class AdVideoLayerState extends State<AdVideoLayer> {
     }
     _active = ctrl;
     _activePath = file.path;
-    await _active!.setVolume(1.0);
+    await _active!.setVolume(0.0);
+    
+    // Inicia com opacidade 0 para fade-in suave
+    if (mounted) {
+      setState(() {
+        _activeOpacity = 0.0;
+        _standbyOpacity = 0.0;
+      });
+    }
+    
+    // Pequeno delay antes de iniciar para garantir buffering
+    await Future.delayed(const Duration(milliseconds: 100));
     await _active!.play();
+    
+    // Fade-in suave do vídeo
+    await Future.delayed(const Duration(milliseconds: 50));
     if (mounted) {
       setState(() {
         _activeOpacity = 1.0;
-        _standbyOpacity = 0.0;
       });
     }
   }
@@ -94,7 +128,15 @@ class AdVideoLayerState extends State<AdVideoLayer> {
       _standby?.dispose();
       _standby = next;
       _standbyPath = file.path;
-      await _standby!.setVolume(1.0);
+      await _standby!.setVolume(0.0);
+      
+      // Pré-carrega alguns segundos do vídeo para evitar travamento
+      _isPreBuffering = true;
+      await _standby!.play();
+      await Future.delayed(const Duration(milliseconds: 200));
+      await _standby!.pause();
+      await _standby!.seekTo(Duration.zero);
+      _isPreBuffering = false;
     } catch (_) {}
   }
 
@@ -107,7 +149,8 @@ class AdVideoLayerState extends State<AdVideoLayer> {
     _standbyPath = null;
     try {
       if (_active != null) {
-        await _active!.setVolume(1.0);
+        await _active!.setVolume(0.0);
+        await Future.delayed(const Duration(milliseconds: 50));
         await _active!.play();
       }
     } catch (_) {}
@@ -146,7 +189,7 @@ class AdVideoLayerState extends State<AdVideoLayer> {
           if (_active != null && _active!.value.isInitialized)
             AnimatedOpacity(
               opacity: _activeOpacity,
-              duration: _fadeDuration,
+              duration: _activeOpacity == 0.0 ? _initialFadeDuration : _fadeDuration,
               curve: Curves.easeInOut,
               child: FittedBox(
                 fit: BoxFit.cover,
@@ -161,7 +204,7 @@ class AdVideoLayerState extends State<AdVideoLayer> {
           if (_standby != null && _standby!.value.isInitialized)
             AnimatedOpacity(
               opacity: _standbyOpacity,
-              duration: _fadeDuration,
+              duration: _standbyOpacity == 0.0 ? _initialFadeDuration : _fadeDuration,
               curve: Curves.easeInOut,
               child: FittedBox(
                 fit: BoxFit.cover,

@@ -49,7 +49,8 @@ class BackgroundDetectionService {
     return File('${d.path}/$captureId.json');
   }
 
-  Future<File> _persistPhoto(File src, String captureId) async {
+  Future<File?> _persistPhoto(File? src, String captureId) async {
+    if (src == null) return null;
     final photos = await _photoDir();
     final parts = src.path.split('.');
     final ext = parts.isNotEmpty ? parts.last : 'jpg';
@@ -115,7 +116,7 @@ class BackgroundDetectionService {
     final f = await _jobMetaFile(job.captureId);
     final data = {
       'captureId': job.captureId,
-      'imagePath': job.imageFile.path,
+      'imagePath': job.imageFile?.path,  // Pode ser null sem câmera
       'body': job.body,
       'isAd': job.isAd,
     };
@@ -215,7 +216,7 @@ class BackgroundDetectionService {
 
   void enqueue({
     required String captureId,
-    required File imageFile,
+    File? imageFile,  // Permite null quando não tem câmera
     required Map<String, dynamic> body,
   }) {
     final cloned = Map<String, dynamic>.from(body);
@@ -224,8 +225,12 @@ class BackgroundDetectionService {
 
     // Persist and enqueue asynchronously
     unawaited(() async {
-      final persisted = await _persistPhoto(imageFile, captureId);
-      final job = _Job(captureId, persisted, cloned, isAd);
+      // Se não tem imagem (sem câmera), cria job sem foto
+      File? persisted;
+      if (imageFile != null) {
+        persisted = await _persistPhoto(imageFile, captureId);
+      }
+      final job = _Job(captureId, persisted, cloned, isAd);  // persisted pode ser null
       await _saveJobMeta(job);
 
       if (_queue.length >= _priorityThreshold && isAd) {
@@ -251,8 +256,8 @@ class BackgroundDetectionService {
             await _deleteJobMeta(removed.captureId);
           } catch (_) {}
           try {
-            if (await removed.imageFile.exists()) {
-              await removed.imageFile.delete();
+            if (removed.imageFile != null && await removed.imageFile!.exists()) {
+              await removed.imageFile!.delete();
             }
           } catch (_) {}
         }());
@@ -290,8 +295,8 @@ class BackgroundDetectionService {
         } catch (_) {}
         // Ensure temp file is removed
         try {
-          if (await job.imageFile.exists()) {
-            await job.imageFile.delete();
+          if (job.imageFile != null && await job.imageFile!.exists()) {
+            await job.imageFile!.delete();
           }
         } catch (_) {}
         unawaited(_deleteJobMeta(job.captureId));
@@ -310,26 +315,32 @@ class BackgroundDetectionService {
     int peopleCount = 0;
     try {
       if (_yolo != null) {
-        final swYolo = Stopwatch()..start();
-        final Uint8List bytes = await job.imageFile.readAsBytes();
-        final result = await _yolo!.predict(
-          bytes,
-          confidenceThreshold: 0.5,
-          iouThreshold: 0.4,
-        );
-        swYolo.stop();
-        try {
-          bdTrace.incrementMetric('yolo_ms', swYolo.elapsedMilliseconds);
-        } catch (_) {}
-        final detections = (result['detections'] as List<dynamic>? ?? [])
-            .map((e) => YOLOResult.fromMap(e))
-            .toList();
-        peopleCount = detections
-            .where((d) => d.className.toLowerCase() == 'person')
-            .length;
-        debugPrint(
-          '[BackgroundDetection] capture=${job.captureId} people=$peopleCount',
-        );
+        // Se não tem imagem, pula detecção
+        if (job.imageFile == null) {
+          debugPrint('[BackgroundDetection] No image file, skipping YOLO detection');
+          job.body['people_count'] = 0;
+        } else {
+          final swYolo = Stopwatch()..start();
+          final Uint8List bytes = await job.imageFile!.readAsBytes();
+          final result = await _yolo!.predict(
+            bytes,
+            confidenceThreshold: 0.5,
+            iouThreshold: 0.4,
+          );
+          swYolo.stop();
+          try {
+            bdTrace.incrementMetric('yolo_ms', swYolo.elapsedMilliseconds);
+          } catch (_) {}
+          final detections = (result['detections'] as List<dynamic>? ?? [])
+              .map((e) => YOLOResult.fromMap(e))
+              .toList();
+          peopleCount = detections
+              .where((d) => d.className.toLowerCase() == 'person')
+              .length;
+          debugPrint(
+            '[BackgroundDetection] capture=${job.captureId} people=$peopleCount',
+          );
+        }
       }
     } catch (e, st) {
       debugPrint('[BackgroundDetection] Detection error: $e\n$st');
@@ -351,13 +362,26 @@ class BackgroundDetectionService {
         };
       } else {
         try {
-          final swFace = Stopwatch()..start();
-          final insight = await _fetchInsightface(job.imageFile);
-          swFace.stop();
-          try {
-            bdTrace.incrementMetric('insight_ms', swFace.elapsedMilliseconds);
-          } catch (_) {}
-          job.body['insightface'] = insight;
+          // Só faz InsightFace se tem imagem
+          if (job.imageFile != null) {
+            final swFace = Stopwatch()..start();
+            final insight = await _fetchInsightface(job.imageFile!);
+            swFace.stop();
+            try {
+              bdTrace.incrementMetric('insight_ms', swFace.elapsedMilliseconds);
+            } catch (_) {}
+            job.body['insightface'] = insight;
+          } else {
+            // Sem imagem, usa valores zerados
+            job.body['insightface'] = {
+              'gender': {'Woman': 0, 'Man': 0},
+              'men': 0,
+              'women': 0,
+              'total': 0,
+              'age': {'max': 0, 'min': 0, 'average': 0},
+              'method': 'no_camera',
+            };
+          }
         } catch (e, st) {
           debugPrint(
             '[BackgroundDetection] InsightFace request failed: $e\n$st',
@@ -393,8 +417,8 @@ class BackgroundDetectionService {
     } finally {
       // Clean up temporary photo to avoid retention
       try {
-        if (await job.imageFile.exists()) {
-          await job.imageFile.delete();
+        if (job.imageFile != null && await job.imageFile!.exists()) {
+          await job.imageFile!.delete();
         }
       } catch (_) {}
       unawaited(_deleteJobMeta(job.captureId));
@@ -479,7 +503,7 @@ class BackgroundDetectionService {
 
 class _Job {
   final String captureId;
-  final File imageFile;
+  final File? imageFile;  // Permite null quando não tem câmera
   final Map<String, dynamic> body;
   final bool isAd;
   _Job(this.captureId, this.imageFile, this.body, this.isAd);

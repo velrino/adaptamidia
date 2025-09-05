@@ -18,7 +18,7 @@ import 'package:firebase_performance/firebase_performance.dart';
 // Removed PhotoLogService (no image uploads by LGPD)
 // import '../../components/video_player_screen.dart';
 // import '../../components/vlc_video_player.dart'; // VLC has _viewId bug
-import '../../components/flutter_video_player.dart'; // Testing Flutter native video player
+// import '../../components/flutter_video_player.dart'; // Testing Flutter native video player
 import '../../components/ad_video_layer.dart';
 
 class DisplayScreen extends StatefulWidget {
@@ -428,8 +428,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
           (ads['source_landscape'] as String?) ??
           (ads['source_portrait'] as String?);
       if (v is String && v.isNotEmpty) {
-        // play current ad
-        VideoCacheService.instance.getVideoFromCache(v).then((file) async {
+        // play current ad com pequeno delay para evitar travamento inicial
+        final videoUrl = v;
+        Future.delayed(const Duration(milliseconds: 100), () async {
+          final file = await VideoCacheService.instance.getVideoFromCache(
+            videoUrl,
+          );
           if (file != null) {
             await _adLayerKey.currentState?.playFile(file);
           }
@@ -474,6 +478,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
     final next = _contents[nextIndex];
     final isNextAd = next['type'] == 'ADVERTISEMENT' && next['ads'] != null;
     final isNextNews = next['type'] == 'NEWS' && next['news'] != null;
+
+    // Prepara o próximo conteúdo com antecedência maior para evitar travamentos
     if (isNextAd) {
       final nads = next['ads'];
       String? nv = _deviceIsLandscape
@@ -483,15 +489,18 @@ class _DisplayScreenState extends State<DisplayScreen> {
           (nads['source_landscape'] as String?) ??
           (nads['source_portrait'] as String?);
       if (nv is String && nv.isNotEmpty) {
+        // Prepara o próximo vídeo imediatamente
         final file = await VideoCacheService.instance.getVideoFromCache(nv);
         if (file != null) {
+          // Aguarda um pouco antes de preparar para dar tempo do buffer carregar
+          await Future.delayed(const Duration(milliseconds: 500));
           await _adLayerKey.currentState?.prepareNext(file);
         }
       }
     } else if (isNextNews) {
       final img = next['news']['image'];
       if (img is String && img.isNotEmpty && mounted) {
-        // Warm the image into memory cache to avoid black flicker
+        // Pré-carrega a imagem com maior antecedência
         final provider = CachedNetworkImageProvider(img);
         unawaited(precacheImage(provider, context));
       }
@@ -612,10 +621,14 @@ class _DisplayScreenState extends State<DisplayScreen> {
     );
     unawaited(_logCurrentDisplayFinished());
 
-    setState(() {
-      _currentIndex = (_currentIndex + 1) % _contents.length;
+    // Pequeno delay na transição para evitar travamento
+    Future.delayed(const Duration(milliseconds: 150), () {
+      if (!mounted) return;
+      setState(() {
+        _currentIndex = (_currentIndex + 1) % _contents.length;
+      });
+      _startContent();
     });
-    _startContent();
   }
 
   Future<void> _logCurrentDisplayFinished() async {
@@ -699,25 +712,20 @@ class _DisplayScreenState extends State<DisplayScreen> {
       }
     }
 
-    // Fallback: log without photo
-    debugPrint('[DisplayScreen] Sending log to API (no photo) id=$captureId');
+    // Fallback: log without photo (quando não tem câmera USB)
+    debugPrint('[DisplayScreen] No camera available, logging without photo');
     try {
-      final token = await StorageService.getAuthToken();
-      if (token != null) {
-        await ApiService.post<Map<String, dynamic>>(
-          '/display/log/device',
-          body,
-          (m) => m,
-          headers: {
-            'Authorization': 'Bearer $token',
-            'ngrok-skip-browser-warning': 'true',
-          },
-        );
-      }
+      // Usa apenas o BackgroundDetectionService para logging
+      // Se não tem câmera, passa null para imageFile
+      BackgroundDetectionService.instance.enqueue(
+        captureId: captureId,
+        imageFile: null, // null quando não tem câmera disponível
+        body: body,
+      );
+      debugPrint('[DisplayScreen] Log enqueued successfully (no photo)');
     } catch (e) {
-      debugPrint('[DisplayScreen] API log failed: $e');
+      debugPrint('[DisplayScreen] Failed to enqueue log: $e');
     }
-    debugPrint('[DisplayScreen] Log sent');
   }
 
   Widget _buildContent() {
@@ -773,8 +781,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
-            fadeInDuration: Duration.zero,
-            fadeOutDuration: Duration.zero,
+            fadeInDuration: const Duration(milliseconds: 300),
+            fadeOutDuration: const Duration(milliseconds: 300),
             memCacheWidth: memW,
             memCacheHeight: memH,
             placeholder: (context, url) => Container(color: Colors.black),
@@ -971,8 +979,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
                                         width: (28 * scale),
                                         height: (28 * scale),
                                         fit: BoxFit.contain,
-                                        fadeInDuration: Duration.zero,
-                                        fadeOutDuration: Duration.zero,
+                                        fadeInDuration: const Duration(
+                                          milliseconds: 200,
+                                        ),
+                                        fadeOutDuration: const Duration(
+                                          milliseconds: 200,
+                                        ),
                                         errorWidget: (ctx, url, err) => Icon(
                                           Icons.wb_sunny,
                                           color: Colors.white70,
