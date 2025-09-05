@@ -61,6 +61,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   // Backdrop persistente para evitar tela preta entre transições
   ImageProvider? _backdropProvider;
   String? _backdropId; // usa o path ou a URL para AnimatedSwitcher keys
+  double _backdropOpacity = 1.0;
 
   // UVC handled globally via UvcCameraService
   // YOLO handled by BackgroundDetectionService
@@ -441,6 +442,13 @@ class _DisplayScreenState extends State<DisplayScreen> {
             await _adLayerKey.currentState?.playFile(file);
           }
         });
+        // Crossfade: inicia fade-out suave do backdrop levemente após o vídeo começar
+        Future.delayed(const Duration(milliseconds: 160), () {
+          if (!mounted) return;
+          setState(() {
+            _backdropOpacity = 0.0;
+          });
+        });
         // prepare next ad
         final nextIndex = (_currentIndex + 1) % _contents.length;
         final next = _contents[nextIndex];
@@ -478,6 +486,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
               setState(() {
                 _backdropProvider = provider;
                 _backdropId = file.path;
+                _backdropOpacity = 1.0; // garante visível para NEWS
               });
             }
           }
@@ -1097,14 +1106,19 @@ class _DisplayScreenState extends State<DisplayScreen> {
           // Backdrop persistente (imagem do NEWS atual mais recente)
           if (_backdropProvider != null)
             AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: SizedBox.expand(
+              duration: const Duration(milliseconds: 250),
+              child: AnimatedOpacity(
                 key: ValueKey(_backdropId),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: _backdropProvider!,
-                      fit: BoxFit.cover,
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeInOut,
+                opacity: _backdropOpacity,
+                child: SizedBox.expand(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: _backdropProvider!,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                 ),
