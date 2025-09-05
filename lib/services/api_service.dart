@@ -5,9 +5,8 @@ import 'logger_service.dart';
 import 'package:firebase_performance/firebase_performance.dart';
 
 class ApiService {
-  // static const String _baseUrl = 'https://9aca430ada6d.ngrok-free.app';
-  static const String _baseUrl =
-      'https://api-2057331207.southamerica-east1.run.app';
+  static const String _baseUrl = 'https://7f9f6a329a98.ngrok-free.app';
+  // static const String _baseUrl = 'https://api-2057331207.southamerica-east1.run.app';
   static const Duration _timeout = Duration(seconds: 30);
 
   static final Map<String, String> _defaultHeaders = {
@@ -59,20 +58,32 @@ class ApiService {
 
       switch (method.toUpperCase()) {
         case 'GET':
-          response = await http.get(uri, headers: finalHeaders).timeout(_timeout);
+          response = await http
+              .get(uri, headers: finalHeaders)
+              .timeout(_timeout);
           break;
         case 'POST':
           response = await http
-              .post(uri, headers: finalHeaders, body: data != null ? jsonEncode(data) : null)
+              .post(
+                uri,
+                headers: finalHeaders,
+                body: data != null ? jsonEncode(data) : null,
+              )
               .timeout(_timeout);
           break;
         case 'PUT':
           response = await http
-              .put(uri, headers: finalHeaders, body: data != null ? jsonEncode(data) : null)
+              .put(
+                uri,
+                headers: finalHeaders,
+                body: data != null ? jsonEncode(data) : null,
+              )
               .timeout(_timeout);
           break;
         case 'DELETE':
-          response = await http.delete(uri, headers: finalHeaders).timeout(_timeout);
+          response = await http
+              .delete(uri, headers: finalHeaders)
+              .timeout(_timeout);
           break;
         default:
           throw ApiException('Método HTTP não suportado: $method');

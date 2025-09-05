@@ -13,7 +13,7 @@ class _CompanyUnitsListState extends State<CompanyUnitsList> {
   bool _isLoading = true;
   String? _error;
   Map<String, Map<String, Map<String, List<ICompanyUnit>>>> _groupedUnits = {};
-  final TextEditingController _searchController = TextEditingController();
+  // final TextEditingController _searchController = TextEditingController(); // Removido campo de busca
   String _currentSearch = '';
   final Map<String, ScrollController> _scrollControllers = {};
 
@@ -25,7 +25,7 @@ class _CompanyUnitsListState extends State<CompanyUnitsList> {
 
   @override
   void dispose() {
-    _searchController.dispose();
+    // _searchController.dispose(); // Removido campo de busca
     for (final controller in _scrollControllers.values) {
       controller.dispose();
     }
@@ -170,7 +170,7 @@ class _CompanyUnitsListState extends State<CompanyUnitsList> {
   Widget _buildUnitsList(bool isDark) {
     return Column(
       children: [
-        _buildSearchBar(isDark),
+        // _buildSearchBar(isDark), // Removido campo de busca
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -195,58 +195,7 @@ class _CompanyUnitsListState extends State<CompanyUnitsList> {
     );
   }
 
-  Widget _buildSearchBar(bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.grey[850] : Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: isDark ? Colors.grey[700]! : Colors.grey[200]!,
-          ),
-        ),
-      ),
-      child: TextField(
-        controller: _searchController,
-        decoration: InputDecoration(
-          hintText: 'Buscar unidades...',
-          hintStyle: TextStyle(
-            color: isDark ? Colors.grey[400] : Colors.grey[500],
-          ),
-          prefixIcon: Icon(
-            Icons.search,
-            color: isDark ? Colors.grey[400] : Colors.grey[500],
-          ),
-          suffixIcon: _searchController.text.isNotEmpty
-              ? IconButton(
-                  onPressed: () {
-                    _searchController.clear();
-                    _loadUnits();
-                  },
-                  icon: Icon(
-                    Icons.clear,
-                    color: isDark ? Colors.grey[400] : Colors.grey[500],
-                  ),
-                )
-              : null,
-          filled: true,
-          fillColor: isDark ? Colors.grey[800] : Colors.grey[50],
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        ),
-        style: TextStyle(
-          color: isDark ? Colors.white : Colors.grey[900],
-        ),
-        onSubmitted: (value) => _loadUnits(value.trim().isEmpty ? null : value.trim()),
-        onChanged: (value) {
-          setState(() {}); // Update suffixIcon visibility
-        },
-      ),
-    );
-  }
+  // Função _buildSearchBar removida - campo de busca desabilitado
 
   List<Widget> _buildGroupedUnits(bool isDark) {
     final widgets = <Widget>[];

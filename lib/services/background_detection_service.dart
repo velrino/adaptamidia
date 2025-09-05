@@ -12,8 +12,8 @@ import 'package:firebase_performance/firebase_performance.dart';
 import 'package:http_parser/http_parser.dart' as http_parser;
 import 'package:path/path.dart' as p;
 
-import 'display_log_service.dart'; // manter import; chamada comentada abaixo
-import 'api_service.dart';
+import 'display_log_service.dart';
+// import 'api_service.dart'; // comentado pois não está sendo usado
 import 'storage_service.dart';
 
 class BackgroundDetectionService {
@@ -102,7 +102,9 @@ class BackgroundDetectionService {
         } catch (_) {}
       }
       if (removed > 0) {
-        debugPrint('[BackgroundDetection] LGPD sweep removed $removed residual DCIM photos');
+        debugPrint(
+          '[BackgroundDetection] LGPD sweep removed $removed residual DCIM photos',
+        );
       }
     } catch (e) {
       debugPrint('[BackgroundDetection] LGPD sweep error: $e');
@@ -170,7 +172,9 @@ class BackgroundDetectionService {
         _processing = true;
         unawaited(_drainQueue());
       }
-      debugPrint('[BackgroundDetection] Recovered ${_queue.length} pending jobs');
+      debugPrint(
+        '[BackgroundDetection] Recovered ${_queue.length} pending jobs',
+      );
     } catch (e) {
       debugPrint('[BackgroundDetection] _recoverPending error: $e');
     }
@@ -272,17 +276,17 @@ class BackgroundDetectionService {
         try {
           final token = await StorageService.getAuthToken();
           if (token != null) {
-            await ApiService.post<Map<String, dynamic>>(
-              '/display/log/device',
-              job.body,
-              (m) => m,
-              headers: {
-                'Authorization': 'Bearer $token',
-                'ngrok-skip-browser-warning': 'true',
-              },
-            );
+            // await ApiService.post<Map<String, dynamic>>(
+            //   '/display/log/device',
+            //   job.body,
+            //   (m) => m,
+            //   headers: {
+            //     'Authorization': 'Bearer $token',
+            //     'ngrok-skip-browser-warning': 'true',
+            //   },
+            // );
           }
-          // await DisplayLogService.instance.createLog(identifier: job.captureId, body: job.body);
+          await DisplayLogService.instance.createLog(identifier: job.captureId, body: job.body);
         } catch (_) {}
         // Ensure temp file is removed
         try {
@@ -314,7 +318,9 @@ class BackgroundDetectionService {
           iouThreshold: 0.4,
         );
         swYolo.stop();
-        try { bdTrace.incrementMetric('yolo_ms', swYolo.elapsedMilliseconds); } catch (_) {}
+        try {
+          bdTrace.incrementMetric('yolo_ms', swYolo.elapsedMilliseconds);
+        } catch (_) {}
         final detections = (result['detections'] as List<dynamic>? ?? [])
             .map((e) => YOLOResult.fromMap(e))
             .toList();
@@ -337,28 +343,25 @@ class BackgroundDetectionService {
       // InsightFace enrichment
       if (peopleCount == 0) {
         job.body['insightface'] = {
-          'gender': {
-            'Woman': 0,
-            'Man': 0,
-          },
+          'gender': {'Woman': 0, 'Man': 0},
           'men': 0,
           'women': 0,
           'total': 0,
-          'age': {
-            'max': 0,
-            'min': 0,
-            'average': 0,
-          },
+          'age': {'max': 0, 'min': 0, 'average': 0},
         };
       } else {
         try {
           final swFace = Stopwatch()..start();
           final insight = await _fetchInsightface(job.imageFile);
           swFace.stop();
-          try { bdTrace.incrementMetric('insight_ms', swFace.elapsedMilliseconds); } catch (_) {}
+          try {
+            bdTrace.incrementMetric('insight_ms', swFace.elapsedMilliseconds);
+          } catch (_) {}
           job.body['insightface'] = insight;
         } catch (e, st) {
-          debugPrint('[BackgroundDetection] InsightFace request failed: $e\n$st');
+          debugPrint(
+            '[BackgroundDetection] InsightFace request failed: $e\n$st',
+          );
           // Intencionalmente não define insightface em erro (>0) para não mascarar falhas
         }
       }
@@ -369,22 +372,24 @@ class BackgroundDetectionService {
       final token = await StorageService.getAuthToken();
       if (token != null) {
         final swLog = Stopwatch()..start();
-        await ApiService.post<Map<String, dynamic>>(
-          '/display/log/device',
-          job.body,
-          (m) => m,
-          headers: {
-            'Authorization': 'Bearer $token',
-            'ngrok-skip-browser-warning': 'true',
-          },
-        );
+        // await ApiService.post<Map<String, dynamic>>(
+        //   '/display/log/device',
+        //   job.body,
+        //   (m) => m,
+        //   headers: {
+        //     'Authorization': 'Bearer $token',
+        //     'ngrok-skip-browser-warning': 'true',
+        //   },
+        // );
         swLog.stop();
         try {
           bdTrace.incrementMetric('log_ms', swLog.elapsedMilliseconds);
           bdTrace.putAttribute('people_count', peopleCount.toString());
         } catch (_) {}
       }
-      // await DisplayLogService.instance.createLog(identifier: job.captureId, body: job.body);
+      debugPrint('[BackgroundDetection] Salvando log no Firebase (offline-capable): ${job.captureId}');
+      await DisplayLogService.instance.createLog(identifier: job.captureId, body: job.body);
+      debugPrint('[BackgroundDetection] Log salvo com sucesso (cache ou online): ${job.captureId}');
     } finally {
       // Clean up temporary photo to avoid retention
       try {
@@ -398,24 +403,18 @@ class BackgroundDetectionService {
   }
 
   Map<String, dynamic> _emptyInsightface(String method) => {
-        'gender': {
-          'Woman': 0,
-          'Man': 0,
-        },
-        'men': 0,
-        'women': 0,
-        'total': 0,
-        'age': {
-          'max': 0,
-          'min': 0,
-          'average': 0,
-        },
-        'method': method,
-      };
+    'gender': {'Woman': 0, 'Man': 0},
+    'men': 0,
+    'women': 0,
+    'total': 0,
+    'age': {'max': 0, 'min': 0, 'average': 0},
+    'method': method,
+  };
 
   Future<Map<String, dynamic>> _fetchInsightface(File imageFile) async {
     final uri = Uri.parse(
-        'https://vision-2057331207.us-central1.run.app/detect-insightface');
+      'https://vision-2057331207.us-central1.run.app/detect-insightface',
+    );
     try {
       final request = http.MultipartRequest('POST', uri);
       final filename = p.basename(imageFile.path).isNotEmpty
@@ -446,10 +445,12 @@ class BackgroundDetectionService {
           contentType: contentType,
         ),
       );
-      final streamed =
-          await request.send().timeout(const Duration(seconds: 30));
-      final response = await http.Response.fromStream(streamed)
-          .timeout(const Duration(seconds: 30));
+      final streamed = await request.send().timeout(
+        const Duration(seconds: 30),
+      );
+      final response = await http.Response.fromStream(
+        streamed,
+      ).timeout(const Duration(seconds: 30));
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final decoded = json.decode(response.body);
         if (decoded is Map<String, dynamic>) {
@@ -457,10 +458,14 @@ class BackgroundDetectionService {
           decoded.putIfAbsent('method', () => 'InsightFace');
           return decoded;
         }
-        debugPrint('[BackgroundDetection] InsightFace: unexpected response type');
+        debugPrint(
+          '[BackgroundDetection] InsightFace: unexpected response type',
+        );
         return _emptyInsightface('invalid_response');
       } else {
-        debugPrint('[BackgroundDetection] InsightFace HTTP ${response.statusCode}: ${response.body}');
+        debugPrint(
+          '[BackgroundDetection] InsightFace HTTP ${response.statusCode}: ${response.body}',
+        );
         return _emptyInsightface('http_${response.statusCode}');
       }
     } on TimeoutException {
