@@ -25,8 +25,8 @@ class AdVideoLayerState extends State<AdVideoLayer> {
   Future<void> _initController(VideoPlayerController controller) async {
     await controller.initialize();
     controller.setLooping(false);
-    // Sempre mudo para evitar problemas com codec de áudio
-    await controller.setVolume(0.0);
+    // Mantém volume padrão; mute será aplicado apenas em prebuffer/hide
+    await controller.setVolume(1.0);
     
     // Pré-buffer: avança um frame para carregar o vídeo na memória
     await controller.seekTo(Duration.zero);
@@ -41,7 +41,8 @@ class AdVideoLayerState extends State<AdVideoLayer> {
     // If standby prepared for this file, crossfade
     if (_standby != null && _standbyPath == file.path) {
       try {
-        await _standby!.setVolume(0.0);
+        // Ao iniciar reprodução, garante áudio ligado
+        await _standby!.setVolume(1.0);
         // Pequeno delay para garantir que o vídeo está pronto
         await Future.delayed(const Duration(milliseconds: 50));
         await _standby!.play();
@@ -92,7 +93,7 @@ class AdVideoLayerState extends State<AdVideoLayer> {
     }
     _active = ctrl;
     _activePath = file.path;
-    await _active!.setVolume(0.0);
+    await _active!.setVolume(1.0);
     
     // Inicia com opacidade 0 para fade-in suave
     if (mounted) {
@@ -128,6 +129,7 @@ class AdVideoLayerState extends State<AdVideoLayer> {
       _standby?.dispose();
       _standby = next;
       _standbyPath = file.path;
+      // Mantém mudo durante o prebuffer para evitar vazamento de áudio
       await _standby!.setVolume(0.0);
       
       // Pré-carrega alguns segundos do vídeo para evitar travamento
@@ -149,7 +151,8 @@ class AdVideoLayerState extends State<AdVideoLayer> {
     _standbyPath = null;
     try {
       if (_active != null) {
-        await _active!.setVolume(0.0);
+        // Ao trocar para ativo, liga o áudio
+        await _active!.setVolume(1.0);
         await Future.delayed(const Duration(milliseconds: 50));
         await _active!.play();
       }
