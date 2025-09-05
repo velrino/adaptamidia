@@ -70,3 +70,7 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    implementation("com.github.HyperInspire:inspireface-android-sdk:1.2.0")
+}
