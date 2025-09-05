@@ -10,6 +10,8 @@ import 'screens/authenticated/home_screen.dart';
 import 'screens/authenticated/display_screen.dart';
 // import 'screens/camera_screen.dart'; // removed: using overlay toggle
 import 'components/uvc_camera_host.dart';
+import 'services/background_detection_service.dart';
+import 'services/insightface_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -97,6 +99,8 @@ class AppWrapper extends StatefulWidget {
 class _AppWrapperState extends State<AppWrapper> {
   bool _isConfigured = false;
   bool _isLoading = true;
+  bool _modelsReady = false;
+  String _loadingStep = 'Iniciando...';
 
   @override
   void initState() {
@@ -127,6 +131,35 @@ class _AppWrapperState extends State<AppWrapper> {
       _isConfigured = isConfigured;
       _isLoading = false;
     });
+
+    if (isConfigured) {
+      await _initModels();
+    }
+  }
+
+  Future<void> _initModels() async {
+    setState(() {
+      _loadingStep = 'Carregando modelos (YOLO, InsightFace)...';
+      _modelsReady = false;
+    });
+    try {
+      // YOLO (TFLite) – carrega modelo e mantém instância viva
+      setState(() { _loadingStep = 'Carregando YOLO...'; });
+      await BackgroundDetectionService.instance.ensureLoaded();
+
+      // InsightFace (Android on-device). Em outras plataformas, retorna false e segue.
+      setState(() { _loadingStep = 'Carregando InsightFace...'; });
+      await InsightFaceService.instance.ensureInitialized();
+
+      setState(() {
+        _modelsReady = true;
+      });
+    } catch (_) {
+      // Mesmo se falhar, seguimos para que o app abra; serviços lidam com fallback.
+      setState(() {
+        _modelsReady = true;
+      });
+    }
   }
 
   @override
@@ -157,6 +190,22 @@ class _AppWrapperState extends State<AppWrapper> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        // Gate de carregamento dos modelos críticos antes de entrar no app
+        if (!_modelsReady) {
+          return Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(_loadingStep),
+                ],
+              ),
+            ),
           );
         }
 
