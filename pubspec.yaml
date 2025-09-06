@@ -34,7 +34,6 @@ dependencies:
   webview_flutter_wkwebview: ^3.23.0
   flutter_vlc_player: ^7.4.3
   video_player: ^2.9.1
-  cached_video_player_plus: ^4.0.4
   connectivity_plus: ^6.0.5
   package_info_plus: ^8.0.2
 

@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_uvc_camera/flutter_uvc_camera.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class UvcCameraService {
   UvcCameraService._internal();
@@ -44,8 +43,6 @@ class UvcCameraService {
     if (previewVisible.value) previewVisible.value = false;
   }
 
-  // Expose best-effort DCIM sweep publicly
-  Future<void> sweepDcimIfNeeded() => _sweepDcimIfNeeded();
 
   void initialize() {
     if (_initialized) return;
@@ -74,8 +71,7 @@ class UvcCameraService {
     _controller.msgCallback = (msg) {
       debugPrint('[UvcCameraService] msg=$msg');
     };
-    // Schedule DCIM cleanup best-effort
-    Future.microtask(() => _sweepDcimIfNeeded());
+    // DCIM cleanup disabled: we no longer persist photos to DCIM
   }
 
   Future<void> ensureOpen() async {
@@ -146,43 +142,5 @@ class UvcCameraService {
     }
   }
 
-  Future<void> _sweepDcimIfNeeded() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final last = prefs.getInt('dcim_sweep_last') ?? 0;
-      final lastDt = DateTime.fromMillisecondsSinceEpoch(last);
-      if (DateTime.now().difference(lastDt) < const Duration(hours: 6)) {
-        return;
-      }
-      int removed = 0;
-      for (final path in const [
-        '/storage/emulated/0/DCIM/Camera',
-        '/sdcard/DCIM/Camera',
-      ]) {
-        final dir = Directory(path);
-        if (!await dir.exists()) continue;
-        try {
-          final re = RegExp(r'^IMG_\d+\.jpg$', caseSensitive: false);
-          final entries = await dir.list(followLinks: false).toList();
-          for (final e in entries) {
-            if (e is! File) continue;
-            final name = e.uri.pathSegments.isNotEmpty
-                ? e.uri.pathSegments.last
-                : e.path.split('/').last;
-            if (!re.hasMatch(name)) continue;
-            try {
-              await e.delete();
-              removed++;
-            } catch (_) {}
-          }
-        } catch (_) {}
-      }
-      if (removed > 0) {
-        debugPrint('[UvcCameraService] LGPD DCIM sweep removed $removed photos');
-      }
-      await prefs.setInt('dcim_sweep_last', DateTime.now().millisecondsSinceEpoch);
-    } catch (e) {
-      debugPrint('[UvcCameraService] DCIM sweep error: $e');
-    }
-  }
+  // DCIM sweep removed; no longer needed when images are not persisted
 }

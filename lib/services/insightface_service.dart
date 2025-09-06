@@ -62,7 +62,10 @@ class InsightFaceService {
       if (path == null) return _emptyResult();
       final file = File(path);
       if (!await file.exists()) return _emptyResult();
-      return analyzeImage(file);
+      final result = await analyzeImage(file);
+      // Delete captured photo immediately to avoid persisting to DCIM
+      try { await file.delete(); } catch (_) {}
+      return result;
     } catch (e) {
       if (kDebugMode) {
         print('[InsightFaceService] captureAndAnalyze error: $e');

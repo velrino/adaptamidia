@@ -13,8 +13,7 @@ import '../../services/api_service.dart';
 import '../../services/device_context_service.dart';
 import '../../services/uvc_camera_service.dart';
 import 'package:firebase_performance/firebase_performance.dart';
-// import '../../components/ad_video_layer.dart'; // rollback option
-import '../../components/cached_video_layer.dart';
+import '../../components/ad_video_layer.dart';
 
 class DisplayScreen extends StatefulWidget {
   final String unitId;
@@ -29,7 +28,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   List<dynamic> _contents = [];
   int _currentIndex = 0;
   Timer? _timer;
-  Timer? _clockTimer;
+  // Timer for clock removed; use dedicated widget to avoid full rebuilds
   bool _isLoading = true;
   bool _isPreparing = false;
   double _prepareProgress = 0.0;
@@ -45,13 +44,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
   String? _weatherText;
   String? _weatherIcon;
   double? _weatherTempC;
-  DateTime _now = DateTime.now();
+  // Date/time handled by dedicated widget
   DateTime? _currentStartAt;
   int _currentDurationSecs = 0;
   bool _deviceIsLandscape = true;
-  // final GlobalKey<AdVideoLayerState> _adLayerKey = GlobalKey<AdVideoLayerState>(); // rollback option
-  final GlobalKey<CachedVideoLayerState> _adLayerKey =
-      GlobalKey<CachedVideoLayerState>();
+  final GlobalKey<AdVideoLayerState> _adLayerKey =
+      GlobalKey<AdVideoLayerState>();
   // Backdrop persistente para evitar tela preta entre transições
   ImageProvider? _backdropProvider;
   String? _backdropId; // usa o path ou a URL para AnimatedSwitcher keys
@@ -66,13 +64,13 @@ class _DisplayScreenState extends State<DisplayScreen> {
     _enterFullScreen();
     _initDeviceConfig();
     _loadContent();
-    _startClock();
+    // Clock handled by widget; no global timer needed
     WakelockPlus.enable();
     // Ensure global UVC is opened
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(UvcCameraService.instance.ensureOpen());
       UvcCameraService.instance.hidePreview();
-      // DCIM sweep is scheduled in UvcCameraService.initialize()
+      // DCIM sweep removed: images are processed in-memory and deleted
     });
     // No uploads to Storage per LGPD; skip photo upload queue
   }
@@ -97,7 +95,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
       BackgroundDetectionService.instance.dispose();
     } catch (_) {}
     _timer?.cancel();
-    _clockTimer?.cancel();
+    // no-op: clock timer removed
     _backgroundTimer?.cancel();
     _exitFullScreen();
     WakelockPlus.disable();
@@ -117,15 +115,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
   }
 
-  void _startClock() {
-    _clockTimer?.cancel();
-    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      setState(() {
-        _now = DateTime.now();
-      });
-    });
-  }
+  // Clock moved to a dedicated widget to avoid rebuilding the whole screen.
 
   Future<void> _fetchInfo() async {
     try {
@@ -309,7 +299,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
         if (imageUrls.isEmpty) return;
         await ImageCacheService.instance.preloadAll(
           imageUrls,
-          concurrency: 6,
+          concurrency: 3,
           onProgress: (p) {
             _imageDone = (p * _imageTotal).round();
             done = _imageDone + _videoDone;
@@ -467,7 +457,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
               await ImageCacheService.instance.getFileFromCache(imageUrl) ??
               await ImageCacheService.instance.prefetch(imageUrl);
           if (file != null && mounted) {
-            final provider = FileImage(file);
+            final mq = MediaQuery.of(context);
+            final targetW = (mq.size.width * mq.devicePixelRatio).round();
+            final targetH = (mq.size.height * mq.devicePixelRatio).round();
+            final provider = ResizeImage(FileImage(file), width: targetW, height: targetH);
             // Decodifica antes de mostrar para evitar piscar
             await precacheImage(provider, context);
             if (mounted) {
@@ -525,7 +518,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
               await ImageCacheService.instance.getFileFromCache(img) ??
               await ImageCacheService.instance.prefetch(img);
           if (file != null) {
-            final provider = FileImage(file);
+            final mq = MediaQuery.of(context);
+            final targetW = (mq.size.width * mq.devicePixelRatio).round();
+            final targetH = (mq.size.height * mq.devicePixelRatio).round();
+            final provider = ResizeImage(FileImage(file), width: targetW, height: targetH);
             unawaited(precacheImage(provider, context));
           }
         } catch (_) {}
@@ -721,13 +717,16 @@ class _DisplayScreenState extends State<DisplayScreen> {
           debugPrint(
             '[DisplayScreen] Captured photo for $captureId at $tmpPath',
           );
-          // Enqueue background YOLO + upload + log
-          BackgroundDetectionService.instance.enqueue(
+          // Read in-memory for YOLO; keep the same file for InsightFace, then delete
+          final bytes = await file.readAsBytes();
+          // Process immediately (YOLO + InsightFace) and log; deletes file internally
+          await BackgroundDetectionService.instance.processImmediate(
             captureId: captureId,
-            imageFile: file,
             body: body,
+            bytes: bytes,
+            imageFile: file,
           );
-          return; // either logged or queued; do not double-log
+          return; // done
         } else {
           debugPrint(
             '[DisplayScreen] takePicture returned null, fallback to log without photo',
@@ -741,16 +740,14 @@ class _DisplayScreenState extends State<DisplayScreen> {
     // Fallback: log without photo (quando não tem câmera USB)
     debugPrint('[DisplayScreen] No camera available, logging without photo');
     try {
-      // Usa apenas o BackgroundDetectionService para logging
-      // Se não tem câmera, passa null para imageFile
-      BackgroundDetectionService.instance.enqueue(
+      await BackgroundDetectionService.instance.processImmediate(
         captureId: captureId,
-        imageFile: null, // null quando não tem câmera disponível
         body: body,
+        bytes: null,
       );
-      debugPrint('[DisplayScreen] Log enqueued successfully (no photo)');
+      debugPrint('[DisplayScreen] Log saved successfully (no photo)');
     } catch (e) {
-      debugPrint('[DisplayScreen] Failed to enqueue log: $e');
+      debugPrint('[DisplayScreen] Failed to save log: $e');
     }
   }
 
@@ -789,11 +786,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
     final shortest = mq.size.shortestSide;
     final scale = (shortest / 800).clamp(1.0, 1.8);
 
-    String _fmt2(int v) => v.toString().padLeft(2, '0');
-    final dateStr = '${_fmt2(_now.day)}/${_fmt2(_now.month)}/${_now.year}';
-    final timeStr =
-        '${_fmt2(_now.hour)}:${_fmt2(_now.minute)}:${_fmt2(_now.second)}';
-    final rightDateTime = '$dateStr $timeStr';
+    // Clock moved to ClockText widget to avoid full rebuilds
     final hasCenter = _weatherIcon != null || _weatherTempC != null;
     final leftCurrency = _usdBid != null ? _usdBid!.toStringAsFixed(2) : '--';
 
@@ -1030,19 +1023,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
                                 ),
                         ),
                       ),
-                      // Right: date/time now
+                      // Right: date/time now (isolated widget to avoid full rebuilds)
                       Expanded(
                         child: Align(
                           alignment: Alignment.centerRight,
-                          child: Text(
-                            rightDateTime,
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: (20 * scale),
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          child: ClockText(fontSize: (20 * scale)),
                         ),
                       ),
                     ],
@@ -1094,7 +1079,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
         children: [
           // Backdrop persistente (imagem do NEWS atual mais recente)
           if (_backdropProvider != null)
-            AnimatedOpacity(
+            RepaintBoundary(
+              child: AnimatedOpacity(
               duration: const Duration(milliseconds: 250),
               curve: Curves.easeInOut,
               opacity: _backdropOpacity,
@@ -1108,7 +1094,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
                   ),
                 ),
               ),
-            ),
+            )),
           // Main content
           if (_isLoading)
             const Center(child: CircularProgressIndicator(color: Colors.white))
@@ -1191,12 +1177,53 @@ class _DisplayScreenState extends State<DisplayScreen> {
           // (Progress bar removed as requested)
 
           // Persistent Ad video layer (double-buffered), hidden by default
-          // AdVideoLayer(key: _adLayerKey), // rollback option
-          CachedVideoLayer(key: _adLayerKey),
+          AdVideoLayer(key: _adLayerKey),
 
           // Global hidden UVC preview lives in UvcCameraHost (root)
         ],
       ),
+    );
+  }
+}
+
+class ClockText extends StatefulWidget {
+  final double fontSize;
+  const ClockText({super.key, this.fontSize = 20});
+
+  @override
+  State<ClockText> createState() => _ClockTextState();
+}
+
+class _ClockTextState extends State<ClockText> {
+  late Timer _t;
+  DateTime _now = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _t = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _t.cancel();
+    super.dispose();
+  }
+
+  String _fmt2(int v) => v.toString().padLeft(2, '0');
+
+  @override
+  Widget build(BuildContext context) {
+    final dateStr = '${_fmt2(_now.day)}/${_fmt2(_now.month)}/${_now.year}';
+    final timeStr = '${_fmt2(_now.hour)}:${_fmt2(_now.minute)}:${_fmt2(_now.second)}';
+    return Text(
+      '$dateStr $timeStr',
+      style: TextStyle(color: Colors.white70, fontSize: widget.fontSize),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
     );
   }
 }
