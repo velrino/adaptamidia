@@ -85,7 +85,6 @@ class AdVideoLayerState extends State<AdVideoLayer> {
       // Aguarda fade e troca controllers
       Future.delayed(_fadeDuration, () async {
         final old = _active;
-        final wasReady = _isActiveReady;
 
         _active = _standby;
         _isActiveReady = _isStandbyReady;
@@ -94,15 +93,17 @@ class AdVideoLayerState extends State<AdVideoLayer> {
         _standbyPath = null;
         _isStandbyReady = false;
 
-        // Cleanup do controller antigo
-        if (old != null) {
-          try {
-            await old.pause();
-            await old.dispose();
-          } catch (e) {
-            debugPrint('[AdVideoLayer] Error disposing old controller: $e');
+        // Cleanup do controller antigo (com delay para evitar GC durante playback)
+        Future.delayed(const Duration(seconds: 1), () async {
+          if (old != null) {
+            try {
+              await old.pause();
+              await old.dispose();
+            } catch (e) {
+              debugPrint('[AdVideoLayer] Error disposing old controller: $e');
+            }
           }
-        }
+        });
 
         if (mounted) {
           setState(() {
@@ -129,21 +130,12 @@ class AdVideoLayerState extends State<AdVideoLayer> {
     _isActiveReady = false;
 
     try {
-      // Inicializa com buffer completo
+      // Inicializa com buffer progressivo
       await _initController(ctrl, isStandby: false);
 
-      // Dispose do controller antigo APÓS o novo estar pronto
+      // Guarda referência do controller antigo
       final oldActive = _active;
       _active = ctrl;
-
-      if (oldActive != null) {
-        try {
-          await oldActive.pause();
-          await oldActive.dispose();
-        } catch (e) {
-          debugPrint('[AdVideoLayer] Error disposing old active: $e');
-        }
-      }
 
       // Mostra a camada antes de tocar para evitar flash
       if (mounted) {
@@ -153,13 +145,22 @@ class AdVideoLayerState extends State<AdVideoLayer> {
         });
       }
 
-      // Pequeno delay para garantir que o widget foi renderizado
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      // Inicia reprodução após buffer estar carregado
+      // Inicia reprodução imediatamente (buffer já carregado)
       await _active!.play();
 
       debugPrint('[AdVideoLayer] Playing: ${file.path}');
+
+      // Dispose do controller antigo após 1 segundo (evita GC durante início)
+      if (oldActive != null) {
+        Future.delayed(const Duration(seconds: 1), () async {
+          try {
+            await oldActive.pause();
+            await oldActive.dispose();
+          } catch (e) {
+            debugPrint('[AdVideoLayer] Error disposing old active: $e');
+          }
+        });
+      }
     } catch (e) {
       debugPrint('[AdVideoLayer] Error initializing controller: $e');
       _isActiveReady = false;

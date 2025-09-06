@@ -468,7 +468,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
       if (nv is String && nv.isNotEmpty) {
         final file = await VideoCacheService.instance.getVideoFromCache(nv);
         if (file != null) {
-          // Prepara imediatamente (sem delay adicional)
+          // Aguarda um momento para não competir com o vídeo atual
+          await Future.delayed(const Duration(milliseconds: 500));
+          // Prepara o próximo vídeo
           await _adLayerKey.currentState?.prepareNext(file);
         }
       }
