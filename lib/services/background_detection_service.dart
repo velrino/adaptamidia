@@ -38,13 +38,26 @@ class BackgroundDetectionService {
       await file.writeAsBytes(bytes, flush: true);
       _modelPath = file.path;
 
-      _yolo = YOLO(
-        modelPath: _modelPath!,
-        task: YOLOTask.detect,
-        useGpu: false,
-      );
-      await _yolo!.loadModel();
-      debugPrint('[BackgroundDetection] YOLO loaded at $_modelPath');
+      // Prefer GPU delegate; fallback to CPU if unavailable
+      try {
+        _yolo = YOLO(
+          modelPath: _modelPath!,
+          task: YOLOTask.detect,
+          useGpu: true,
+        );
+        await _yolo!.loadModel();
+        debugPrint('[BackgroundDetection] YOLO loaded (GPU) at $_modelPath');
+      } catch (e) {
+        debugPrint('[BackgroundDetection] GPU load failed, falling back to CPU: $e');
+        try { _yolo?.dispose(); } catch (_) {}
+        _yolo = YOLO(
+          modelPath: _modelPath!,
+          task: YOLOTask.detect,
+          useGpu: false,
+        );
+        await _yolo!.loadModel();
+        debugPrint('[BackgroundDetection] YOLO loaded (CPU) at $_modelPath');
+      }
     } catch (e) {
       debugPrint('[BackgroundDetection] Failed to load YOLO: $e');
     } finally {
