@@ -460,7 +460,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
             final mq = MediaQuery.of(context);
             final targetW = (mq.size.width * mq.devicePixelRatio).round();
             final targetH = (mq.size.height * mq.devicePixelRatio).round();
-            final provider = ResizeImage(FileImage(file), width: targetW, height: targetH);
+            final provider = ResizeImage(
+              FileImage(file),
+              width: targetW,
+              height: targetH,
+            );
             // Decodifica antes de mostrar para evitar piscar
             await precacheImage(provider, context);
             if (mounted) {
@@ -521,7 +525,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
             final mq = MediaQuery.of(context);
             final targetW = (mq.size.width * mq.devicePixelRatio).round();
             final targetH = (mq.size.height * mq.devicePixelRatio).round();
-            final provider = ResizeImage(FileImage(file), width: targetW, height: targetH);
+            final provider = ResizeImage(
+              FileImage(file),
+              width: targetW,
+              height: targetH,
+            );
             unawaited(precacheImage(provider, context));
           }
         } catch (_) {}
@@ -708,6 +716,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
     // If we have a UVC camera, capture a photo via global service
     {
       try {
+        // Reduce pressure on ImageReader during capture+inference
+        UvcCameraService.instance.hidePreview();
         final tmpPath = await UvcCameraService.instance.takePicture(
           width: 640,
           height: 480,
@@ -734,6 +744,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
         }
       } catch (e) {
         debugPrint('[DisplayScreen] Photo capture failed: $e');
+      } finally {
+        // Resume preview after capture path completes
+        // UvcCameraService.instance.showPreview();
       }
     }
 
@@ -1081,20 +1094,21 @@ class _DisplayScreenState extends State<DisplayScreen> {
           if (_backdropProvider != null)
             RepaintBoundary(
               child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              opacity: _backdropOpacity,
-              child: SizedBox.expand(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: _backdropProvider!,
-                      fit: BoxFit.cover,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                opacity: _backdropOpacity,
+                child: SizedBox.expand(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: _backdropProvider!,
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
                 ),
               ),
-            )),
+            ),
           // Main content
           if (_isLoading)
             const Center(child: CircularProgressIndicator(color: Colors.white))
@@ -1218,7 +1232,8 @@ class _ClockTextState extends State<ClockText> {
   @override
   Widget build(BuildContext context) {
     final dateStr = '${_fmt2(_now.day)}/${_fmt2(_now.month)}/${_now.year}';
-    final timeStr = '${_fmt2(_now.hour)}:${_fmt2(_now.minute)}:${_fmt2(_now.second)}';
+    final timeStr =
+        '${_fmt2(_now.hour)}:${_fmt2(_now.minute)}:${_fmt2(_now.second)}';
     return Text(
       '$dateStr $timeStr',
       style: TextStyle(color: Colors.white70, fontSize: widget.fontSize),

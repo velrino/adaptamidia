@@ -22,6 +22,8 @@ class BackgroundDetectionService {
   YOLO? _yolo;
   bool _loading = false;
   String? _modelPath;
+  bool _yoloGpu = false;
+  bool _gpuDelegateDisabled = false; // disable GPU after a runtime failure
 
   // Queue/persistence pipeline removed: now processing is immediate and in-memory.
 
@@ -46,6 +48,7 @@ class BackgroundDetectionService {
           useGpu: true,
         );
         await _yolo!.loadModel();
+        _yoloGpu = true;
         debugPrint('[BackgroundDetection] YOLO loaded (GPU) at $_modelPath');
       } catch (e) {
         debugPrint('[BackgroundDetection] GPU load failed, falling back to CPU: $e');
@@ -56,6 +59,7 @@ class BackgroundDetectionService {
           useGpu: false,
         );
         await _yolo!.loadModel();
+        _yoloGpu = false;
         debugPrint('[BackgroundDetection] YOLO loaded (CPU) at $_modelPath');
       }
     } catch (e) {
@@ -70,6 +74,43 @@ class BackgroundDetectionService {
       _yolo?.dispose();
     } catch (_) {}
     _yolo = null;
+  }
+
+  Future<Map<String, dynamic>> _predictWithGpuFallback(Uint8List bytes) async {
+    try {
+      return await _yolo!.predict(
+        bytes,
+        confidenceThreshold: 0.5,
+        iouThreshold: 0.4,
+      );
+    } catch (e) {
+      // If GPU path failed at runtime, switch to CPU and retry once
+      final msg = e.toString();
+      final looksGpuDelegateError = msg.contains('Failed to apply delegate') ||
+          msg.contains('TfLiteGpuDelegate') ||
+          msg.contains('OpenCL') ||
+          msg.contains('delegate is not initialized');
+      if (_yoloGpu && !_gpuDelegateDisabled && looksGpuDelegateError) {
+        debugPrint('[BackgroundDetection] GPU runtime failure, falling back to CPU. Error: $msg');
+        try { _yolo?.dispose(); } catch (_) {}
+        _gpuDelegateDisabled = true;
+        // Recreate YOLO on CPU
+        _yolo = YOLO(
+          modelPath: _modelPath!,
+          task: YOLOTask.detect,
+          useGpu: false,
+        );
+        await _yolo!.loadModel();
+        _yoloGpu = false;
+        // Retry once on CPU
+        return await _yolo!.predict(
+          bytes,
+          confidenceThreshold: 0.5,
+          iouThreshold: 0.4,
+        );
+      }
+      rethrow;
+    }
   }
 
   /// Process a single capture immediately, without persisting the image to disk.
@@ -94,11 +135,7 @@ class BackgroundDetectionService {
       if (bytes != null && _yolo != null) {
         try {
           final swYolo = Stopwatch()..start();
-          final result = await _yolo!.predict(
-            bytes,
-            confidenceThreshold: 0.5,
-            iouThreshold: 0.4,
-          );
+          final result = await _predictWithGpuFallback(bytes);
           swYolo.stop();
           try { bdTrace.incrementMetric('yolo_ms', swYolo.elapsedMilliseconds); } catch (_) {}
           final detections = (result['detections'] as List<dynamic>? ?? [])
@@ -108,7 +145,7 @@ class BackgroundDetectionService {
               .where((d) => d.className.toLowerCase() == 'person')
               .length;
         } catch (e, st) {
-          debugPrint('[BackgroundDetection] Immediate YOLO failed: $e\n$st');
+          debugPrint('[BackgroundDetection] Immediate YOLO failed (after fallback): $e\n$st');
         }
       }
 
