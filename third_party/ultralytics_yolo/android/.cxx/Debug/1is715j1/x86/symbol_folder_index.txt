@@ -1,0 +1,1 @@
+/Users/velrino/projects/xmp-media/app/build/ultralytics_yolo/intermediates/cxx/Debug/1is715j1/obj/x86

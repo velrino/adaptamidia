@@ -13,12 +13,12 @@ class VideoPlayerScreen extends StatefulWidget {
   final bool isLandscape;
   
   const VideoPlayerScreen({
-    Key? key,
+    super.key,
     required this.videoUrl,
     this.onVideoEnded,
     this.duration,
     this.isLandscape = true,
-  }) : super(key: key);
+  });
   
   @override
   State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();

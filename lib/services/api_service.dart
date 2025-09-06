@@ -130,10 +130,7 @@ class ApiService {
       throw ApiException('Erro inesperado: ${e.toString()}');
     } finally {
       // Ensure any started metric is stopped in error cases
-      try {
-        final active = FirebasePerformance.instance;
-        // no global way to fetch metric; metrics above are stopped in success
-      } catch (_) {}
+      // Metrics above are stopped in success paths; nothing to do here.
     }
   }
 

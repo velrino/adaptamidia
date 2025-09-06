@@ -9,16 +9,10 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../services/storage_service.dart';
 import '../../services/video_cache_service.dart';
 import '../../services/image_cache_service.dart';
-// import '../../services/display_log_service.dart';
 import '../../services/api_service.dart';
 import '../../services/device_context_service.dart';
-// Global UVC handled by UvcCameraService
 import '../../services/uvc_camera_service.dart';
 import 'package:firebase_performance/firebase_performance.dart';
-// Removed PhotoLogService (no image uploads by LGPD)
-// import '../../components/video_player_screen.dart';
-// import '../../components/vlc_video_player.dart'; // VLC has _viewId bug
-// import '../../components/flutter_video_player.dart'; // Testing Flutter native video player
 import '../../components/ad_video_layer.dart';
 
 class DisplayScreen extends StatefulWidget {
@@ -34,9 +28,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
   List<dynamic> _contents = [];
   int _currentIndex = 0;
   Timer? _timer;
-  Timer? _progressTimer;
   Timer? _clockTimer;
-  double _progress = 0.0;
   bool _isLoading = true;
   bool _isPreparing = false;
   double _prepareProgress = 0.0;
@@ -103,7 +95,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
       BackgroundDetectionService.instance.dispose();
     } catch (_) {}
     _timer?.cancel();
-    _progressTimer?.cancel();
     _clockTimer?.cancel();
     _backgroundTimer?.cancel();
     _exitFullScreen();
@@ -391,8 +382,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
     if (_contents.isEmpty) return;
 
     _timer?.cancel();
-    _progressTimer?.cancel();
-    _progress = 0.0;
 
     final content = _contents[_currentIndex];
     final type = content['type'];
@@ -408,19 +397,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
     _currentStartAt = DateTime.now();
     _currentDurationSecs = duration;
 
-    // Start progress timer (100ms)
-    const periodMs = 100;
-    _progressTimer = Timer.periodic(const Duration(milliseconds: periodMs), (
-      timer,
-    ) {
-      if (!mounted) {
-        timer.cancel();
-        return;
-      }
-      setState(() {
-        _progress = (timer.tick * periodMs) / (duration * 1000);
-      });
-    });
+    // Progress bar removed: no progress timer needed
 
     // Control Ad video layer visibility and source
     if (type == 'ADVERTISEMENT' && content['ads'] != null) {
@@ -484,8 +461,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
             });
           }
           // Recupera arquivo do cache ou baixa se necessário
-          final file = await ImageCacheService.instance.getFileFromCache(imageUrl)
-              ?? await ImageCacheService.instance.prefetch(imageUrl);
+          final file =
+              await ImageCacheService.instance.getFileFromCache(imageUrl) ??
+              await ImageCacheService.instance.prefetch(imageUrl);
           if (file != null && mounted) {
             final provider = FileImage(file);
             // Decodifica antes de mostrar para evitar piscar
@@ -541,7 +519,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
       if (img is String && img.isNotEmpty && mounted) {
         // Pré-carrega via arquivo local em cache para evitar uso de rede/placeholder
         try {
-          final file = await ImageCacheService.instance.getFileFromCache(img) ??
+          final file =
+              await ImageCacheService.instance.getFileFromCache(img) ??
               await ImageCacheService.instance.prefetch(img);
           if (file != null) {
             final provider = FileImage(file);

@@ -14,11 +14,9 @@ class AdVideoLayer extends StatefulWidget {
 class AdVideoLayerState extends State<AdVideoLayer> {
   VideoPlayerController? _active;
   VideoPlayerController? _standby;
-  String? _activePath;
   String? _standbyPath;
   double _activeOpacity = 0.0;
   double _standbyOpacity = 0.0;
-  bool _isPreBuffering = false;
   final Duration _fadeDuration = const Duration(milliseconds: 500);
   final Duration _initialFadeDuration = const Duration(milliseconds: 800);
 
@@ -55,7 +53,6 @@ class AdVideoLayerState extends State<AdVideoLayer> {
       Future.delayed(_fadeDuration, () {
         final old = _active;
         _active = _standby;
-        _activePath = _standbyPath;
         _standby = null;
         _standbyPath = null;
         try { old?.pause(); } catch (_) {}
@@ -84,7 +81,6 @@ class AdVideoLayerState extends State<AdVideoLayer> {
       unawaited(_active!.dispose());
     }
     _active = ctrl;
-    _activePath = file.path;
     await _active!.setVolume(1.0);
 
     // Mantém a camada ativa visível já no início para não expor o fundo
@@ -117,12 +113,11 @@ class AdVideoLayerState extends State<AdVideoLayer> {
       await _standby!.setVolume(0.0);
       
       // Pré-carrega alguns segundos do vídeo para evitar travamento
-      _isPreBuffering = true;
       await _standby!.play();
       await Future.delayed(const Duration(milliseconds: 200));
       await _standby!.pause();
       await _standby!.seekTo(Duration.zero);
-      _isPreBuffering = false;
+      
     } catch (_) {}
   }
 
@@ -131,7 +126,6 @@ class AdVideoLayerState extends State<AdVideoLayer> {
     final old = _active;
     _active = _standby;
     _standby = null;
-    _activePath = _standbyPath;
     _standbyPath = null;
     try {
       if (_active != null) {

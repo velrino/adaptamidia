@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../services/insightface_service.dart';
@@ -23,7 +22,7 @@ class _DebugInsightFaceButtonState extends State<DebugInsightFaceButton> {
     try {
       await InsightFaceService.instance.ensureInitialized();
       final res = await InsightFaceService.instance.captureAndAnalyze();
-      if (!mounted) return;
+      if (!context.mounted) return;
       showModalBottomSheet(
         context: context,
         showDragHandle: true,
@@ -39,7 +38,7 @@ class _DebugInsightFaceButtonState extends State<DebugInsightFaceButton> {
         ),
       );
     } catch (e) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('InsightFace error: $e')),
       );
@@ -63,4 +62,3 @@ class _DebugInsightFaceButtonState extends State<DebugInsightFaceButton> {
     );
   }
 }
-

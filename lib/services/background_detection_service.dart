@@ -1,16 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:ultralytics_yolo/ultralytics_yolo.dart';
-import 'package:http/http.dart' as http;
 import 'package:firebase_performance/firebase_performance.dart';
-import 'package:http_parser/http_parser.dart' as http_parser;
-import 'package:path/path.dart' as p;
 
 import 'display_log_service.dart';
 import 'insightface_service.dart';

@@ -1,0 +1,19 @@
+                        -H/Users/velrino/projects/xmp-media/app/third_party/ultralytics_yolo/android/src/main/cpp
+-DCMAKE_SYSTEM_NAME=Android
+-DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+-DCMAKE_SYSTEM_VERSION=21
+-DANDROID_PLATFORM=android-21
+-DANDROID_ABI=x86_64
+-DCMAKE_ANDROID_ARCH_ABI=x86_64
+-DANDROID_NDK=/Users/velrino/Library/Android/sdk/ndk/27.0.12077973
+-DCMAKE_ANDROID_NDK=/Users/velrino/Library/Android/sdk/ndk/27.0.12077973
+-DCMAKE_TOOLCHAIN_FILE=/Users/velrino/Library/Android/sdk/ndk/27.0.12077973/build/cmake/android.toolchain.cmake
+-DCMAKE_MAKE_PROGRAM=/Users/velrino/Library/Android/sdk/cmake/3.22.1/bin/ninja
+-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=/Users/velrino/projects/xmp-media/app/build/ultralytics_yolo/intermediates/cxx/Debug/1is715j1/obj/x86_64
+-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=/Users/velrino/projects/xmp-media/app/build/ultralytics_yolo/intermediates/cxx/Debug/1is715j1/obj/x86_64
+-DCMAKE_BUILD_TYPE=Debug
+-B/Users/velrino/projects/xmp-media/app/third_party/ultralytics_yolo/android/.cxx/Debug/1is715j1/x86_64
+-GNinja
+-DANDROID_STL=c++_shared
+                        Build command args: []
+                        Version: 2

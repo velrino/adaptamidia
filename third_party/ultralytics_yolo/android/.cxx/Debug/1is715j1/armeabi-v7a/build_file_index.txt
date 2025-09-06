@@ -1,0 +1,1 @@
+/Users/velrino/projects/xmp-media/app/third_party/ultralytics_yolo/android/src/main/cpp/CMakeLists.txt
