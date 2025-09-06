@@ -13,7 +13,8 @@ import '../../services/api_service.dart';
 import '../../services/device_context_service.dart';
 import '../../services/uvc_camera_service.dart';
 import 'package:firebase_performance/firebase_performance.dart';
-import '../../components/ad_video_layer.dart';
+// import '../../components/ad_video_layer.dart'; // rollback option
+import '../../components/cached_video_layer.dart';
 
 class DisplayScreen extends StatefulWidget {
   final String unitId;
@@ -48,8 +49,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
   DateTime? _currentStartAt;
   int _currentDurationSecs = 0;
   bool _deviceIsLandscape = true;
-  final GlobalKey<AdVideoLayerState> _adLayerKey =
-      GlobalKey<AdVideoLayerState>();
+  // final GlobalKey<AdVideoLayerState> _adLayerKey = GlobalKey<AdVideoLayerState>(); // rollback option
+  final GlobalKey<CachedVideoLayerState> _adLayerKey =
+      GlobalKey<CachedVideoLayerState>();
   // Backdrop persistente para evitar tela preta entre transições
   ImageProvider? _backdropProvider;
   String? _backdropId; // usa o path ou a URL para AnimatedSwitcher keys
@@ -1189,7 +1191,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
           // (Progress bar removed as requested)
 
           // Persistent Ad video layer (double-buffered), hidden by default
-          AdVideoLayer(key: _adLayerKey),
+          // AdVideoLayer(key: _adLayerKey), // rollback option
+          CachedVideoLayer(key: _adLayerKey),
 
           // Global hidden UVC preview lives in UvcCameraHost (root)
         ],
