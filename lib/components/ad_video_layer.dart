@@ -20,43 +20,90 @@ class AdVideoLayerState extends State<AdVideoLayer> {
   final Duration _fadeDuration = const Duration(milliseconds: 500);
   final Duration _initialFadeDuration = const Duration(milliseconds: 800);
 
-  Future<void> _initController(VideoPlayerController controller) async {
+  // Controle de estado para evitar travadas
+  bool _isActiveReady = false;
+  bool _isStandbyReady = false;
+
+  Future<void> _initController(
+    VideoPlayerController controller, {
+    bool isStandby = false,
+  }) async {
     await controller.initialize();
     controller.setLooping(false);
-    // Mantém volume padrão; mute será aplicado apenas em prebuffer/hide
-    await controller.setVolume(1.0);
-    
-    // Pré-buffer: avança um frame para carregar o vídeo na memória
+
+    // Volume inicial baseado no tipo
+    await controller.setVolume(isStandby ? 0.0 : 1.0);
+
+    // IMPORTANTE: Pré-buffer mais agressivo para evitar travada inicial
     await controller.seekTo(Duration.zero);
-    
-    // Aguarda o primeiro frame estar pronto
-    if (!controller.value.isInitialized) {
-      await Future.delayed(const Duration(milliseconds: 100));
+
+    // Tocar um pouco para forçar o buffer a carregar
+    await controller.play();
+
+    // Aguarda mais tempo para garantir buffer adequado
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    // Pausa e volta ao início
+    await controller.pause();
+    await controller.seekTo(Duration.zero);
+
+    // Marca como pronto
+    if (isStandby) {
+      _isStandbyReady = true;
+    } else {
+      _isActiveReady = true;
     }
   }
 
   Future<void> playFile(File file) async {
-    // If standby prepared for this file, crossfade
-    if (_standby != null && _standbyPath == file.path) {
+    // Se já está tocando o mesmo arquivo, ignora
+    if (_active != null && _isActiveReady) {
+      final currentPath = (_active!.dataSource ?? '').replaceAll('file://', '');
+      if (currentPath == file.path) {
+        return;
+      }
+    }
+
+    // If standby prepared for this file, crossfade com transição suave
+    if (_standby != null && _standbyPath == file.path && _isStandbyReady) {
       try {
-        // Ao iniciar reprodução, garante áudio ligado e exibe imediatamente
+        // Garante volume e inicia reprodução
         await _standby!.setVolume(1.0);
+        await _standby!.seekTo(Duration.zero);
         await _standby!.play();
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('[AdVideoLayer] Error playing standby: $e');
+      }
+
       if (mounted) {
-        // Garante que a camada standby fica visível sem gap
         setState(() {
           _standbyOpacity = 1.0;
           _activeOpacity = 0.0;
         });
       }
-      Future.delayed(_fadeDuration, () {
+
+      // Aguarda fade e troca controllers
+      Future.delayed(_fadeDuration, () async {
         final old = _active;
+        final wasReady = _isActiveReady;
+
         _active = _standby;
+        _isActiveReady = _isStandbyReady;
+
         _standby = null;
         _standbyPath = null;
-        try { old?.pause(); } catch (_) {}
-        unawaited(old?.dispose());
+        _isStandbyReady = false;
+
+        // Cleanup do controller antigo
+        if (old != null) {
+          try {
+            await old.pause();
+            await old.dispose();
+          } catch (e) {
+            debugPrint('[AdVideoLayer] Error disposing old controller: $e');
+          }
+        }
+
         if (mounted) {
           setState(() {
             _activeOpacity = 1.0;
@@ -67,7 +114,9 @@ class AdVideoLayerState extends State<AdVideoLayer> {
       return;
     }
 
-    // Otherwise create active and show
+    // Criar novo controller e preparar adequadamente
+    debugPrint('[AdVideoLayer] Creating new controller for: ${file.path}');
+
     final ctrl = VideoPlayerController.file(
       file,
       videoPlayerOptions: VideoPlayerOptions(
@@ -75,29 +124,73 @@ class AdVideoLayerState extends State<AdVideoLayer> {
         allowBackgroundPlayback: false,
       ),
     );
-    await _initController(ctrl);
-    if (_active != null) {
-      try { await _active!.pause(); } catch (_) {}
-      unawaited(_active!.dispose());
-    }
-    _active = ctrl;
-    await _active!.setVolume(1.0);
 
-    // Mantém a camada ativa visível já no início para não expor o fundo
-    if (mounted) {
-      setState(() {
-        _activeOpacity = 1.0;
-        _standbyOpacity = 0.0;
-      });
-    }
+    // Marca como não pronto durante inicialização
+    _isActiveReady = false;
 
-    // Pequeno delay antes de iniciar para garantir buffering, mas sem esconder a camada
-    await Future.delayed(const Duration(milliseconds: 100));
-    await _active!.play();
+    try {
+      // Inicializa com buffer completo
+      await _initController(ctrl, isStandby: false);
+
+      // Dispose do controller antigo APÓS o novo estar pronto
+      final oldActive = _active;
+      _active = ctrl;
+
+      if (oldActive != null) {
+        try {
+          await oldActive.pause();
+          await oldActive.dispose();
+        } catch (e) {
+          debugPrint('[AdVideoLayer] Error disposing old active: $e');
+        }
+      }
+
+      // Mostra a camada antes de tocar para evitar flash
+      if (mounted) {
+        setState(() {
+          _activeOpacity = 1.0;
+          _standbyOpacity = 0.0;
+        });
+      }
+
+      // Pequeno delay para garantir que o widget foi renderizado
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      // Inicia reprodução após buffer estar carregado
+      await _active!.play();
+
+      debugPrint('[AdVideoLayer] Playing: ${file.path}');
+    } catch (e) {
+      debugPrint('[AdVideoLayer] Error initializing controller: $e');
+      _isActiveReady = false;
+    }
   }
 
   Future<void> prepareNext(File file) async {
+    // Não prepara se já está preparado ou é o arquivo atual
+    if (_standbyPath == file.path && _isStandbyReady) {
+      debugPrint('[AdVideoLayer] Already prepared: ${file.path}');
+      return;
+    }
+
+    if (_active != null) {
+      final currentPath = (_active!.dataSource ?? '').replaceAll('file://', '');
+      if (currentPath == file.path) {
+        debugPrint('[AdVideoLayer] Cannot prepare current file as next');
+        return;
+      }
+    }
+
+    debugPrint('[AdVideoLayer] Preparing next: ${file.path}');
+
     try {
+      // Dispose do standby anterior se existir
+      if (_standby != null) {
+        await _standby!.dispose();
+        _standby = null;
+        _isStandbyReady = false;
+      }
+
       final next = VideoPlayerController.file(
         file,
         videoPlayerOptions: VideoPlayerOptions(
@@ -105,59 +198,80 @@ class AdVideoLayerState extends State<AdVideoLayer> {
           allowBackgroundPlayback: false,
         ),
       );
-      await _initController(next);
-      _standby?.dispose();
+
+      // Inicializa com buffer completo em background
+      await _initController(next, isStandby: true);
+
       _standby = next;
       _standbyPath = file.path;
-      // Mantém mudo durante o prebuffer para evitar vazamento de áudio
-      await _standby!.setVolume(0.0);
-      
-      // Pré-carrega alguns segundos do vídeo para evitar travamento
-      await _standby!.play();
-      await Future.delayed(const Duration(milliseconds: 200));
-      await _standby!.pause();
-      await _standby!.seekTo(Duration.zero);
-      
-    } catch (_) {}
+
+      debugPrint('[AdVideoLayer] Prepared: ${file.path}');
+    } catch (e) {
+      debugPrint('[AdVideoLayer] Error preparing next: $e');
+      _isStandbyReady = false;
+    }
   }
 
-  Future<void> swapToStandbyAndPlay() async {
-    if (_standby == null) return;
-    final old = _active;
-    _active = _standby;
-    _standby = null;
-    _standbyPath = null;
+  Future<void> hide() async {
+    debugPrint('[AdVideoLayer] Hiding video layer');
+
     try {
-      if (_active != null) {
-        // Ao trocar para ativo, liga o áudio
-        await _active!.setVolume(1.0);
-        await Future.delayed(const Duration(milliseconds: 50));
-        await _active!.play();
-      }
-    } catch (_) {}
-    try { await old?.pause(); } catch (_) {}
-    unawaited(old?.dispose());
+      await _active?.setVolume(0.0);
+      await _active?.pause();
+    } catch (e) {
+      debugPrint('[AdVideoLayer] Error hiding active: $e');
+    }
+
+    try {
+      await _standby?.setVolume(0.0);
+      await _standby?.pause();
+    } catch (e) {
+      debugPrint('[AdVideoLayer] Error hiding standby: $e');
+    }
+
     if (mounted) {
       setState(() {
-        _activeOpacity = 1.0;
+        _activeOpacity = 0.0;
         _standbyOpacity = 0.0;
       });
     }
   }
 
-  Future<void> hide() async {
-    try { await _active?.setVolume(0.0); await _active?.pause(); } catch (_) {}
-    try { await _standby?.setVolume(0.0); await _standby?.pause(); } catch (_) {}
-    if (mounted) setState(() { _activeOpacity = 0.0; _standbyOpacity = 0.0; });
-  }
-
   @override
   void dispose() {
+    debugPrint('[AdVideoLayer] Disposing');
     try {
       _active?.dispose();
       _standby?.dispose();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[AdVideoLayer] Error during dispose: $e');
+    }
     super.dispose();
+  }
+
+  Widget _buildVideoWidget(
+    VideoPlayerController? controller,
+    double opacity,
+    String label,
+  ) {
+    if (controller == null || !controller.value.isInitialized) {
+      return const SizedBox.shrink();
+    }
+
+    return AnimatedOpacity(
+      opacity: opacity,
+      duration: opacity == 0.0 ? _initialFadeDuration : _fadeDuration,
+      curve: Curves.easeInOut,
+      child: FittedBox(
+        fit: BoxFit.cover,
+        alignment: Alignment.center,
+        child: SizedBox(
+          width: controller.value.size.width,
+          height: controller.value.size.height,
+          child: VideoPlayer(controller),
+        ),
+      ),
+    );
   }
 
   @override
@@ -167,36 +281,8 @@ class AdVideoLayerState extends State<AdVideoLayer> {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (_active != null && _active!.value.isInitialized)
-            AnimatedOpacity(
-              opacity: _activeOpacity,
-              duration: _activeOpacity == 0.0 ? _initialFadeDuration : _fadeDuration,
-              curve: Curves.easeInOut,
-              child: FittedBox(
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
-                child: SizedBox(
-                  width: _active!.value.size.width,
-                  height: _active!.value.size.height,
-                  child: VideoPlayer(_active!),
-                ),
-              ),
-            ),
-          if (_standby != null && _standby!.value.isInitialized)
-            AnimatedOpacity(
-              opacity: _standbyOpacity,
-              duration: _standbyOpacity == 0.0 ? _initialFadeDuration : _fadeDuration,
-              curve: Curves.easeInOut,
-              child: FittedBox(
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
-                child: SizedBox(
-                  width: _standby!.value.size.width,
-                  height: _standby!.value.size.height,
-                  child: VideoPlayer(_standby!),
-                ),
-              ),
-            ),
+          _buildVideoWidget(_active, _activeOpacity, 'active'),
+          _buildVideoWidget(_standby, _standbyOpacity, 'standby'),
         ],
       ),
     );
