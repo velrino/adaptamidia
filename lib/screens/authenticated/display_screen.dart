@@ -1207,22 +1207,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
               ),
             ),
 
-          // Progress bar
-          if (!_isLoading &&
-              !_isPreparing &&
-              _error == null &&
-              _contents.isNotEmpty)
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: LinearProgressIndicator(
-                value: _progress.clamp(0.0, 1.0),
-                backgroundColor: Colors.white.withOpacity(0.1),
-                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                minHeight: 3,
-              ),
-            ),
+          // (Progress bar removed as requested)
 
           // Persistent Ad video layer (double-buffered), hidden by default
           AdVideoLayer(key: _adLayerKey),
