@@ -40,19 +40,9 @@ class BackgroundDetectionService {
       await file.writeAsBytes(bytes, flush: true);
       _modelPath = file.path;
 
-      // Prefer GPU delegate; fallback to CPU if unavailable
-      try {
-        _yolo = YOLO(
-          modelPath: _modelPath!,
-          task: YOLOTask.detect,
-          useGpu: true,
-        );
-        await _yolo!.loadModel();
-        _yoloGpu = true;
-        debugPrint('[BackgroundDetection] YOLO loaded (GPU) at $_modelPath');
-      } catch (e) {
-        debugPrint('[BackgroundDetection] GPU load failed, falling back to CPU: $e');
-        try { _yolo?.dispose(); } catch (_) {}
+      // Prefer GPU delegate; fallback to CPU if unavailable.
+      // If GPU was disabled due to a previous runtime failure, skip GPU attempt.
+      if (_gpuDelegateDisabled) {
         _yolo = YOLO(
           modelPath: _modelPath!,
           task: YOLOTask.detect,
@@ -60,7 +50,29 @@ class BackgroundDetectionService {
         );
         await _yolo!.loadModel();
         _yoloGpu = false;
-        debugPrint('[BackgroundDetection] YOLO loaded (CPU) at $_modelPath');
+        debugPrint('[BackgroundDetection] YOLO loaded (CPU, GPU disabled) at $_modelPath');
+      } else {
+        try {
+          _yolo = YOLO(
+            modelPath: _modelPath!,
+            task: YOLOTask.detect,
+            useGpu: true,
+          );
+          await _yolo!.loadModel();
+          _yoloGpu = true;
+          debugPrint('[BackgroundDetection] YOLO loaded (GPU) at $_modelPath');
+        } catch (e) {
+          debugPrint('[BackgroundDetection] GPU load failed, falling back to CPU: $e');
+          try { _yolo?.dispose(); } catch (_) {}
+          _yolo = YOLO(
+            modelPath: _modelPath!,
+            task: YOLOTask.detect,
+            useGpu: false,
+          );
+          await _yolo!.loadModel();
+          _yoloGpu = false;
+          debugPrint('[BackgroundDetection] YOLO loaded (CPU) at $_modelPath');
+        }
       }
     } catch (e) {
       debugPrint('[BackgroundDetection] Failed to load YOLO: $e');

@@ -13,7 +13,8 @@ import '../../services/api_service.dart';
 import '../../services/device_context_service.dart';
 import '../../services/uvc_camera_service.dart';
 import 'package:firebase_performance/firebase_performance.dart';
-import '../../components/ad_video_layer.dart';
+// import '../../components/ad_video_layer.dart'; // commented for rollback
+import '../../components/vlc_ad_video_layer.dart';
 
 class DisplayScreen extends StatefulWidget {
   final String unitId;
@@ -48,8 +49,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
   DateTime? _currentStartAt;
   int _currentDurationSecs = 0;
   bool _deviceIsLandscape = true;
-  final GlobalKey<AdVideoLayerState> _adLayerKey =
-      GlobalKey<AdVideoLayerState>();
+  // final GlobalKey<AdVideoLayerState> _adLayerKey = GlobalKey<AdVideoLayerState>(); // rollback option
+  final GlobalKey<VlcAdVideoLayerState> _adLayerKey =
+      GlobalKey<VlcAdVideoLayerState>();
   // Backdrop persistente para evitar tela preta entre transições
   ImageProvider? _backdropProvider;
   String? _backdropId; // usa o path ou a URL para AnimatedSwitcher keys
@@ -719,8 +721,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
         // Reduce pressure on ImageReader during capture+inference
         UvcCameraService.instance.hidePreview();
         final tmpPath = await UvcCameraService.instance.takePicture(
-          width: 640,
-          height: 480,
+          width: 480,
+          height: 360,
         );
         if (tmpPath != null) {
           final file = File(tmpPath);
@@ -1191,7 +1193,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
           // (Progress bar removed as requested)
 
           // Persistent Ad video layer (double-buffered), hidden by default
-          AdVideoLayer(key: _adLayerKey),
+          // AdVideoLayer(key: _adLayerKey), // rollback option
+          VlcAdVideoLayer(key: _adLayerKey),
 
           // Global hidden UVC preview lives in UvcCameraHost (root)
         ],

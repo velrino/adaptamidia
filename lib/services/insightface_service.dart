@@ -56,7 +56,7 @@ class InsightFaceService {
   }
 
   /// Convenience: capture a photo via UVC and analyze.
-  Future<Map<String, dynamic>> captureAndAnalyze({int width = 640, int height = 480}) async {
+  Future<Map<String, dynamic>> captureAndAnalyze({int width = 480, int height = 360}) async {
     try {
       final path = await UvcCameraService.instance.takePicture(width: width, height: height);
       if (path == null) return _emptyResult();
