@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:seemidia/components/ad_video_layer.dart';
 import '../../services/background_detection_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
@@ -13,8 +14,6 @@ import '../../services/api_service.dart';
 import '../../services/device_context_service.dart';
 import '../../services/uvc_camera_service.dart';
 import 'package:firebase_performance/firebase_performance.dart';
-// import '../../components/ad_video_layer.dart'; // commented for rollback
-import '../../components/vlc_ad_video_layer.dart';
 
 class DisplayScreen extends StatefulWidget {
   final String unitId;
@@ -29,7 +28,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
   List<dynamic> _contents = [];
   int _currentIndex = 0;
   Timer? _timer;
-  // Timer for clock removed; use dedicated widget to avoid full rebuilds
   bool _isLoading = true;
   bool _isPreparing = false;
   double _prepareProgress = 0.0;
@@ -45,20 +43,14 @@ class _DisplayScreenState extends State<DisplayScreen> {
   String? _weatherText;
   String? _weatherIcon;
   double? _weatherTempC;
-  // Date/time handled by dedicated widget
   DateTime? _currentStartAt;
   int _currentDurationSecs = 0;
   bool _deviceIsLandscape = true;
-  // final GlobalKey<AdVideoLayerState> _adLayerKey = GlobalKey<AdVideoLayerState>(); // rollback option
-  final GlobalKey<VlcAdVideoLayerState> _adLayerKey =
-      GlobalKey<VlcAdVideoLayerState>();
-  // Backdrop persistente para evitar tela preta entre transições
+  final GlobalKey<AdVideoLayerState> _adLayerKey =
+      GlobalKey<AdVideoLayerState>();
   ImageProvider? _backdropProvider;
-  String? _backdropId; // usa o path ou a URL para AnimatedSwitcher keys
+  String? _backdropId;
   double _backdropOpacity = 1.0;
-
-  // UVC handled globally via UvcCameraService
-  // YOLO handled by BackgroundDetectionService
 
   @override
   void initState() {
@@ -66,15 +58,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
     _enterFullScreen();
     _initDeviceConfig();
     _loadContent();
-    // Clock handled by widget; no global timer needed
     WakelockPlus.enable();
-    // Ensure global UVC is opened
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(UvcCameraService.instance.ensureOpen());
       UvcCameraService.instance.hidePreview();
-      // DCIM sweep removed: images are processed in-memory and deleted
     });
-    // No uploads to Storage per LGPD; skip photo upload queue
   }
 
   Future<void> _initDeviceConfig() async {
@@ -89,24 +77,17 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
   @override
   void dispose() {
-    // tentar registrar o último conteúdo em exibição
     unawaited(_logCurrentDisplayFinished());
-    // Do not close global UVC; service keeps it alive
-    // Background YOLO service cleanup (optional)
     try {
       BackgroundDetectionService.instance.dispose();
     } catch (_) {}
     _timer?.cancel();
-    // no-op: clock timer removed
     _backgroundTimer?.cancel();
     _exitFullScreen();
     WakelockPlus.disable();
     super.dispose();
   }
 
-  // Global UVC initialization handled by service
-
-  // Pre-warm background YOLO model without blocking UI
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -116,8 +97,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
   void _enterFullScreen() {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
   }
-
-  // Clock moved to a dedicated widget to avoid rebuilding the whole screen.
 
   Future<void> _fetchInfo() async {
     try {
@@ -191,7 +170,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
         debugPrint('Response status: 200');
         debugPrint('Response data: ${json.encode(data).substring(0, 200)}...');
 
-        // Check if response has data array (new format)
         if (data['data'] != null && data['data'] is List) {
           // Pre-cache videos
           for (var content in data['data']) {
@@ -200,12 +178,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
               String? videoUrl = isLandscape
                   ? (ads['source_landscape'] as String?)
                   : (ads['source_portrait'] as String?);
-              // Fallback se não existir a fonte específica
               videoUrl ??=
                   (ads['source_landscape'] as String?) ??
                   (ads['source_portrait'] as String?);
               if (videoUrl != null) {
-                debugPrint('📥 Pre-caching video: $videoUrl');
+                debugPrint('🔥 Pre-caching video: $videoUrl');
                 VideoCacheService.instance.getVideoFromCache(videoUrl);
               }
             }
@@ -218,11 +195,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
           });
 
           if (_contents.isNotEmpty) {
-            // Pré-carrega mídias para garantir reprodução offline
             unawaited(_prepareAssetsAndStart());
-            // Inicia sincronização em background
             _startBackgroundSync();
-            // Busca informações de rodapé (câmbio/tempo)
             unawaited(_fetchInfo());
           }
         } else {
@@ -254,7 +228,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
     });
 
     try {
-      // Coleta URLs de vídeos e imagens
       final videoUrls = <String>[];
       final imageUrls = <String>[];
 
@@ -281,7 +254,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
       _videoTotal = videoSet.length;
       _imageTotal = imageSet.length;
 
-      // 1) Limpa cache antigo antes de baixar (retém somente o que será usado)
       await Future.wait([
         VideoCacheService.instance.cleanupCache(keepUrls: videoSet),
         ImageCacheService.instance.cleanupOld(keepUrls: imageSet),
@@ -296,7 +268,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
         });
       }
 
-      // Pré-carrega imagens e vídeos com progresso combinado (timeout 30s)
       Future<void> imageFuture = () async {
         if (imageUrls.isEmpty) return;
         await ImageCacheService.instance.preloadAll(
@@ -322,10 +293,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
         );
       }();
 
-      // Primeira preparação: aguarda baixar TUDO (vídeos e imagens)
       await Future.wait([imageFuture, videoFuture]);
 
-      // Após pré-carregar, mantém apenas conteúdos com mídia garantida em cache
       final filtered = <dynamic>[];
       for (final c in _contents) {
         if (c['type'] == 'ADVERTISEMENT' && c['ads'] != null) {
@@ -360,7 +329,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
       }
     } catch (e) {
       debugPrint('⚠️ Erro no pré-carregamento: $e');
-      // Continua mesmo com falhas parciais
     } finally {
       if (!mounted) return;
       setState(() {
@@ -382,18 +350,14 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
     debugPrint('🎬 Starting content: $type at index $_currentIndex');
 
-    int duration = 10; // NEWS default is 10s
+    int duration = 10;
     if (type == 'ADVERTISEMENT' && content['ads'] != null) {
       duration = content['ads']['seconds'] ?? 10;
     }
 
-    // Registra início do conteúdo atual
     _currentStartAt = DateTime.now();
     _currentDurationSecs = duration;
 
-    // Progress bar removed: no progress timer needed
-
-    // Control Ad video layer visibility and source
     if (type == 'ADVERTISEMENT' && content['ads'] != null) {
       final ads = content['ads'];
       String? v = _deviceIsLandscape
@@ -403,7 +367,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
           (ads['source_landscape'] as String?) ??
           (ads['source_portrait'] as String?);
       if (v is String && v.isNotEmpty) {
-        // Esconde o backdrop imediatamente e remove a imagem para nunca piscar
+        // Esconde o backdrop imediatamente
         if (mounted) {
           setState(() {
             _backdropOpacity = 0.0;
@@ -411,17 +375,17 @@ class _DisplayScreenState extends State<DisplayScreen> {
             _backdropId = null;
           });
         }
-        // play current ad com pequeno delay para evitar travamento inicial
+
+        // Play current ad imediatamente (sem delay)
         final videoUrl = v;
-        Future.delayed(const Duration(milliseconds: 100), () async {
-          final file = await VideoCacheService.instance.getVideoFromCache(
-            videoUrl,
-          );
-          if (file != null) {
-            await _adLayerKey.currentState?.playFile(file);
-          }
-        });
-        // prepare next ad
+        final file = await VideoCacheService.instance.getVideoFromCache(
+          videoUrl,
+        );
+        if (file != null) {
+          await _adLayerKey.currentState?.playFile(file);
+        }
+
+        // Prepare next ad
         final nextIndex = (_currentIndex + 1) % _contents.length;
         final next = _contents[nextIndex];
         if (next['type'] == 'ADVERTISEMENT' && next['ads'] != null) {
@@ -442,19 +406,17 @@ class _DisplayScreenState extends State<DisplayScreen> {
         }
       }
     } else {
-      // NEWS: garantir backdrop pronto a partir do arquivo local em cache
+      // NEWS: garantir backdrop pronto
       unawaited(_adLayerKey.currentState?.hide());
       try {
         final news = content['news'];
         final String imageUrl = (news?['image'] as String?) ?? '';
         if (imageUrl.isNotEmpty) {
-          // Antes de trocar imagem, mantém opacidade 0 para evitar flicker
           if (mounted) {
             setState(() {
               _backdropOpacity = 0.0;
             });
           }
-          // Recupera arquivo do cache ou baixa se necessário
           final file =
               await ImageCacheService.instance.getFileFromCache(imageUrl) ??
               await ImageCacheService.instance.prefetch(imageUrl);
@@ -467,23 +429,21 @@ class _DisplayScreenState extends State<DisplayScreen> {
               width: targetW,
               height: targetH,
             );
-            // Decodifica antes de mostrar para evitar piscar
             await precacheImage(provider, context);
             if (mounted) {
               setState(() {
                 _backdropProvider = provider;
                 _backdropId = file.path;
-                _backdropOpacity = 1.0; // mostra após decodificar
+                _backdropOpacity = 1.0;
               });
             }
           }
         }
       } catch (_) {}
     }
-    // Proactively prepare the NEXT content to avoid black gaps
+
     unawaited(_prepareNextContent());
 
-    // Auto advance timer
     _timer = Timer(Duration(seconds: duration), () {
       if (!mounted) return;
       _nextContent();
@@ -497,7 +457,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
     final isNextAd = next['type'] == 'ADVERTISEMENT' && next['ads'] != null;
     final isNextNews = next['type'] == 'NEWS' && next['news'] != null;
 
-    // Prepara o próximo conteúdo com antecedência maior para evitar travamentos
     if (isNextAd) {
       final nads = next['ads'];
       String? nv = _deviceIsLandscape
@@ -507,18 +466,15 @@ class _DisplayScreenState extends State<DisplayScreen> {
           (nads['source_landscape'] as String?) ??
           (nads['source_portrait'] as String?);
       if (nv is String && nv.isNotEmpty) {
-        // Prepara o próximo vídeo imediatamente
         final file = await VideoCacheService.instance.getVideoFromCache(nv);
         if (file != null) {
-          // Aguarda um pouco antes de preparar para dar tempo do buffer carregar
-          await Future.delayed(const Duration(milliseconds: 500));
+          // Prepara imediatamente (sem delay adicional)
           await _adLayerKey.currentState?.prepareNext(file);
         }
       }
     } else if (isNextNews) {
       final img = next['news']['image'];
       if (img is String && img.isNotEmpty && mounted) {
-        // Pré-carrega via arquivo local em cache para evitar uso de rede/placeholder
         try {
           final file =
               await ImageCacheService.instance.getFileFromCache(img) ??
@@ -547,8 +503,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
     });
   }
 
-  // Footer full-width moved inside NEWS card; no standalone footer
-
   Future<void> _backgroundRefresh() async {
     try {
       final token = await StorageService.getAuthToken();
@@ -569,7 +523,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
       final newContents = List<dynamic>.from(data['data']);
 
-      // Coleta URLs novas
       final newVideos = <String>[];
       final newImages = <String>[];
       for (final c in newContents) {
@@ -591,13 +544,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
       final videoSet = newVideos.toSet();
       final imageSet = newImages.toSet();
 
-      // Limpa cache antigo antes de baixar novos
       await Future.wait([
         VideoCacheService.instance.cleanupCache(keepUrls: videoSet),
         ImageCacheService.instance.cleanupOld(keepUrls: imageSet),
       ]);
 
-      // Pré-carrega novos itens
       await Future.wait([
         if (imageSet.isNotEmpty)
           ImageCacheService.instance.preloadAll(
@@ -608,7 +559,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
           VideoCacheService.instance.preloadVideos(videoSet.toList()),
       ]);
 
-      // Filtra para apenas itens com mídia disponível (respeitando orientação)
       final filtered = <dynamic>[];
       for (final c in newContents) {
         if (c['type'] == 'ADVERTISEMENT' && c['ads'] != null) {
@@ -647,20 +597,17 @@ class _DisplayScreenState extends State<DisplayScreen> {
   }
 
   void _nextContent() {
-    // Log do conteúdo finalizado antes de avançar
     debugPrint(
       '[DisplayScreen] _nextContent called. Will log current display as finished. index=$_currentIndex total=${_contents.length}',
     );
     unawaited(_logCurrentDisplayFinished());
 
-    // Pequeno delay na transição para evitar travamento
-    Future.delayed(const Duration(milliseconds: 150), () {
-      if (!mounted) return;
-      setState(() {
-        _currentIndex = (_currentIndex + 1) % _contents.length;
-      });
-      unawaited(_startContent());
+    // Transição imediata (sem delay)
+    if (!mounted) return;
+    setState(() {
+      _currentIndex = (_currentIndex + 1) % _contents.length;
     });
+    unawaited(_startContent());
   }
 
   Future<void> _logCurrentDisplayFinished() async {
@@ -679,7 +626,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
       return;
     }
 
-    // Identificadores
     final currentId = isAd
         ? (content['ads']['_id']?.toString() ?? '')
         : (content['news']['_id']?.toString() ?? '');
@@ -689,7 +635,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
     }
     final captureId = DateTime.now().millisecondsSinceEpoch.toString();
 
-    // Datas
     final endAt = DateTime.now();
     final startAt =
         _currentStartAt ??
@@ -706,7 +651,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
     final body = <String, dynamic>{
       'identifier': captureId,
       'id': currentId,
-      'local': _unitData, // unit data as received from API
+      'local': _unitData,
       'type': isAd ? 'ADVERTISEMENT' : 'NEWS',
       'status': 'FINISHED',
       'start_at': startAt.toIso8601String(),
@@ -715,10 +660,8 @@ class _DisplayScreenState extends State<DisplayScreen> {
       'device_context': deviceContext,
     };
 
-    // If we have a UVC camera, capture a photo via global service
     {
       try {
-        // Reduce pressure on ImageReader during capture+inference
         UvcCameraService.instance.hidePreview();
         final tmpPath = await UvcCameraService.instance.takePicture(
           width: 480,
@@ -729,16 +672,14 @@ class _DisplayScreenState extends State<DisplayScreen> {
           debugPrint(
             '[DisplayScreen] Captured photo for $captureId at $tmpPath',
           );
-          // Read in-memory for YOLO; keep the same file for InsightFace, then delete
           final bytes = await file.readAsBytes();
-          // Process immediately (YOLO + InsightFace) and log; deletes file internally
           await BackgroundDetectionService.instance.processImmediate(
             captureId: captureId,
             body: body,
             bytes: bytes,
             imageFile: file,
           );
-          return; // done
+          return;
         } else {
           debugPrint(
             '[DisplayScreen] takePicture returned null, fallback to log without photo',
@@ -747,12 +688,10 @@ class _DisplayScreenState extends State<DisplayScreen> {
       } catch (e) {
         debugPrint('[DisplayScreen] Photo capture failed: $e');
       } finally {
-        // Resume preview after capture path completes
         // UvcCameraService.instance.showPreview();
       }
     }
 
-    // Fallback: log without photo (quando não tem câmera USB)
     debugPrint('[DisplayScreen] No camera available, logging without photo');
     try {
       await BackgroundDetectionService.instance.processImmediate(
@@ -797,17 +736,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
     final mq = MediaQuery.of(context);
     final memW = (mq.size.width * mq.devicePixelRatio).round();
     final memH = (mq.size.height * mq.devicePixelRatio).round();
-    // Escala simples baseada no menor lado da tela (para melhorar legibilidade)
     final shortest = mq.size.shortestSide;
     final scale = (shortest / 800).clamp(1.0, 1.8);
 
-    // Clock moved to ClockText widget to avoid full rebuilds
     final hasCenter = _weatherIcon != null || _weatherTempC != null;
     final leftCurrency = _usdBid != null ? _usdBid!.toStringAsFixed(2) : '--';
 
-    // Apenas renderiza o overlay de texto; o fundo usa o backdrop persistente
-    // Se o backdrop ainda não estiver pronto, não mostra o texto para evitar
-    // a sensação de que o texto aparece antes da imagem.
     if (_backdropProvider == null) {
       return const SizedBox.shrink();
     }
@@ -815,7 +749,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Overlay with content
         Positioned(
           bottom: 24,
           left: 24,
@@ -850,7 +783,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
                 IntrinsicHeight(
                   child: Row(
                     children: [
-                      // Logo
                       Container(
                         width: 200,
                         height: 200,
@@ -866,8 +798,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(15),
                           child: Image.asset(
-                            // 'assets/images/logo.png',
-                            // 'assets/images/logo-white.png',
                             'assets/images/logo-flex.png',
                             fit: BoxFit.contain,
                             errorBuilder: (context, error, stackTrace) {
@@ -883,14 +813,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
                           ),
                         ),
                       ),
-                      // Divider
                       Container(
                         width: 1,
                         height: double.infinity,
                         margin: const EdgeInsets.symmetric(horizontal: 20),
                         color: Colors.white.withOpacity(0.2),
                       ),
-                      // Text content
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -954,7 +882,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Full-width footer inside the card
                 Container(
                   padding: const EdgeInsets.only(top: 12),
                   decoration: BoxDecoration(
@@ -967,7 +894,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
                   ),
                   child: Row(
                     children: [
-                      // Left: currency
                       Expanded(
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -991,7 +917,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
                           ],
                         ),
                       ),
-                      // Center: weather
                       Expanded(
                         child: Center(
                           child: hasCenter
@@ -1038,7 +963,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
                                 ),
                         ),
                       ),
-                      // Right: date/time now (isolated widget to avoid full rebuilds)
                       Expanded(
                         child: Align(
                           alignment: Alignment.centerRight,
@@ -1080,8 +1004,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
       );
     }
 
-    // Layer-based playback handles rendering; mantemos o backdrop visível
-    // para evitar tela preta até o vídeo fazer fade-in por cima.
     return const SizedBox.shrink();
   }
 
@@ -1092,7 +1014,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Backdrop persistente (imagem do NEWS atual mais recente)
           if (_backdropProvider != null)
             RepaintBoundary(
               child: AnimatedOpacity(
@@ -1111,7 +1032,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
                 ),
               ),
             ),
-          // Main content
           if (_isLoading)
             const Center(child: CircularProgressIndicator(color: Colors.white))
           else if (_error != null)
@@ -1147,9 +1067,6 @@ class _DisplayScreenState extends State<DisplayScreen> {
           else
             _buildContent(),
 
-          // Rodapé agora aparece apenas em NEWS, integrado ao card de texto
-
-          // Overlay de preparação (pré-carregando mídias)
           if (!_isLoading && _error == null && _isPreparing)
             Container(
               color: Colors.black.withOpacity(0.7),
@@ -1167,7 +1084,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Vídeos: \\${_videoDone}/\\${_videoTotal}   Imagens: \\${_imageDone}/\\${_imageTotal}',
+                      'Vídeos: $_videoDone/$_videoTotal   Imagens: $_imageDone/$_imageTotal',
                       style: const TextStyle(
                         color: Colors.white70,
                         fontSize: 16,
@@ -1190,13 +1107,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
               ),
             ),
 
-          // (Progress bar removed as requested)
-
-          // Persistent Ad video layer (double-buffered), hidden by default
-          // AdVideoLayer(key: _adLayerKey), // rollback option
-          VlcAdVideoLayer(key: _adLayerKey),
-
-          // Global hidden UVC preview lives in UvcCameraHost (root)
+          AdVideoLayer(key: _adLayerKey),
         ],
       ),
     );
