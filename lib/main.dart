@@ -13,6 +13,7 @@ import 'components/uvc_camera_host.dart';
 import 'services/background_detection_service.dart';
 import 'services/insightface_service.dart';
 import 'services/env_service.dart';
+import 'services/presence_route_observer.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -71,6 +72,7 @@ class MyApp extends StatelessWidget {
           themeMode: ThemeService.instance.themeMode,
           builder: (context, child) =>
               UvcCameraHost(child: child ?? const SizedBox.shrink()),
+          navigatorObservers: [PresenceRouteObserver.instance],
           home: const AppWrapper(),
           routes: {
             '/home': (context) => const HomeScreen(),

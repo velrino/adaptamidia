@@ -15,6 +15,7 @@ class DevicePresenceService {
   String? _deviceId;
   Timer? _heartbeat;
   Duration _interval = const Duration(seconds: 60);
+  bool _onlineFlag = false;
 
   Future<void> start({required String currentScreen, double? latitude, double? longitude, Duration? heartbeatInterval}) async {
     try {
@@ -22,6 +23,7 @@ class DevicePresenceService {
       final deviceId = _deviceId!;
       _ref = FirebaseDatabase.instance.ref(FirebasePaths.p('DEVICES')).child(deviceId);
       final now = DateTime.now().toIso8601String();
+      _onlineFlag = currentScreen.toUpperCase() == 'DISPLAY';
       String? appName;
       String? appPackage;
       String? appVersion;
@@ -36,7 +38,7 @@ class DevicePresenceService {
       final body = <String, dynamic>{
         'DEVICE_ID': deviceId,
         'CURRENT_SCREEN': currentScreen,
-        'ONLINE': true,
+        'ONLINE': _onlineFlag,
         'UPDATED_AT': now,
         'APP_ENV': Env.appEnv.toUpperCase(),
       };
@@ -47,7 +49,12 @@ class DevicePresenceService {
       if (appVersion != null) body['APP_VERSION'] = appVersion;
       if (appBuildNumber != null) body['APP_BUILD_NUMBER'] = appBuildNumber;
 
-      try { await _ref!.onDisconnect().remove(); } catch (_) {}
+      try {
+        await _ref!.onDisconnect().update({
+          'ONLINE': false,
+          'UPDATED_AT': ServerValue.timestamp,
+        });
+      } catch (_) {}
 
       await _ref!.set(body);
       debugPrint('[DevicePresence] start: device=$deviceId screen=$currentScreen');
@@ -58,7 +65,7 @@ class DevicePresenceService {
         try {
           await _ref!.update({
             'UPDATED_AT': DateTime.now().toIso8601String(),
-            'ONLINE': true,
+            'ONLINE': _onlineFlag,
           });
         } catch (_) {}
       });
@@ -71,9 +78,11 @@ class DevicePresenceService {
     if (_ref == null) return;
     try {
       final now = DateTime.now().toIso8601String();
+      _onlineFlag = currentScreen.toUpperCase() == 'DISPLAY';
       await _ref!.update({
         'CURRENT_SCREEN': currentScreen,
         'UPDATED_AT': now,
+        'ONLINE': _onlineFlag,
       });
       debugPrint('[DevicePresence] updateScreen: $currentScreen');
     } catch (e) {
@@ -124,10 +133,17 @@ class DevicePresenceService {
       _heartbeat?.cancel();
       _heartbeat = null;
       if (r != null) {
-        try { await r.onDisconnect().cancel(); } catch (_) {}
-        await r.remove();
+        try {
+          await r.onDisconnect().cancel();
+        } catch (_) {}
+        try {
+          await r.update({
+            'ONLINE': false,
+            'UPDATED_AT': ServerValue.timestamp,
+          });
+        } catch (_) {}
       }
-      debugPrint('[DevicePresence] stop: removed device presence');
+      debugPrint('[DevicePresence] stop: set ONLINE=false');
     } catch (e) {
       debugPrint('[DevicePresence] stop error: $e');
     }

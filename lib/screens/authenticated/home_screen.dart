@@ -6,6 +6,7 @@ import '../../services/theme_service.dart';
 import '../../widgets/company_units_list.dart';
 import '../../debug/debug_insightface_button.dart';
 import '../../services/env_service.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -106,6 +107,46 @@ class HomeScreen extends StatelessWidget {
         ],
       ),
       body: const CompanyUnitsList(),
+      bottomNavigationBar: _VersionFooter(isDark: isDark),
+    );
+  }
+}
+
+class _VersionFooter extends StatelessWidget {
+  final bool isDark;
+  const _VersionFooter({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<PackageInfo>(
+      future: PackageInfo.fromPlatform(),
+      builder: (context, snapshot) {
+        final pi = snapshot.data;
+        final version = pi?.version ?? '';
+        final build = pi?.buildNumber ?? '';
+        final text = (version.isEmpty && build.isEmpty)
+            ? 'Versão: --  •  Code: --'
+            : 'Versão: $version  •  Code: $build';
+        return Container
+          (
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          decoration: BoxDecoration(
+            color: isDark ? Colors.grey[850] : Colors.white,
+            border: Border(top: BorderSide(color: (isDark ? Colors.grey[800]! : Colors.grey[300]!), width: 1)),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Text(
+              text,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: isDark ? Colors.grey[400] : Colors.grey[700],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
