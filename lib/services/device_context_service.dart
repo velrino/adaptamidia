@@ -25,7 +25,7 @@ class DeviceContextService {
           'release': a.version.release,
         };
         ctx['user_agent'] =
-            'SeeMidia Display (Android; ${a.brand} ${a.model}; SDK ${a.version.sdkInt})';
+            'SeeMedIA Display (Android; ${a.brand} ${a.model}; SDK ${a.version.sdkInt})';
       } else if (Platform.isIOS) {
         final i = await di.iosInfo;
         ctx['device'] = {
@@ -37,15 +37,15 @@ class DeviceContextService {
           'machine': i.utsname.machine,
         };
         ctx['user_agent'] =
-            'SeeMidia Display (iOS; ${i.utsname.machine}; ${i.systemVersion})';
+            'SeeMedIA Display (iOS; ${i.utsname.machine}; ${i.systemVersion})';
       } else {
         final base = await di.deviceInfo;
         final model = base.data['model'] ?? 'Unknown';
         ctx['device'] = {'platform': 'unknown', 'model': model};
-        ctx['user_agent'] = 'SeeMidia Display ($model)';
+        ctx['user_agent'] = 'SeeMedIA Display ($model)';
       }
     } catch (_) {
-      ctx['user_agent'] = 'SeeMidia Display';
+      ctx['user_agent'] = 'SeeMedIA Display';
     }
 
     // Timezone info
@@ -76,10 +76,14 @@ class DeviceContextService {
     try {
       final result = await Connectivity().checkConnectivity();
       String kind = 'none';
-      if (result.contains(ConnectivityResult.wifi)) kind = 'wifi';
-      else if (result.contains(ConnectivityResult.mobile)) kind = 'mobile';
-      else if (result.contains(ConnectivityResult.ethernet)) kind = 'ethernet';
-      else if (result.contains(ConnectivityResult.vpn)) kind = 'vpn';
+      if (result.contains(ConnectivityResult.wifi))
+        kind = 'wifi';
+      else if (result.contains(ConnectivityResult.mobile))
+        kind = 'mobile';
+      else if (result.contains(ConnectivityResult.ethernet))
+        kind = 'ethernet';
+      else if (result.contains(ConnectivityResult.vpn))
+        kind = 'vpn';
       ctx['connectivity'] = kind;
     } catch (_) {}
 

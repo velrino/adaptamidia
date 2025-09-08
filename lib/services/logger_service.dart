@@ -1,16 +1,10 @@
 import 'dart:developer' as developer;
 
-enum LogLevel {
-  debug,
-  info,
-  warning,
-  error,
-  critical,
-}
+enum LogLevel { debug, info, warning, error, critical }
 
 class LoggerService {
   static bool _isDebugMode = true;
-  static String _appName = 'SeeMidia';
+  static String _appName = 'SeeMedIA';
 
   static void setDebugMode(bool isDebug) {
     _isDebugMode = isDebug;
@@ -20,27 +14,86 @@ class LoggerService {
     _appName = name;
   }
 
-  static void debug(String message, {String? tag, Object? error, StackTrace? stackTrace}) {
-    _log(LogLevel.debug, message, tag: tag, error: error, stackTrace: stackTrace);
+  static void debug(
+    String message, {
+    String? tag,
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
+    _log(
+      LogLevel.debug,
+      message,
+      tag: tag,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
-  static void info(String message, {String? tag, Object? error, StackTrace? stackTrace}) {
-    _log(LogLevel.info, message, tag: tag, error: error, stackTrace: stackTrace);
+  static void info(
+    String message, {
+    String? tag,
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
+    _log(
+      LogLevel.info,
+      message,
+      tag: tag,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
-  static void warning(String message, {String? tag, Object? error, StackTrace? stackTrace}) {
-    _log(LogLevel.warning, message, tag: tag, error: error, stackTrace: stackTrace);
+  static void warning(
+    String message, {
+    String? tag,
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
+    _log(
+      LogLevel.warning,
+      message,
+      tag: tag,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
-  static void error(String message, {String? tag, Object? error, StackTrace? stackTrace}) {
-    _log(LogLevel.error, message, tag: tag, error: error, stackTrace: stackTrace);
+  static void error(
+    String message, {
+    String? tag,
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
+    _log(
+      LogLevel.error,
+      message,
+      tag: tag,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
-  static void critical(String message, {String? tag, Object? error, StackTrace? stackTrace}) {
-    _log(LogLevel.critical, message, tag: tag, error: error, stackTrace: stackTrace);
+  static void critical(
+    String message, {
+    String? tag,
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
+    _log(
+      LogLevel.critical,
+      message,
+      tag: tag,
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
-  static void apiRequest(String method, String endpoint, {Map<String, dynamic>? data}) {
+  static void apiRequest(
+    String method,
+    String endpoint, {
+    Map<String, dynamic>? data,
+  }) {
     if (_isDebugMode) {
       final message = 'API Request: $method $endpoint';
       final details = data != null ? 'Data: $data' : 'No data';
@@ -48,7 +101,12 @@ class LoggerService {
     }
   }
 
-  static void apiResponse(String endpoint, int statusCode, {dynamic response, String? error}) {
+  static void apiResponse(
+    String endpoint,
+    int statusCode, {
+    dynamic response,
+    String? error,
+  }) {
     if (_isDebugMode) {
       final message = 'API Response: $endpoint - Status: $statusCode';
       if (error != null) {
@@ -59,11 +117,26 @@ class LoggerService {
     }
   }
 
-  static void apiError(String endpoint, Object error, {StackTrace? stackTrace}) {
-    LoggerService.error('API Error: $endpoint', tag: 'API', error: error, stackTrace: stackTrace);
+  static void apiError(
+    String endpoint,
+    Object error, {
+    StackTrace? stackTrace,
+  }) {
+    LoggerService.error(
+      'API Error: $endpoint',
+      tag: 'API',
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
-  static void _log(LogLevel level, String message, {String? tag, Object? error, StackTrace? stackTrace}) {
+  static void _log(
+    LogLevel level,
+    String message, {
+    String? tag,
+    Object? error,
+    StackTrace? stackTrace,
+  }) {
     if (!_isDebugMode && level == LogLevel.debug) {
       return;
     }

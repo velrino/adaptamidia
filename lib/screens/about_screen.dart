@@ -45,9 +45,7 @@ class _AboutScreenState extends State<AboutScreen> {
         : 'assets/images/logo-landscape.png';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Sobre'),
-      ),
+      appBar: AppBar(title: const Text('Sobre')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -57,22 +55,20 @@ class _AboutScreenState extends State<AboutScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Image.asset(
-                  logo,
-                  height: 80,
-                  fit: BoxFit.contain,
-                ),
+                Image.asset(logo, height: 80, fit: BoxFit.contain),
                 const SizedBox(height: 24),
                 Text(
-                  'SeeMidia Display',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.w600),
+                  'SeeMedIA Display',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
-                _infoRow('Versão', _version.isEmpty ? '-' : '$_version ($_buildNumber)'),
+                _infoRow(
+                  'Versão',
+                  _version.isEmpty ? '-' : '$_version ($_buildNumber)',
+                ),
                 _infoRow('Ambiente', Env.appEnv.toUpperCase()),
                 _infoRow('Pacote', _package.isEmpty ? '-' : _package),
                 _infoRow('Device ID', _deviceId.isEmpty ? '-' : _deviceId),
@@ -80,7 +76,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 Divider(color: Colors.grey.withOpacity(0.3)),
                 const SizedBox(height: 16),
                 Text(
-                  'Suporte: seemidia.com.br',
+                  'Suporte: seemedia.com.br',
                   style: Theme.of(context).textTheme.bodyMedium,
                   textAlign: TextAlign.center,
                 ),
@@ -98,20 +94,12 @@ class _AboutScreenState extends State<AboutScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            '$label: ',
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
+          Text('$label: ', style: const TextStyle(fontWeight: FontWeight.w600)),
           Flexible(
-            child: Text(
-              value,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 2,
-            ),
+            child: Text(value, overflow: TextOverflow.ellipsis, maxLines: 2),
           ),
         ],
       ),
     );
   }
 }
-

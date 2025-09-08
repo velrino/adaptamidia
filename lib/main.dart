@@ -54,7 +54,7 @@ class MyApp extends StatelessWidget {
       animation: ThemeService.instance,
       builder: (context, child) {
         return MaterialApp(
-          title: 'SeeMidia Display',
+          title: 'SeeMedIA Display',
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
             brightness: Brightness.light,
@@ -69,23 +69,24 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
           ),
           themeMode: ThemeService.instance.themeMode,
-          builder: (context, child) => UvcCameraHost(child: child ?? const SizedBox.shrink()),
+          builder: (context, child) =>
+              UvcCameraHost(child: child ?? const SizedBox.shrink()),
           home: const AppWrapper(),
-      routes: {
-        '/home': (context) => const HomeScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/config': (context) => const ConfigurationScreen(),
-        // '/camera': (context) => const CameraScreen(), // removed
-      },
-      onGenerateRoute: (settings) {
-        if (settings.name == '/display') {
-          final unitId = settings.arguments as String;
-          return MaterialPageRoute(
-            builder: (context) => DisplayScreen(unitId: unitId),
-          );
-        }
-        return null;
-      },
+          routes: {
+            '/home': (context) => const HomeScreen(),
+            '/login': (context) => const LoginScreen(),
+            '/config': (context) => const ConfigurationScreen(),
+            // '/camera': (context) => const CameraScreen(), // removed
+          },
+          onGenerateRoute: (settings) {
+            if (settings.name == '/display') {
+              final unitId = settings.arguments as String;
+              return MaterialPageRoute(
+                builder: (context) => DisplayScreen(unitId: unitId),
+              );
+            }
+            return null;
+          },
           debugShowCheckedModeBanner: false,
         );
       },
@@ -148,11 +149,15 @@ class _AppWrapperState extends State<AppWrapper> {
     });
     try {
       // YOLO (TFLite) – carrega modelo e mantém instância viva
-      setState(() { _loadingStep = 'Carregando YOLO...'; });
+      setState(() {
+        _loadingStep = 'Carregando YOLO...';
+      });
       await BackgroundDetectionService.instance.ensureLoaded();
 
       // InsightFace (Android on-device). Em outras plataformas, retorna false e segue.
-      setState(() { _loadingStep = 'Carregando InsightFace...'; });
+      setState(() {
+        _loadingStep = 'Carregando InsightFace...';
+      });
       await InsightFaceService.instance.ensureInitialized();
 
       setState(() {
