@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 
 class RemoteControlService {
   static const Map<int, String> _keyCodeMap = {
@@ -46,6 +47,40 @@ class RemoteControlService {
     return _keyCodeMap[keyCode];
   }
 
+  // Derive a friendly key name from a RawKeyEvent, preferring Android keyCode on Android.
+  static String? keyNameFromEvent(RawKeyEvent event) {
+    // Android: use platform keyCode reliably for remotes
+    final data = event.data;
+    if (data is RawKeyEventDataAndroid) {
+      final code = data.keyCode;
+      final mapped = _keyCodeMap[code];
+      if (mapped != null) return mapped;
+    }
+
+    // Fallback: use logical keys (works on desktop/web and some Android remotes)
+    final lk = event.logicalKey;
+    if (lk == LogicalKeyboardKey.arrowUp) return 'DPAD_UP';
+    if (lk == LogicalKeyboardKey.arrowDown) return 'DPAD_DOWN';
+    if (lk == LogicalKeyboardKey.arrowLeft) return 'DPAD_LEFT';
+    if (lk == LogicalKeyboardKey.arrowRight) return 'DPAD_RIGHT';
+    if (lk == LogicalKeyboardKey.select || lk == LogicalKeyboardKey.enter || lk == LogicalKeyboardKey.numpadEnter) return 'DPAD_CENTER';
+    if (lk == LogicalKeyboardKey.escape || lk == LogicalKeyboardKey.goBack) return 'BACK';
+
+    // Number keys
+    if (lk == LogicalKeyboardKey.digit0 || lk == LogicalKeyboardKey.numpad0) return 'NUMBER_0';
+    if (lk == LogicalKeyboardKey.digit1 || lk == LogicalKeyboardKey.numpad1) return 'NUMBER_1';
+    if (lk == LogicalKeyboardKey.digit2 || lk == LogicalKeyboardKey.numpad2) return 'NUMBER_2';
+    if (lk == LogicalKeyboardKey.digit3 || lk == LogicalKeyboardKey.numpad3) return 'NUMBER_3';
+    if (lk == LogicalKeyboardKey.digit4 || lk == LogicalKeyboardKey.numpad4) return 'NUMBER_4';
+    if (lk == LogicalKeyboardKey.digit5 || lk == LogicalKeyboardKey.numpad5) return 'NUMBER_5';
+    if (lk == LogicalKeyboardKey.digit6 || lk == LogicalKeyboardKey.numpad6) return 'NUMBER_6';
+    if (lk == LogicalKeyboardKey.digit7 || lk == LogicalKeyboardKey.numpad7) return 'NUMBER_7';
+    if (lk == LogicalKeyboardKey.digit8 || lk == LogicalKeyboardKey.numpad8) return 'NUMBER_8';
+    if (lk == LogicalKeyboardKey.digit9 || lk == LogicalKeyboardKey.numpad9) return 'NUMBER_9';
+
+    return null;
+  }
+
   static bool isNavigationKey(int keyCode) {
     return [0x0013, 0x0014, 0x0015, 0x0016, 0x0017].contains(keyCode);
   }
@@ -88,11 +123,14 @@ class RemoteControlService {
 mixin RemoteControlMixin {
   bool handleRemoteKeyPress(RawKeyEvent event) {
     if (event is RawKeyDownEvent) {
-      final keyCode = event.logicalKey.keyId;
-      final keyName = RemoteControlService.getKeyName(keyCode);
+      final keyName = RemoteControlService.keyNameFromEvent(event);
       
       if (keyName != null) {
-        return onRemoteKeyPressed(keyName, keyCode);
+        // Provide a synthetic keyCode when not available
+        final maybeAndroid = event.data is RawKeyEventDataAndroid
+            ? (event.data as RawKeyEventDataAndroid).keyCode
+            : event.logicalKey.keyId;
+        return onRemoteKeyPressed(keyName, maybeAndroid);
       }
     }
     return false;

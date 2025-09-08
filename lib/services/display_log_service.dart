@@ -1,13 +1,14 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'env_service.dart';
 
 class DisplayLogService {
   static final DisplayLogService _instance = DisplayLogService._internal();
   static DisplayLogService get instance => _instance;
   DisplayLogService._internal();
 
-  DatabaseReference get _logsRef => FirebaseDatabase.instance.ref('DISPLAY_LOGS');
+  DatabaseReference get _logsRef => FirebaseDatabase.instance.ref(FirebasePaths.p('DISPLAY_LOGS'));
 
   Future<void> createLog({required String identifier, required Map<String, dynamic> body}) async {
     try {

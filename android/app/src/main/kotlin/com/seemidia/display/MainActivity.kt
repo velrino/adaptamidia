@@ -15,9 +15,18 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import android.provider.Settings
+import android.content.Intent
+import android.app.PendingIntent
+import android.content.pm.PackageInstaller
+import java.io.File
+import java.io.FileInputStream
+import java.io.OutputStream
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.seemidia/insightface"
+    private val DEVICE_CHANNEL = "com.seemidia/device"
+    private val UPDATE_CHANNEL = "com.seemidia/app_update"
     private var launched: Boolean = false
     private var session: Session? = null
 
@@ -64,6 +73,71 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+
+        // Device ID channel
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, DEVICE_CHANNEL)
+            .setMethodCallHandler { call: MethodCall, result: MethodChannel.Result ->
+                when (call.method) {
+                    "getAndroidId" -> {
+                        try {
+                            val id = Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
+                            result.success(id)
+                        } catch (e: Throwable) {
+                            e.printStackTrace()
+                            result.success("")
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+
+        // App update channel
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, UPDATE_CHANNEL)
+            .setMethodCallHandler { call: MethodCall, result: MethodChannel.Result ->
+                when (call.method) {
+                    "installApk" -> {
+                        val path = call.argument<String>("path")
+                        if (path.isNullOrEmpty()) {
+                            result.error("invalid_path", "APK path is empty", null)
+                        } else {
+                            try {
+                                installApkViaPackageInstaller(path)
+                                result.success(true)
+                            } catch (e: Throwable) {
+                                e.printStackTrace()
+                                result.error("install_error", e.message, null)
+                            }
+                        }
+                    }
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    private fun installApkViaPackageInstaller(path: String) {
+        val apkFile = File(path)
+        val length = apkFile.length()
+        val packageInstaller = packageManager.packageInstaller
+        val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL)
+        val sessionId = packageInstaller.createSession(params)
+        val session = packageInstaller.openSession(sessionId)
+        val out: OutputStream = session.openWrite("app-release", 0, length)
+        val fis = FileInputStream(apkFile)
+        fis.use { input ->
+            out.use { output ->
+                val buffer = ByteArray(65536)
+                while (true) {
+                    val c = input.read(buffer)
+                    if (c <= 0) break
+                    output.write(buffer, 0, c)
+                }
+                session.fsync(output)
+            }
+        }
+        val intent = Intent(this, javaClass)
+        val pending = PendingIntent.getActivity(this, sessionId, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        session.commit(pending.intentSender)
+        session.close()
     }
 
     private fun ensureLaunched(): Boolean {

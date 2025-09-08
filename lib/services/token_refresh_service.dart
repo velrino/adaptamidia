@@ -61,10 +61,7 @@ class TokenRefreshService {
       final res = await ApiService.get<AuthResponse>(
         '/auth/refresh-token',
         (m) => AuthResponse.fromJson(m),
-        headers: {
-          'Authorization': 'Bearer $token',
-          'ngrok-skip-browser-warning': 'true',
-        },
+        headers: {'Authorization': 'Bearer $token'},
       );
       if (res.success && res.data != null) {
         final a = res.data!;
@@ -97,4 +94,3 @@ class TokenRefreshService {
     return status.toString() != 'ConnectivityResult.none';
   }
 }
-

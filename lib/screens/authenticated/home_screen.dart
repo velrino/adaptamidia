@@ -4,8 +4,8 @@ import '../../services/storage_service.dart';
 import '../../services/configuration_service.dart';
 import '../../services/theme_service.dart';
 import '../../widgets/company_units_list.dart';
-import '../example.dart';
 import '../../debug/debug_insightface_button.dart';
+import '../../services/env_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -32,26 +32,42 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          if (kDebugMode) const DebugInsightFaceButton(),
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const MyHomePage()),
-              );
-            },
-            icon: Icon(
-              Icons.play_circle_fill,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: (Env.isDevelop ? Colors.orange : Colors.green)
+                      .withOpacity(0.15),
+                  border: Border.all(
+                    color: Env.isDevelop ? Colors.orange : Colors.green,
+                    width: 1,
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  Env.appEnv.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 12,
+                    letterSpacing: 1.0,
+                    color: Env.isDevelop ? Colors.orange : Colors.green,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ),
-            tooltip: 'VLC Player Demo',
           ),
+          if (kDebugMode) const DebugInsightFaceButton(),
           IconButton(
             onPressed: () async {
               await ThemeService.instance.toggleTheme();
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Tema: ${ThemeService.instance.getThemeModeName()}'),
+                    content: Text(
+                      'Tema: ${ThemeService.instance.getThemeModeName()}',
+                    ),
                     duration: const Duration(seconds: 1),
                   ),
                 );
@@ -61,7 +77,8 @@ class HomeScreen extends StatelessWidget {
               ThemeService.instance.getThemeIcon(),
               color: isDark ? Colors.grey[400] : Colors.grey[600],
             ),
-            tooltip: 'Alternar tema: ${ThemeService.instance.getThemeModeName()}',
+            tooltip:
+                'Alternar tema: ${ThemeService.instance.getThemeModeName()}',
           ),
           IconButton(
             onPressed: () {

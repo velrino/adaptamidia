@@ -4,6 +4,7 @@ import 'package:seemidia/services/uvc_camera_service.dart';
 import '../services/storage_service.dart';
 import '../screens/configuration_screen.dart';
 import 'remote_control_service.dart';
+import '../screens/about_screen.dart';
 
 class ConfigurationService {
   static ConfigurationService? _instance;
@@ -63,10 +64,11 @@ class _ConfigurationBottomSheet extends StatefulWidget {
   });
 
   @override
-  State<_ConfigurationBottomSheet> createState() => _ConfigurationBottomSheetState();
+  State<_ConfigurationBottomSheet> createState() =>
+      _ConfigurationBottomSheetState();
 }
 
-class _ConfigurationBottomSheetState extends State<_ConfigurationBottomSheet> 
+class _ConfigurationBottomSheetState extends State<_ConfigurationBottomSheet>
     with RemoteControlMixin {
   int _selectedIndex = 0;
   final FocusNode _focusNode = FocusNode();
@@ -124,6 +126,18 @@ class _ConfigurationBottomSheetState extends State<_ConfigurationBottomSheet>
           Navigator.pop(context);
         },
       ),
+
+      _ConfigOption(
+        title: 'Sobre',
+        subtitle: 'Informações do app e suporte',
+        icon: Icons.info_outline,
+        onTap: () {
+          Navigator.pop(context);
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (context) => const AboutScreen()));
+        },
+      ),
       _ConfigOption(
         title: 'Limpar Dados',
         subtitle: 'Resetar todas as configurações',
@@ -144,7 +158,7 @@ class _ConfigurationBottomSheetState extends State<_ConfigurationBottomSheet>
   @override
   bool onRemoteKeyPressed(String keyName, int keyCode) {
     debugPrint('[ConfigurationService] Remote key: $keyName');
-    
+
     switch (keyName) {
       case 'DPAD_UP':
         setState(() {
@@ -152,14 +166,14 @@ class _ConfigurationBottomSheetState extends State<_ConfigurationBottomSheet>
         });
         HapticFeedback.selectionClick();
         return true;
-        
+
       case 'DPAD_DOWN':
         setState(() {
           _selectedIndex = (_selectedIndex + 1).clamp(0, _options.length - 1);
         });
         HapticFeedback.selectionClick();
         return true;
-        
+
       case 'DPAD_CENTER':
       case 'NUMBER_5':
         if (_selectedIndex < _options.length) {
@@ -167,12 +181,12 @@ class _ConfigurationBottomSheetState extends State<_ConfigurationBottomSheet>
           _options[_selectedIndex].onTap();
         }
         return true;
-        
+
       case 'BACK':
       case 'MENU':
         Navigator.pop(context);
         return true;
-        
+
       // Atalhos numéricos para acesso direto
       case 'NUMBER_1':
         if (_options.isNotEmpty) {
@@ -180,21 +194,21 @@ class _ConfigurationBottomSheetState extends State<_ConfigurationBottomSheet>
           _options[0].onTap();
         }
         return true;
-        
+
       case 'NUMBER_2':
         if (_options.length > 1) {
           HapticFeedback.selectionClick();
           _options[1].onTap();
         }
         return true;
-        
+
       case 'NUMBER_3':
         if (_options.length > 2) {
           HapticFeedback.selectionClick();
           _options[2].onTap();
         }
         return true;
-        
+
       case 'NUMBER_4':
         if (_options.length > 3) {
           HapticFeedback.selectionClick();
@@ -251,7 +265,7 @@ class _ConfigurationBottomSheetState extends State<_ConfigurationBottomSheet>
             ...List.generate(_options.length, (index) {
               final option = _options[index];
               final isSelected = index == _selectedIndex;
-              
+
               return Padding(
                 padding: const EdgeInsets.only(bottom: 12),
                 child: _buildConfigOption(
@@ -278,7 +292,7 @@ class _ConfigurationBottomSheetState extends State<_ConfigurationBottomSheet>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    Icons.settings_remote, 
+                    Icons.settings_remote,
                     size: 16,
                     color: widget.isDark ? Colors.grey[400] : Colors.blue[600],
                   ),
@@ -287,7 +301,9 @@ class _ConfigurationBottomSheetState extends State<_ConfigurationBottomSheet>
                     '↑↓ Navegar | OK Selecionar | 1-4 Atalhos',
                     style: TextStyle(
                       fontSize: 12,
-                      color: widget.isDark ? Colors.grey[400] : Colors.blue[600],
+                      color: widget.isDark
+                          ? Colors.grey[400]
+                          : Colors.blue[600],
                     ),
                   ),
                 ],
@@ -317,7 +333,7 @@ class _ConfigurationBottomSheetState extends State<_ConfigurationBottomSheet>
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected 
+          color: isSelected
               ? Colors.blue.withOpacity(0.15)
               : (isDark ? Colors.grey[800] : Colors.grey[50]),
           borderRadius: BorderRadius.circular(12),
@@ -365,9 +381,14 @@ class _ConfigurationBottomSheetState extends State<_ConfigurationBottomSheet>
             Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.blue : Colors.grey.withOpacity(0.2),
+                    color: isSelected
+                        ? Colors.blue
+                        : Colors.grey.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -375,7 +396,9 @@ class _ConfigurationBottomSheetState extends State<_ConfigurationBottomSheet>
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : (isDark ? Colors.grey[400] : Colors.grey[600]),
+                      color: isSelected
+                          ? Colors.white
+                          : (isDark ? Colors.grey[400] : Colors.grey[600]),
                     ),
                   ),
                 ),
@@ -383,7 +406,9 @@ class _ConfigurationBottomSheetState extends State<_ConfigurationBottomSheet>
                 Icon(
                   Icons.arrow_forward_ios,
                   size: 16,
-                  color: isSelected ? Colors.blue : (isDark ? Colors.grey[400] : Colors.grey[400]),
+                  color: isSelected
+                      ? Colors.blue
+                      : (isDark ? Colors.grey[400] : Colors.grey[400]),
                 ),
               ],
             ),

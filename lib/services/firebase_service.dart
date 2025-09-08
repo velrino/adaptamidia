@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../interfaces/auth_data.dart';
 import 'storage_service.dart';
+import 'env_service.dart';
 
 class FirebaseService {
   static FirebaseService? _instance;
@@ -93,6 +94,7 @@ class FirebaseService {
       try {
         final deviceId = await StorageService.getOrCreateDeviceId();
         await FirebaseCrashlytics.instance.setCustomKey('device_id', deviceId);
+        await FirebaseCrashlytics.instance.setCustomKey('app_env', Env.appEnv);
       } catch (_) {}
       debugPrint('[FirebaseService] Crashlytics & Performance enabled');
     } catch (e) {
@@ -104,7 +106,7 @@ class FirebaseService {
   Future<IAuthResponse?> listenForAuthDevice(String deviceId) async {
     if (!_initialized) await initialize();
 
-    final ref = _database.ref('AUTH_DEVICES/$deviceId');
+    final ref = _database.ref('${FirebasePaths.p('AUTH_DEVICES')}/$deviceId');
 
     // Listen once for the data
     final snapshot = await ref.once();
@@ -141,7 +143,7 @@ class FirebaseService {
     Function(IAuthResponse) onSuccess,
     Function(String) onError,
   ) {
-    final ref = _database.ref('AUTH_DEVICES/$deviceId');
+    final ref = _database.ref('${FirebasePaths.p('AUTH_DEVICES')}/$deviceId');
 
     ref.onValue.listen(
       (event) {

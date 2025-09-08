@@ -16,6 +16,7 @@ import '../../services/uvc_camera_service.dart';
 import 'package:firebase_performance/firebase_performance.dart';
 import '../../services/device_presence_service.dart';
 import '../../services/token_refresh_service.dart';
+import '../../services/app_update_service.dart';
 
 class DisplayScreen extends StatefulWidget {
   final String unitId;
@@ -40,7 +41,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
   String? _error;
   Map<String, dynamic>? _unitData;
   Timer? _backgroundTimer;
+  Timer? _updateTimer;
   Map<String, dynamic>? _infoData;
+  // Analysis placeholders (reserved for NEWS analysis scheduling)
+  Timer? _analysisTimer;
+  Map<String, dynamic>? _pendingAnalysis;
+  String? _pendingAnalysisForId;
   double? _usdBid;
   String? _weatherText;
   String? _weatherIcon;
@@ -64,6 +70,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
     _loadContent();
     WakelockPlus.enable();
     TokenRefreshService.instance.start();
+    _scheduleAppUpdateChecks();
+    // React immediately when RELEASE changes
+    AppUpdateService.instance.startFirebaseReleaseListener();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(UvcCameraService.instance.ensureOpen());
       UvcCameraService.instance.hidePreview();
@@ -80,6 +89,24 @@ class _DisplayScreenState extends State<DisplayScreen> {
     } catch (_) {}
   }
 
+  Future<void> _announcePresence() async {
+    try {
+      await DevicePresenceService.instance.start(currentScreen: 'DISPLAY');
+    } catch (_) {}
+  }
+
+  void _scheduleAppUpdateChecks() {
+    // First check shortly after startup to avoid competing with initial I/O
+    Future.delayed(const Duration(seconds: 45), () {
+      unawaited(AppUpdateService.instance.checkAndUpdateFromFirebase());
+    });
+    // Then check hourly
+    _updateTimer?.cancel();
+    _updateTimer = Timer.periodic(const Duration(hours: 1), (_) {
+      unawaited(AppUpdateService.instance.checkAndUpdateFromFirebase());
+    });
+  }
+
   @override
   void dispose() {
     unawaited(_logCurrentDisplayFinished());
@@ -88,11 +115,13 @@ class _DisplayScreenState extends State<DisplayScreen> {
     } catch (_) {}
     _timer?.cancel();
     _backgroundTimer?.cancel();
+    _updateTimer?.cancel();
     _analysisTimer?.cancel();
     _exitFullScreen();
     WakelockPlus.disable();
     TokenRefreshService.instance.stop();
     unawaited(DevicePresenceService.instance.stop());
+    AppUpdateService.instance.stopFirebaseReleaseListener();
     super.dispose();
   }
 
@@ -113,10 +142,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
       final res = await ApiService.get<Map<String, dynamic>>(
         '/display/unit/${widget.unitId}/info',
         (m) => m,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'ngrok-skip-browser-warning': 'true',
-        },
+        headers: {'Authorization': 'Bearer $token'},
       );
       if (!res.success || res.data == null) return;
       final data = res.data!;
@@ -168,10 +194,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
       final res = await ApiService.get<Map<String, dynamic>>(
         '/display/unit/${widget.unitId}',
         (m) => m,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'ngrok-skip-browser-warning': 'true',
-        },
+        headers: {'Authorization': 'Bearer $token'},
       );
       if (res.success && res.data != null) {
         final data = res.data!;
@@ -522,10 +545,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
       final res = await ApiService.get<Map<String, dynamic>>(
         '/display/unit/${widget.unitId}',
         (m) => m,
-        headers: {
-          'Authorization': 'Bearer $token',
-          'ngrok-skip-browser-warning': 'true',
-        },
+        headers: {'Authorization': 'Bearer $token'},
       );
       if (!res.success || res.data == null) return;
       final data = res.data!;

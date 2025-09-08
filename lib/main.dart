@@ -12,9 +12,13 @@ import 'screens/authenticated/display_screen.dart';
 import 'components/uvc_camera_host.dart';
 import 'services/background_detection_service.dart';
 import 'services/insightface_service.dart';
+import 'services/env_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Enforce APP_ENV is provided correctly
+  Env.validateOrThrow();
 
   // Initialize Firebase
   await FirebaseService.instance.initialize();
