@@ -14,6 +14,8 @@ import '../../services/api_service.dart';
 import '../../services/device_context_service.dart';
 import '../../services/uvc_camera_service.dart';
 import 'package:firebase_performance/firebase_performance.dart';
+import '../../services/device_presence_service.dart';
+import '../../services/token_refresh_service.dart';
 
 class DisplayScreen extends StatefulWidget {
   final String unitId;
@@ -56,9 +58,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
   void initState() {
     super.initState();
     _enterFullScreen();
+    // Start presence and background token refresh
+    _announcePresence();
     _initDeviceConfig();
     _loadContent();
     WakelockPlus.enable();
+    TokenRefreshService.instance.start();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(UvcCameraService.instance.ensureOpen());
       UvcCameraService.instance.hidePreview();
@@ -83,8 +88,11 @@ class _DisplayScreenState extends State<DisplayScreen> {
     } catch (_) {}
     _timer?.cancel();
     _backgroundTimer?.cancel();
+    _analysisTimer?.cancel();
     _exitFullScreen();
     WakelockPlus.disable();
+    TokenRefreshService.instance.stop();
+    unawaited(DevicePresenceService.instance.stop());
     super.dispose();
   }
 
