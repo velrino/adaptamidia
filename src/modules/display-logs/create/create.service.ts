@@ -53,8 +53,8 @@ import {
 
 @Processor(QueuesEnum.DISPLAY_LOG_CREATE)
 @Injectable()
-export class CreateDisplayLogService {
-  // private unsubscribeListener: () => void;
+export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
+  private unsubscribeListener: () => void;
 
   constructor(
     private readonly queueService: QueueService,
@@ -335,17 +335,6 @@ export class CreateDisplayLogService {
   //   await this.displayLogModel.deleteMany({});
   // }
 
-  // async onModuleInit(): Promise<void> {
-  //   // await this.displayLogModel.deleteMany({});
-  //   await this.startDisplayLogsListener();
-  // }
-
-  // async onModuleDestroy(): Promise<void> {
-  //   if (this.unsubscribeListener) {
-  //     this.unsubscribeListener();
-  //   }
-  // }
-
   // @Cron(CronExpression.EVERY_5_SECONDS)
   // async example() {
   //   //  Debug
@@ -356,32 +345,6 @@ export class CreateDisplayLogService {
   //   await this.firebaseService.addRecord(FirebasePathsEnum.DISPLAY_LOGS, {
   //     lorem: `ipsum - ${new Date().toString()}`,
   //   });
-  // }
-
-  // private async startDisplayLogsListener(): Promise<void> {
-  //   try {
-  //     this.unsubscribeListener = await this.firebaseService.listenForNewRecords(
-  //       {
-  //         path: FirebasePathsEnum.DISPLAY_LOGS,
-  //         callback: async (data, key) => {
-  //           console.log('FIREBASE', { data, key });
-
-  //           await this.processDisplayLog(data);
-
-  //           // Deleta o registro após processamento
-  //           await this.firebaseService.deleteRecord(
-  //             FirebasePathsEnum.DISPLAY_LOGS,
-  //             key,
-  //           );
-  //         },
-  //       },
-  //     );
-
-  //     console.log('Listener iniciado para display_logs');
-  //   } catch (error) {
-  //     console.error('Erro ao iniciar listener:', error);
-  //     throw error;
-  //   }
   // }
 
   async executeFromDevice(
@@ -489,6 +452,12 @@ export class CreateDisplayLogService {
         };
       }
 
+      currentBody.device = payload?.device_id ? payload.device_id : null;
+
+      currentBody.orientation = payload?.device_context?.display?.orientation
+        ? payload?.device_context?.display?.orientation
+        : null;
+
       const record = await this.displayLogModel.create({
         ...currentBody,
         local: localID,
@@ -515,4 +484,47 @@ export class CreateDisplayLogService {
       throw error;
     }
   }
+
+  /*
+   * START FIREBASE
+   */
+  async onModuleInit(): Promise<void> {
+    // await this.displayLogModel.deleteMany({});
+    await this.startDisplayLogsListener();
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    if (this.unsubscribeListener) {
+      this.unsubscribeListener();
+    }
+  }
+
+  private async startDisplayLogsListener(): Promise<void> {
+    try {
+      this.unsubscribeListener = await this.firebaseService.listenForNewRecords(
+        {
+          path: FirebasePathsEnum.DISPLAY_LOGS,
+          callback: async (data, key) => {
+            console.log('FIREBASE', { data, key });
+
+            await this.processDisplayLog(data);
+
+            // Deleta o registro após processamento
+            await this.firebaseService.deleteRecord(
+              FirebasePathsEnum.DISPLAY_LOGS,
+              key,
+            );
+          },
+        },
+      );
+
+      console.log('Listener iniciado para display_logs');
+    } catch (error) {
+      console.error('Erro ao iniciar listener:', error);
+      throw error;
+    }
+  }
+  /*
+   * END FIREBASE
+   */
 }

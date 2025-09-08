@@ -17,6 +17,8 @@ import { RESULT } from 'src/shared/result.enum';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { FirebaseDatabaseService } from 'src/shared/firebase/firebase-database.service';
 
+export const ExcludeDomains = ['GlobeNewswire'];
+
 @Injectable()
 export class SyncNewsService {
   private readonly newsapi: NewsAPI = new NewsAPI(
@@ -65,6 +67,7 @@ export class SyncNewsService {
         language: 'pt', // Português
         // country: 'br', // Brasil
         sortBy: 'popularity',
+        // excludeDomains: ExcludeDomains.join(','),
         pageSize: 100, // Limita a 10 notícias
         q,
       });
@@ -156,30 +159,32 @@ export class SyncNewsService {
         }
 
         const created = await this.model.insertMany(
-          newArticles.map(
-            ({
-              source,
-              title,
-              author,
-              description,
-              url,
-              urlToImage,
-              publishedAt,
-            }) => ({
-              keyword,
-              provider,
-              language: LanguageEnum.PT_BR,
-              source_id: source.id,
-              source_name: source.name,
-              title,
-              author,
-              description,
-              url,
-              image: urlToImage,
-              status: NewsStatusEnum.ACTIVE,
-              published_at: new Date(publishedAt),
-            }),
-          ),
+          newArticles
+            .filter((item) => !ExcludeDomains.includes(item.source.name))
+            .map(
+              ({
+                source,
+                title,
+                author,
+                description,
+                url,
+                urlToImage,
+                publishedAt,
+              }) => ({
+                keyword,
+                provider,
+                language: LanguageEnum.PT_BR,
+                source_id: source.id,
+                source_name: source.name,
+                title,
+                author,
+                description,
+                url,
+                image: urlToImage,
+                status: NewsStatusEnum.ACTIVE,
+                published_at: new Date(publishedAt),
+              }),
+            ),
         );
 
         Log(

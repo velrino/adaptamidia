@@ -102,7 +102,10 @@ export class DisplayLog {
   bucket: string;
 
   @Prop({ type: String, required: false, default: null })
-  orientation: string;
+  orientation: string | null;
+
+  @Prop({ type: String, required: false, default: null })
+  device: string | null;
 
   @Prop({ type: mongoose.Schema.Types.Mixed, required: false, default: null })
   yolo: IApiYoloResult;

@@ -62,8 +62,11 @@ export class AuthController {
 
   @Get('refresh-token')
   @UseGuards(AuthJwtGuard)
-  async refreshToken(@Req() req: any) {
-    return this.authService.refreshToken(req.user.id, req.custom_client);
+  async refreshToken(@Req() req: AuthenticatedRequest) {
+    return this.authService.refreshToken(
+      req.user.user._id as string,
+      req.custom_client,
+    );
   }
 
   @Get('otp/generate')

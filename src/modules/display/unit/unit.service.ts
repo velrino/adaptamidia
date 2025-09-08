@@ -21,6 +21,7 @@ import {
   AdvertisementDocument,
 } from 'src/modules/advertisement/advertisement.schema';
 import { DisplayService } from '../display.service';
+import { ExcludeDomains } from 'src/modules/news/sync-news/sync-news.service';
 
 @Injectable()
 export class DisplayByUnitService {
@@ -130,6 +131,11 @@ export class DisplayByUnitService {
 
     // Exclude specific sources (if provided)
     // If both include and exclude exist, combine them correctly
+    parameters.exclude_source_name = [
+      ...(parameters.exclude_source_name || []),
+      ...ExcludeDomains,
+    ];
+
     if (parameters?.exclude_source_name?.length) {
       if (query.source_name?.$in) {
         query.source_name.$in = query.source_name.$in.filter(
