@@ -68,10 +68,52 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  // Resolve RTDB path by environment to avoid mixing DEV and RELEASE data
+  private p(informed: FirebasePathsEnum): string {
+    const env = (
+      process.env.APP_ENV ||
+      process.env.NODE_ENV ||
+      'DEVELOP'
+    ).toUpperCase();
+    const firebasePath = ['RELEASE', 'PRODUCTION', 'PROD'].includes(env)
+      ? informed
+      : `DEV_${String(informed).toUpperCase()}`;
+
+    Log(
+      LogType.INFO,
+      FirebaseDatabaseService.name,
+      'firebasePath',
+      LogAction.SUCCESS,
+      { firebasePath },
+    );
+
+    return firebasePath;
+  }
+
+  // Set data at the root of a path (no id), with server timestamp
+  async setRoot(path: FirebasePathsEnum, data: any): Promise<void> {
+    try {
+      const ref = this.database.ref(this.p(path));
+      await ref.set({
+        ...data,
+        timestamp: admin.database.ServerValue.TIMESTAMP,
+      });
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        FirebaseDatabaseService.name,
+        this.setRoot.name,
+        LogAction.FAILED,
+        { path, data, error },
+      );
+      throw error;
+    }
+  }
+
   async save(path: FirebasePathsEnum, id: string, data: any): Promise<void> {
     try {
       // Use os métodos do Admin SDK para Realtime Database
-      const deviceRef = this.database.ref(`${path}/${id}`);
+      const deviceRef = this.database.ref(`${this.p(path)}/${id}`);
       return await deviceRef.set({
         ...data,
         timestamp: admin.database.ServerValue.TIMESTAMP, // Use o timestamp do servidor, é melhor!
@@ -91,7 +133,7 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
   // Adicione este método na classe FirebaseDatabaseService
   async addRecord(path: FirebasePathsEnum, data: any): Promise<string> {
     try {
-      const ref = this.database.ref(path);
+      const ref = this.database.ref(this.p(path));
       const newRecordRef = ref.push(); // Cria uma referência com ID automático
 
       await newRecordRef.set({
@@ -117,7 +159,7 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
     parameters: IFirebaseListenForNewRecords,
   ): Promise<() => void> {
     try {
-      const ref = this.database.ref(parameters.path);
+      const ref = this.database.ref(this.p(parameters.path));
 
       // Listener para novos registros
       const childAddedHandler = ref.on('child_added', async (snapshot) => {
@@ -172,7 +214,7 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
     leaseMs = 60_000, // 1 minuto de lease por padrão
   ): Promise<boolean> {
     const now = Date.now();
-    const ref = this.database.ref(`${path}/${id}`);
+    const ref = this.database.ref(`${this.p(path)}/${id}`);
 
     try {
       const result = await new Promise<{
@@ -230,7 +272,7 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
     id: string,
   ): Promise<void> {
     try {
-      const ref = this.database.ref(`${path}/${id}`);
+      const ref = this.database.ref(`${this.p(path)}/${id}`);
       await ref.update({
         processed: true,
         processed_at: Date.now(),
@@ -252,7 +294,7 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
     id: string,
   ): Promise<void> {
     try {
-      const ref = this.database.ref(`${path}/${id}`);
+      const ref = this.database.ref(`${this.p(path)}/${id}`);
       const snapshot = await ref.once('value');
       const value = snapshot.val();
       if (value?.claimed_by === this.workerId && !value?.processed) {
@@ -275,33 +317,36 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
     leaseMs = 30 * 60 * 1000, // 30 minutos por padrão
   ): Promise<boolean> {
     const now = Date.now();
-    const ref = this.database.ref(`${FirebasePathsEnum.LOCKS}/${name}`);
+    const ref = this.database.ref(`${this.p(FirebasePathsEnum.LOCKS)}/${name}`);
     try {
-      const result = await new Promise<{ committed: boolean }>((resolve, reject) => {
-        ref.transaction(
-          (current: any) => {
-            const claimedAt = Number(current?.claimed_at || 0);
-            const claimedBy = current?.claimed_by as string | undefined;
-            const isLeaseValid = claimedBy && claimedAt && now - claimedAt < leaseMs;
+      const result = await new Promise<{ committed: boolean }>(
+        (resolve, reject) => {
+          ref.transaction(
+            (current: any) => {
+              const claimedAt = Number(current?.claimed_at || 0);
+              const claimedBy = current?.claimed_by as string | undefined;
+              const isLeaseValid =
+                claimedBy && claimedAt && now - claimedAt < leaseMs;
 
-            if (isLeaseValid && claimedBy !== this.workerId) {
-              // Outro worker ainda mantém o lease
-              return; // não altera
-            }
+              if (isLeaseValid && claimedBy !== this.workerId) {
+                // Outro worker ainda mantém o lease
+                return; // não altera
+              }
 
-            // Adquire ou renova lease
-            return {
-              claimed_by: this.workerId,
-              claimed_at: now,
-            };
-          },
-          (error, committed) => {
-            if (error) return reject(error);
-            resolve({ committed: Boolean(committed) });
-          },
-          false,
-        );
-      });
+              // Adquire ou renova lease
+              return {
+                claimed_by: this.workerId,
+                claimed_at: now,
+              };
+            },
+            (error, committed) => {
+              if (error) return reject(error);
+              resolve({ committed: Boolean(committed) });
+            },
+            false,
+          );
+        },
+      );
       return result.committed;
     } catch (error) {
       Log(
@@ -316,7 +361,7 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
   }
 
   async releaseLock(name: string): Promise<void> {
-    const ref = this.database.ref(`${FirebasePathsEnum.LOCKS}/${name}`);
+    const ref = this.database.ref(`${this.p(FirebasePathsEnum.LOCKS)}/${name}`);
     try {
       await ref.transaction((current: any) => {
         if (current?.claimed_by === this.workerId) {
@@ -338,7 +383,7 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
   // Método para deletar registro
   async deleteRecord(path: FirebasePathsEnum, id: string): Promise<void> {
     try {
-      const ref = this.database.ref(`${path}/${id}`);
+      const ref = this.database.ref(`${this.p(path)}/${id}`);
       await ref.remove();
     } catch (error) {
       Log(

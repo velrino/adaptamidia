@@ -25,6 +25,7 @@ import { LeadsModule } from './modules/leads/leads.module';
 import { HealthCheckService } from './app.service';
 import { DetectionModule } from './shared/detection/detection.module';
 import { DashboardDisplayLogsModule } from './modules/dashboard-display-logs/dashboard-display-logs.module';
+import { AppReleaseModule } from './modules/app-release/app-release.module';
 
 @Module({
   imports: [
@@ -83,6 +84,7 @@ import { DashboardDisplayLogsModule } from './modules/dashboard-display-logs/das
     WeatherModule,
     LeadsModule,
     DetectionModule,
+    AppReleaseModule,
   ],
   controllers: [AppController],
   providers: [HealthCheckService],

@@ -2,6 +2,7 @@ export enum FirebasePathsEnum {
   AUTH_DEVICES = 'AUTH_DEVICES',
   DISPLAY_LOGS = 'DISPLAY_LOGS',
   LOCKS = 'LOCKS',
+  RELEASE = 'RELEASE',
 }
 
 export interface IFirebaseListenForNewRecords {

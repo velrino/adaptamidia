@@ -39,7 +39,7 @@ export class HealthCheckService {
       result = [
         await this.checkMongoDB(),
         await this.checkRedis(),
-        await this.checkVision(),
+        // await this.checkVision(),
       ];
 
       await this.redisService.set(cacheKey, result, 60000); // Cache de 1 minuto

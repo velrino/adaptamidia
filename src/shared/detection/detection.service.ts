@@ -17,26 +17,25 @@ export class DetectionService implements OnModuleInit {
     process.env.DETECTION_API_URL || 'http://localhost:8000';
 
   async onModuleInit() {
-    if (!process.env.DETECTION_API_URL) return;
-
-    try {
-      const response = await this.check();
-      Log(
-        LogType.INFO,
-        DetectionService.name,
-        this.onModuleInit.name,
-        LogAction.STARTED,
-        { response },
-      );
-    } catch (error) {
-      Log(
-        LogType.ERROR,
-        DetectionService.name,
-        this.onModuleInit.name,
-        LogAction.FAILED,
-        { error },
-      );
-    }
+    // if (!process.env.DETECTION_API_URL) return;
+    // try {
+    //   const response = await this.check();
+    //   Log(
+    //     LogType.INFO,
+    //     DetectionService.name,
+    //     this.onModuleInit.name,
+    //     LogAction.STARTED,
+    //     { response },
+    //   );
+    // } catch (error) {
+    //   Log(
+    //     LogType.ERROR,
+    //     DetectionService.name,
+    //     this.onModuleInit.name,
+    //     LogAction.FAILED,
+    //     { error },
+    //   );
+    // }
   }
 
   async check() {
