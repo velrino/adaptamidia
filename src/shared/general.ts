@@ -207,6 +207,12 @@ export const MIME_TO_EXTENSION: Record<string, string> = {
   // 'application/x-rar-compressed': '.rar',
 };
 
+export enum Environments {
+  RELEASE = 'RELEASE',
+  PRODUCTION = 'PRODUCTION',
+  PROD = 'PROD',
+}
+
 export function GetEnvironment(): string {
   return (
     process.env.APP_ENV ||

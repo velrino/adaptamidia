@@ -10,7 +10,7 @@ import {
   GoogleCloudCredential,
 } from '../google/resouces';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
-import { GetEnvironment } from '../general';
+import { Environments, GetEnvironment } from '../general';
 
 @Injectable()
 export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
@@ -72,7 +72,10 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
   // Resolve RTDB path by environment to avoid mixing DEV and RELEASE data
   private p(informed: FirebasePathsEnum): string {
     const env = GetEnvironment();
-    const firebasePath = ['RELEASE', 'PRODUCTION', 'PROD'].includes(env)
+
+    const firebasePath = Object.values(Environments).includes(
+      env as Environments,
+    )
       ? informed
       : `DEV_${String(informed).toUpperCase()}`;
 
