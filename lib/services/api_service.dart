@@ -5,8 +5,10 @@ import 'logger_service.dart';
 import 'package:firebase_performance/firebase_performance.dart';
 
 class ApiService {
-  static const String _baseUrl = 'https://561e93266a10.ngrok-free.app';
-  // static const String _baseUrl = 'https://api-2057331207.southamerica-east1.run.app';
+  // static const String _baseUrl = 'https://561e93266a10.ngrok-free.app';
+  static const String _baseUrl =
+      'https://api-2057331207.southamerica-east1.run.app';
+
   static const Duration _timeout = Duration(seconds: 30);
 
   static final Map<String, String> _defaultHeaders = {
