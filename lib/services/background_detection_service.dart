@@ -140,10 +140,12 @@ class BackgroundDetectionService {
       bdTrace.putAttribute('capture_id', captureId);
       final typeAttr = (body['type'] ?? '').toString();
       if (typeAttr.isNotEmpty) bdTrace.putAttribute('type', typeAttr);
-
-      await ensureLoaded();
-
+      // Only load models if needed. When called with no bytes/imageFile (e.g.,
+      // NEWS right before an AD), we skip any AI work entirely to protect UX.
       int peopleCount = 0;
+      if (bytes != null) {
+        await ensureLoaded();
+      }
       if (bytes != null && _yolo != null) {
         try {
           final swYolo = Stopwatch()..start();

@@ -59,6 +59,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
   ImageProvider? _backdropProvider;
   String? _backdropId;
   double _backdropOpacity = 1.0;
+  // Persistent News overlay state (kept mounted; opacity-driven)
+  double _newsOpacity = 0.0;
+  String _newsTitle = '';
+  String _newsDescription = '';
+  String _newsSourceName = '';
+  String _newsAuthor = '';
 
   @override
   void initState() {
@@ -219,9 +225,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
             }
           }
 
+          // Annotate skip flags before using as playlist
+          final loaded = List<dynamic>.from(data['data']);
+          _annotateSkipFlags(loaded);
           setState(() {
             _unitData = data['unit'];
-            _contents = data['data'];
+            _contents = loaded;
             _isLoading = false;
           });
 
@@ -404,6 +413,7 @@ class _DisplayScreenState extends State<DisplayScreen> {
             _backdropOpacity = 0.0;
             _backdropProvider = null;
             _backdropId = null;
+            _newsOpacity = 0.0; // hide news overlay while an ad/video plays
           });
         }
 
@@ -466,6 +476,12 @@ class _DisplayScreenState extends State<DisplayScreen> {
                 _backdropProvider = provider;
                 _backdropId = file.path;
                 _backdropOpacity = 1.0;
+                // Update persistent News overlay content and fade it in
+                _newsTitle = (news['title'] as String?) ?? '';
+                _newsDescription = (news['description'] as String?) ?? '';
+                _newsSourceName = (news['source_name'] as String?) ?? '';
+                _newsAuthor = (news['author'] as String?) ?? '';
+                _newsOpacity = 1.0;
               });
             }
           }
@@ -534,6 +550,24 @@ class _DisplayScreenState extends State<DisplayScreen> {
       _backgroundRefresh();
       _fetchInfo();
     });
+  }
+
+  // Mark NEWS items that are immediately followed by an ADVERTISEMENT to skip
+  // AI (photo/YOLO/InsightFace) on FINISHED logging for performance.
+  void _annotateSkipFlags(List<dynamic> items) {
+    if (items.isEmpty) return;
+    final n = items.length;
+    for (int i = 0; i < n; i++) {
+      final curr = items[i];
+      final next = items[(i + 1) % n];
+      final isCurrNews = curr is Map && curr['type'] == 'NEWS' && curr['news'] != null;
+      final isNextAd = next is Map && next['type'] == 'ADVERTISEMENT' && next['ads'] != null;
+      if (isCurrNews && isNextAd) {
+        try { curr['skip_ai_on_finish'] = true; } catch (_) {}
+      } else {
+        try { curr['skip_ai_on_finish'] = false; } catch (_) {}
+      }
+    }
   }
 
   Future<void> _backgroundRefresh() async {
@@ -615,6 +649,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
 
       if (!mounted || filtered.isEmpty) return;
 
+      // Re-annotate skip flags on refreshed playlist
+      _annotateSkipFlags(filtered);
+
       setState(() {
         _contents = filtered;
         if (_currentIndex >= _contents.length) {
@@ -689,6 +726,30 @@ class _DisplayScreenState extends State<DisplayScreen> {
       'device_id': deviceId,
       'device_context': deviceContext,
     };
+
+    /*
+     * Performance safeguard: skip AI capture before ads/videos
+     *
+     * Organização do roteiro:
+     *  - Em _loadContent/_backgroundRefresh anotamos a playlist (_contents)
+     *    marcando cada NEWS que antecede um AD com `skip_ai_on_finish = true`.
+     *  - Aqui apenas consultamos essa flag para decidir pular foto/YOLO/InsightFace.
+     */
+    final skipAiForUpcomingAd = (content is Map && content['skip_ai_on_finish'] == true);
+    if (skipAiForUpcomingAd) {
+      debugPrint('[DisplayScreen] Skipping camera/AI because next item is an AD');
+      try {
+        await BackgroundDetectionService.instance.processImmediate(
+          captureId: captureId,
+          body: body,
+          bytes: null,
+        );
+        debugPrint('[DisplayScreen] Log saved (no photo, AI skipped)');
+      } catch (e) {
+        debugPrint('[DisplayScreen] Failed to save log (AI skipped): $e');
+      }
+      return;
+    }
 
     {
       try {
@@ -1010,6 +1071,255 @@ class _DisplayScreenState extends State<DisplayScreen> {
     );
   }
 
+  // Always-mounted News overlay; toggled via _newsOpacity for smoother transitions
+  Widget _buildNewsOverlay() {
+    if (_backdropProvider == null) {
+      return const SizedBox.shrink();
+    }
+
+    final mq = MediaQuery.of(context);
+    final shortest = mq.size.shortestSide;
+    final scale = (shortest / 800).clamp(1.0, 1.8);
+    final hasCenter = _weatherIcon != null || _weatherTempC != null;
+    final leftCurrency = _usdBid != null ? _usdBid!.toStringAsFixed(2) : '--';
+
+    return IgnorePointer(
+      ignoring: _newsOpacity == 0.0,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        opacity: _newsOpacity.clamp(0.0, 1.0),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Positioned(
+              bottom: 24,
+              left: 24,
+              right: 24,
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.black.withOpacity(0.8),
+                      Colors.black.withOpacity(0.6),
+                    ],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.1),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IntrinsicHeight(
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 200,
+                            height: 200,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.3),
+                                  blurRadius: 10,
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(15),
+                              child: Image.asset(
+                                'assets/images/logo-flex.png',
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: Colors.grey[800],
+                                    child: const Icon(
+                                      Icons.image,
+                                      color: Colors.white54,
+                                      size: 80,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            height: double.infinity,
+                            margin: const EdgeInsets.symmetric(horizontal: 20),
+                            color: Colors.white.withOpacity(0.2),
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _newsTitle,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: (36 * scale),
+                                    fontWeight: FontWeight.bold,
+                                    height: 1.2,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  _newsDescription,
+                                  style: TextStyle(
+                                    color: Colors.grey[300],
+                                    fontSize: (26 * scale),
+                                    height: 1.3,
+                                  ),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                if (_newsSourceName.isNotEmpty || _newsAuthor.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.newspaper,
+                                        color: Colors.grey[400],
+                                        size: (18 * scale),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(
+                                        child: Text(
+                                          [
+                                            _newsSourceName,
+                                            _newsAuthor,
+                                          ].where((s) => s.isNotEmpty).join(' • '),
+                                          style: TextStyle(
+                                            color: Colors.grey[400],
+                                            fontSize: (18 * scale),
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                                const SizedBox(height: 8),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.only(top: 12),
+                      decoration: BoxDecoration(
+                        border: Border(
+                          top: BorderSide(
+                            color: Colors.white.withOpacity(0.15),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.attach_money,
+                                  color: Colors.white70,
+                                  size: (20 * scale),
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    leftCurrency,
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: (20 * scale),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: Center(
+                              child: hasCenter
+                                  ? Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (_weatherIcon != null)
+                                          CachedNetworkImage(
+                                            imageUrl: _weatherIcon!,
+                                            width: (28 * scale),
+                                            height: (28 * scale),
+                                            fit: BoxFit.contain,
+                                            fadeInDuration: const Duration(milliseconds: 200),
+                                            fadeOutDuration: const Duration(milliseconds: 200),
+                                            errorWidget: (ctx, url, err) => Icon(
+                                              Icons.wb_sunny,
+                                              color: Colors.white70,
+                                              size: (22 * scale),
+                                            ),
+                                          ),
+                                        if (_weatherIcon != null && _weatherTempC != null)
+                                          SizedBox(width: 8),
+                                        if (_weatherTempC != null)
+                                          Text(
+                                            '${_weatherTempC!.toStringAsFixed(0)}°C',
+                                            style: TextStyle(
+                                              color: Colors.white70,
+                                              fontSize: (20 * scale),
+                                            ),
+                                          ),
+                                      ],
+                                    )
+                                  : Text(
+                                      '-',
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: (20 * scale),
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: ClockText(fontSize: (20 * scale)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildAdvertisement(Map<String, dynamic> ads) {
     final String? landscape = ads['source_landscape'] as String?;
     final String? portrait = ads['source_portrait'] as String?;
@@ -1093,9 +1403,9 @@ class _DisplayScreenState extends State<DisplayScreen> {
                   ],
                 ),
               ),
-            )
-          else
-            _buildContent(),
+            ),
+          // Keep news overlay mounted; just toggle opacity for performance
+          if (!_isLoading && _error == null) _buildNewsOverlay(),
 
           if (!_isLoading && _error == null && _isPreparing)
             Container(
