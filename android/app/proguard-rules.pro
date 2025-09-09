@@ -25,3 +25,8 @@
 -dontwarn java.beans.**
 -dontwarn org.yaml.snakeyaml.**
 -keep class org.yaml.snakeyaml.** { *; }
+
+# InspireFace SDK – JNI/reflection access: keep classes and members
+-keep class com.insightface.sdk.inspireface.** { *; }
+-keep class com.insightface.sdk.** { *; }
+-dontwarn com.insightface.sdk.**

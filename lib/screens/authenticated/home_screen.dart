@@ -59,7 +59,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          if (kDebugMode) const DebugInsightFaceButton(),
+          const DebugInsightFaceButton(),
           IconButton(
             onPressed: () async {
               await ThemeService.instance.toggleTheme();
@@ -127,12 +127,16 @@ class _VersionFooter extends StatelessWidget {
         final text = (version.isEmpty && build.isEmpty)
             ? 'Versão: --  •  Code: --'
             : 'Versão: $version  •  Code: $build';
-        return Container
-          (
+        return Container(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
             color: isDark ? Colors.grey[850] : Colors.white,
-            border: Border(top: BorderSide(color: (isDark ? Colors.grey[800]! : Colors.grey[300]!), width: 1)),
+            border: Border(
+              top: BorderSide(
+                color: (isDark ? Colors.grey[800]! : Colors.grey[300]!),
+                width: 1,
+              ),
+            ),
           ),
           child: SafeArea(
             top: false,
