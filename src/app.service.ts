@@ -10,10 +10,11 @@ import {
   IHealthCheck,
   IHealthCheckResult,
 } from './modules/health-check/health-check.dto';
-import { CalculateTimeBetweenDates } from './shared/general';
+import { CalculateTimeBetweenDates, GetEnvironment } from './shared/general';
 import { RESULT } from './shared/result.enum';
 import { Log, LogAction, LogType } from './modules/logs/log.helper';
 import { DetectionService } from './shared/detection/detection.service';
+import { Environment } from '@google/genai';
 
 @Injectable()
 export class HealthCheckService {
@@ -50,6 +51,7 @@ export class HealthCheckService {
     const overallResponseTime = Date.now() - start;
 
     return {
+      environment: GetEnvironment(),
       time: this.calculateTimeBetweenDates(),
       result_total_time: `${overallResponseTime}ms`,
       result_is_cache: resultIsCache,

@@ -206,3 +206,11 @@ export const MIME_TO_EXTENSION: Record<string, string> = {
   // 'application/zip': '.zip',
   // 'application/x-rar-compressed': '.rar',
 };
+
+export function GetEnvironment(): string {
+  return (
+    process.env.APP_ENV ||
+    process.env.NODE_ENV ||
+    'DEVELOP'
+  ).toUpperCase();
+}
