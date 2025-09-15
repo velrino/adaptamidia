@@ -13,6 +13,7 @@ import {
   ICompanyStatus,
   ICompanyType,
 } from "@/interfaces/company";
+import { AdvertisementsPlans } from "@/utils/generic";
 
 export const AudienceOptionsMock: IReactSelectOption[] = [
   { value: AdsAudience.EXECUTIVES, label: "Executivos" },
@@ -44,6 +45,7 @@ export const Default = {
 
 export const AdsRecordDefault: IApiAdvertisementItem = {
   _id: String(),
+  plan: AdvertisementsPlans.TWO_WEEKS,
   company: {
     _id: String(),
     document: String(),

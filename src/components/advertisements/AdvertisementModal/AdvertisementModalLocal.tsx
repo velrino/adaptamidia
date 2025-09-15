@@ -30,7 +30,6 @@ import { AdPeriod, AdPeriodText } from "@/interfaces/ads";
 import { AdvertisementFormProps } from "./interface";
 import Select from "@/components/form/Select";
 import { RegionsComponent } from "@/components/regions/Regions";
-import { ContentAction } from "@/interfaces/general";
 
 const LazyMap = dynamic(() => import("./Ads/Map"), {
   ssr: false,
