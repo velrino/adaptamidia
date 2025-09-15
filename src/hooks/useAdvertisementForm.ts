@@ -39,6 +39,7 @@ export const useAdvertisementForm = (
     return {
       company: data.company._id,
       title: data.title,
+      plan: data.plan,
       description: data.description,
       type: data.type,
       source_landscape:

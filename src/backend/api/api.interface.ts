@@ -127,6 +127,7 @@ export interface IApiAdvertisementItem {
 export interface IApiCreateAdvertisementRequest {
   company: string;
   title: string;
+  plan: string;
   source_landscape: string;
   source_portrait: string;
   description: string;
@@ -144,6 +145,7 @@ export interface IApiCreateAdvertisementRequest {
 export interface IApiUpdateAdvertisementRequest {
   company: string;
   title: string;
+  plan: string;
   description: string;
   source_landscape: string;
   source_portrait: string;
