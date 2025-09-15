@@ -203,7 +203,6 @@ export default function AdvertisementsTable() {
                   {[
                     { key: AdSortKey.title, label: "Titulo" },
                     { key: AdSortKey.company, label: "Anunciante" },
-                    { key: AdSortKey.type, label: "Tipo" },
                     { key: AdSortKey.start_date, label: "Data inicial" },
                     { key: AdSortKey.end_date, label: "Data final" },
                     { key: AdSortKey.status, label: "Status" },
@@ -252,7 +251,7 @@ export default function AdvertisementsTable() {
                       setCurrentAdvertisement(item);
                     }}
                   >
-                    <TableCell className="px-4 py-3 border border-gray-100 dark:border-white/[0.05] whitespace-nowrap">
+                    <TableCell className="px-4 py-3 border border-gray-100 dark:border-white/[0.05]">
                       <div className="flex items-center gap-3">
                         {/* Imagem */}
                         <div className="w-10 h-10 overflow-hidden rounded-full">
@@ -291,17 +290,14 @@ export default function AdvertisementsTable() {
 
                         {/* Texto */}
                         <div className="flex-1 min-w-0">
-                          <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90 line-clamp-2 break-words">
+                          <span className="font-medium text-gray-800 text-theme-sm dark:text-white/90 line-clamp-2 break-words max-w-[250px]">
                             {item.title || `Rascunho #${i + 1}`}
                           </span>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
+                    <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm ">
                       {item?.company?.name}
-                    </TableCell>
-                    <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
-                      {item.type}
                     </TableCell>
                     <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
                       {DateHelper.format(item?.start_date)}
