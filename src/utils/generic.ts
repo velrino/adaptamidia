@@ -210,25 +210,33 @@ export enum AdvertisementsPlans {
   TWENTY_FOUR_WEEKS = "TWENTY_FOUR_WEEKS",
 }
 
+export enum AdvertisementsPlansLabel {
+  CUSTOM = "Personalizado",
+  TWO_WEEKS = "2 semanas",
+  FOUR_WEEKS = "4 semanas",
+  TWELVE_WEEKS = "12 semanas",
+  TWENTY_FOUR_WEEKS = "24 semanas",
+}
+
 export const AdvertisementsPlansOptions = [
   {
-    label: "Personalizado",
+    label: AdvertisementsPlansLabel.CUSTOM,
     value: AdvertisementsPlans.CUSTOM,
   },
   {
-    label: "2 semanas",
+    label: AdvertisementsPlansLabel.TWO_WEEKS,
     value: AdvertisementsPlans.TWO_WEEKS,
   },
   {
-    label: "4 semanas",
+    label: AdvertisementsPlansLabel.FOUR_WEEKS,
     value: AdvertisementsPlans.FOUR_WEEKS,
   },
   {
-    label: "12 semanas",
+    label: AdvertisementsPlansLabel.TWELVE_WEEKS,
     value: AdvertisementsPlans.TWELVE_WEEKS,
   },
   {
-    label: "24 semanas",
+    label: AdvertisementsPlansLabel.TWENTY_FOUR_WEEKS,
     value: AdvertisementsPlans.TWENTY_FOUR_WEEKS,
   },
 ];

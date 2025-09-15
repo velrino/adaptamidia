@@ -84,18 +84,18 @@ const AdvertisementModalLocal = memo(
         setSelectedPlan(data.plan as AdvertisementsPlans);
       }
 
-      if (action === ContentAction.CREATE) {
-        setSelectedPlan(AdvertisementsPlans.TWO_WEEKS);
-      }
+      // if (action === ContentAction.CREATE) {
+      //   setSelectedPlan(AdvertisementsPlans.TWO_WEEKS);
+      // }
 
-      if (action === ContentAction.UPDATE && !data?.plan) {
-        setSelectedPlan(AdvertisementsPlans.CUSTOM);
-      }
+      // if (action === ContentAction.UPDATE && !data?.plan) {
+      //   setSelectedPlan(AdvertisementsPlans.CUSTOM);
+      // }
     }, [data, action]);
 
     const [formReport, setFormReport] =
       useState<IDefaultFormReport>(defaultFormReport);
-    const [, setDiffBetweenDates] = useState<number>(0);
+    const [diffBetweenDates, setDiffBetweenDates] = useState<number>(0);
     const [metricItemMessage, setMetricItemMessage] = useState<{
       label: string;
       value: string;
@@ -272,6 +272,14 @@ const AdvertisementModalLocal = memo(
       []
     );
 
+    const convertToBRL = (rate = 10.73) => {
+      const value = Number(diffBetweenDates || 0) * rate;
+      return value.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+      });
+    };
+
     return (
       <>
         <div className="grid gap-3 sm:grid-cols-3">
@@ -285,7 +293,7 @@ const AdvertisementModalLocal = memo(
                   <div className="col-span-2">
                     <div className="grid gap-6 sm:grid-cols-4">
                       <div>
-                        <Label>Plano</Label>
+                        <Label>Duração</Label>
                         <Select
                           key={`plan-select-${selectedPlan}`}
                           options={AdvertisementsPlansOptions}
@@ -378,6 +386,11 @@ const AdvertisementModalLocal = memo(
                           <MetricItem
                             label={`Período (${currentPeriodText})`}
                             value={metricItemMessage.value}
+                            icon={<PiUsersLight size={15} />}
+                          />
+                          <MetricItem
+                            label={`Investimento`}
+                            value={`${convertToBRL()}`}
                             icon={<PiUsersLight size={15} />}
                           />
                           <MetricItem
