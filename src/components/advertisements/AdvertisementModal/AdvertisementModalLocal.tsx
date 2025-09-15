@@ -20,6 +20,8 @@ import dynamic from "next/dynamic";
 import Spinner from "@/components/ui/spinner/Spinner";
 import { PiEye, PiUsersLight } from "react-icons/pi";
 import {
+  AdvertisementsPlans,
+  AdvertisementsPlansOptions,
   FormatThousand,
   GenerateNumberRangeAsOptions,
   SumUnitPeriodNative,
@@ -28,6 +30,7 @@ import { AdPeriod, AdPeriodText } from "@/interfaces/ads";
 import { AdvertisementFormProps } from "./interface";
 import Select from "@/components/form/Select";
 import { RegionsComponent } from "@/components/regions/Regions";
+import { ContentAction } from "@/interfaces/general";
 
 const LazyMap = dynamic(() => import("./Ads/Map"), {
   ssr: false,
@@ -49,7 +52,7 @@ const defaultFormReport: IDefaultFormReport = {
 };
 
 const AdvertisementModalLocal = memo(
-  ({ data, onUpdate }: AdvertisementFormProps) => {
+  ({ data, onUpdate, action }: AdvertisementFormProps) => {
     const [startDate, setStartDate] = useState<Date>();
     const [endDate, setEndDate] = useState<Date>();
     const maxStartDate = useMemo(
@@ -61,9 +64,9 @@ const AdvertisementModalLocal = memo(
       []
     );
 
-    const tomorrow = useMemo(() => DateHelper.dayjs().toDate(), []);
+    // const tomorrow = useMemo(() => DateHelper.dayjs().toDate(), []);
 
-    // Inicializa as datas apenas uma vez, quando o componente é montado ou quando `data` muda
+    // Inicializa as datas e o plano apenas uma vez, quando o componente é montado ou quando `data` muda
     useEffect(() => {
       const start_date = DateHelper.dayjs(data.start_date);
       const end_date = DateHelper.dayjs(data.end_date);
@@ -72,10 +75,23 @@ const AdvertisementModalLocal = memo(
         setStartDate(start_date.toDate());
         setEndDate(end_date.toDate());
       } else {
-        setStartDate(DateHelper.dayjs(tomorrow).add(7, "day").toDate());
-        setEndDate(DateHelper.dayjs(tomorrow).add(14, "day").toDate());
+        setStartDate(DateHelper.dayjs().add(7, "day").toDate());
+        setEndDate(DateHelper.dayjs().add(14, "day").toDate());
       }
-    }, [data, tomorrow]);
+
+      // Inicializar o plano selecionado
+      if (data.plan) {
+        setSelectedPlan(data.plan as AdvertisementsPlans);
+      }
+
+      if (action === ContentAction.CREATE) {
+        setSelectedPlan(AdvertisementsPlans.TWO_WEEKS);
+      }
+
+      if (action === ContentAction.UPDATE && !data?.plan) {
+        setSelectedPlan(AdvertisementsPlans.CUSTOM);
+      }
+    }, [data, action]);
 
     const [formReport, setFormReport] =
       useState<IDefaultFormReport>(defaultFormReport);
@@ -95,6 +111,9 @@ const AdvertisementModalLocal = memo(
     );
 
     const [units, setUnits] = useState<IApiUnitItemResponse[]>([]);
+    const [selectedPlan, setSelectedPlan] = useState<AdvertisementsPlans>(
+      AdvertisementsPlans.CUSTOM
+    );
 
     const classifyPeriod = useCallback((diff: number): AdPeriod => {
       if (diff <= 1) return AdPeriod.DAILY;
@@ -103,6 +122,26 @@ const AdvertisementModalLocal = memo(
       if (diff >= 365) return AdPeriod.YEARLY;
       return AdPeriod.MONTHLY;
     }, []);
+
+    const calculateEndDateFromPlan = useCallback(
+      (startDate: Date, plan: AdvertisementsPlans): Date => {
+        const start = DateHelper.dayjs(startDate);
+        switch (plan) {
+          case AdvertisementsPlans.TWO_WEEKS:
+            return start.add(14, "day").toDate();
+          case AdvertisementsPlans.FOUR_WEEKS:
+            return start.add(28, "day").toDate();
+          case AdvertisementsPlans.TWELVE_WEEKS:
+            return start.add(84, "day").toDate();
+          case AdvertisementsPlans.TWENTY_FOUR_WEEKS:
+            return start.add(168, "day").toDate();
+          case AdvertisementsPlans.CUSTOM:
+          default:
+            return start.add(7, "day").toDate();
+        }
+      },
+      []
+    );
 
     useEffect(() => {
       if (startDate && endDate) {
@@ -161,33 +200,14 @@ const AdvertisementModalLocal = memo(
         if (selectedDates.length === 0) return;
         const newStartDate = selectedDates[0];
 
-        //  TODO
-        // if (
-        //   DateHelper.dayjs(newStartDate).isSameOrAfter(tomorrow, "day") &&
-        //   DateHelper.dayjs(newStartDate).isBefore(endDate, "day")
-        // ) {
-        //   setStartDate(newStartDate);
-        //   setEndDate(DateHelper.dayjs(newStartDate).add(7, "day").toDate());
-        //   updateFormReport("start_date");
-        //   updateForm("start_date", newStartDate.toISOString());
-        // } else {
-        //   updateFormReport(
-        //     "start_date",
-        //     `A data deve ser maior ou igual a ${DateHelper.format(
-        //       tomorrow,
-        //       DateHelperFormat.SHORT
-        //     )} e menor que ${DateHelper.format(
-        //       endDate as Date,
-        //       DateHelperFormat.SHORT
-        //     )}.`
-        //   );
-        // }
         setStartDate(newStartDate);
-        setEndDate(DateHelper.dayjs(newStartDate).add(7, "day").toDate());
+        const newEndDate = calculateEndDateFromPlan(newStartDate, selectedPlan);
+        setEndDate(newEndDate);
         updateFormReport("start_date");
         updateForm("start_date", newStartDate.toISOString());
+        updateForm("end_date", newEndDate.toISOString());
       },
-      [endDate, tomorrow, updateForm, updateFormReport]
+      [selectedPlan, updateForm, updateFormReport, calculateEndDateFromPlan]
     );
 
     const handleEndDateChange = useCallback(
@@ -199,6 +219,12 @@ const AdvertisementModalLocal = memo(
           setEndDate(currentDate);
           updateFormReport("end_date");
           updateForm("end_date", currentDate.toISOString());
+
+          // Mudar para CUSTOM quando o usuário alterar a data final manualmente
+          if (selectedPlan !== AdvertisementsPlans.CUSTOM) {
+            setSelectedPlan(AdvertisementsPlans.CUSTOM);
+            updateForm("plan", AdvertisementsPlans.CUSTOM);
+          }
         } else {
           updateFormReport(
             "end_date",
@@ -209,7 +235,7 @@ const AdvertisementModalLocal = memo(
           );
         }
       },
-      [startDate, updateForm, updateFormReport]
+      [startDate, selectedPlan, updateForm, updateFormReport]
     );
 
     const MetricItem = useCallback(
@@ -257,7 +283,35 @@ const AdvertisementModalLocal = memo(
               <div className="grid gap-3 sm:grid-cols-2">
                 {startDate && endDate && (
                   <div className="col-span-2">
-                    <div className="grid gap-6 sm:grid-cols-3">
+                    <div className="grid gap-6 sm:grid-cols-4">
+                      <div>
+                        <Label>Plano</Label>
+                        <Select
+                          key={`plan-select-${selectedPlan}`}
+                          options={AdvertisementsPlansOptions}
+                          defaultValue={String(selectedPlan)}
+                          placeholder="Plano"
+                          onChange={(value: string) => {
+                            const newPlan = value as AdvertisementsPlans;
+                            setSelectedPlan(newPlan);
+                            updateForm("plan", newPlan);
+
+                            // Se não for CUSTOM, recalcular a data final baseada no plano
+                            if (
+                              newPlan !== AdvertisementsPlans.CUSTOM &&
+                              startDate
+                            ) {
+                              const newEndDate = calculateEndDateFromPlan(
+                                startDate,
+                                newPlan
+                              );
+                              setEndDate(newEndDate);
+                              updateForm("end_date", newEndDate.toISOString());
+                            }
+                          }}
+                          className="dark:bg-dark-900"
+                        />
+                      </div>
                       {/* Start Date Picker */}
                       <div>
                         <Label htmlFor="startDate">Data inicial</Label>

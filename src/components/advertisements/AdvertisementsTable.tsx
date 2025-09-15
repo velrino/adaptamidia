@@ -56,8 +56,8 @@ export default function AdvertisementsTable() {
     if (!response) return;
 
     handleResponse().then((data) => {
-      // setContentAction(() => ContentAction.UPDATE);
-      // setCurrentAdvertisement(data[2] || null);
+      setContentAction(() => ContentAction.UPDATE);
+      setCurrentAdvertisement(data[0] || null);
       setList(data);
     });
   }, [response, handleResponse]);
@@ -203,6 +203,7 @@ export default function AdvertisementsTable() {
                   {[
                     { key: AdSortKey.title, label: "Titulo" },
                     { key: AdSortKey.company, label: "Anunciante" },
+                    { key: AdSortKey.type, label: "Estabelecimentos" },
                     { key: AdSortKey.start_date, label: "Data inicial" },
                     { key: AdSortKey.end_date, label: "Data final" },
                     { key: AdSortKey.status, label: "Status" },
@@ -298,6 +299,9 @@ export default function AdvertisementsTable() {
                     </TableCell>
                     <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm ">
                       {item?.company?.name}
+                    </TableCell>
+                    <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
+                      {item?.units?.length || 0}
                     </TableCell>
                     <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
                       {DateHelper.format(item?.start_date)}

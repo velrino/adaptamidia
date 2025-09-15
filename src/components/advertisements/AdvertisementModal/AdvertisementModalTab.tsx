@@ -7,6 +7,13 @@ import { AdvertisementComponent } from "./AdvertisementModalItems";
 import { AdvertisementMetricsTab } from "./Metrics/Tab";
 import DisplaysTable from "@/components/displays/DisplaysTable";
 
+enum InternalTabs {
+  ADS = "ADS",
+  DISPLAYS = "DISPLAYS",
+  METRICS = "METRICS",
+  LOCAL = "LOCAL",
+}
+
 const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
   action,
   data,
@@ -14,65 +21,11 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
 }: AdvertisementFormProps) => {
   const tabs = [
     {
-      id: "ADS",
+      id: InternalTabs.ADS,
       label: "Anúncio",
       content: (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
           <div className="text-black dark:text-white text-center">
-            {/* {data._id && (
-              <div className="cursor-pointer">
-                <div className="h-10 cursor-pointer" onClick={openPreview}>
-                  Abrir no Display
-                </div>
-              </div>
-            )}
-            {!data._id && (
-              <div>
-                <div className="h-10">Salve para ver no Display</div>
-              </div>
-            )} */}
-            {/* <div className="flex justify-center w-full gap-4">
-              <div className="w-full max-w-[640px]">
-                <div
-                  className="relative w-full bg-black rounded-lg"
-                  style={{ aspectRatio: "16 / 9" }}
-                >
-                  {data.source_landscape ? (
-                    <video
-                      src={data.source_landscape}
-                      controls
-                      playsInline
-                      preload="metadata"
-                      className="absolute inset-0 w-full h-full object-contain rounded-lg"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-gray-500 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                      Sem vídeo landscape
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="w-full max-w-[360px]">
-                <div
-                  className="relative w-full bg-black rounded-lg overflow-hidden"
-                  style={{ aspectRatio: "9 / 16" }}
-                >
-                  {data.source_portrait ? (
-                    <video
-                      src={data.source_portrait}
-                      controls
-                      playsInline
-                      preload="metadata"
-                      className="absolute inset-0 w-full h-full object-cover object-center"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-gray-500 bg-gray-100 dark:bg-gray-800 rounded-lg">
-                      Sem vídeo portrait
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div> */}
             <div className="justify-center w-full text-center mt-5">
               <AdvertisementComponent data={data} onUpdate={onUpdate} />
             </div>
@@ -88,7 +41,7 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
       ),
     },
     {
-      id: "LOCAL",
+      id: InternalTabs.LOCAL,
       label: `Estabelecimentos`,
       content: (
         <>
@@ -105,12 +58,12 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
     ...(data?._id
       ? [
           {
-            id: "METRICS",
+            id: InternalTabs.METRICS,
             label: "Métricas",
             content: <AdvertisementMetricsTab id={data._id} />,
           },
           {
-            id: "DISPLAYS",
+            id: InternalTabs.DISPLAYS,
             label: "Exibições",
             content: (
               <DisplaysTable
@@ -129,7 +82,7 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
     <div>
       <Tabs
         tabs={tabs}
-        defaultTabId="ADS"
+        defaultTabId={InternalTabs.LOCAL}
         styles={{
           nav: "p-0",
           navMenu: "mx-auto",

@@ -201,3 +201,34 @@ export function cn(...inputs: ClassValue[]) {
 export const StorageKey = {
   USER_DATA_CACHE: "USER_DATA_CACHE",
 };
+
+export enum AdvertisementsPlans {
+  CUSTOM = "CUSTOM",
+  TWO_WEEKS = "TWO_WEEKS",
+  FOUR_WEEKS = "FOUR_WEEKS",
+  TWELVE_WEEKS = "TWELVE_WEEKS",
+  TWENTY_FOUR_WEEKS = "TWENTY_FOUR_WEEKS",
+}
+
+export const AdvertisementsPlansOptions = [
+  {
+    label: "Personalizado",
+    value: AdvertisementsPlans.CUSTOM,
+  },
+  {
+    label: "2 semanas",
+    value: AdvertisementsPlans.TWO_WEEKS,
+  },
+  {
+    label: "4 semanas",
+    value: AdvertisementsPlans.FOUR_WEEKS,
+  },
+  {
+    label: "12 semanas",
+    value: AdvertisementsPlans.TWELVE_WEEKS,
+  },
+  {
+    label: "24 semanas",
+    value: AdvertisementsPlans.TWENTY_FOUR_WEEKS,
+  },
+];

@@ -117,6 +117,7 @@ export interface IApiAdvertisementItem {
   end_date: string;
   created_at: string;
   updated_at: string;
+  plan: string;
   audience: AdsAudience[];
   neighborhood: string[];
   segments: string[];
