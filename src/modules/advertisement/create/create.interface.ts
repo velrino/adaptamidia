@@ -17,6 +17,10 @@ export class CreateAdvertisementDto {
   @IsString()
   status: string;
 
+  @IsOptional()
+  @IsString()
+  plan: string;
+
   @IsNotEmpty()
   @IsString()
   type: string;
