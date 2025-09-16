@@ -474,7 +474,7 @@ export default function DisplayLogModalInfo({
 
           {activeTab === "analytics" && (
             <>
-              <div className="flex items-center justify-center my-10">
+              {/* <div className="flex items-center justify-center my-10">
                 <LoadingButton
                   onClick={handleVisualComputation}
                   loading={loadingVisual}
@@ -483,7 +483,7 @@ export default function DisplayLogModalInfo({
                 >
                   Executar Computação Visual
                 </LoadingButton>
-              </div>
+              </div> */}
 
               <div className="grid lg:grid-cols-2 gap-6">
                 {/* Audience Analytics */}
