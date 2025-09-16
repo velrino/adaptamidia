@@ -505,7 +505,7 @@ export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
         {
           path: FirebasePathsEnum.DISPLAY_LOGS,
           callback: async (data, key) => {
-            console.log('FIREBASE', { data, key });
+            // console.log('FIREBASE', { data, key });
 
             await this.processDisplayLog(data);
 
