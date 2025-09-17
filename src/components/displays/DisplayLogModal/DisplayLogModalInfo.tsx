@@ -309,7 +309,10 @@ export default function DisplayLogModalInfo({
                         Pessoas
                       </span>
                       <span className="text-lg font-bold text-gray-900 dark:text-white">
-                        {record.insightface?.total || 0}
+                        {Math.max(
+                          record.yolo?.people || 0,
+                          record.insightface?.total || 0
+                        ) || 0}
                       </span>
                     </div>
                   </div>
@@ -328,10 +331,13 @@ export default function DisplayLogModalInfo({
                     </h3>
                   </div>
 
-                  <div className="grid sm:grid-cols-3 gap-4 mb-6">
+                  <div className="grid sm:grid-cols-2 gap-4 mb-6">
                     <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
                       <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                        {record.insightface?.total || 0}
+                        {Math.max(
+                          record.yolo?.people || 0,
+                          record.insightface?.total || 0
+                        )}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Pessoas Detectadas
@@ -342,24 +348,7 @@ export default function DisplayLogModalInfo({
                         {record.insightface?.age?.average || 0}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Idade Média
-                      </div>
-                    </div>
-                    <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
-                      <div className="text-3xl font-bold text-violet-600 dark:text-violet-400">
-                        {(() => {
-                          const men = record.insightface?.men || 0;
-                          const women = record.insightface?.women || 0;
-                          const total =
-                            record.insightface?.total || 0 || men + women;
-                          const pct = total
-                            ? Math.round((men / total) * 100)
-                            : 0;
-                          return `${pct}% M`;
-                        })()}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Distribuição Masculina
+                        Média de Idade
                       </div>
                     </div>
                   </div>
