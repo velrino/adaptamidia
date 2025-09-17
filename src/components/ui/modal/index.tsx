@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 
 interface ModalProps {
   isOpen: boolean;
@@ -8,6 +8,9 @@ interface ModalProps {
   children: React.ReactNode;
   showCloseButton?: boolean; // New prop to control close button visibility
   isFullscreen?: boolean; // Default to false for backwards compatibility
+  title?: string; // Accessible name for dialog
+  ariaLabel?: string; // Fallback accessible label
+  closeOnBackdrop?: boolean; // Click backdrop to close
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -17,8 +20,13 @@ export const Modal: React.FC<ModalProps> = ({
   className,
   showCloseButton = true, // Default to true for backwards compatibility
   isFullscreen = false,
+  title,
+  ariaLabel,
+  closeOnBackdrop,
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const closeBtnRef = useRef<HTMLButtonElement>(null);
+  const previouslyFocused = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
@@ -38,25 +46,81 @@ export const Modal: React.FC<ModalProps> = ({
 
   useEffect(() => {
     if (isOpen) {
+      previouslyFocused.current = document.activeElement as HTMLElement | null;
       document.body.style.overflow = "hidden";
+      // Focus the close button or first focusable element
+      const timer = window.setTimeout(() => {
+        if (closeBtnRef.current) {
+          closeBtnRef.current.focus();
+          return;
+        }
+        const node = modalRef.current;
+        if (!node) return;
+        const focusable = node.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusable.length > 0) focusable[0].focus();
+      }, 0);
+      return () => window.clearTimeout(timer);
     } else {
       document.body.style.overflow = "unset";
     }
 
     return () => {
       document.body.style.overflow = "unset";
+      // Restore focus where it was
+      if (previouslyFocused.current) {
+        previouslyFocused.current.focus();
+        previouslyFocused.current = null;
+      }
     };
   }, [isOpen]);
 
+  const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "Tab") return;
+    const node = modalRef.current;
+    if (!node) return;
+    const focusable = Array.from(
+      node.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+      )
+    ).filter((el) => !el.hasAttribute("data-focus-guard"));
+    if (focusable.length === 0) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement as HTMLElement | null;
+
+    if (e.shiftKey) {
+      if (active === first || !node.contains(active)) {
+        last.focus();
+        e.preventDefault();
+      }
+    } else {
+      if (active === last) {
+        first.focus();
+        e.preventDefault();
+      }
+    }
+  }, []);
+
   if (!isOpen) return null;
 
+  const shouldCloseOnBackdrop = closeOnBackdrop ?? !isFullscreen;
   const contentClasses = isFullscreen
     ? "w-full h-full"
-    : "relative w-full rounded-3xl bg-white  dark:bg-gray-900";
+    : "relative w-full rounded-3xl bg-white dark:bg-gray-900";
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999">
-      {!isFullscreen && (
+    <div
+      className="fixed inset-0 flex items-center justify-center overflow-y-auto modal z-99999"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={title ? "modal-title" : undefined}
+      aria-label={!title ? ariaLabel : undefined}
+      onKeyDown={onKeyDown}
+    >
+      {shouldCloseOnBackdrop && (
         <div
           className="fixed inset-0 h-full w-full bg-gray-400/50 backdrop-blur-[32px]"
           onClick={onClose}
@@ -64,12 +128,14 @@ export const Modal: React.FC<ModalProps> = ({
       )}
       <div
         ref={modalRef}
-        className={`${contentClasses}  ${className}`}
+        className={`${contentClasses} ${className || ""}`}
         onClick={(e) => e.stopPropagation()}
       >
         {showCloseButton && (
           <button
+            ref={closeBtnRef}
             onClick={onClose}
+            aria-label="Fechar"
             className="absolute right-3 top-3 z-999 flex h-9.5 w-9.5 items-center justify-center rounded-full bg-gray-100 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white sm:right-6 sm:top-6 sm:h-11 sm:w-11"
           >
             <svg
@@ -87,6 +153,11 @@ export const Modal: React.FC<ModalProps> = ({
               />
             </svg>
           </button>
+        )}
+        {title && (
+          <h2 id="modal-title" className="sr-only">
+            {title}
+          </h2>
         )}
         <div>{children}</div>
       </div>

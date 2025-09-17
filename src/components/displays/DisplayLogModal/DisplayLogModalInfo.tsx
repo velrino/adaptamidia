@@ -1,17 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
-  Eye,
   MapPin,
   Clock,
   Users,
-  Image as ImageIcon,
   Activity,
-  BarChart3,
   FileText,
   Target,
   Globe,
+  ExternalLink,
   ChevronRight,
   Sparkles,
 } from "lucide-react";
@@ -25,48 +23,29 @@ interface DisplayLogModalInfoProps {
 
 type TabType = "overview" | "analytics" | "content" | "insights";
 
-function CaptureDisplay({ capture, title }: { capture?: any; title?: string }) {
-  const [imageError, setImageError] = useState(false);
-
-  if (!capture) return <></>;
-
-  return (
-    <div className="space-y-2">
-      {title && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-          {title}
-        </p>
-      )}
-      <div className="rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center shadow-inner">
-        {!imageError ? (
-          <img
-            src={capture}
-            alt={title || "Captura da exibição"}
-            className="w-full h-full object-contain"
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className="text-center">
-            <Eye className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <span className="text-gray-500 dark:text-gray-400 text-sm">
-              Captura não disponível
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
 export default function DisplayLogModalInfo({
   recordInformed,
 }: DisplayLogModalInfoProps) {
   const [record] = useState<IApiDisplayLogItem>(recordInformed);
 
-  const [activeTab, setActiveTab] = useState<TabType>("overview");
+  const [activeTab, setActiveTab] = useState<TabType>("content");
+  const deviceId = (record as any)?.device as string | undefined;
+  const [mediaMode, setMediaMode] = useState<"portrait" | "landscape">(
+    record.orientation?.toLowerCase() === "portrait" ? "portrait" : "landscape"
+  );
+  const videoAspectClass = useMemo(() => {
+    return mediaMode === "portrait" ? "aspect-[9/16]" : "aspect-video";
+  }, [mediaMode]);
 
   const formatDuration = (seconds: number) => {
-    return `${seconds}s`;
+    if (!seconds || seconds < 0) return "00:00";
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    const mm = String(mins).padStart(2, "0");
+    const ss = String(secs).padStart(2, "0");
+    if (hrs > 0) return `${String(hrs).padStart(2, "0")}:${mm}:${ss}`;
+    return `${mm}:${ss}`;
   };
 
   const getStatusColor = (status: string) => {
@@ -75,25 +54,13 @@ export default function DisplayLogModalInfo({
       : "bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 dark:from-gray-800 dark:to-slate-800 dark:text-gray-300";
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "NEWS":
-        return "bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 dark:from-blue-900/20 dark:to-cyan-900/20 dark:text-blue-400";
-      case "ADVERTISEMENT":
-        return "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 dark:from-purple-900/20 dark:to-pink-900/20 dark:text-purple-400";
-      default:
-        return "bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 dark:from-gray-800 dark:to-slate-800 dark:text-gray-300";
-    }
-  };
-
   const isAdvertisement =
     record.type === "ADVERTISEMENT" && record.advertisement;
   const isNews = record.type === "NEWS" && record.news;
 
   const tabs = [
-    { id: "overview", label: "Visão Geral", icon: Activity },
     { id: "content", label: "Conteúdo", icon: FileText },
-    { id: "analytics", label: "Analytics", icon: BarChart3 },
+    { id: "overview", label: "Visão Geral", icon: Activity },
     { id: "insights", label: "Insights", icon: Sparkles },
   ];
 
@@ -102,82 +69,120 @@ export default function DisplayLogModalInfo({
       {/* Main Container */}
       <div className="mx-auto">
         {/* Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                  {record.type === "NEWS" ? (
-                    <Globe className="w-6 h-6" />
-                  ) : (
-                    <Target className="w-6 h-6" />
+        <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden mb-6">
+          <div className="relative">
+            <div className="absolute inset-0 opacity-60 pointer-events-none bg-[radial-gradient(75%_75%_at_0%_0%,rgba(79,70,229,0.25)_0%,transparent_60%),radial-gradient(75%_75%_at_100%_0%,rgba(236,72,153,0.25)_0%,transparent_60%)]" />
+            <div className="relative bg-gradient-to-r from-slate-900 via-indigo-900 to-fuchsia-900 p-6 text-white">
+              <div className="flex items-start justify-between gap-6">
+                <div className="flex items-start gap-4 min-w-0">
+                  <div className="p-2 bg-white/10 rounded-xl backdrop-blur-sm shadow">
+                    {record.type === "NEWS" ? (
+                      <Globe className="w-6 h-6" />
+                    ) : (
+                      <Target className="w-6 h-6" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/10 border border-white/20">
+                        {record.type === "NEWS" ? "News" : "Advertisement"}
+                      </span>
+                      <span className="text-xs text-white/70">
+                        {record.start_at
+                          ? DateHelper.format(record.start_at)
+                          : "—"}
+                      </span>
+                      {record.start_at && (
+                        <span className="text-[11px] text-white/60">
+                          ({DateHelper.timeAgo(record.start_at)})
+                        </span>
+                      )}
+                    </div>
+                    <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+                      {record.type === "NEWS"
+                        ? record.news?.title || "Log de Exibição"
+                        : record.advertisement?.title || "Log de Exibição"}
+                    </h1>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-medium ${getStatusColor(
+                          record.status
+                        )} bg-white/10`}
+                      >
+                        {record.status.replace("DETECTION_", "")}
+                      </span>
+                      {record.local_unit?.name && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/10 border border-white/10 flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />{" "}
+                          {record.local_unit.name}
+                        </span>
+                      )}
+                      {record.orientation && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/10 border border-white/10">
+                          {record.orientation}
+                        </span>
+                      )}
+                      {deviceId && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/10 border border-white/10">
+                          Device: {deviceId}
+                        </span>
+                      )}
+                      {record.ip && (
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-white/10 border border-white/10">
+                          IP: {record.ip}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <div className="text-xs text-white/60">Identifier</div>
+                  <div className="font-mono text-sm truncate max-w-[28ch]">
+                    {record.identifier}
+                  </div>
+                  <div className="mt-1 text-xs text-white/60">ID</div>
+                  <div className="font-mono text-xs truncate max-w-[28ch]">
+                    {record._id}
+                  </div>
+                  {record.type === "NEWS" && record.news?.source_name && (
+                    <div className="mt-2 inline-flex items-center gap-2 text-[11px] px-2 py-1 rounded-full bg-white/10 border border-white/10">
+                      <Globe className="w-3 h-3" /> {record.news.source_name}
+                    </div>
+                  )}
+                  {record.type === "ADVERTISEMENT" && record.advertiser && (
+                    <div className="mt-2 inline-flex items-center gap-2 text-[11px] px-2 py-1 rounded-full bg-white/10 border border-white/10">
+                      <Target className="w-3 h-3" /> Advertiser:{" "}
+                      {record.advertiser}
+                    </div>
                   )}
                 </div>
-                <div>
-                  <h1 className="text-2xl font-bold">Log de Exibição</h1>
-                  <p className="text-sm text-blue-200 dark:text-blue-100">
-                    <span className="font-medium">
-                      {record.type === "NEWS" ? "Notícia" : "Anúncio"}
-                    </span>
-                    <span className="mx-1">•</span>
-                    <span>{DateHelper.format(record.start_at)}</span>
-                    <span className="ml-1 text-xs text-blue-300 dark:text-blue-400">
-                      ({DateHelper.timeAgo(record.start_at)})
-                    </span>
-                  </p>
+              </div>
+
+              {/* Tabs as segmented control */}
+              <div className="mt-6">
+                <div className="inline-flex bg-white/10 border border-white/15 rounded-xl p-1 backdrop-blur">
+                  {tabs.map((tab) => {
+                    const Icon = tab.icon;
+                    const active = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as TabType)}
+                        className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg transition-all ${
+                          active
+                            ? "bg-white text-slate-900 shadow"
+                            : "text-white/80 hover:text-white hover:bg-white/5"
+                        }`}
+                        aria-pressed={active}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-              <div className="text-right mt-5">
-                <div className="font-mono text-lg">
-                  Identifier: {record.identifier}
-                </div>
-                <div className="font-mono text-sm">ID: {record._id}</div>
-              </div>
             </div>
-
-            <div className="flex items-center space-x-4">
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${getTypeColor(
-                  record.type
-                )} backdrop-blur-sm`}
-              >
-                {record.type}
-              </span>
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                  record.status
-                )} backdrop-blur-sm`}
-              >
-                {record.status.replace("DETECTION_", "")}
-              </span>
-              <div className="flex items-center space-x-2 text-blue-100">
-                <MapPin className="w-4 h-4" />
-                <span className="text-sm">{record.local_unit.name}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Tab Navigation */}
-          <div className="border-b border-gray-200 dark:border-gray-700">
-            <nav className="flex space-x-0">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id as TabType)}
-                    className={`flex items-center space-x-2 px-6 py-4 text-sm font-medium transition-all duration-200 border-b-2 ${
-                      activeTab === tab.id
-                        ? "border-blue-500 text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
-                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50"
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    <span>{tab.label}</span>
-                  </button>
-                );
-              })}
-            </nav>
           </div>
         </div>
 
@@ -199,14 +204,14 @@ export default function DisplayLogModalInfo({
                   <div className="space-y-3">
                     <div>
                       <h4 className="font-medium text-gray-900 dark:text-white">
-                        {record.local_unit.name}
+                        {record.local_unit?.name}
                       </h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                        {record.local_unit.full_address}
+                        {record.local_unit?.full_address}
                       </p>
                     </div>
                     <span className="inline-block text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full">
-                      {record.local_unit.type}
+                      {record.local_unit?.type}
                     </span>
                   </div>
                 </div>
@@ -235,14 +240,52 @@ export default function DisplayLogModalInfo({
                       </div>
                       <div>
                         <div className="text-lg font-medium text-gray-900 dark:text-white">
-                          {new Date(record.start_at).toLocaleTimeString(
-                            "pt-BR",
-                            { hour: "2-digit", minute: "2-digit" }
-                          )}
+                          {record.start_at
+                            ? new Date(record.start_at).toLocaleTimeString(
+                                "pt-BR",
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )
+                            : "—"}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">
                           Início
                         </div>
+                      </div>
+                      {record.end_at && (
+                        <div>
+                          <div className="text-lg font-medium text-gray-900 dark:text-white">
+                            {new Date(record.end_at).toLocaleTimeString(
+                              "pt-BR",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            Fim
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {/* Barra de progresso relativa (referência 60s) */}
+                    <div>
+                      <div className="h-2 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-green-500 to-emerald-400 dark:from-green-400 dark:to-emerald-300"
+                          style={{
+                            width: `${Math.min(
+                              100,
+                              Math.max(0, ((record.seconds || 0) / 60) * 100)
+                            )}%`,
+                          }}
+                        />
+                      </div>
+                      <div className="mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                        Progresso relativo (ref. 60s)
                       </div>
                     </div>
                   </div>
@@ -269,16 +312,195 @@ export default function DisplayLogModalInfo({
                         {record.insightface?.total || 0}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-600 dark:text-gray-400">
-                        Confiança
-                      </span>
-                      <span className="text-lg font-bold text-gray-900 dark:text-white">
-                        {record.yolo?.confidence
-                          ? Math.round(record.yolo.confidence * 100)
-                          : 0}
-                        %
-                      </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Audience Analytics (movido para Visão Geral) */}
+              <div className="lg:col-span-3">
+                <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700/50 dark:to-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-600">
+                  <div className="flex items-center space-x-3 mb-6">
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                      <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      Análise de Audiência
+                    </h3>
+                  </div>
+
+                  <div className="grid sm:grid-cols-3 gap-4 mb-6">
+                    <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
+                      <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                        {record.insightface?.total || 0}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Pessoas Detectadas
+                      </div>
+                    </div>
+                    <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
+                      <div className="text-3xl font-bold text-green-600 dark:text-green-400">
+                        {record.insightface?.age?.average || 0}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Idade Média
+                      </div>
+                    </div>
+                    <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
+                      <div className="text-3xl font-bold text-violet-600 dark:text-violet-400">
+                        {(() => {
+                          const men = record.insightface?.men || 0;
+                          const women = record.insightface?.women || 0;
+                          const total =
+                            record.insightface?.total || 0 || men + women;
+                          const pct = total
+                            ? Math.round((men / total) * 100)
+                            : 0;
+                          return `${pct}% M`;
+                        })()}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Distribuição Masculina
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Homens */}
+                    <div>
+                      <div className="flex justify-between mb-1 text-sm">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          Homens
+                        </span>
+                        <span className="text-blue-600 dark:text-blue-400 font-semibold">
+                          {record.insightface?.men || 0}
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-blue-100 dark:bg-blue-950/40 overflow-hidden">
+                        <div
+                          className="h-full bg-blue-500 dark:bg-blue-400"
+                          style={{
+                            width: `${(() => {
+                              const total =
+                                record.insightface?.total ||
+                                (record.insightface?.men || 0) +
+                                  (record.insightface?.women || 0);
+                              const men = record.insightface?.men || 0;
+                              return total
+                                ? Math.min(
+                                    100,
+                                    Math.max(0, (men / total) * 100)
+                                  )
+                                : 0;
+                            })()}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                    {/* Mulheres */}
+                    <div>
+                      <div className="flex justify-between mb-1 text-sm">
+                        <span className="font-medium text-gray-700 dark:text-gray-300">
+                          Mulheres
+                        </span>
+                        <span className="text-pink-600 dark:text-pink-400 font-semibold">
+                          {record.insightface?.women || 0}
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-pink-100 dark:bg-pink-950/40 overflow-hidden">
+                        <div
+                          className="h-full bg-pink-500 dark:bg-pink-400"
+                          style={{
+                            width: `${(() => {
+                              const total =
+                                record.insightface?.total ||
+                                (record.insightface?.men || 0) +
+                                  (record.insightface?.women || 0);
+                              const women = record.insightface?.women || 0;
+                              return total
+                                ? Math.min(
+                                    100,
+                                    Math.max(0, (women / total) * 100)
+                                  )
+                                : 0;
+                            })()}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {record.insightface?.age && (
+                    <div className="mt-6 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                      <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Faixa Etária
+                      </div>
+                      <div className="flex flex-wrap gap-4 text-xs text-gray-600 dark:text-gray-400">
+                        <span className="px-2 py-0.5 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600">
+                          Min: {record.insightface.age.min}
+                        </span>
+                        <span className="px-2 py-0.5 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600">
+                          Média: {record.insightface.age.average}
+                        </span>
+                        <span className="px-2 py-0.5 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600">
+                          Máx: {record.insightface.age.max}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Metadados básicos */}
+              <div className="lg:col-span-3">
+                <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700/50 dark:to-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-600">
+                  <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+                    Metadados
+                  </h3>
+                  <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <div className="text-gray-500 dark:text-gray-400">
+                        Dispositivo
+                      </div>
+                      <div className="font-medium text-gray-900 dark:text-white break-all">
+                        {deviceId || "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500 dark:text-gray-400">IP</div>
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {record.ip || "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500 dark:text-gray-400">
+                        Criado em
+                      </div>
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {record.created_at
+                          ? DateHelper.format(record.created_at)
+                          : "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-gray-500 dark:text-gray-400">
+                        Atualizado em
+                      </div>
+                      <div className="font-medium text-gray-900 dark:text-white">
+                        {record.updated_at
+                          ? DateHelper.format(record.updated_at)
+                          : "—"}
+                      </div>
+                    </div>
+                    <div className="sm:col-span-2 md:col-span-4">
+                      <div className="text-gray-500 dark:text-gray-400">
+                        User-Agent
+                      </div>
+                      <div
+                        className="font-medium text-gray-900 dark:text-white truncate"
+                        title={record.user_agent || undefined}
+                      >
+                        {record.user_agent || "—"}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -307,249 +529,206 @@ export default function DisplayLogModalInfo({
           )}
 
           {activeTab === "content" && (
-            <div className="space-y-6">
-              {isNews && (
-                <>
-                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800">
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
-                        <Globe className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                          Notícia
-                        </h2>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-                          <span>{record.news!.source_name}</span>
-                          <ChevronRight className="w-3 h-3" />
-                          <span>{record.news!.author}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 leading-relaxed">
-                      {record.news!.title}
-                    </h3>
-
-                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
-                      {record.news!.description}
-                    </p>
-
-                    {record.news!.image && (
-                      <div className="rounded-xl overflow-hidden shadow-lg">
-                        <img
-                          src={record.news!.image}
-                          alt="News thumbnail"
-                          className="w-full h-64 object-cover"
+            <div className="grid lg:grid-cols-5 gap-6">
+              <aside className="lg:col-span-2">
+                <div className="lg:sticky lg:top-6 space-y-3">
+                  <div className="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-100 dark:bg-slate-800">
+                    {isAdvertisement ? (
+                      <div className={`relative ${videoAspectClass}`}>
+                        <video
+                          src={
+                            (mediaMode === "portrait"
+                              ? record.advertisement?.source_portrait ||
+                                record.advertisement?.source_landscape
+                              : record.advertisement?.source_landscape ||
+                                record.advertisement?.source_portrait) ||
+                            "/placeholder.mp4"
+                          }
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          className="absolute inset-0 h-full w-full object-cover"
                         />
                       </div>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {isAdvertisement && (
-                <>
-                  <div className="rounded-xl p-6">
-                    <div className="flex items-center space-x-3 mb-4">
-                      <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
-                        <Target className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                      </div>
-                      <div>
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                          Anúncio ({formatDuration(record.seconds)})
-                        </h2>
-                        {record.advertiser && (
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            ID: {record.advertiser}
+                    ) : (
+                      <div className="relative aspect-[4/3]">
+                        {record.news?.image ? (
+                          <img
+                            src={record.news.image}
+                            alt="Imagem da notícia"
+                            className="absolute inset-0 w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="absolute inset-0 flex items-center justify-center text-slate-500">
+                            Sem imagem
                           </div>
                         )}
                       </div>
-                    </div>
+                    )}
+                  </div>
 
-                    {/* Advertisement Items */}
-                    <div className="space-y-4">
-                      {record.advertisement && (
-                        <div className="rounded-xl p-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="p-4 rounded-lg">
-                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 leading-relaxed">
-                                {record.advertisement!.title}
-                              </h3>
+                  {isAdvertisement &&
+                    (record.advertisement?.source_landscape ||
+                      record.advertisement?.source_portrait) && (
+                      <div className="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 p-1 bg-white dark:bg-slate-800">
+                        {(["landscape", "portrait"] as const).map((mode) => (
+                          <button
+                            key={mode}
+                            onClick={() => {
+                              setMediaMode(mode);
+                            }}
+                            className={`px-3 py-1 text-xs rounded-lg ${
+                              mediaMode === mode
+                                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                                : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700"
+                            }`}
+                          >
+                            {mode}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                </div>
+              </aside>
 
-                              {record.advertisement!.description && (
-                                <p className="text-gray-600 dark:text-gray-300 leading-relaxed mb-4">
-                                  {record.advertisement!.description}
-                                </p>
-                              )}
-                            </div>
-                            <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-600 dark:to-gray-700 rounded-lg p-3 flex items-center justify-center">
-                              <div className="text-center ">
-                                {record.advertisement &&
-                                record.type === "ADVERTISEMENT" ? (
-                                  <>
-                                    <video
-                                      src={
-                                        record.advertisement
-                                          ?.source_landscape ||
-                                        record.advertisement?.source_portrait ||
-                                        "/placeholder.svg"
-                                      }
-                                      autoPlay
-                                      loop
-                                      muted
-                                      className="w-100 max-h-[400px]"
-                                      style={{ objectPosition: "center" }}
-                                    />
-                                  </>
-                                ) : (
-                                  <>
-                                    <ImageIcon className="w-8 h-8 text-gray-500 dark:text-gray-400 mx-auto mb-2" />
-                                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                                      Preview da imagem
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+              <section className="lg:col-span-3 space-y-6">
+                {isNews && (
+                  <article className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/40 p-6">
+                    <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 mb-2">
+                      <Globe className="w-4 h-4" />
+                      <span className="truncate">
+                        {record.news?.source_name}
+                      </span>
+                      {record.news?.author && (
+                        <>
+                          <ChevronRight className="w-3 h-3" />
+                          <span className="truncate">
+                            {record.news?.author}
+                          </span>
+                        </>
                       )}
                     </div>
+                    <h2 className="text-2xl font-semibold text-slate-900 dark:text-white mb-3">
+                      {record.news?.title}
+                    </h2>
+                    {record.news?.description && (
+                      <p className="leading-relaxed text-slate-700 dark:text-slate-200">
+                        {record.news.description}
+                      </p>
+                    )}
+                    {record.news?.url && (
+                      <a
+                        href={record.news.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-2 text-indigo-600 dark:text-indigo-400 mt-4 text-sm hover:underline"
+                      >
+                        Acessar matéria <ExternalLink className="w-4 h-4" />
+                      </a>
+                    )}
+                  </article>
+                )}
+
+                {isAdvertisement && (
+                  <section className="rounded-2xl border border-purple-200/50 dark:border-purple-800/50 bg-white/60 dark:bg-slate-900/40 p-6">
+                    <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
+                      {record.advertisement?.title}
+                    </h2>
+                    {record.advertisement?.description && (
+                      <p className="leading-relaxed text-slate-700 dark:text-slate-200">
+                        {record.advertisement.description}
+                      </p>
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                      {record.advertisement?.source_landscape && (
+                        <span
+                          className={`px-2 py-0.5 rounded-full border ${
+                            mediaMode === "landscape"
+                              ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                              : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                          }`}
+                        >
+                          landscape
+                        </span>
+                      )}
+                      {record.advertisement?.source_portrait && (
+                        <span
+                          className={`px-2 py-0.5 rounded-full border ${
+                            mediaMode === "portrait"
+                              ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+                              : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700"
+                          }`}
+                        >
+                          portrait
+                        </span>
+                      )}
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                        {formatDuration(record.seconds)}
+                      </span>
+                    </div>
+                  </section>
+                )}
+
+                <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-900/40 p-6">
+                  <h3 className="font-semibold text-slate-900 dark:text-white mb-4">
+                    Metadados
+                  </h3>
+                  <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <div className="text-slate-500 dark:text-slate-400">
+                        Dispositivo
+                      </div>
+                      <div className="font-medium text-slate-900 dark:text-white break-all">
+                        {deviceId || "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-slate-500 dark:text-slate-400">
+                        IP
+                      </div>
+                      <div className="font-medium text-slate-900 dark:text-white">
+                        {record.ip || "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-slate-500 dark:text-slate-400">
+                        Criado em
+                      </div>
+                      <div className="font-medium text-slate-900 dark:text-white">
+                        {record.created_at
+                          ? DateHelper.format(record.created_at)
+                          : "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-slate-500 dark:text-slate-400">
+                        Atualizado em
+                      </div>
+                      <div className="font-medium text-slate-900 dark:text-white">
+                        {record.updated_at
+                          ? DateHelper.format(record.updated_at)
+                          : "—"}
+                      </div>
+                    </div>
+                    <div className="sm:col-span-2 md:col-span-4">
+                      <div className="text-slate-500 dark:text-slate-400">
+                        User-Agent
+                      </div>
+                      <div
+                        className="font-medium text-slate-900 dark:text-white truncate"
+                        title={record.user_agent || undefined}
+                      >
+                        {record.user_agent || "—"}
+                      </div>
+                    </div>
                   </div>
-                </>
-              )}
+                </div>
+              </section>
             </div>
           )}
 
-          {activeTab === "analytics" && (
-            <>
-              {/* <div className="flex items-center justify-center my-10">
-                <LoadingButton
-                  onClick={handleVisualComputation}
-                  loading={loadingVisual}
-                  icon={Cpu}
-                  variant="primary"
-                >
-                  Executar Computação Visual
-                </LoadingButton>
-              </div> */}
-
-              <div className="grid lg:grid-cols-2 gap-6">
-                {/* Audience Analytics */}
-                <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700/50 dark:to-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-600">
-                  <div className="flex items-center space-x-3 mb-6">
-                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                      <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Análise de Audiência
-                    </h3>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
-                      <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                        {record.insightface?.total || 0}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Pessoas Detectadas
-                      </div>
-                    </div>
-                    <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
-                      <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                        {record.insightface?.age?.average || 0}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Idade Média
-                      </div>
-                    </div>
-                    {/* <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
-                      <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-                        {record.yolo?.confidence
-                          ? Math.round(record.yolo.confidence * 100)
-                          : 0}
-                        %
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Confiança YOLO
-                      </div>
-                    </div> */}
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Homens
-                      </span>
-                      <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                        {record.insightface?.men || 0}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center p-3 bg-pink-50 dark:bg-pink-900/20 rounded-lg">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Mulheres
-                      </span>
-                      <span className="text-lg font-bold text-pink-600 dark:text-pink-400">
-                        {record.insightface?.women || 0}
-                      </span>
-                    </div>
-                    {record.insightface?.age && (
-                      <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                        <div className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Faixa Etária
-                        </div>
-                        <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400">
-                          <span>Min: {record.insightface.age.min}</span>
-                          <span>Máx: {record.insightface.age.max}</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Capture Preview */}
-                <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700/50 dark:to-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-600">
-                  <div className="flex items-center space-x-3 mb-6">
-                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                      <Eye className="w-5 h-5 text-green-600 dark:text-green-400" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      Capturas da Exibição
-                    </h3>
-                  </div>
-
-                  <div className="space-y-6">
-                    {record.capture && (
-                      <CaptureDisplay
-                        capture={record.capture}
-                        title="Captura Principal"
-                      />
-                    )}
-
-                    {record.capture_bbox &&
-                      typeof record.capture_bbox === "string" && (
-                        <CaptureDisplay
-                          capture={record.capture_bbox}
-                          title="Detecção de Pessoas"
-                        />
-                      )}
-
-                    {!record.capture && !record.capture_bbox && (
-                      <div className="bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl h-40 flex items-center justify-center">
-                        <div className="text-center">
-                          <Eye className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                          <span className="text-gray-500 dark:text-gray-400 text-sm">
-                            Nenhuma captura disponível
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
+          {false && <></>}
 
           {activeTab === "insights" && (
             <div className="space-y-6">

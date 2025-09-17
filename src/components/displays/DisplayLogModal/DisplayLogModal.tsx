@@ -3,9 +3,7 @@
 import React from "react";
 import { Modal } from "@/components/ui/modal";
 
-// import { useToast } from "@/context/ToastContext";
 import { IApiDisplayLogItem } from "@/backend/api/api.interface";
-// import { useSession } from "next-auth/react";
 import DisplayLogModalInfo from "./DisplayLogModalInfo";
 
 interface IDisplayLogModalProps {
@@ -15,19 +13,10 @@ interface IDisplayLogModalProps {
   onCloseCallback: (record?: IApiDisplayLogItem) => void;
 }
 
-export enum DisplayLogModalTabs {
-  INFO = "INFO",
-  METRICS = "METRICS",
-  POPULAR_TIMES = "POPULAR_TIMES",
-}
-
 export default function DisplayLogModal({
   record,
   onCloseCallback,
 }: IDisplayLogModalProps) {
-  // const { data: session } = useSession();
-  // const { showToast } = useToast();
-
   const handleClose = (data?: IApiDisplayLogItem) => {
     if (onCloseCallback) {
       onCloseCallback(data);
@@ -39,10 +28,11 @@ export default function DisplayLogModal({
       isOpen={true}
       onClose={handleClose}
       showCloseButton={true}
-      className="max-w-[1200px] max-h-[90vh] overflow-y-auto"
+      isFullscreen={true}
+      className="relative bg-white dark:bg-gray-900"
     >
-      <div className="px-6 pb-24">
-        <div className="mx-auto">
+      <div className="h-[100dvh] overflow-y-auto px-4 sm:px-6 pb-24 pt-6">
+        <div className="mx-auto max-w-[1600px]">
           <DisplayLogModalInfo recordInformed={record} />
         </div>
       </div>
