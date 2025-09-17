@@ -45,11 +45,14 @@ export const Modal: React.FC<ModalProps> = ({
   }, [isOpen, onClose]);
 
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    let timerId: number | null = null;
+
     if (isOpen) {
       previouslyFocused.current = document.activeElement as HTMLElement | null;
       document.body.style.overflow = "hidden";
       // Focus the close button or first focusable element
-      const timer = window.setTimeout(() => {
+      timerId = window.setTimeout(() => {
         if (closeBtnRef.current) {
           closeBtnRef.current.focus();
           return;
@@ -60,15 +63,17 @@ export const Modal: React.FC<ModalProps> = ({
           'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
         );
         if (focusable.length > 0) focusable[0].focus();
-      }, 0);
-      return () => window.clearTimeout(timer);
+      }, 0) as unknown as number;
     } else {
-      document.body.style.overflow = "unset";
+      // Ensure scroll is re-enabled immediately when closing
+      document.body.style.overflow = previousOverflow || "";
     }
 
     return () => {
-      document.body.style.overflow = "unset";
-      // Restore focus where it was
+      if (timerId) window.clearTimeout(timerId);
+      // Always restore previous overflow on unmount or state change
+      document.body.style.overflow = previousOverflow || "";
+      // Restore focus where it was when closing
       if (previouslyFocused.current) {
         previouslyFocused.current.focus();
         previouslyFocused.current = null;
