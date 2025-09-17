@@ -42,7 +42,6 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    await this.dashboardModel.deleteMany({});
     // Start the background process at boot to catch up quickly.
     await this.execute();
   }
