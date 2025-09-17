@@ -42,8 +42,8 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    // await this.dashboardModel.deleteMany({});
-
+    await this.dashboardModel.deleteMany({});
+    // Start the background process at boot to catch up quickly.
     await this.execute();
   }
 
@@ -75,19 +75,26 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
         { lockKey },
       );
 
+      // We run an incremental aggregation by day, per entity, over
+      // only the logs that were not yet aggregated (dashboard_aggregated_at: null).
+      // Important: we process all entity dimensions first, then mark the
+      // DisplayLog documents as aggregated to ensure a single log contributes
+      // to each dimension (advertisement, local_unit, news) before being marked.
+
       const entities = [
         EntityFieldEnum.advertisement,
         EntityFieldEnum.local_unit,
         EntityFieldEnum.news,
       ];
 
-      const periods = [this.getLogsByDay];
-
       for (const entity of entities) {
-        for (const fn of periods) {
-          await fn.call(this, new Date(), entity);
-        }
+        await this.processIncrementalByDay(entity);
       }
+
+      // After all entity dimensions have been updated, mark the source
+      // DisplayLog rows as aggregated. This prevents reprocessing and
+      // ensures a single pass for each log across all dimensions.
+      await this.markDisplayLogsAsAggregated();
     } finally {
       await this.firebaseDb.releaseLock(lockKey);
       Log(
@@ -100,46 +107,42 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
     }
   }
 
-  private getDateRange(date: Date): { startDate: Date; endDate: Date } {
-    const dt = DateTime.fromJSDate(date);
-
-    return {
-      startDate: dt.startOf('day').toJSDate(),
-      endDate: dt.endOf('day').toJSDate(),
-    };
-  }
-
-  private async executeQuery(
-    startDate: Date,
-    endDate: Date,
+  /**
+   * Incrementally aggregate not-yet-aggregated DisplayLog rows into
+   * daily buckets for the given entity field.
+   * - Only matches logs with dashboard_aggregated_at: null
+   * - Groups by entity and by day (derived from start_at)
+   * - Upserts with $inc to avoid recalculating existing totals
+   * - Uses $min/$max to maintain age boundaries; average is set on insert
+   */
+  private async processIncrementalByDay(
     entityField: EntityFieldEnum,
-    currentPeriod: AggregationPeriod,
   ): Promise<IAggregationResult[]> {
+    // Match only logs that are ready for counting and were never aggregated.
+    // We allow logs where either YOLO or Insightface detected people.
     const matchCondition: any = {
-      // start_at: { $gte: startDate, $lte: endDate },
+      dashboard_aggregated_at: null,
       [entityField]: { $exists: true, $ne: null },
-      $and: [
-        { 'yolo.people': { $gt: 0 } },
-        { 'insightface.total': { $gt: 0 } },
-      ],
+      $or: [{ 'yolo.people': { $gt: 0 } }, { 'insightface.total': { $gt: 0 } }],
     };
 
+    // If aggregating advertisements, ensure advertiser linkage exists too.
     if (entityField === EntityFieldEnum.advertisement) {
       matchCondition[EntityFieldEnum.advertiser] = { $exists: true, $ne: null };
     }
 
     const pipeline = [
-      {
-        $match: matchCondition,
-      },
+      { $match: matchCondition },
       {
         $group: {
           _id: {
             entity: `$${entityField}`,
+            // Use start_at as the canonical date; end_at may be null
             date: {
               $dateToString: {
                 format: '%Y-%m-%d',
-                date: '$end_at',
+                date: '$start_at',
+                timezone: 'UTC',
               },
             },
           },
@@ -153,43 +156,40 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
           ...(entityField === EntityFieldEnum.news && {
             news: { $first: `$${EntityFieldEnum.news}` },
           }),
+          // Totals from the not-yet-aggregated slice only
           displays: { $sum: 1 },
+          // People counted per log = max(yolo.people, insightface.total)
+          // Then summed across the group to avoid double weighting
           total_people: {
-            $sum: {
-              $cond: [
-                { $gt: ['$yolo.people', 0] },
-                '$yolo.people',
-                { $ifNull: ['$insightface.total', 0] },
-              ],
-            },
+            $sum: { $max: ['$yolo.people', '$insightface.total'] },
           },
           total_men: { $sum: { $ifNull: ['$insightface.men', 0] } },
           total_women: { $sum: { $ifNull: ['$insightface.women', 0] } },
           max_age: { $max: '$insightface.age.max' },
           min_age: { $min: '$insightface.age.min' },
-          end_at: { $first: '$end_at' },
         },
       },
-      {
-        $sort: {
-          '_id.date': 1 as const,
-        },
-      },
+      { $sort: { '_id.date': 1 as const } },
     ];
 
-    const records: IAggregationResult[] = [];
-    const batchOperations: any[] = [];
+    const results: IAggregationResult[] = [];
+    const ops: any[] = [];
 
+    // Stream results to avoid loading everything in memory.
     const cursor = this.displayLogModel.aggregate(pipeline).cursor();
-
     for await (const record of cursor) {
-      records.push(record);
+      results.push(record);
 
+      // Daily bucket date at midnight UTC
+      const bucketDate = new Date(`${record._id.date}T00:00:00.000Z`);
+      const entityId = new Types.ObjectId(record._id.entity);
+
+      // Base filter identifying the aggregation bucket document
       const filter = {
-        date: record._id.date,
-        period: currentPeriod,
-        entity_id: new Types.ObjectId(record._id.entity),
-        [entityField]: record._id,
+        date: bucketDate,
+        period: AggregationPeriod.DAY,
+        entity_id: entityId,
+        [entityField]: entityId,
         ...(entityField === EntityFieldEnum.advertisement && {
           advertiser: record.advertiser,
           advertisement: record.advertisement,
@@ -202,47 +202,81 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
         }),
       };
 
-      const updateDoc = {
-        ...filter,
-        entity_id: new Types.ObjectId(record._id.entity),
-        displays: record.displays,
-        total_people: record.total_people,
-        total_men: record.total_men,
-        total_women: record.total_women,
-        age: {
-          max: record.max_age,
-          min: record.min_age,
-          average: Math.round((record.min_age + record.max_age) / 2),
+      // Increment counts; on insert set static fields and initial age.
+      const update = {
+        $setOnInsert: {
+          date: bucketDate,
+          period: AggregationPeriod.DAY,
+          entity_id: entityId,
+          [entityField]: entityId,
+          ...(entityField === EntityFieldEnum.advertisement && {
+            advertiser: record.advertiser,
+            advertisement: record.advertisement,
+          }),
+          ...(entityField === EntityFieldEnum.local_unit && {
+            local_unit: record.local_unit,
+          }),
+          ...(entityField === EntityFieldEnum.news && {
+            news: record.news,
+          }),
+          age: {
+            max: record.max_age,
+            min: record.min_age,
+            // On insert, compute average from this slice; later updates adjust min/max
+            // and we accept average as an approximation or can be recomputed offline if needed.
+            average: Math.round((record.min_age + record.max_age) / 2),
+          },
         },
-      };
+        $inc: {
+          displays: record.displays,
+          total_people: record.total_people,
+          total_men: record.total_men,
+          total_women: record.total_women,
+        },
+        $min: { 'age.min': record.min_age },
+        $max: { 'age.max': record.max_age },
+      } as any;
 
-      batchOperations.push({
-        updateOne: {
-          filter,
-          update: { $set: updateDoc },
-          upsert: true,
-        },
-      });
+      ops.push({ updateOne: { filter, update, upsert: true } });
     }
 
-    if (batchOperations.length > 0) {
-      await this.dashboardModel.bulkWrite(batchOperations, { ordered: false });
+    if (ops.length > 0) {
+      await this.dashboardModel.bulkWrite(ops, { ordered: false });
     }
 
-    return records;
+    return results;
   }
 
-  async getLogsByDay(
-    date: Date,
-    entityField: EntityFieldEnum,
-  ): Promise<IAggregationResult[]> {
-    const { startDate, endDate } = this.getDateRange(date);
+  /**
+   * Mark all not-yet-aggregated DisplayLog documents that are eligible for
+   * aggregation as aggregated. This runs after all entity dimensions have been
+   * processed to ensure one log can contribute to each dimension exactly once.
+   */
+  private async markDisplayLogsAsAggregated() {
+    const now = new Date();
+    const filter = {
+      dashboard_aggregated_at: null,
+      $and: [
+        {
+          // Eligible logs: at least one entity dimension present
+          $or: [
+            { [EntityFieldEnum.advertisement]: { $exists: true, $ne: null } },
+            { [EntityFieldEnum.local_unit]: { $exists: true, $ne: null } },
+            { [EntityFieldEnum.news]: { $exists: true, $ne: null } },
+          ],
+        },
+        {
+          // People detected by either model
+          $or: [
+            { 'yolo.people': { $gt: 0 } },
+            { 'insightface.total': { $gt: 0 } },
+          ],
+        },
+      ],
+    } as any;
 
-    return await this.executeQuery(
-      startDate,
-      endDate,
-      entityField,
-      AggregationPeriod.DAY,
-    );
+    await this.displayLogModel.updateMany(filter, {
+      $set: { dashboard_aggregated_at: now },
+    });
   }
 }

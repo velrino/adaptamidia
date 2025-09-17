@@ -130,6 +130,16 @@ export class DisplayLog {
 
   @Prop({ type: Number, required: false, default: null })
   processing_instance: number;
+
+  // Marker used by the dashboard aggregation job to avoid
+  // re-aggregating the same DisplayLog more than once.
+  // - null: not aggregated yet
+  // - Date: when this log was aggregated into dashboard buckets
+  // This field is optional and defaults to null so it doesn't
+  // affect old or new records that don't rely on the dashboard
+  // process. It is safe and backwards compatible.
+  @Prop({ type: Date, required: false, default: null, index: true })
+  dashboard_aggregated_at: Date | null;
 }
 
 export type DisplayLogDocument = DisplayLog & Document;
@@ -142,6 +152,13 @@ DisplayLogSchema.index({ type: 1, status: 1, created_at: -1 });
 DisplayLogSchema.index({ news: 1, created_at: -1 });
 DisplayLogSchema.index({ advertisement: 1, created_at: -1 });
 DisplayLogSchema.index({ start_at: 1, end_at: 1 });
+
+// Partial index to efficiently fetch only not-yet-aggregated logs by time
+// This helps the dashboard process select the minimal working set.
+DisplayLogSchema.index(
+  { dashboard_aggregated_at: 1, start_at: 1 },
+  { partialFilterExpression: { dashboard_aggregated_at: null } },
+);
 
 // Text search index for full-text search
 DisplayLogSchema.index(
