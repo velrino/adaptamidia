@@ -1,4 +1,11 @@
-import { Controller, Post, UploadedFile, UseInterceptors, BadRequestException, Query } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+  BadRequestException,
+  Query,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { createHash } from 'node:crypto';
 import { GoogleCloudStorageService } from 'src/shared/google/cloud/google-cloud-storage.service';
@@ -24,7 +31,10 @@ export class AppReleaseController {
     @Query('version_name') versionName?: string,
     @Query('min_version_code') minVersionCode?: string,
   ) {
-    if (!file) throw new BadRequestException('file is required (multipart/form-data field name: file)');
+    if (!file)
+      throw new BadRequestException(
+        'file is required (multipart/form-data field name: file)',
+      );
     if (!file.mimetype || !file.mimetype.includes('application')) {
       // APKs are application/vnd.android.package-archive but allow any application/*
     }
@@ -44,7 +54,9 @@ export class AppReleaseController {
     const vc = versionCode ? parseInt(versionCode, 10) : undefined;
     const mvc = minVersionCode ? parseInt(minVersionCode, 10) : undefined;
     if (!vc || isNaN(vc)) {
-      throw new BadRequestException('version_code (number) is required as query param');
+      throw new BadRequestException(
+        'version_code (number) is required as query param',
+      );
     }
 
     const releasePayload: any = {

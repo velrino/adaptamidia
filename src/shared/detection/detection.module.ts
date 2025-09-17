@@ -6,4 +6,3 @@ import { DetectionService } from './detection.service';
   exports: [DetectionService],
 })
 export class DetectionModule {}
-

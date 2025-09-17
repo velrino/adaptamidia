@@ -220,3 +220,13 @@ export function GetEnvironment(): string {
     'DEVELOP'
   ).toUpperCase();
 }
+
+export const LockKeyName = (lockKeyName: string): string => {
+  const env = GetEnvironment();
+
+  const lockKey = Object.values(Environments).includes(env as Environments)
+    ? lockKeyName
+    : `DEV_${lockKeyName.toUpperCase()}`;
+
+  return lockKey;
+};

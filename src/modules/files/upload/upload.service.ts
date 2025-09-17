@@ -39,7 +39,6 @@ export class UploadFileService {
 
     // 1.5) Try ffmpeg-static if installed
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const ffmpegStatic = require('ffmpeg-static');
       if (ffmpegStatic) {
         const test = spawnSync(ffmpegStatic, ['-version']);
@@ -133,7 +132,7 @@ export class UploadFileService {
       // Otimiza vídeo MP4 se habilitado (default: true)
       // const shouldOptimize =
       // parameters.optimize_video === undefined ? true : !!parameters.optimize_video;
-      let fileToUpload = parameters.file;
+      const fileToUpload = parameters.file;
 
       // if (
       //   shouldOptimize &&

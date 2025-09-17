@@ -16,30 +16,39 @@ import { DateTime } from 'luxon';
 import { RESULT } from 'src/shared/result.enum';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { FirebaseDatabaseService } from 'src/shared/firebase/firebase-database.service';
+import { LockKeyName } from 'src/shared/general';
 
 export const ExcludeDomains = ['GlobeNewswire'];
 
 @Injectable()
 export class SyncNewsService {
-  private readonly newsapi: NewsAPI = new NewsAPI(
-    'REDACTED',
-  );
+  private apiTokens = [
+    'REDACTED', //  velrino
+    'REDACTED', //  adaptamidia
+    'REDACTED', //  seemidia
+  ];
+  private currentTokenIndex = 0;
 
   constructor(
     @InjectModel(News.name)
     readonly model: Model<NewsDocument>,
     private readonly firebaseDb: FirebaseDatabaseService,
-  ) {
-    // this.providerNewsApi = new NewsAPI('SUA_API_KEY');
+  ) {}
+
+  async onApplicationBootstrap() {
+    await this.execute();
   }
 
-  // async onApplicationBootstrap() {
-  //   await this.execute();
-  // }
+  private getNextApiToken(): string {
+    const token = this.apiTokens[this.currentTokenIndex];
+    this.currentTokenIndex =
+      (this.currentTokenIndex + 1) % this.apiTokens.length;
+    return token;
+  }
 
   @Cron(CronExpression.EVERY_3_HOURS)
   async handleCron() {
-    const lockName = 'sync-news';
+    const lockName = LockKeyName(`sync-news`);
     const leaseMs = 30 * 60 * 1000; // 30 minutos (ajuste conforme duração esperada)
     const acquired = await this.firebaseDb.acquireLock(lockName, leaseMs);
 
@@ -51,7 +60,7 @@ export class SyncNewsService {
         LogAction.SKIP,
         { about: 'LOCK_NOT_ACQUIRED', lockName },
       );
-      return;
+      // return;
     }
 
     try {
@@ -61,13 +70,18 @@ export class SyncNewsService {
     }
   }
 
-  async getNewsEverythingAbout(q: string): Promise<INewsApiResponse> {
+  async getNewsEverythingAbout(
+    token: string,
+    q: string,
+  ): Promise<INewsApiResponse> {
     try {
-      return await this.newsapi.v2.everything({
+      const newsapi: NewsAPI = new NewsAPI(token);
+
+      return await newsapi.v2.everything({
         language: 'pt', // Português
         // country: 'br', // Brasil
         sortBy: 'popularity',
-        // excludeDomains: ExcludeDomains.join(','),
+        excludeDomains: ExcludeDomains.join(','),
         pageSize: 100, // Limita a 10 notícias
         q,
       });
@@ -77,7 +91,6 @@ export class SyncNewsService {
   }
 
   async execute() {
-    // await this.model.deleteMany({});
     try {
       Log(
         LogType.INFO,
@@ -112,14 +125,60 @@ export class SyncNewsService {
           continue;
         }
 
-        const articles: INewsApiArticle[] = await this.getNewsEverythingAbout(
-          keyword,
-        ).then((res) =>
-          res.articles.filter(
-            ({ author, urlToImage, title, url, source }) =>
-              author && urlToImage && title && url && source?.name,
-          ),
-        );
+        let articles: INewsApiArticle[] = [];
+        let attemptsMade = 0;
+        const maxAttempts = this.apiTokens.length;
+
+        while (attemptsMade < maxAttempts && articles.length === 0) {
+          const apiToken = this.getNextApiToken();
+
+          try {
+            articles = await this.getNewsEverythingAbout(
+              apiToken,
+              keyword,
+            ).then((res) =>
+              res.articles.filter(
+                ({ author, urlToImage, title, url, source }) =>
+                  author && urlToImage && title && url && source?.name,
+              ),
+            );
+
+            if (articles.length > 0) {
+              break; // Sucesso, sair do loop
+            }
+          } catch (error) {
+            attemptsMade++;
+
+            if (attemptsMade < maxAttempts) {
+              Log(
+                LogType.ERROR,
+                SyncNewsService.name,
+                this.getNewsEverythingAbout.name,
+                LogAction.FAILED,
+                {
+                  about: RESULT.NEWS_LIMIT_REACHED,
+                  keyword,
+                  tokenIndex: this.currentTokenIndex - 1,
+                  attemptNumber: attemptsMade,
+                },
+              );
+            } else {
+              // Todos os tokens falharam
+              Log(
+                LogType.ERROR,
+                SyncNewsService.name,
+                this.getNewsEverythingAbout.name,
+                LogAction.FAILED,
+                {
+                  about: 'ALL_TOKENS_EXHAUSTED',
+                  keyword,
+                  totalAttempts: attemptsMade,
+                },
+              );
+              throw error; // Re-lançar o erro se todos os tokens falharam
+            }
+          }
+        }
 
         if (!articles.length) {
           Log(
@@ -195,7 +254,8 @@ export class SyncNewsService {
           {
             about: RESULT.NEWS_ALL_ARTICLES_SAVED,
             keyword,
-            created: created.map(({ _id }) => _id),
+            tokenIndex: this.currentTokenIndex,
+            created: created.length,
           },
         );
       }

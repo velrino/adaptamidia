@@ -44,7 +44,7 @@ const DEFAULT_LOCATION = 'Estabelecimento comercial';
 const NA_VALUE = 'N/A';
 
 // Buffer reutilizável para construção de strings
-let stringBuffer: string[] = [];
+const stringBuffer: string[] = [];
 
 // Função inline para limpeza periódica de cache
 function cleanupCache(): void {
@@ -69,7 +69,7 @@ function fastDateFormat(date: Date): string {
   const timestamp = date.getTime();
   const key = timestamp.toString();
 
-  let cached = dateCache.get(key);
+  const cached = dateCache.get(key);
   if (cached) return cached;
 
   // Extrair componentes uma única vez
@@ -123,7 +123,7 @@ function calculatePercentage(part: number, total: number): string {
   if (total === 0) return '0';
 
   const key = `${part}-${total}`;
-  let cached = percentageCache.get(key);
+  const cached = percentageCache.get(key);
   if (cached) return cached;
 
   const result = ((part / total) * 100).toFixed(1);

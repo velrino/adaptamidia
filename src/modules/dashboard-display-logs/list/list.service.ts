@@ -132,7 +132,7 @@ export class ListDashboardDisplayLogsService {
           }
         : { updated_at: -1 as SortOrder };
 
-      let data = await queryBuilder
+      const data = await queryBuilder
         .sort(sortObject)
         .skip(skip)
         .limit(parameters.limit)

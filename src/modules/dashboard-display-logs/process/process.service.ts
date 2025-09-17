@@ -31,7 +31,12 @@ import { EntityFieldEnum } from '../dashboard-display-logs.interface';
 */
 import { FirebaseDatabaseService } from 'src/shared/firebase/firebase-database.service';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
-import { Environments, GetEnvironment, Milliseconds } from 'src/shared/general';
+import {
+  Environments,
+  GetEnvironment,
+  LockKeyName,
+  Milliseconds,
+} from 'src/shared/general';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 export interface IAggregationResult {
@@ -66,12 +71,7 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async execute() {
-    const lockKeyName = `dashboard-display-logs:process`;
-    const env = GetEnvironment();
-
-    const lockKey = Object.values(Environments).includes(env as Environments)
-      ? lockKeyName
-      : `DEV_${String(lockKeyName).toUpperCase()}`;
+    const lockKey = LockKeyName(`dashboard-display-logs:process`);
 
     const acquired = await this.firebaseDb.acquireLock(
       lockKey,
