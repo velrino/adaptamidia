@@ -16,7 +16,9 @@ export enum IApiDashboardDisplayLogType {
 export enum DisplayLogSortKey {
   local_unit_name = "local_unit.name",
   type = "type",
-  status = "status",
+  "yolo.people" = "yolo.people",
+  "insightface.men" = "insightface.men",
+  "insightface.women" = "insightface.women",
   created_at = "created_at",
-  updated_at = "updated_at",
+  start_at = "start_at",
 }

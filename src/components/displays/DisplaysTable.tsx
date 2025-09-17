@@ -84,7 +84,7 @@ export default function DisplaysTable({
           page: currentPage,
           limit: 20,
           get_signed_url: true,
-          sort_by: "created_at",
+          sort_by: "start_at",
           sort: SortOrder.DESC,
           ...apiQuery,
         };
@@ -121,13 +121,19 @@ export default function DisplaysTable({
 
   const filteredAndSortedData = useMemo(() => {
     return list
-      .filter((item) =>
-        Object.values(item).some(
+      .filter((item) => {
+        // Check if searching for yolo.people
+        if (searchTerm.toLowerCase() === "yolo.people" && item.yolo?.people) {
+          return true;
+        }
+
+        // Default string search
+        return Object.values(item).some(
           (value) =>
             typeof value === "string" &&
             value.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      )
+        );
+      })
       .sort((a, b) => {
         if (sortKey === DisplayLogSortKey.local_unit_name) {
           if (!a.local_unit?.name || !b.local_unit?.name) return 0;
@@ -136,20 +142,56 @@ export default function DisplaysTable({
             : b.local_unit.name.localeCompare(a.local_unit.name);
         }
 
-        if (!a[sortKey] || !b[sortKey]) return 0;
+        // Handle yolo.people sorting
+        if (sortKey === DisplayLogSortKey["yolo.people"]) {
+          const aValue = a.yolo?.people ?? 0;
+          const bValue = b.yolo?.people ?? 0;
+          return sortOrder === SortOrder.ASC
+            ? aValue - bValue
+            : bValue - aValue;
+        }
+
+        // Handle insightface.men sorting
+        if (sortKey === DisplayLogSortKey["insightface.men"]) {
+          const aValue = a.insightface?.men ?? 0;
+          const bValue = b.insightface?.men ?? 0;
+          return sortOrder === SortOrder.ASC
+            ? aValue - bValue
+            : bValue - aValue;
+        }
+
+        // Handle insightface.women sorting
+        if (sortKey === DisplayLogSortKey["insightface.women"]) {
+          const aValue = a.insightface?.women ?? 0;
+          const bValue = b.insightface?.women ?? 0;
+          return sortOrder === SortOrder.ASC
+            ? aValue - bValue
+            : bValue - aValue;
+        }
+
+        // For other keys, need to handle type properly
+        if (sortKey === DisplayLogSortKey.type) {
+          const aValue = a[sortKey as keyof IApiDisplayLogItem];
+          const bValue = b[sortKey as keyof IApiDisplayLogItem];
+          if (!aValue || !bValue) return 0;
+          return sortOrder === SortOrder.ASC
+            ? String(aValue).localeCompare(String(bValue))
+            : String(bValue).localeCompare(String(aValue));
+        }
 
         if (
           sortKey === DisplayLogSortKey.created_at ||
-          sortKey === DisplayLogSortKey.updated_at
+          sortKey === DisplayLogSortKey.start_at
         ) {
-          const dateA = new Date(a[sortKey]).getTime();
-          const dateB = new Date(b[sortKey]).getTime();
+          const aValue = a[sortKey as keyof IApiDisplayLogItem] as string;
+          const bValue = b[sortKey as keyof IApiDisplayLogItem] as string;
+          if (!aValue || !bValue) return 0;
+          const dateA = new Date(aValue).getTime();
+          const dateB = new Date(bValue).getTime();
           return sortOrder === SortOrder.ASC ? dateA - dateB : dateB - dateA;
         }
 
-        return sortOrder === SortOrder.ASC
-          ? String(a[sortKey]).localeCompare(String(b[sortKey]))
-          : String(b[sortKey]).localeCompare(String(a[sortKey]));
+        return 0;
       });
   }, [list, sortKey, sortOrder, searchTerm]);
 
@@ -240,12 +282,23 @@ export default function DisplaysTable({
                         label: "Local",
                       },
                       { key: DisplayLogSortKey.type, label: "Tipo" },
-                      { key: DisplayLogSortKey.status, label: "Status" },
-                      { key: DisplayLogSortKey.created_at, label: "Criado em" },
                       {
-                        key: DisplayLogSortKey.updated_at,
-                        label: "Atualizado em",
+                        key: DisplayLogSortKey["yolo.people"],
+                        label: "Pessoas",
                       },
+                      {
+                        key: DisplayLogSortKey["insightface.men"],
+                        label: "Homens",
+                      },
+                      {
+                        key: DisplayLogSortKey["insightface.women"],
+                        label: "Mulheres",
+                      },
+                      {
+                        key: DisplayLogSortKey.start_at,
+                        label: "Exibido em",
+                      },
+                      { key: DisplayLogSortKey.created_at, label: "Criado em" },
                     ].map(({ key, label }) => (
                       <TableCell
                         key={key}
@@ -333,7 +386,23 @@ export default function DisplaysTable({
                         {item.type}
                       </TableCell>
                       <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
-                        {item.status}
+                        {item?.yolo?.people || 0}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
+                        {item?.insightface?.men || 0}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
+                        {item?.insightface?.women || 0}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
+                        <div className="flex flex-col text-theme-sm">
+                          <span className="text-gray-800 dark:text-gray-200 font-medium">
+                            {DateHelper.format(item.start_at)}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {DateHelper.timeAgo(item.start_at)}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
                         <div className="flex flex-col text-theme-sm">
@@ -342,16 +411,6 @@ export default function DisplaysTable({
                           </span>
                           <span className="text-xs text-gray-500 dark:text-gray-400">
                             {DateHelper.timeAgo(item.created_at)}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
-                        <div className="flex flex-col text-theme-sm">
-                          <span className="text-gray-800 dark:text-gray-200 font-medium">
-                            {DateHelper.format(item.updated_at)}
-                          </span>
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {DateHelper.timeAgo(item.updated_at)}
                           </span>
                         </div>
                       </TableCell>

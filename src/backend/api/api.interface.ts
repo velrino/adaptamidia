@@ -807,6 +807,7 @@ export interface IApiDisplayLogItem {
   };
   advertiser?: string;
   local: string;
+  device?: string;
   local_unit: {
     _id: string;
     name: string;
