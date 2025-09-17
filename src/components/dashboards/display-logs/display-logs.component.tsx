@@ -7,12 +7,8 @@ import { Calendar, Users, Eye, Filter, Sun, Moon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { API } from "@/backend/api/api.endpoints";
 import {
-  LineChart,
-  Line,
   BarChart,
   Bar,
-  AreaChart,
-  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -91,8 +87,6 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
   };
 
   const dataSource = getDataSource();
-  console.log("dataSource:", dataSource);
-  console.log("Component props:", { news, local_unit, advertisement });
 
   // Função para agrupar dados
   const groupData = (
@@ -187,7 +181,6 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
       if (response.ok) {
         const responseData = await response.json();
         const dataArray = responseData.data || [];
-        console.log({ dataArray });
 
         setData(dataArray);
 
@@ -285,13 +278,13 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
 
   return (
     <div
-      className={`min-h-screen transition-colors duration-200 ${className} ${
+      className={`transition-colors duration-200 ${className} ${
         isDark ? "dark" : ""
       }`}
     >
       <div>
         {/* Header */}
-        <div className="mb-8 flex justify-between items-start">
+        <div className="flex justify-between items-start">
           {/* Dark Mode Toggle */}
           {showDarkToggle && (
             <button
@@ -311,7 +304,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         {/* Controles */}
         {showControls && (
           <div
-            className={`${themeClasses.cardBg} rounded-lg shadow-sm p-6 mb-6`}
+            className={`${themeClasses.cardBg} rounded-lg shadow-sm p-6 mb-4`}
           >
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-center gap-2">
@@ -334,7 +327,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
 
         {/* Métricas */}
         {showMetrics && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className={`${themeClasses.cardBg} rounded-lg shadow-sm p-6`}>
               <div className="flex items-center justify-between">
                 <div>
@@ -411,53 +404,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
 
         {/* Gráficos */}
         {!loading && chartData.length > 0 && (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            {/* Gráfico de Displays */}
-            <div className={`${themeClasses.cardBg} rounded-lg shadow-sm p-6`}>
-              <h3
-                className={`text-lg font-semibold ${themeClasses.textPrimary} mb-4`}
-              >
-                Displays ao Longo do Tempo
-              </h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={chartData}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke={isDark ? "#374151" : "#e5e7eb"}
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tick={{
-                      fill: isDark ? "#9ca3af" : "#6b7280",
-                      fontSize: 12,
-                    }}
-                  />
-                  <YAxis
-                    tick={{
-                      fill: isDark ? "#9ca3af" : "#6b7280",
-                      fontSize: 12,
-                    }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: isDark ? "#374151" : "#ffffff",
-                      border: `1px solid ${isDark ? "#4b5563" : "#d1d5db"}`,
-                      borderRadius: "8px",
-                      color: isDark ? "#f9fafb" : "#111827",
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="displays"
-                    stroke="#3B82F6"
-                    strokeWidth={3}
-                    dot={{ fill: "#3B82F6", strokeWidth: 2, r: 4 }}
-                    name="Displays"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-
+          <div className="grid grid-cols-1  gap-6">
             {/* Gráfico de Demografia */}
             <div className={`${themeClasses.cardBg} rounded-lg shadow-sm p-6`}>
               <h3
@@ -500,71 +447,6 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   <Bar dataKey="homens" fill="#10B981" name="Homens" />
                   <Bar dataKey="mulheres" fill="#F59E0B" name="Mulheres" />
                 </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Gráfico de Idade Média */}
-            <div
-              className={`${themeClasses.cardBg} rounded-lg shadow-sm p-6 xl:col-span-2`}
-            >
-              <h3
-                className={`text-lg font-semibold ${themeClasses.textPrimary} mb-4`}
-              >
-                Idade Média ao Longo do Tempo
-              </h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={chartData}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke={isDark ? "#374151" : "#e5e7eb"}
-                  />
-                  <XAxis
-                    dataKey="date"
-                    tick={{
-                      fill: isDark ? "#9ca3af" : "#6b7280",
-                      fontSize: 12,
-                    }}
-                  />
-                  <YAxis
-                    tick={{
-                      fill: isDark ? "#9ca3af" : "#6b7280",
-                      fontSize: 12,
-                    }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: isDark ? "#374151" : "#ffffff",
-                      border: `1px solid ${isDark ? "#4b5563" : "#d1d5db"}`,
-                      borderRadius: "8px",
-                      color: isDark ? "#f9fafb" : "#111827",
-                    }}
-                    formatter={(value: any) => [`${value} anos`, "Idade Média"]}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="idadeMedia"
-                    stroke="#8B5CF6"
-                    fill="url(#colorIdadeMedia)"
-                    strokeWidth={3}
-                    name="Idade Média"
-                  />
-                  <defs>
-                    <linearGradient
-                      id="colorIdadeMedia"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8} />
-                      <stop
-                        offset="95%"
-                        stopColor="#8B5CF6"
-                        stopOpacity={0.1}
-                      />
-                    </linearGradient>
-                  </defs>
-                </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
