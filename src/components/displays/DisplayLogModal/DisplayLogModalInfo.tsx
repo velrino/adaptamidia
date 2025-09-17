@@ -7,7 +7,6 @@ import {
   Clock,
   Users,
   Image as ImageIcon,
-  Cpu,
   Activity,
   BarChart3,
   FileText,
@@ -18,12 +17,6 @@ import {
 } from "lucide-react";
 import { IApiDisplayLogItem } from "@/backend/api/api.interface";
 import { DateHelper } from "@/utils/date";
-import { API } from "@/backend/api/api.endpoints";
-import { useSession } from "next-auth/react";
-import { useToast } from "@/context/ToastContext";
-import { LoadingButton } from "@/components/ui/loading-button";
-import { IToastType } from "@/interfaces/general";
-import { GetErrorMessage } from "@/utils/generic";
 import { DisplayLogLLMStreamComponent } from "./LLM";
 
 interface DisplayLogModalInfoProps {
@@ -68,12 +61,9 @@ function CaptureDisplay({ capture, title }: { capture?: any; title?: string }) {
 export default function DisplayLogModalInfo({
   recordInformed,
 }: DisplayLogModalInfoProps) {
-  const [record, setRecord] = useState<IApiDisplayLogItem>(recordInformed);
+  const [record] = useState<IApiDisplayLogItem>(recordInformed);
 
-  const { showToast } = useToast();
-  const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<TabType>("overview");
-  const [loadingVisual, setLoadingVisual] = useState(false);
 
   const formatDuration = (seconds: number) => {
     return `${seconds}s`;
@@ -95,46 +85,6 @@ export default function DisplayLogModalInfo({
         return "bg-gradient-to-r from-gray-100 to-slate-100 text-gray-800 dark:from-gray-800 dark:to-slate-800 dark:text-gray-300";
     }
   };
-
-  const handleVisualComputation = async () => {
-    if (!session?.api_session) {
-      return;
-    }
-
-    setLoadingVisual(true);
-
-    try {
-      const response = await API.display_logs.detect(
-        session.api_session.access_token,
-        {
-          id: record._id,
-        }
-      );
-
-      const currentData = await response.json();
-
-      if (currentData?.error && currentData?.message) {
-        showToast(GetErrorMessage(currentData.message), IToastType.ERROR);
-      } else if (response.ok && currentData?.result._id) {
-        showToast(`Detecção visual concluída com sucesso!`, IToastType.SUCCESS);
-        setRecord(currentData.result);
-      } else {
-        showToast("FAILED", IToastType.ERROR);
-      }
-    } catch (error) {
-      showToast(GetErrorMessage(error), IToastType.ERROR);
-    } finally {
-      setLoadingVisual(false);
-    }
-  };
-
-  // const handleLLMInsights = async () => {
-  //   setLoadingLLM(true);
-  //   // Simulate API call
-  //   await new Promise((resolve) => setTimeout(resolve, 1000));
-  //   setLoadingLLM(false);
-  //   showToast("EM DEV", IToastType.INFO);
-  // };
 
   const isAdvertisement =
     record.type === "ADVERTISEMENT" && record.advertisement;
