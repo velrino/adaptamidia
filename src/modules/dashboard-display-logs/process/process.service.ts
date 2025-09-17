@@ -12,9 +12,26 @@ import {
   DisplayLogDocument,
 } from '../../display-logs/display-logs.schema';
 import { EntityFieldEnum } from '../dashboard-display-logs.interface';
+/*
+  Dashboard Display Logs Aggregation – Incremental Design
+
+  This service aggregates `display_logs` into daily dashboard buckets for each
+  entity dimension (advertisement, local_unit, news) with the following goals:
+  - Process only new/changed data (delta) using `dashboard_aggregated_at: null`.
+  - Keep writes idempotent and conflict-free using $inc and $min/$max.
+  - Avoid recomputing entire days every minute.
+  - Ensure each DisplayLog contributes once per dimension before being marked.
+
+  Key choices:
+  - Date source: uses `start_at` and stores bucket `date` at midnight UTC.
+  - People metric: per-log people = max(yolo.people, insightface.total).
+  - Age fields: maintain `age.min` and `age.max` only via $min/$max (no $set on `age`).
+  - Marking: after all dimensions, set `dashboard_aggregated_at` to exclude logs next run.
+  - Locking: Firebase-based distributed lock prevents overlapping executions.
+*/
 import { FirebaseDatabaseService } from 'src/shared/firebase/firebase-database.service';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
-import { Milliseconds } from 'src/shared/general';
+import { Environments, GetEnvironment, Milliseconds } from 'src/shared/general';
 import { Cron, CronExpression } from '@nestjs/schedule';
 
 export interface IAggregationResult {
@@ -43,12 +60,19 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
 
   async onModuleInit() {
     // Start the background process at boot to catch up quickly.
+    // Protected by the distributed lock, so multiple instances are safe.
     await this.execute();
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
   async execute() {
-    const lockKey = 'dashboard-display-logs:process';
+    const lockKeyName = `dashboard-display-logs:process`;
+    const env = GetEnvironment();
+
+    const lockKey = Object.values(Environments).includes(env as Environments)
+      ? lockKeyName
+      : `DEV_${String(lockKeyName).toUpperCase()}`;
+
     const acquired = await this.firebaseDb.acquireLock(
       lockKey,
       Milliseconds({ minutes: 5 }),
@@ -74,11 +98,12 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
         { lockKey },
       );
 
-      // We run an incremental aggregation by day, per entity, over
-      // only the logs that were not yet aggregated (dashboard_aggregated_at: null).
-      // Important: we process all entity dimensions first, then mark the
-      // DisplayLog documents as aggregated to ensure a single log contributes
-      // to each dimension (advertisement, local_unit, news) before being marked.
+      // Incremental strategy
+      // 1) Aggregate by entity (advertisement, local_unit, news) using only
+      //    logs where `dashboard_aggregated_at: null`.
+      // 2) Upsert with `$inc` counters and `$min/$max` for ages – no `$set` on `age`.
+      // 3) After all dimensions are done, mark the logs as aggregated.
+      // This ensures one log contributes once per dimension before being excluded.
 
       const entities = [
         EntityFieldEnum.advertisement,
@@ -90,9 +115,8 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
         await this.processIncrementalByDay(entity);
       }
 
-      // After all entity dimensions have been updated, mark the source
-      // DisplayLog rows as aggregated. This prevents reprocessing and
-      // ensures a single pass for each log across all dimensions.
+      // After all dimensions are updated, mark source logs as aggregated.
+      // This prevents reprocessing and ensures a single pass across dimensions.
       await this.markDisplayLogsAsAggregated();
     } finally {
       await this.firebaseDb.releaseLock(lockKey);
@@ -109,16 +133,16 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
   /**
    * Incrementally aggregate not-yet-aggregated DisplayLog rows into
    * daily buckets for the given entity field.
-   * - Only matches logs with dashboard_aggregated_at: null
-   * - Groups by entity and by day (derived from start_at)
-   * - Upserts with $inc to avoid recalculating existing totals
-   * - Uses $min/$max to maintain age boundaries; average is set on insert
+   * - Only matches logs with `dashboard_aggregated_at: null` (delta only)
+   * - Groups by entity and day (from `start_at`, stored as midnight UTC)
+   * - Upserts with `$inc` to avoid recomputation, and `$min/$max` for ages
+   * - Never `$set` the full `age` object to avoid path conflicts with `age.*`
    */
   private async processIncrementalByDay(
     entityField: EntityFieldEnum,
   ): Promise<IAggregationResult[]> {
     // Match only logs that are ready for counting and were never aggregated.
-    // We allow logs where either YOLO or Insightface detected people.
+    // People criteria: either YOLO or Insightface detected > 0.
     const matchCondition: any = {
       dashboard_aggregated_at: null,
       [entityField]: { $exists: true, $ne: null },
@@ -158,9 +182,14 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
           // Totals from the not-yet-aggregated slice only
           displays: { $sum: 1 },
           // People counted per log = max(yolo.people, insightface.total)
-          // Then summed across the group to avoid double weighting
+          // Guard against nulls using $ifNull
           total_people: {
-            $sum: { $max: ['$yolo.people', '$insightface.total'] },
+            $sum: {
+              $max: [
+                { $ifNull: ['$yolo.people', 0] },
+                { $ifNull: ['$insightface.total', 0] },
+              ],
+            },
           },
           total_men: { $sum: { $ifNull: ['$insightface.men', 0] } },
           total_women: { $sum: { $ifNull: ['$insightface.women', 0] } },
@@ -179,11 +208,13 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
     for await (const record of cursor) {
       results.push(record);
 
-      // Daily bucket date at midnight UTC
+      // Daily bucket date at midnight UTC (Date type; avoids null `date`)
       const bucketDate = new Date(`${record._id.date}T00:00:00.000Z`);
       const entityId = new Types.ObjectId(record._id.entity);
 
-      // Base filter identifying the aggregation bucket document
+      // Base filter identifying the aggregation bucket document.
+      // Upsert will insert a document containing these identifying fields,
+      // so we don't need `$setOnInsert` for them.
       const filter = {
         date: bucketDate,
         period: AggregationPeriod.DAY,
@@ -201,40 +232,26 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
         }),
       };
 
-      // Increment counts; on insert set static fields and initial age.
-      const update = {
-        $setOnInsert: {
-          date: bucketDate,
-          period: AggregationPeriod.DAY,
-          entity_id: entityId,
-          [entityField]: entityId,
-          ...(entityField === EntityFieldEnum.advertisement && {
-            advertiser: record.advertiser,
-            advertisement: record.advertisement,
-          }),
-          ...(entityField === EntityFieldEnum.local_unit && {
-            local_unit: record.local_unit,
-          }),
-          ...(entityField === EntityFieldEnum.news && {
-            news: record.news,
-          }),
-          age: {
-            max: record.max_age,
-            min: record.min_age,
-            // On insert, compute average from this slice; later updates adjust min/max
-            // and we accept average as an approximation or can be recomputed offline if needed.
-            average: Math.round((record.min_age + record.max_age) / 2),
-          },
-        },
+      // Increment counters only. On insert, MongoDB combines the filter fields
+      // with these `$inc` values to create the new document.
+      const update: any = {
+        // Incremental counters; on upsert-insert Mongo initializes with these values
         $inc: {
           displays: record.displays,
           total_people: record.total_people,
           total_men: record.total_men,
           total_women: record.total_women,
         },
-        $min: { 'age.min': record.min_age },
-        $max: { 'age.max': record.max_age },
-      } as any;
+      };
+
+      // Maintain age boundaries safely with subpath updates only.
+      // Include `$min`/`$max` only when values are valid numbers.
+      if (Number.isFinite(record.min_age)) {
+        update.$min = { ...(update.$min || {}), 'age.min': record.min_age };
+      }
+      if (Number.isFinite(record.max_age)) {
+        update.$max = { ...(update.$max || {}), 'age.max': record.max_age };
+      }
 
       ops.push({ updateOne: { filter, update, upsert: true } });
     }
@@ -248,8 +265,11 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
 
   /**
    * Mark all not-yet-aggregated DisplayLog documents that are eligible for
-   * aggregation as aggregated. This runs after all entity dimensions have been
-   * processed to ensure one log can contribute to each dimension exactly once.
+   * aggregation as aggregated. This runs AFTER all entity dimensions have been
+   * processed to ensure a single log contributes once per dimension.
+   *
+   * Resilience: if a crash happens before this step completes, the next run
+   * will still pick up unmarked logs and continue from where it left off.
    */
   private async markDisplayLogsAsAggregated() {
     const now = new Date();
