@@ -73,7 +73,7 @@ export class ListDisplayLogService {
 
     // Add date filter to match conditions if any date is provided
     if (Object.keys(dateFilter).length) {
-      query.created_at = dateFilter;
+      query.start_at = dateFilter;
     }
 
     if (parameters.id) {
