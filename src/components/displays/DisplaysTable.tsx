@@ -295,6 +295,10 @@ export default function DisplaysTable({
                         label: "Mulheres",
                       },
                       {
+                        key: DisplayLogSortKey.device,
+                        label: "Dispositivo",
+                      },
+                      {
                         key: DisplayLogSortKey.start_at,
                         label: "Exibido em",
                       },
@@ -393,6 +397,9 @@ export default function DisplaysTable({
                       </TableCell>
                       <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
                         {item?.insightface?.women || 0}
+                      </TableCell>
+                      <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
+                        {item?.device || "NDA"}
                       </TableCell>
                       <TableCell className="px-4 py-3 font-normal dark:text-gray-400/90 text-gray-800 border border-gray-100 dark:border-white/[0.05] text-theme-sm whitespace-nowrap">
                         <div className="flex flex-col text-theme-sm">

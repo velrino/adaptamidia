@@ -21,4 +21,5 @@ export enum DisplayLogSortKey {
   "insightface.women" = "insightface.women",
   created_at = "created_at",
   start_at = "start_at",
+  device = "device",
 }
