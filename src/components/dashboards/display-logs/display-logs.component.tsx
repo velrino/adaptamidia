@@ -289,7 +289,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
         isDark ? "dark" : ""
       }`}
     >
-      <div className="max-w-7xl mx-auto">
+      <div>
         {/* Header */}
         <div className="mb-8 flex justify-between items-start">
           {/* Dark Mode Toggle */}
