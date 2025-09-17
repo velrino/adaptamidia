@@ -302,7 +302,10 @@ export default function DisplaysTable({
                         key: DisplayLogSortKey.start_at,
                         label: "Exibido em",
                       },
-                      { key: DisplayLogSortKey.created_at, label: "Criado em" },
+                      {
+                        key: DisplayLogSortKey.created_at,
+                        label: "Sincronizado em",
+                      },
                     ].map(({ key, label }) => (
                       <TableCell
                         key={key}
