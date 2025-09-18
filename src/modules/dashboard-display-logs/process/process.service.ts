@@ -66,10 +66,10 @@ export class DashboardDisplayLogsProcessService implements OnModuleInit {
   async onModuleInit() {
     // Start the background process at boot to catch up quickly.
     // Protected by the distributed lock, so multiple instances are safe.
-    await this.execute();
+    // await this.execute();
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  // @Cron(CronExpression.EVERY_MINUTE)
   async execute() {
     const lockKey = LockKeyName(`dashboard-display-logs:process`);
 
