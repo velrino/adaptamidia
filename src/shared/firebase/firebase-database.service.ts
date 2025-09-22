@@ -79,13 +79,13 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
       ? informed
       : `DEV_${String(informed).toUpperCase()}`;
 
-    Log(
-      LogType.INFO,
-      FirebaseDatabaseService.name,
-      'firebasePath',
-      LogAction.SUCCESS,
-      { firebasePath },
-    );
+    // Log(
+    //   LogType.INFO,
+    //   FirebaseDatabaseService.name,
+    //   'firebasePath',
+    //   LogAction.SUCCESS,
+    //   { firebasePath },
+    // );
 
     return firebasePath;
   }

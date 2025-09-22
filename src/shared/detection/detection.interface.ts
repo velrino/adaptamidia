@@ -41,11 +41,15 @@ export interface IApiDeepFaceAnalysisResult {
 export interface IApiYoloResult {
   people: number;
   confidence: number;
+  min: number;
+  max: number;
 }
 
 export const ApiYoloResultDefault: IApiYoloResult = {
   people: 0,
   confidence: 0,
+  min: 0,
+  max: 0,
 };
 
 export const ApiDeepFaceAnalysisResult: IApiDeepFaceAnalysisResult = {

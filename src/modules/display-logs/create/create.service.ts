@@ -438,6 +438,7 @@ export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
 
       if (payload.people_count) {
         currentBody.yolo = {
+          ...currentBody.yolo,
           people: Number(payload.people_count),
           confidence: 99,
         };
@@ -505,15 +506,15 @@ export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
         {
           path: FirebasePathsEnum.DISPLAY_LOGS,
           callback: async (data, key) => {
-            // console.log('FIREBASE', { data, key });
+            console.log('FIREBASE', { data, key });
 
             await this.processDisplayLog(data);
 
             // Deleta o registro após processamento
-            await this.firebaseService.deleteRecord(
-              FirebasePathsEnum.DISPLAY_LOGS,
-              key,
-            );
+            // await this.firebaseService.deleteRecord(
+            //   FirebasePathsEnum.DISPLAY_LOGS,
+            //   key,
+            // );
           },
         },
       );

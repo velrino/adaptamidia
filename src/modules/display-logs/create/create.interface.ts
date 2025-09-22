@@ -168,5 +168,6 @@ export interface IFirebaseDisplayLog {
   people_count: number;
   start_at: string;
   status: string;
+  yolo?: { confidence: number; max: number; min: number; people: number };
   type: 'ADVERTISEMENT' | 'NEWS';
 }
