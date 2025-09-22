@@ -28,6 +28,10 @@ import {
   DashboardDisplayLogsAggregation,
   DashboardDisplayLogsAggregationSchema,
 } from 'src/modules/dashboard-display-logs/dashboard-display-logs.schema';
+import {
+  CompanyUnitDevices,
+  CompanyUnitDevicesSchema,
+} from 'src/modules/company-unit-devices/company-unit-devices.schema';
 
 export const MongoCollection = {
   advertisement: { name: Advertisement.name, schema: AdvertisementSchema },
@@ -37,6 +41,10 @@ export const MongoCollection = {
   },
   companies: { name: Company.name, schema: CompanySchema },
   company_units: { name: CompanyUnit.name, schema: CompanyUnitSchema },
+  company_unit_devices: {
+    name: CompanyUnitDevices.name,
+    schema: CompanyUnitDevicesSchema,
+  },
   company_units_popular_times: {
     name: CompanyUnitPopularTime.name,
     schema: CompanyUnitPopularTimeSchema,

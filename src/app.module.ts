@@ -26,6 +26,7 @@ import { HealthCheckService } from './app.service';
 import { DetectionModule } from './shared/detection/detection.module';
 import { DashboardDisplayLogsModule } from './modules/dashboard-display-logs/dashboard-display-logs.module';
 import { AppReleaseModule } from './modules/app-release/app-release.module';
+import { CompanyUnitDevicesModule } from './modules/company-unit-devices/company-unit-devices.module';
 
 @Module({
   imports: [
@@ -85,6 +86,7 @@ import { AppReleaseModule } from './modules/app-release/app-release.module';
     LeadsModule,
     DetectionModule,
     AppReleaseModule,
+    CompanyUnitDevicesModule,
   ],
   controllers: [AppController],
   providers: [HealthCheckService],
