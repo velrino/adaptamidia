@@ -39,6 +39,8 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
       }
 
       this.database = admin.database(); // Obtenha a referência ao Realtime Database
+
+      // this.database.ref(`LOCKS`).remove();
     } catch (error) {
       const about = 'Firebase Realtime Database initialization error';
       Log(
