@@ -70,7 +70,7 @@ export class CompanyUnit {
   @Prop({ required: false, default: String() })
   complement: string;
 
-  @Prop({ required: false, default: String() })
+  @Prop({ required: false, default: String(), uppercase: true })
   identifier: string;
 
   @Prop({ required: true, index: true })

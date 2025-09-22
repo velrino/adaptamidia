@@ -75,7 +75,7 @@ export class CreateCompanyUnitService implements OnModuleInit {
         return hash.slice(0, 6).toUpperCase();
       }
       // Tentar novamente
-      return this.generateUniqueIdentifier(attempts + 1);
+      return this.generateUniqueIdentifier(attempts + 1).toUpperCase();
     }
   }
 
@@ -102,7 +102,8 @@ export class CreateCompanyUnitService implements OnModuleInit {
         const element = records[index];
 
         try {
-          const identifier = await this.generateUniqueIdentifier();
+          const identifier =
+            await this.generateUniqueIdentifier().toUpperCase();
 
           await this.companyUnitModel.updateOne(
             { _id: element._id },
@@ -244,7 +245,7 @@ export class CreateCompanyUnitService implements OnModuleInit {
 
       try {
         // Gerar identifier único antes de criar
-        const identifier = await this.generateUniqueIdentifier();
+        const identifier = await this.generateUniqueIdentifier().toUpperCase();
 
         const created = await this.companyUnitModel.create(
           [
