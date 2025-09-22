@@ -52,8 +52,8 @@ export class CreateCompanyUnitService implements OnModuleInit {
   async generateUniqueIdentifier(attempts = 0) {
     const maxAttempts = 10;
 
-    // Usar caracteres que não se confundem (remover 0, O, I, 1, L)
-    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    // Usar apenas letras que não se confundem (remover O, I, L)
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ';
 
     // Gerar código aleatório de 6 caracteres
     let identifier = '';
@@ -75,8 +75,10 @@ export class CreateCompanyUnitService implements OnModuleInit {
         return hash.slice(0, 6).toUpperCase();
       }
       // Tentar novamente
-      return this.generateUniqueIdentifier(attempts + 1).toUpperCase();
+      return this.generateUniqueIdentifier(attempts + 1);
     }
+
+    return identifier;
   }
 
   async syncUnitsCode() {
@@ -102,8 +104,9 @@ export class CreateCompanyUnitService implements OnModuleInit {
         const element = records[index];
 
         try {
-          const identifier =
-            await this.generateUniqueIdentifier().toUpperCase();
+          const identifier = (
+            await this.generateUniqueIdentifier()
+          ).toUpperCase();
 
           await this.companyUnitModel.updateOne(
             { _id: element._id },
@@ -245,7 +248,9 @@ export class CreateCompanyUnitService implements OnModuleInit {
 
       try {
         // Gerar identifier único antes de criar
-        const identifier = await this.generateUniqueIdentifier().toUpperCase();
+        const identifier = (
+          await this.generateUniqueIdentifier()
+        ).toUpperCase();
 
         const created = await this.companyUnitModel.create(
           [
