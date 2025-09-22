@@ -34,13 +34,12 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
         admin.initializeApp({
           credential: admin.credential.cert(serviceAccount),
           databaseURL: 'https://see-midia-default-rtdb.firebaseio.com/',
-          // 'https://seemidia-display-android-default-rtdb.firebaseio.com/',
         });
       }
 
-      this.database = admin.database(); // Obtenha a referência ao Realtime Database
+      this.database = admin.database();
 
-      // this.database.ref(`LOCKS`).remove();
+      // this.database.ref(`DEV_DISPLAY_LOGS`).remove();
     } catch (error) {
       const about = 'Firebase Realtime Database initialization error';
       Log(

@@ -46,7 +46,7 @@ export class CreateCompanyUnitService implements OnModuleInit {
       { $set: { preferences: COMPANY_UNIT_DEFAULT_PREFERENCES } },
     );
 
-    this.syncUnitsCode();
+    await this.syncUnitsCode();
   }
 
   async generateUniqueIdentifier(attempts = 0) {
