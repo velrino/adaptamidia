@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  OnModuleInit,
+} from '@nestjs/common';
+import * as crypto from 'crypto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { CompanyUnit, CompanyUnitDocument } from '../company-unit.schema';
@@ -24,7 +30,7 @@ import { CompanyUnitPopularTimeDataDefault } from '../popular-times/company-unit
 import { Company } from 'src/modules/company/company.schema';
 
 @Injectable()
-export class CreateCompanyUnitService {
+export class CreateCompanyUnitService implements OnModuleInit {
   constructor(
     @InjectModel(CompanyUnit.name)
     private readonly companyUnitModel: Model<CompanyUnitDocument>,
@@ -34,11 +40,73 @@ export class CreateCompanyUnitService {
     private readonly companyUnitPopularTimeModel: Model<CompanyUnitPopularTimeDocument>,
   ) {}
 
-  async onApplicationBootstrap() {
+  async onModuleInit() {
     await this.companyUnitModel.updateMany(
       { preferences: { $exists: false } },
       { $set: { preferences: COMPANY_UNIT_DEFAULT_PREFERENCES } },
     );
+
+    await this.syncUnitsCode();
+  }
+
+  async generateUniqueIdentifier(attempts = 0) {
+    const maxAttempts = 10;
+
+    // Usar caracteres que não se confundem (remover 0, O, I, 1, L)
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+    // Gerar código aleatório de 6 caracteres
+    let identifier = '';
+    for (let i = 0; i < 6; i++) {
+      identifier += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    // Verificar se já existe
+    const exists = await this.companyUnitModel.countDocuments({ identifier });
+
+    if (exists) {
+      if (attempts >= maxAttempts) {
+        // Fallback: usar hash do timestamp + random para garantir unicidade
+        const uniqueString = `${Date.now()}-${Math.random()}`;
+        const hash = crypto
+          .createHash('sha256')
+          .update(uniqueString)
+          .digest('hex');
+        return hash.slice(0, 6).toUpperCase();
+      }
+      // Tentar novamente
+      return this.generateUniqueIdentifier(attempts + 1);
+    }
+  }
+
+  async syncUnitsCode() {
+    const list = await this.companyUnitModel
+      .find({
+        identifier: { $exists: false },
+      })
+      .select('_id')
+      .lean();
+
+    for (let index = 0; index < list.length; index++) {
+      const element = list[index];
+
+      try {
+        const identifier = await this.generateUniqueIdentifier();
+
+        await this.companyUnitModel.updateOne(
+          { _id: element._id },
+          { identifier },
+        );
+      } catch (error) {
+        Log(
+          LogType.ERROR,
+          CreateCompanyUnitService.name,
+          this.syncUnitsCode.name,
+          LogAction.FAILED,
+          { _id: element._id, error },
+        );
+      }
+    }
   }
 
   // async createPopularTime(companyUnitId: Types.ObjectId) {
@@ -155,6 +223,9 @@ export class CreateCompanyUnitService {
       session.startTransaction();
 
       try {
+        // Gerar identifier único antes de criar
+        const identifier = await this.generateUniqueIdentifier();
+
         const created = await this.companyUnitModel.create(
           [
             {
@@ -172,6 +243,7 @@ export class CreateCompanyUnitService {
                 coordinates: [coordinates.lng, coordinates.lat],
               },
               preferences: COMPANY_UNIT_DEFAULT_PREFERENCES,
+              identifier,
             },
           ],
           { session },

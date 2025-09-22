@@ -16,7 +16,7 @@ import { DateTime } from 'luxon';
 import { RESULT } from 'src/shared/result.enum';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { FirebaseDatabaseService } from 'src/shared/firebase/firebase-database.service';
-import { LockKeyName } from 'src/shared/general';
+import { Environments, GetEnvironment, LockKeyName } from 'src/shared/general';
 
 export const ExcludeDomains = ['GlobeNewswire'];
 
@@ -92,13 +92,22 @@ export class SyncNewsService {
 
   async execute() {
     try {
-      Log(
-        LogType.INFO,
-        SyncNewsService.name,
-        this.execute.name,
-        LogAction.STARTED,
-        {},
+      const env = GetEnvironment();
+
+      const currentEnvirement = Object.values(Environments).includes(
+        env as Environments,
       );
+
+      if (!currentEnvirement) {
+        Log(
+          LogType.INFO,
+          SyncNewsService.name,
+          this.handleCron.name,
+          LogAction.SKIP,
+          { about: 'NOT_ENVIRONMENT', currentEnvirement },
+        );
+        return;
+      }
 
       const timeAgo = DateTime.utc().minus({ hour: 1 }).toJSDate();
       const provider = NewsProviderEnum.NEWS_API;

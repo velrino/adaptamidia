@@ -70,6 +70,9 @@ export class CompanyUnit {
   @Prop({ required: false, default: String() })
   complement: string;
 
+  @Prop({ required: false, default: String() })
+  identifier: string;
+
   @Prop({ required: true, index: true })
   type: CompanyUnitType;
 
