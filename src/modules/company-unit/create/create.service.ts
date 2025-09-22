@@ -46,7 +46,7 @@ export class CreateCompanyUnitService implements OnModuleInit {
       { $set: { preferences: COMPANY_UNIT_DEFAULT_PREFERENCES } },
     );
 
-    await this.syncUnitsCode();
+    this.syncUnitsCode();
   }
 
   async generateUniqueIdentifier(attempts = 0) {
@@ -80,32 +80,52 @@ export class CreateCompanyUnitService implements OnModuleInit {
   }
 
   async syncUnitsCode() {
-    const list = await this.companyUnitModel
-      .find({
-        identifier: { $exists: false },
-      })
-      .select('_id')
-      .lean();
+    try {
+      const records = await this.companyUnitModel
+        .find({
+          identifier: { $exists: false },
+        })
+        .select('_id')
+        .lean();
 
-    for (let index = 0; index < list.length; index++) {
-      const element = list[index];
+      Log(
+        LogType.INFO,
+        CreateCompanyUnitService.name,
+        this.syncUnitsCode.name,
+        LogAction.STARTED,
+        { records: records.length },
+      );
 
-      try {
-        const identifier = await this.generateUniqueIdentifier();
+      if (!records.length) return;
 
-        await this.companyUnitModel.updateOne(
-          { _id: element._id },
-          { identifier },
-        );
-      } catch (error) {
-        Log(
-          LogType.ERROR,
-          CreateCompanyUnitService.name,
-          this.syncUnitsCode.name,
-          LogAction.FAILED,
-          { _id: element._id, error },
-        );
+      for (let index = 0; index < records.length; index++) {
+        const element = records[index];
+
+        try {
+          const identifier = await this.generateUniqueIdentifier();
+
+          await this.companyUnitModel.updateOne(
+            { _id: element._id },
+            { identifier },
+          );
+        } catch (error) {
+          Log(
+            LogType.ERROR,
+            CreateCompanyUnitService.name,
+            this.syncUnitsCode.name,
+            LogAction.FAILED,
+            { _id: element._id, error },
+          );
+        }
       }
+    } catch (error) {
+      Log(
+        LogType.ERROR,
+        CreateCompanyUnitService.name,
+        this.syncUnitsCode.name,
+        LogAction.FAILED,
+        { error },
+      );
     }
   }
 
