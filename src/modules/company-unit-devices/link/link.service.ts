@@ -58,12 +58,22 @@ export class LinkDeviceWithCompanyUnitService {
         );
       }
 
-      return await this.companyUnitDevicesModel.create({
-        local_unit: record._id,
-        identifier: parameters.identifier,
-        data: parameters?.data || {},
-        headers: parameters?.headers || {},
-      });
+      return await this.companyUnitDevicesModel.findOneAndUpdate(
+        {
+          local_unit: record._id,
+          identifier: parameters.identifier,
+        },
+        {
+          local_unit: record._id,
+          identifier: parameters.identifier,
+          data: parameters?.data || {},
+          headers: parameters?.headers || {},
+        },
+        {
+          upsert: true,
+          new: true,
+        },
+      );
     } catch (error) {
       throw new HttpException(
         error?.message || RESULT.COMPANY_UNIT_DEVICE_CREATE_FAILED,
