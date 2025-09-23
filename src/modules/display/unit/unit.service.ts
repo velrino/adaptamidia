@@ -153,7 +153,8 @@ export class DisplayByUnitService {
 
     const record = await dbQuery
       .sort(sortBy)
-      .limit(parameters.limit)
+      .limit(30)
+      // .limit(parameters.limit)
       .lean()
       .exec();
 
