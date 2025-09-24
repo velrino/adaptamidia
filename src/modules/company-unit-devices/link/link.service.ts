@@ -15,6 +15,7 @@ import {
   LinkDeviceWithCompanyUnitDto,
 } from './link.interface';
 import { RESULT } from 'src/shared/result.enum';
+import { CompanyUnitDeviceType } from '../company-unit.interface';
 
 @Injectable()
 export class LinkDeviceWithCompanyUnitService {
@@ -66,6 +67,7 @@ export class LinkDeviceWithCompanyUnitService {
           },
           {
             local_unit: record._id,
+            type: parameters?.type || CompanyUnitDeviceType.DISPLAYER,
             identifier: parameters.identifier,
             data: parameters?.data || {},
             headers: parameters?.headers || {},

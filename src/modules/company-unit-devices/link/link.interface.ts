@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { CompanyUnitDeviceType } from '../company-unit.interface';
 
 export class LinkDeviceWithCompanyUnitDto {
   @IsNotEmpty()
@@ -10,12 +11,17 @@ export class LinkDeviceWithCompanyUnitDto {
   identifier: string;
 
   @IsOptional()
+  @IsEnum(CompanyUnitDeviceType)
+  type?: CompanyUnitDeviceType;
+
+  @IsOptional()
   data?: any;
 }
 
 export interface ILinkDeviceWithCompanyUnitService {
   company_unit_identifier: string;
   identifier: string;
+  type?: string;
   data?: any;
   headers?: any;
 }

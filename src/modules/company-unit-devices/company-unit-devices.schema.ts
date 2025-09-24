@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { Document, Types } from 'mongoose';
 import { SchemaDefault } from 'src/shared/shema';
+import { CompanyUnitDeviceType } from './company-unit.interface';
 
 @Schema({ ...SchemaDefault, collection: 'company_unit_devices' })
 export class CompanyUnitDevices {
@@ -14,6 +15,14 @@ export class CompanyUnitDevices {
 
   @Prop({ required: true, type: String })
   identifier: string;
+
+  @Prop({
+    required: false,
+    type: String,
+    enum: CompanyUnitDeviceType,
+    default: CompanyUnitDeviceType.DISPLAYER,
+  })
+  type: CompanyUnitDeviceType;
 
   @Prop({ type: mongoose.Schema.Types.Mixed, required: false, default: null })
   data: any;
