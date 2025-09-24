@@ -82,7 +82,7 @@ const AdvertisementModalTab: React.FC<AdvertisementFormProps> = ({
     <div>
       <Tabs
         tabs={tabs}
-        defaultTabId={InternalTabs.LOCAL}
+        defaultTabId={InternalTabs.ADS}
         styles={{
           nav: "p-0",
           navMenu: "mx-auto",
