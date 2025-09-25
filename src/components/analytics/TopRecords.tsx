@@ -24,8 +24,8 @@ export default function TopRecords() {
   // useEffect(() => {}, [responseDisplayByAdvertisement]);
 
   const [apiQueryForm] = useState({
-    start_at: DateHelper.subtractDays(new Date(), 1, "year").toDate(),
-    end_at: DateHelper.addDays(new Date(), 1, "year").toDate(),
+    start_at: DateHelper.subtractDays(new Date(), 7, "days").toDate(),
+    end_at: DateHelper.endOf(new Date(), "month").toDate(),
   });
 
   const [responseDisplayByAdvertisement, setResponseDisplayByAdvertisement] =

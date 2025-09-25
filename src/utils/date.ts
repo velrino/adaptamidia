@@ -1,4 +1,4 @@
-import dayjs, { ManipulateType } from "dayjs";
+import dayjs, { ManipulateType, OpUnitType } from "dayjs";
 import duration from "dayjs/plugin/duration";
 import relativeTime from "dayjs/plugin/relativeTime";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
@@ -74,6 +74,9 @@ export const DateHelper = {
   },
   timeAgo: (date: string | Date) => {
     return dayjs(date).fromNow();
+  },
+  endOf: (date: string | Date, unit: OpUnitType) => {
+    return dayjs(date).endOf(unit);
   },
   diffDateToObject(days: number) {
     const baseDate = dayjs().startOf("day");
