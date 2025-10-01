@@ -439,6 +439,47 @@ export default function DisplayLogModalInfo({
                 </div>
               </div>
 
+              {/* Imagens de Captura */}
+              {(record.capture || record.capture_bbox) && (
+                <div className="lg:col-span-3">
+                  <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700/50 dark:to-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-600">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-4">
+                      Capturas de Detecção
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {record.capture && (
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                            Captura Original
+                          </div>
+                          <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                            <img
+                              src={record.capture}
+                              alt="Captura original"
+                              className="w-full h-auto"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      {record.capture_bbox && (
+                        <div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                            Captura com Detecções
+                          </div>
+                          <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+                            <img
+                              src={record.capture_bbox}
+                              alt="Captura com bounding boxes"
+                              className="w-full h-auto"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Metadados básicos */}
               <div className="lg:col-span-3">
                 <div className="bg-gradient-to-br from-gray-50 to-white dark:from-gray-700/50 dark:to-gray-800/50 rounded-xl p-6 border border-gray-100 dark:border-gray-600">
