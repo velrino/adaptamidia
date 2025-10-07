@@ -115,7 +115,7 @@ export default function DisplayLogsChart({
   const { showToast } = useToast();
   const [response, setResponse] = useState<IApiDashboardDisplayLogResponse>();
   const [apiQueryForm] = useState<Partial<IApiDashboardDisplayLogRequest>>({
-    start_at: DateHelper.subtractDays(new Date(), 7, "days").toDate(),
+    start_at: DateHelper.subtractDays(new Date(), 30, "days").toDate(),
     end_at: DateHelper.endOf(new Date(), "month").toDate(),
     ...customQuery,
   });
