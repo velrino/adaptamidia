@@ -1,0 +1,59 @@
+---
+title: 02 - Save the log and original capture
+config:
+  theme: base
+  look: classic
+  fontFamily: Arial, sans-serif
+  themeCSS: |
+    rect.actor[name="Queue"], line.actor-line[name="Queue"] { fill: #25334E !important; stroke: #25334E !important; }
+    rect.actor[name="API"], line.actor-line[name="API"] { fill: #2454A6 !important; stroke: #2454A6 !important; }
+    rect.actor[name="DB"], line.actor-line[name="DB"] { fill: #3F6D36 !important; stroke: #3F6D36 !important; }
+    rect.actor[name="Storage"], line.actor-line[name="Storage"] { fill: #A05007 !important; stroke: #A05007 !important; }
+    rect.actor[name="Redis"], line.actor-line[name="Redis"] { fill: #25334E !important; stroke: #25334E !important; }
+    text.actor, text.actor tspan { fill: #FFFFFF !important; }
+    text.actor { font-weight: 700 !important; }
+    text.messageText { paint-order: stroke; stroke: #FFFFFF !important; stroke-width: 4px; stroke-linejoin: round; }
+  themeVariables:
+    background: "#FFFFFF"
+    actorBkg: "#25334E"
+    actorBorder: "#25334E"
+    actorTextColor: "#FFFFFF"
+    actorLineColor: "#ADB9CD"
+    signalColor: "#27334A"
+    signalTextColor: "#201830"
+    titleColor: "#201830"
+    noteBkgColor: "#F4F6FA"
+    noteBorderColor: "#AEBAD0"
+    noteTextColor: "#27334A"
+    labelBoxBkgColor: "#F4F6FA"
+    labelBoxBorderColor: "#AEBAD0"
+    labelTextColor: "#27334A"
+    loopTextColor: "#27334A"
+    sequenceNumberColor: "#FFFFFF"
+  sequence:
+    mirrorActors: false
+    diagramMarginX: 24
+    diagramMarginY: 24
+    actorMargin: 48
+    messageMargin: 26
+---
+sequenceDiagram
+    autonumber
+    participant Queue as Browser queue
+    create participant API as NestJS API
+    Queue->>API: POST /display/log<br/>Playback metadata and capture_expected
+    create participant DB as MongoDB
+    API->>DB: Upsert the playback log
+    DB-->>API: Display log ID
+    API-->>Queue: Playback log saved
+    opt A JPEG is queued
+        Queue->>API: POST /files/camera<br/>Multipart JPEG and playback identifiers
+        create participant Storage as Firebase Storage
+        API->>Storage: Save the original JPEG privately
+        Storage-->>API: Object path
+        API->>DB: Link the object path and bucket
+        create participant Redis as Redis queue
+        API->>Redis: Enqueue detection by display log ID
+        API-->>Queue: Capture accepted
+    end
+    Note over Queue: Remove the successfully synced item

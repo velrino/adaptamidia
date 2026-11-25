@@ -1,0 +1,52 @@
+---
+title: 01 - Play content and capture a frame
+config:
+  theme: base
+  look: classic
+  fontFamily: Arial, sans-serif
+  themeCSS: |
+    rect.actor[name="Display"], line.actor-line[name="Display"] { fill: #2454A6 !important; stroke: #2454A6 !important; }
+    rect.actor[name="Camera"], line.actor-line[name="Camera"] { fill: #067C87 !important; stroke: #067C87 !important; }
+    rect.actor[name="Queue"], line.actor-line[name="Queue"] { fill: #25334E !important; stroke: #25334E !important; }
+    text.actor, text.actor tspan { fill: #FFFFFF !important; }
+    text.actor { font-weight: 700 !important; }
+    text.messageText { paint-order: stroke; stroke: #FFFFFF !important; stroke-width: 4px; stroke-linejoin: round; }
+  themeVariables:
+    background: "#FFFFFF"
+    actorBkg: "#25334E"
+    actorBorder: "#25334E"
+    actorTextColor: "#FFFFFF"
+    actorLineColor: "#ADB9CD"
+    signalColor: "#27334A"
+    signalTextColor: "#201830"
+    titleColor: "#201830"
+    noteBkgColor: "#F4F6FA"
+    noteBorderColor: "#AEBAD0"
+    noteTextColor: "#27334A"
+    labelBoxBkgColor: "#F4F6FA"
+    labelBoxBorderColor: "#AEBAD0"
+    labelTextColor: "#27334A"
+    loopTextColor: "#27334A"
+    sequenceNumberColor: "#FFFFFF"
+  sequence:
+    mirrorActors: false
+    diagramMarginX: 24
+    diagramMarginY: 24
+    actorMargin: 48
+    messageMargin: 26
+---
+sequenceDiagram
+    autonumber
+    participant Display as Web display player
+    Note over Display: An ad or news item plays for the selected unit
+    create participant Camera as Browser camera
+    Display->>Camera: Request camera access
+    alt Camera access granted
+        Camera-->>Display: Video frame
+        Note over Display: Encode the frame as a JPEG
+    else No usable frame
+        Note over Display,Camera: Playback continues
+    end
+    create participant Queue as IndexedDB
+    Display->>Queue: Queue the playback log and optional JPEG
+    Queue-->>Display: Local queue item ID

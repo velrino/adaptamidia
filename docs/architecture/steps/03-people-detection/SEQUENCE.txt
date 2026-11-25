@@ -1,0 +1,60 @@
+---
+title: 03 - Count people and save the annotated capture
+config:
+  theme: base
+  look: classic
+  fontFamily: Arial, sans-serif
+  themeCSS: |
+    rect.actor[name="Redis"], line.actor-line[name="Redis"] { fill: #25334E !important; stroke: #25334E !important; }
+    rect.actor[name="Worker"], line.actor-line[name="Worker"] { fill: #2454A6 !important; stroke: #2454A6 !important; }
+    rect.actor[name="DB"], line.actor-line[name="DB"] { fill: #3F6D36 !important; stroke: #3F6D36 !important; }
+    rect.actor[name="Storage"], line.actor-line[name="Storage"] { fill: #A05007 !important; stroke: #A05007 !important; }
+    rect.actor[name="Vision"], line.actor-line[name="Vision"] { fill: #067C87 !important; stroke: #067C87 !important; }
+    text.actor, text.actor tspan { fill: #FFFFFF !important; }
+    text.actor { font-weight: 700 !important; }
+    text.messageText { paint-order: stroke; stroke: #FFFFFF !important; stroke-width: 4px; stroke-linejoin: round; }
+  themeVariables:
+    background: "#FFFFFF"
+    actorBkg: "#25334E"
+    actorBorder: "#25334E"
+    actorTextColor: "#FFFFFF"
+    actorLineColor: "#ADB9CD"
+    signalColor: "#27334A"
+    signalTextColor: "#201830"
+    titleColor: "#201830"
+    noteBkgColor: "#F4F6FA"
+    noteBorderColor: "#AEBAD0"
+    noteTextColor: "#27334A"
+    labelBoxBkgColor: "#F4F6FA"
+    labelBoxBorderColor: "#AEBAD0"
+    labelTextColor: "#27334A"
+    loopTextColor: "#27334A"
+    sequenceNumberColor: "#FFFFFF"
+  sequence:
+    mirrorActors: false
+    diagramMarginX: 24
+    diagramMarginY: 24
+    actorMargin: 48
+    messageMargin: 26
+---
+sequenceDiagram
+    autonumber
+    participant Redis as Redis queue
+    create participant Worker as Detection worker
+    Redis->>Worker: Run detection for the display log ID
+    create participant DB as MongoDB
+    Worker->>DB: Read the capture path and bucket
+    create participant Storage as Firebase Storage
+    Worker->>Storage: Download original JPEG
+    Storage-->>Worker: Image bytes
+    create participant Vision as Vision service
+    Worker->>Vision: POST /detect-yolo
+    Vision-->>Worker: People count
+    opt YOLO finds people
+        Worker->>Vision: POST /detect-insightface
+        Vision-->>Worker: Audience estimates
+    end
+    Worker->>Vision: POST /detect-people-bbox
+    Vision-->>Worker: Annotated JPEG
+    Worker->>Storage: Save the annotated capture
+    Worker->>DB: Save detection results and capture path

@@ -1,0 +1,53 @@
+---
+title: 04 - Generate and show audience insights
+config:
+  theme: base
+  look: classic
+  fontFamily: Arial, sans-serif
+  themeCSS: |
+    rect.actor[name="Admin"], line.actor-line[name="Admin"] { fill: #2454A6 !important; stroke: #2454A6 !important; }
+    rect.actor[name="API"], line.actor-line[name="API"] { fill: #2454A6 !important; stroke: #2454A6 !important; }
+    rect.actor[name="DB"], line.actor-line[name="DB"] { fill: #3F6D36 !important; stroke: #3F6D36 !important; }
+    rect.actor[name="LLM"], line.actor-line[name="LLM"] { fill: #633DA2 !important; stroke: #633DA2 !important; }
+    text.actor, text.actor tspan { fill: #FFFFFF !important; }
+    text.actor { font-weight: 700 !important; }
+    text.messageText { paint-order: stroke; stroke: #FFFFFF !important; stroke-width: 4px; stroke-linejoin: round; }
+  themeVariables:
+    background: "#FFFFFF"
+    actorBkg: "#25334E"
+    actorBorder: "#25334E"
+    actorTextColor: "#FFFFFF"
+    actorLineColor: "#ADB9CD"
+    signalColor: "#27334A"
+    signalTextColor: "#201830"
+    titleColor: "#201830"
+    noteBkgColor: "#F4F6FA"
+    noteBorderColor: "#AEBAD0"
+    noteTextColor: "#27334A"
+    labelBoxBkgColor: "#F4F6FA"
+    labelBoxBorderColor: "#AEBAD0"
+    labelTextColor: "#27334A"
+    loopTextColor: "#27334A"
+    sequenceNumberColor: "#FFFFFF"
+  sequence:
+    mirrorActors: false
+    diagramMarginX: 24
+    diagramMarginY: 24
+    actorMargin: 48
+    messageMargin: 26
+---
+sequenceDiagram
+    autonumber
+    participant Admin as Admin dashboard
+    create participant API as NestJS API
+    Admin->>API: GET /display/generate-insights (SSE)
+    Note over API: Validate the session token
+    create participant DB as MongoDB
+    API->>DB: Read the playback record and audience results
+    DB-->>API: Content, location, timing, and audience metrics
+    create participant LLM as Google Gen AI
+    API->>LLM: Generate insight from a text prompt
+    LLM-->>API: Generated text
+    API-->>Admin: Insight text via SSE
+    API->>DB: Save the insight, model, and generation time
+    API-->>Admin: [DONE]
