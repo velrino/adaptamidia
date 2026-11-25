@@ -99,7 +99,7 @@ export enum LLMModelsEnum {
 export const LLMModelsAsOptions = [
   {
     value: LLMModelsEnum.GEMINI_2_0_FLASH_001,
-    label: "gemini-2.0-flash-001",
+    label: process.env.NEXT_PUBLIC_DEFAULT_LLM_MODEL || "gemini-2.0-flash-001",
   },
   {
     value: LLMModelsEnum.GEMINI_2_5_PRO,

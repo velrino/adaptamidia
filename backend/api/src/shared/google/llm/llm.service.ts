@@ -46,11 +46,23 @@ export class GoogleGenAiProvider {
           apiKey: process.env.GOOGLE_GENAI_API_KEY,
         });
 
-    const result = await client.models.generateContentStream({
-      model: modelChosed.model,
+    const request = {
+      model: this.resolveModel(currentModel),
       contents: prompt,
-    });
+    };
 
+    if (!modelChosed.vertexai && process.env.GOOGLE_GENAI_STREAMING === 'false') {
+      const response = await client.models.generateContent({
+        ...request,
+        config: { maxOutputTokens: 1200 },
+      });
+      const text = response.text;
+      if (!text) throw new Error('Gemini returned no insight text');
+      yield { text };
+      return;
+    }
+
+    const result = await client.models.generateContentStream(request);
     for await (const chunk of result) {
       const text = chunk.text || '';
       yield { text };
@@ -71,8 +83,15 @@ export class GoogleGenAiProvider {
         });
 
     return await client.models.generateContent({
-      model: modelChosed.model,
+      model: this.resolveModel(currentModel),
       contents: prompt,
     });
+  }
+
+  private resolveModel(model: GoogleGenAiModelsEnum): string {
+    const configuredModel = GoogleGenAiModels[model].model;
+    return model === GoogleGenAiModelsEnum.GEMINI_2_0_FLASH_001
+      ? process.env.GOOGLE_GENAI_DEFAULT_MODEL || configuredModel
+      : configuredModel;
   }
 }

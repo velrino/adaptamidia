@@ -147,7 +147,8 @@ export const DisplayLogLLMStreamComponent = ({
         <div className="text-center text-sm text-gray-500 mb-4 gap-1 flex justify-center">
           <div>Powered by</div>
           <div className="font-mono text-purple-600 dark:text-purple-400">
-            {llmModelUsed}
+            {LLMModelsAsOptions.find(({ value }) => value === llmModelUsed)
+              ?.label || llmModelUsed}
           </div>
         </div>
       )}
