@@ -220,6 +220,34 @@ def warmup():
         }
 
 
+def detect_person_boxes(image):
+    width, height = image.size
+    detections = []
+    has_visible_face = None
+
+    for result in get_model()(image, classes=[0]):
+        if result.boxes is None:
+            continue
+        for box in result.boxes:
+            coordinates = box.xyxy[0].tolist()
+            x1, y1, x2, y2 = coordinates
+            confidence = float(box.conf[0])
+            covers_frame = (
+                x1 <= 0.04 * width and y1 <= 0.04 * height
+                and x2 >= 0.96 * width and y2 >= 0.96 * height
+            )
+            # An obstruction near the lens can be classified as a full-frame person.
+            if covers_frame and confidence < 0.75:
+                if has_visible_face is None:
+                    faces = analyze_faces_insightface(np.asarray(image.convert('RGB')))
+                    has_visible_face = faces.get('total', 0) > 0
+                if not has_visible_face:
+                    continue
+            detections.append((coordinates, confidence))
+
+    return detections
+
+
 @app.post("/detect-yolo")
 async def detect_yolo(file: UploadFile = File(...)):
     """
@@ -242,25 +270,12 @@ async def detect_yolo(file: UploadFile = File(...)):
             background.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
             image = background
 
-        # Executar detecção YOLO
-        yolo_model = get_model()
-        results = yolo_model(image)
-
-        # Filtrar apenas pessoas (classe 0 no COCO dataset)
-        people_detections = []
-        for result in results:
-            boxes = result.boxes
-            if boxes is not None:
-                for box in boxes:
-                    # Classe 0 = pessoa no dataset COCO
-                    if int(box.cls[0]) == 0:
-                        confidence = float(box.conf[0])
-                        people_detections.append(confidence)
+        people_detections = detect_person_boxes(image)
 
         # Calcular estatísticas YOLO
         people_count = len(people_detections)
         avg_confidence = (
-            sum(people_detections) / len(people_detections)
+            sum(confidence for _, confidence in people_detections) / people_count
             if people_detections
             else 0.0
         )
@@ -332,53 +347,15 @@ async def detect_people_bbox(file: UploadFile = File(...)):
             background.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
             image = background
         
-        # Converter RGBA para RGB se necessário (para compatibilidade com JPEG)
-        if image.mode in ('RGBA', 'LA', 'P'):
-            # Criar fundo branco para transparência
-            background = Image.new('RGB', image.size, (255, 255, 255))
-            if image.mode == 'P':
-                image = image.convert('RGBA')
-            background.paste(image, mask=image.split()[-1] if image.mode in ('RGBA', 'LA') else None)
-            image = background
-
-        # Executar detecção YOLO
-        yolo_model = get_model()
-        results = yolo_model(image)
-
-        # Converter PIL para numpy para desenhar
-        img_array = np.array(image)
-
-        # Desenhar bounding boxes nas pessoas detectadas
-        for result in results:
-            boxes = result.boxes
-            if boxes is not None:
-                for box in boxes:
-                    # Classe 0 = pessoa no dataset COCO
-                    if int(box.cls[0]) == 0:
-                        # Obter coordenadas da bbox
-                        x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
-                        confidence = float(box.conf[0])
-
-                        # Desenhar retângulo
-                        cv2.rectangle(
-                            img_array,
-                            (int(x1), int(y1)),
-                            (int(x2), int(y2)),
-                            (0, 255, 0),
-                            2,
-                        )
-
-                        # Adicionar texto com confiança
-                        label = f"Person {confidence:.2f}"
-                        cv2.putText(
-                            img_array,
-                            label,
-                            (int(x1), int(y1 - 10)),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.5,
-                            (0, 255, 0),
-                            2,
-                        )
+        img_array = np.array(image.convert('RGB'))
+        for (x1, y1, x2, y2), confidence in detect_person_boxes(image):
+            cv2.rectangle(
+                img_array, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2,
+            )
+            cv2.putText(
+                img_array, f"Person {confidence:.2f}", (int(x1), max(12, int(y1) - 10)),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2,
+            )
 
         # Converter de volta para PIL
         result_image = Image.fromarray(img_array)
