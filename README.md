@@ -19,3 +19,11 @@ To store display camera captures in Firebase Storage, set `DISPLAY_CAPTURE_BUCKE
 ## Git history
 
 Merge commits connect the original histories to `master` and preserve the original commit hashes. The branches available in the source checkouts are under `archive/api/`, `archive/vision/`, and `archive/frontend/`. Use those branches to inspect changes under their original paths.
+
+### Original repositories
+
+| Component | Monorepo path | Original repository |
+| --- | --- | --- |
+| API | `backend/api` | [velrino/adaptamidia-api](https://github.com/velrino/adaptamidia-api) |
+| Vision | `backend/vision` | [velrino/adaptamidia-vision](https://github.com/velrino/adaptamidia-vision) |
+| Admin | `frontend/admin` | [velrino/alphamidia-admin](https://github.com/velrino/alphamidia-admin) |
