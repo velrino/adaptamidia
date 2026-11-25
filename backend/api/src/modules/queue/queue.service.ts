@@ -58,11 +58,14 @@ export class QueueService {
       });
   }
 
-  async addQueueDetectImage(parameters: IDetectionDisplayLog) {
+  async addQueueDetectImage(
+    parameters: IDetectionDisplayLog,
+    options?: Bull.JobOptions,
+  ) {
     const currentEvent = this.addQueueDetectImage.name;
 
     return await this.displayLogDetectImageQueueQueue
-      .add({ parameters }, this.defaultQueueOptions)
+      .add({ parameters }, { ...this.defaultQueueOptions, ...options })
       .then((result) => {
         Log(LogType.INFO, QueueService.name, currentEvent, LogAction.SUCCESS, {
           result: result.id,

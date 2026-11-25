@@ -9,39 +9,36 @@ export interface HiddenWebcamHandle {
   captureFrame: () => Promise<Blob | null>;
 }
 
-const HiddenWebcam = forwardRef<HiddenWebcamHandle>((_, ref) => {
+type CameraStatus = "starting" | "ready" | "unavailable";
+
+const HiddenWebcam = forwardRef<HiddenWebcamHandle, {
+  onStatusChange?: (status: CameraStatus) => void;
+}>(({ onStatusChange }, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     let stream: MediaStream | null = null;
     let cancelled = false;
+    const video = videoRef.current;
+    onStatusChange?.("starting");
     (async () => {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          // Aguarda o evento canplay antes de chamar play()
-          await new Promise((resolve) => {
-            const video = videoRef.current!;
-            const onCanPlay = () => {
-              video.removeEventListener("canplay", onCanPlay);
-              resolve(null);
-            };
-            video.addEventListener("canplay", onCanPlay);
-            // Timeout de segurança
-            setTimeout(() => {
-              video.removeEventListener("canplay", onCanPlay);
-              resolve(null);
-            }, 2000);
-          });
-          if (!cancelled && videoRef.current.paused) {
-            await videoRef.current.play().catch((err) => {
-              if (err.name !== "AbortError") throw err;
-            });
-          }
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+        });
+        if (cancelled || !video) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
         }
+        video.srcObject = stream;
+        await video.play();
+        if (!cancelled) onStatusChange?.("ready");
       } catch (err) {
-        console.error("Erro ao acessar webcam:", err);
+        if (!cancelled) {
+          stream?.getTracks().forEach((track) => track.stop());
+          onStatusChange?.("unavailable");
+          console.error("Erro ao acessar webcam:", err);
+        }
       }
     })();
     return () => {
@@ -49,20 +46,23 @@ const HiddenWebcam = forwardRef<HiddenWebcamHandle>((_, ref) => {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
+      if (video && video.srcObject === stream) video.srcObject = null;
     };
-  }, []);
+  }, [onStatusChange]);
 
   useImperativeHandle(ref, () => ({
     async captureFrame() {
       const video = videoRef.current;
-      if (!video) return null;
+      if (!video || video.readyState < 2 || !video.videoWidth || !video.videoHeight) return null;
       const canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      const scale = Math.min(1, 1280 / Math.max(video.videoWidth, video.videoHeight));
+      canvas.width = Math.round(video.videoWidth * scale);
+      canvas.height = Math.round(video.videoHeight * scale);
       const ctx = canvas.getContext("2d");
-      ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+      if (!ctx) return null;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       return new Promise<Blob | null>((resolve) => {
-        canvas.toBlob((blob) => resolve(blob), "image/png");
+        canvas.toBlob(resolve, "image/jpeg", 0.85);
       });
     },
   }));

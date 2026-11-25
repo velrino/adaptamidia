@@ -1,9 +1,14 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { GoogleCloudStorageService } from 'src/shared/google/cloud/google-cloud-storage.service';
 import { RESULT } from 'src/shared/result.enum';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { IUplodadCameraFile, UplodadCameraFileDto } from './camera.interface';
-import { IGoogleStorageBucket } from 'src/shared/google/cloud/google-cloud-storage.interface';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   DisplayLog,
@@ -11,11 +16,13 @@ import {
 } from 'src/modules/display-logs/display-logs.schema';
 import { Model, Types } from 'mongoose';
 import { DisplayType } from 'src/modules/display/unit/unit.interface';
+import { QueueService } from 'src/modules/queue/queue.service';
 
 @Injectable()
 export class UplodadCameraFileService {
   constructor(
     private googleCloudStorageService: GoogleCloudStorageService,
+    private readonly queueService: QueueService,
     @InjectModel(DisplayLog.name)
     public readonly displayLogModel: Model<DisplayLogDocument>,
   ) {}
@@ -28,8 +35,35 @@ export class UplodadCameraFileService {
   }
 
   async execute(parameters: IUplodadCameraFile) {
+    if (
+      !parameters.file ||
+      !['image/jpeg', 'image/png', 'image/webp'].includes(
+        parameters.file.mimetype,
+      )
+    ) {
+      throw new BadRequestException(
+        'A câmera deve enviar uma imagem JPEG, PNG ou WebP.',
+      );
+    }
+
+    const field =
+      parameters.type === DisplayType.NEWS ? 'news' : 'advertisement';
+    const log = await this.displayLogModel
+      .findOne({
+        local_unit: new Types.ObjectId(parameters.unit),
+        type: parameters.type,
+        identifier: parameters.timestamp,
+        [field]: new Types.ObjectId(parameters.record),
+      })
+      .select('_id')
+      .lean<{ _id: Types.ObjectId }>();
+
+    if (!log)
+      throw new NotFoundException('Registro de exibição ainda não encontrado.');
+
     try {
-      const currentBucket = IGoogleStorageBucket.ADAPTA_MIDIA_RECORD;
+      const currentBucket =
+        this.googleCloudStorageService.getDisplayCaptureBucket();
 
       const storage = await this.googleCloudStorageService.uploadFile(
         `logs/${parameters.unit}/${parameters.type.toLowerCase()}/${parameters.record}`,
@@ -46,47 +80,16 @@ export class UplodadCameraFileService {
         { storage },
       );
 
-      const typeUpper = parameters.type.toUpperCase() as DisplayType;
+      await this.displayLogModel.updateOne(
+        { _id: log._id },
+        { $set: { capture: storage.path, bucket: currentBucket } },
+      );
 
-      const filter: Record<string, any> = {
-        local_unit: new Types.ObjectId(parameters.unit),
-        type: parameters.type,
-        identifier: parameters.timestamp,
-      };
-
-      const recordId = new Types.ObjectId(parameters.record);
-      const typeToFieldMap: Record<DisplayType, string> = {
-        [DisplayType.NEWS]: 'news',
-        [DisplayType.ADVERTISEMENT]: 'advertisement',
-      };
-
-      const field = typeToFieldMap[typeUpper];
-      if (field) {
-        filter[field] = recordId;
-      }
-
-      if (storage?.path) {
-        const result = await this.displayLogModel.updateOne(
-          filter,
-          {
-            $set: {
-              capture: storage.path,
-              bucket: currentBucket,
-            },
-          },
-          { upsert: false }, // Evita criar um novo se não encontrar
-        );
-
-        if (result.matchedCount === 0) {
-          Log(
-            LogType.INFO,
-            UplodadCameraFileService.name,
-            'NOT_FOUND_DISPLAY_LOG',
-            LogAction.EMPTY,
-            { storage, filter },
-          );
-        }
-      }
+      const job = await this.queueService.addQueueDetectImage(
+        { id: log._id, return: false },
+        { jobId: `capture-${log._id}` },
+      );
+      if (job instanceof Error) throw job;
 
       return { storage };
     } catch (error) {

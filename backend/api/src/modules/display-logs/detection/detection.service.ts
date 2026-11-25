@@ -17,7 +17,6 @@ import { GoogleCloudStorageService } from 'src/shared/google/cloud/google-cloud-
 import { IGoogleStorageBucket } from 'src/shared/google/cloud/google-cloud-storage.interface';
 import {
   ApiDetectInsightfaceDefault,
-  ApiYoloResultDefault,
   IApiDetectInsightface,
   IApiYoloResult,
 } from 'src/shared/detection/detection.interface';
@@ -54,7 +53,6 @@ export class DetectionDisplayLogService {
         LogAction.FAILED,
         { error },
       );
-      await job.remove();
       throw error;
     }
   }
@@ -131,20 +129,24 @@ export class DetectionDisplayLogService {
         displayLog?.news?._id.toString() ||
         displayLog?.advertisement?._id.toString();
 
-      const currentBucket = IGoogleStorageBucket.ADAPTA_MIDIA_RECORD;
-      const filePath = `logs/${displayLog.local_unit._id.toString()}/${displayLog.type.toLowerCase()}/${recordId}`;
+      const currentBucket =
+        displayLog.bucket || IGoogleStorageBucket.ADAPTA_MIDIA_RECORD;
+      const capturePath =
+        displayLog.capture ||
+        `logs/${displayLog.local_unit._id.toString()}/${displayLog.type.toLowerCase()}/${recordId}/${displayLog.identifier}`;
+      const filePath = capturePath.slice(0, capturePath.lastIndexOf('/'));
 
       const imageFile =
         await this.googleCloudStorageService.downloadRecordFileAsMulter(
           currentBucket,
-          `${filePath}/${displayLog.identifier}`,
+          capturePath,
         );
 
       let status = displayLog.status;
       // Enviar para detecção YOLO
-      let yolo: IApiYoloResult = ApiYoloResultDefault;
+      let yolo: IApiYoloResult | undefined;
       // const deepface: IApiDeepFaceAnalysisResult = ApiDeepFaceAnalysisResult;
-      let insightface: IApiDetectInsightface = ApiDetectInsightfaceDefault;
+      let insightface: IApiDetectInsightface | undefined;
       let detectPeopleBbox: Buffer | null = null;
 
       try {
@@ -163,6 +165,7 @@ export class DetectionDisplayLogService {
         detectPeopleBbox =
           await this.detectionService.detectPeopleBbox(imageFile);
       } catch (error) {
+        if (!yolo) throw error;
         Log(
           LogType.ERROR,
           DetectionDisplayLogService.name,
@@ -227,7 +230,7 @@ export class DetectionDisplayLogService {
         status,
         yolo,
         insightface,
-        capture: `${filePath}/${displayLog.identifier}`,
+        capture: capturePath,
         capture_bbox: bboxPath ?? undefined,
         bucket: currentBucket,
       };
@@ -255,9 +258,11 @@ export class DetectionDisplayLogService {
           updateColumns,
         );
 
-        await this.queueService.addQueueDisplayLogInsight({
-          id: String(displayLog._id),
-        });
+        if (process.env.DISPLAY_AUTO_INSIGHTS !== 'false') {
+          await this.queueService.addQueueDisplayLogInsight({
+            id: String(displayLog._id),
+          });
+        }
 
         return result;
       }

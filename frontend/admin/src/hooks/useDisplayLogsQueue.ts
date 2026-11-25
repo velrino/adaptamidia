@@ -2,42 +2,42 @@
 
 import { useEffect, useRef } from "react";
 import { API } from "@/backend/api/api.endpoints";
-import {
-  addLogToQueue,
-  getAllLogs,
-  clearLogs,
-} from "@/backend/queue/display_logs_create";
-import { IApiCreateDisplayLogRequest } from "@/backend/api/api.interface";
+import { getAllLogs, removeLog } from "@/backend/queue/display_logs_create";
 
 function useDisplayLogsQueue() {
   const isProcessing = useRef(false);
 
   useEffect(() => {
+    let retryAfter = 0;
     const interval = setInterval(async () => {
-      if (isProcessing.current) return;
+      if (isProcessing.current || Date.now() < retryAfter) return;
       isProcessing.current = true;
 
       try {
-        const logs: IApiCreateDisplayLogRequest[] = await getAllLogs();
-        if (!logs.length) return;
+        for (const { key, log } of await getAllLogs()) {
+          const { capture, ...body } = log;
+          const created = await API.display_logs.create({
+            ...body,
+            capture_expected: Boolean(capture),
+          });
+          if (!created.ok) throw new Error(`Exibição: HTTP ${created.status}`);
 
-        const failed: IApiCreateDisplayLogRequest[] = [];
-
-        for (const log of logs) {
-          try {
-            await API.display_logs.create(log);
-          } catch (err) {
-            console.error("[display_logs_create] Falha ao enviar log:", err);
-            failed.push(log);
+          if (capture) {
+            const uploaded = await API.files.uploadCamera({
+              file: capture,
+              type: body.type,
+              record: body.id,
+              unit: body.local,
+              timestamp: body.identifier,
+            });
+            if (!uploaded.ok) throw new Error(`Captura: HTTP ${uploaded.status}`);
           }
-        }
 
-        if (failed.length !== logs.length) {
-          await clearLogs();
-          for (const fail of failed) {
-            await addLogToQueue(fail);
-          }
+          await removeLog(key);
         }
+      } catch (error) {
+        retryAfter = Date.now() + 5000;
+        console.error("Falha ao sincronizar a exibição:", error);
       } finally {
         isProcessing.current = false;
       }

@@ -1,9 +1,11 @@
 import { DisplayLogStatus } from '../display-logs.interface';
 import {
+  IsBoolean,
   IsDate,
   IsEnum,
   IsMongoId,
   IsNotEmpty,
+  IsOptional,
   IsString,
   ValidateIf,
 } from 'class-validator';
@@ -19,6 +21,10 @@ import {
 } from 'src/shared/detection/detection.interface';
 
 export class ICreateDisplayLogDto {
+  @IsOptional()
+  @IsBoolean()
+  capture_expected?: boolean;
+
   @Transform(({ value }) => (value ? value : String()))
   @IsString()
   identifier: string;
@@ -55,6 +61,7 @@ export class ICreateDisplayLogDto {
 }
 
 export interface ICreateDisplayLog {
+  capture_expected?: boolean;
   id: Types.ObjectId;
   local: Types.ObjectId;
   type: DisplayType;

@@ -22,7 +22,6 @@ import useDisplayLogsQueue from "@/hooks/useDisplayLogsQueue";
 import HiddenWebcam, {
   HiddenWebcamHandle,
 } from "@/components/webcam/HiddenWebcam";
-import { API } from "@/backend/api/api.endpoints";
 
 interface AdStat {
   index: number;
@@ -42,8 +41,6 @@ interface IDisplay {
     container?: string;
   };
 }
-
-const LOG_TIMEOUT_MS = 100;
 
 const updateAdStats = (adIndex: number): void => {
   const stats: AdStat[] = JSON.parse(
@@ -78,11 +75,14 @@ export function Display({
   useWebcam,
 }: IDisplay) {
   useDisplayLogsQueue();
-  const [currentAdIndex, setCurrentAdIndex] = useState(0);
+  const [rotation, setRotation] = useState(0);
   const [currentDisplay, setCurrentDisplay] =
     useState<IApiDisplayResponseItem>();
   const [timeRemaining, setTimeRemaining] = useState(5);
   const [totalTime, setTotalTime] = useState(5);
+  const [cameraStatus, setCameraStatus] = useState<"starting" | "ready" | "unavailable">("starting");
+  const currentAdIndex = list.length ? rotation % list.length : 0;
+  const cameraEnabled = Boolean(useWebcam && unit && !preview);
 
   // Memoized current item to avoid recalculations
   const currentItem = useMemo(
@@ -97,56 +97,33 @@ export function Display({
       const currentId = item.ads?._id || item.news?._id;
 
       if (preview === false && unit && currentId) {
-        const captureId: string = Date.now().toString();
+        const captureId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
         const body: IApiCreateDisplayLogRequest = {
           identifier: captureId,
           id: currentId,
           local: unit,
-          type: currentItem.ads ? DisplayType.ADVERTISEMENT : DisplayType.NEWS,
+          type: item.ads ? DisplayType.ADVERTISEMENT : DisplayType.NEWS,
           status: DisplayLogStatus.FINISHED,
           start_at: DateHelper.dayjs()
             .subtract(displaySeconds, "seconds")
             .toISOString(),
           end_at: DateHelper.dayjs().toISOString(),
         };
+        let capture: Blob | null | undefined;
         try {
-          await Promise.race([
-            addLogToQueue(body)
-              .then((res) => ({ success: true, res }))
-              .catch((err) => ({ success: false, err })),
-            new Promise((resolve) =>
-              setTimeout(
-                () => resolve({ success: false, reason: "timeout" }),
-                LOG_TIMEOUT_MS
-              )
-            ),
-          ]);
-
-          // Captura o frame do webcam
-          let frame = null;
-          if (
-            useWebcam &&
-            webcamRef.current &&
-            typeof webcamRef.current.captureFrame === "function"
-          ) {
-            frame = await webcamRef.current.captureFrame();
-            if (frame) {
-              await API.files.uploadCamera({
-                file: frame,
-                type: item.type,
-                record: String(currentId),
-                unit: String(unit),
-                timestamp: captureId,
-              });
-            }
-          }
+          if (cameraEnabled) capture = await webcamRef.current?.captureFrame();
+        } catch (error) {
+          console.error("Falha ao capturar imagem da câmera:", error);
+        }
+        try {
+          await addLogToQueue({ ...body, capture: capture ?? undefined });
         } catch (error) {
           console.error("Failed to send log:", error);
         }
       }
     },
-    [preview, unit, currentItem]
+    [preview, unit, cameraEnabled]
   );
 
   // Main display rotation effect
@@ -178,14 +155,14 @@ export function Display({
         await sendLog(currentItem, displaySeconds);
       }
 
-      setCurrentAdIndex((prevIndex) => (prevIndex + 1) % list.length);
+      setRotation((previous) => previous + 1);
     }, displaySeconds * 1000);
 
     return () => {
       clearTimeout(timer);
       clearInterval(countdownInterval);
     };
-  }, [list, currentAdIndex, currentItem, preview, sendLog]);
+  }, [list, rotation, currentAdIndex, currentItem, preview, sendLog]);
 
   if (!currentDisplay) return null;
 
@@ -209,7 +186,12 @@ export function Display({
         />
       </div>
       {/* Webcam invisível, apenas para captura de frame */}
-      {useWebcam && <HiddenWebcam ref={webcamRef} />}
+      {cameraEnabled && <HiddenWebcam ref={webcamRef} onStatusChange={setCameraStatus} />}
+      {cameraEnabled && cameraStatus === "unavailable" && (
+        <p role="status" className="fixed bottom-4 left-4 rounded bg-black/75 px-3 py-2 text-sm text-white">
+          Câmera indisponível. Verifique a permissão do navegador.
+        </p>
+      )}
     </div>
   );
 }

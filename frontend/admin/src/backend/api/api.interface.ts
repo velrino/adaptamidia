@@ -539,6 +539,7 @@ export interface IApiDisplayResponseItemAdsNews {
 // DISPLAY LOGS
 
 export interface IApiCreateDisplayLogRequest {
+  capture_expected?: boolean;
   identifier: string;
   id: string;
   local: string;

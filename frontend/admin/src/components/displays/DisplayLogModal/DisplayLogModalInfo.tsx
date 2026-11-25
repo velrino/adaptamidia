@@ -309,10 +309,7 @@ export default function DisplayLogModalInfo({
                         Pessoas
                       </span>
                       <span className="text-lg font-bold text-gray-900 dark:text-white">
-                        {Math.max(
-                          record.yolo?.people || 0,
-                          record.insightface?.total || 0
-                        ) || 0}
+                        {record.yolo?.people ?? record.insightface?.total ?? "—"}
                       </span>
                     </div>
                   </div>
@@ -334,10 +331,7 @@ export default function DisplayLogModalInfo({
                   <div className="grid sm:grid-cols-2 gap-4 mb-6">
                     <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
                       <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                        {Math.max(
-                          record.yolo?.people || 0,
-                          record.insightface?.total || 0
-                        )}
+                        {record.yolo?.people ?? record.insightface?.total ?? "—"}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Pessoas Detectadas
@@ -345,7 +339,7 @@ export default function DisplayLogModalInfo({
                     </div>
                     <div className="text-center p-4 bg-white dark:bg-gray-700 rounded-lg shadow-sm">
                       <div className="text-3xl font-bold text-green-600 dark:text-green-400">
-                        {record.insightface?.age?.average || 0}
+                        {record.insightface?.age?.average ?? "—"}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Média de Idade
@@ -361,7 +355,7 @@ export default function DisplayLogModalInfo({
                           Homens
                         </span>
                         <span className="text-blue-600 dark:text-blue-400 font-semibold">
-                          {record.insightface?.men || 0}
+                          {record.insightface?.men ?? "—"}
                         </span>
                       </div>
                       <div className="h-2 rounded-full bg-blue-100 dark:bg-blue-950/40 overflow-hidden">
@@ -392,7 +386,7 @@ export default function DisplayLogModalInfo({
                           Mulheres
                         </span>
                         <span className="text-pink-600 dark:text-pink-400 font-semibold">
-                          {record.insightface?.women || 0}
+                          {record.insightface?.women ?? "—"}
                         </span>
                       </div>
                       <div className="h-2 rounded-full bg-pink-100 dark:bg-pink-950/40 overflow-hidden">

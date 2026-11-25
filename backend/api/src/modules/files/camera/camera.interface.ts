@@ -1,27 +1,24 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEnum, IsMongoId, Matches } from 'class-validator';
+import { DisplayType } from 'src/modules/display/unit/unit.interface';
 
 export class UplodadCameraFileDto {
-  @IsNotEmpty()
-  @IsString()
+  @IsMongoId()
   record: string;
 
-  @IsNotEmpty()
-  @IsString()
+  @IsMongoId()
   unit: string;
 
-  @IsNotEmpty()
-  @IsString()
+  @Matches(/^[\w.:-]{1,128}$/)
   timestamp: string;
 
-  @IsNotEmpty()
-  @IsString()
-  type: string;
+  @IsEnum(DisplayType)
+  type: DisplayType;
 }
 
 export class IUplodadCameraFile {
   file: Express.Multer.File;
   timestamp: string;
-  type: string;
+  type: DisplayType;
   unit: string;
   record: string;
 }

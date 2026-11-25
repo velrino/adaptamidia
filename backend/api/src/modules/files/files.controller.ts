@@ -47,7 +47,9 @@ export class FilesController {
   }
 
   @Post('camera')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 8 * 1024 * 1024 } }),
+  )
   async uploadWebcam(
     @Body() body: UplodadCameraFileDto,
     @UploadedFile() file: Express.Multer.File,

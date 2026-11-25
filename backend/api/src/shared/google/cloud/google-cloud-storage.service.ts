@@ -13,6 +13,8 @@ import { GetGoogleCloudCredential, GoogleCloudCredential } from '../resouces';
 @Injectable()
 export class GoogleCloudStorageService {
   private storage: Storage;
+  private readonly captureBucket = process.env.DISPLAY_CAPTURE_BUCKET?.trim();
+  private readonly captureStorage?: Storage;
 
   constructor() {
     const keyFilename = GetGoogleCloudCredential(
@@ -22,6 +24,21 @@ export class GoogleCloudStorageService {
     this.storage = new Storage(
       keyFilename ? { keyFilename } : { projectId: 'rare-tape-466414-f4' },
     );
+
+    const captureKey = process.env.DISPLAY_CAPTURE_CREDENTIALS_FILE?.trim();
+    if (this.captureBucket && captureKey) {
+      this.captureStorage = new Storage({ keyFilename: captureKey });
+    }
+  }
+
+  getDisplayCaptureBucket(): string {
+    return this.captureBucket || IGoogleStorageBucket.ADAPTA_MIDIA_RECORD;
+  }
+
+  private getBucket(name: string) {
+    const storage =
+      name === this.captureBucket ? this.captureStorage : undefined;
+    return (storage ?? this.storage).bucket(name);
   }
 
   // async onApplicationBootstrap() {
@@ -142,11 +159,11 @@ export class GoogleCloudStorageService {
     folderName: string,
     fileName: string,
     file: Express.Multer.File,
-    bucket: IGoogleStorageBucket,
+    bucket: string,
     makePublic: boolean = false,
   ) {
     const filePath = `${folderName}/${fileName}`;
-    const bucketRef = this.storage.bucket(bucket);
+    const bucketRef = this.getBucket(bucket);
     const blob = bucketRef.file(filePath);
 
     try {
@@ -191,12 +208,9 @@ export class GoogleCloudStorageService {
     }
   }
 
-  async deleteFile(
-    filename: string,
-    bucket: IGoogleStorageBucket,
-  ): Promise<void> {
+  async deleteFile(filename: string, bucket: string): Promise<void> {
     try {
-      const bucketRef = this.storage.bucket(bucket);
+      const bucketRef = this.getBucket(bucket);
       await bucketRef.file(filename).delete();
     } catch (error) {
       Log(
@@ -214,12 +228,12 @@ export class GoogleCloudStorageService {
 
   async getSignedUrl(
     filename: string,
-    bucket: IGoogleStorageBucket,
+    bucket: string,
     isPublic: boolean = false, // Indica se o arquivo é público (opcional, padrão false)
     expiresInMs?: number, // Tempo de expiração em milissegundos (opcional)
   ): Promise<string> {
     try {
-      const file = this.storage.bucket(bucket).file(filename);
+      const file = this.getBucket(bucket).file(filename);
 
       // Se o arquivo for público e a URL pública for solicitada, retorne a URL pública
       if (isPublic) {
@@ -250,12 +264,12 @@ export class GoogleCloudStorageService {
 
   async getSignedUrlSafe(
     filename: string,
-    bucket: IGoogleStorageBucket,
+    bucket: string,
     isPublic: boolean = false,
     expiresInMs?: number,
   ): Promise<string | null> {
     try {
-      const file = this.storage.bucket(bucket).file(filename);
+      const file = this.getBucket(bucket).file(filename);
 
       // Verifica se o arquivo existe antes de tentar gerar a URL
       const [exists] = await file.exists();
@@ -307,12 +321,9 @@ export class GoogleCloudStorageService {
     return this.getSignedUrl(filePath, bucket, isPublic, expiresInMs);
   }
 
-  async downloadRecordFile(
-    bucket: IGoogleStorageBucket,
-    filePath: string,
-  ): Promise<Buffer> {
+  async downloadRecordFile(bucket: string, filePath: string): Promise<Buffer> {
     try {
-      const file = this.storage.bucket(bucket).file(filePath);
+      const file = this.getBucket(bucket).file(filePath);
       const [buffer] = await file.download();
       return buffer;
     } catch (error) {
@@ -353,7 +364,7 @@ export class GoogleCloudStorageService {
   }
 
   async downloadRecordFileAsMulter(
-    bucket: IGoogleStorageBucket,
+    bucket: string,
     filePath: string,
   ): Promise<Express.Multer.File> {
     const buffer = await this.downloadRecordFile(bucket, filePath);

@@ -6,6 +6,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { createHash } from 'node:crypto';
 import { Model, Types } from 'mongoose';
 import {
   Advertisement,
@@ -74,6 +75,7 @@ export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
     const currentTimezone = currentRequest.custom_client.timezone;
 
     const body: ICreateDisplayLog = {
+      capture_expected: parameters.capture_expected,
       id: new Types.ObjectId(parameters.id),
       local: new Types.ObjectId(parameters.local),
       type: parameters.type,
@@ -296,7 +298,7 @@ export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
         );
       }
 
-      const record = await this.displayLogModel.create({
+      const values = {
         ...currentBody,
         local: localID,
         local_unit: new Types.ObjectId(localUnit?._id),
@@ -308,8 +310,32 @@ export class CreateDisplayLogService implements OnModuleInit, OnModuleDestroy {
         data: parameters.data,
         type: parameters.type,
         status: parameters.status,
-      });
+      };
 
+      if (parameters.capture_expected !== undefined && parameters.identifier) {
+        const key = [
+          parameters.local,
+          parameters.type,
+          parameters.id,
+          parameters.identifier,
+        ];
+        const id = new Types.ObjectId(
+          createHash('sha256').update(key.join(':')).digest('hex').slice(0, 24),
+        );
+        const now = new Date();
+        return this.displayLogModel.findOneAndUpdate(
+          { _id: id },
+          { $setOnInsert: { ...values, created_at: now, updated_at: now } },
+          {
+            upsert: true,
+            new: true,
+            timestamps: false,
+            setDefaultsOnInsert: true,
+          },
+        );
+      }
+
+      const record = await this.displayLogModel.create(values);
       await this.queueService.addQueueDetectImage({
         id: record._id as Types.ObjectId,
         return: false,
