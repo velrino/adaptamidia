@@ -22,6 +22,18 @@ Follow the web display from playback and camera capture through private storage,
 | **03** | Detection queue | **Count people and save the annotated capture**<br>Vision analyzes the stored image. The worker saves the count and the image with bounding boxes.<br>[Guide](docs/architecture/steps/03-people-detection/README.md) · [Mermaid source](docs/architecture/steps/03-people-detection/SEQUENCE.txt) | <a href="docs/architecture/steps/03-people-detection/diagram.png"><img src="docs/architecture/steps/03-people-detection/diagram.png" alt="Count people and save the annotated capture sequence diagram" width="480" /></a> |
 | **04** | Admin or insights queue | **Generate and show audience insights**<br>The API sends playback context and audience metrics as text to the LLM, then saves the generated insight.<br>[Guide](docs/architecture/steps/04-llm-insights/README.md) · [Mermaid source](docs/architecture/steps/04-llm-insights/SEQUENCE.txt) | <a href="docs/architecture/steps/04-llm-insights/diagram.png"><img src="docs/architecture/steps/04-llm-insights/diagram.png" alt="Generate and show audience insights sequence diagram" width="480" /></a> |
 
+## Proposed AI architecture
+
+A proposal for a dedicated NestJS AI module with a workflow orchestrator, bounded specialist agents, provider adapters, and durable runs. It uses derived audience metrics and approved context. Private camera captures stay with the Vision pipeline. The proposal covers campaign digests, measurement triage, and experiment drafts alongside the current per-display insight.
+
+[Read the architecture proposal](docs/architecture/ai/README.md) · [Proposed workflow guides](docs/architecture/steps/README.md#proposed-ai-workflow)
+
+| Step | Starts with | Flow | Diagram |
+| --- | --- | --- | --- |
+| **05** | Admin or scheduler | **Register a scoped AI run**<br>Authorize the scope, reserve a run in MongoDB, and dispatch its ID.<br>[Guide](docs/architecture/steps/05-ai-run-intake/README.md) · [Mermaid source](docs/architecture/steps/05-ai-run-intake/SEQUENCE.txt) | <a href="docs/architecture/steps/05-ai-run-intake/diagram.png"><img src="docs/architecture/steps/05-ai-run-intake/diagram.png" alt="Register a scoped AI run proposed sequence diagram" width="480" /></a> |
+| **06** | AI queue | **Delegate and validate the result**<br>Build an evidence snapshot, select a specialist where useful, and validate the result.<br>[Guide](docs/architecture/steps/06-ai-orchestration/README.md) · [Mermaid source](docs/architecture/steps/06-ai-orchestration/SEQUENCE.txt) | <a href="docs/architecture/steps/06-ai-orchestration/diagram.png"><img src="docs/architecture/steps/06-ai-orchestration/diagram.png" alt="Delegate and validate the result proposed sequence diagram" width="480" /></a> |
+| **07** | Admin | **Review evidence and approve next actions**<br>Show run status and evidence, then record a human decision on a proposed action.<br>[Guide](docs/architecture/steps/07-ai-review/README.md) · [Mermaid source](docs/architecture/steps/07-ai-review/SEQUENCE.txt) | <a href="docs/architecture/steps/07-ai-review/diagram.png"><img src="docs/architecture/steps/07-ai-review/diagram.png" alt="Review evidence and approve next actions proposed sequence diagram" width="480" /></a> |
+
 ## Local development
 
 Install Node.js 24, Java 21 for the Firebase Realtime Database emulator, MongoDB with `mongosh`, Redis, and `uv` for Python 3.12. If you use nvm, run `nvm install` and `nvm use` in the repository root. The development and seed commands can also pick an installed Node.js 24 from nvm when your shell uses another version.

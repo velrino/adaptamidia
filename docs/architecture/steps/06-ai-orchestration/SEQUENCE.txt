@@ -1,0 +1,63 @@
+---
+title: 06 - Delegate and validate the result (proposed)
+config:
+  theme: base
+  look: classic
+  fontFamily: Arial, sans-serif
+  themeCSS: |
+    rect.actor[name="Queue"], line.actor-line[name="Queue"] { fill: #25334E !important; stroke: #25334E !important; }
+    rect.actor[name="Worker"], line.actor-line[name="Worker"] { fill: #067C87 !important; stroke: #067C87 !important; }
+    rect.actor[name="Orchestrator"], line.actor-line[name="Orchestrator"] { fill: #2454A6 !important; stroke: #2454A6 !important; }
+    rect.actor[name="Evidence"], line.actor-line[name="Evidence"] { fill: #3F6D36 !important; stroke: #3F6D36 !important; }
+    rect.actor[name="Agent"], line.actor-line[name="Agent"] { fill: #067C87 !important; stroke: #067C87 !important; }
+    rect.actor[name="Provider"], line.actor-line[name="Provider"] { fill: #633DA2 !important; stroke: #633DA2 !important; }
+    text.actor, text.actor tspan { fill: #FFFFFF !important; }
+    text.actor { font-weight: 700 !important; }
+    text.messageText { paint-order: stroke; stroke: #FFFFFF !important; stroke-width: 4px; stroke-linejoin: round; }
+  themeVariables:
+    background: "#FFFFFF"
+    actorBkg: "#25334E"
+    actorBorder: "#25334E"
+    actorTextColor: "#FFFFFF"
+    actorLineColor: "#ADB9CD"
+    signalColor: "#27334A"
+    signalTextColor: "#201830"
+    titleColor: "#201830"
+    noteBkgColor: "#F4F6FA"
+    noteBorderColor: "#AEBAD0"
+    noteTextColor: "#27334A"
+    labelBoxBkgColor: "#F4F6FA"
+    labelBoxBorderColor: "#AEBAD0"
+    labelTextColor: "#27334A"
+    loopTextColor: "#27334A"
+    sequenceNumberColor: "#FFFFFF"
+  sequence:
+    mirrorActors: false
+    diagramMarginX: 24
+    diagramMarginY: 24
+    actorMargin: 48
+    messageMargin: 26
+---
+sequenceDiagram
+    autonumber
+    participant Queue as AI queue
+    create participant Worker as AI worker
+    Queue->>Worker: Deliver run ID
+    create participant Orchestrator as Orchestrator
+    Worker->>Orchestrator: Execute the claimed run
+    create participant Evidence as Evidence store
+    Orchestrator->>Evidence: Load scoped aggregate facts
+    Evidence-->>Orchestrator: Snapshot and coverage
+    alt Evidence supports the workflow
+        create participant Agent as Specialist agent
+        Orchestrator->>Agent: Delegate one bounded task
+        create participant Provider as Model adapter
+        Agent->>Provider: Send text evidence and response schema
+        Provider-->>Agent: Structured output and usage
+        Agent-->>Orchestrator: Candidate artifact
+        Note over Orchestrator: Verify schema, evidence, and budget
+    else Evidence is missing or pending
+        Note over Orchestrator: Return insufficient evidence
+    end
+    Orchestrator-->>Worker: Validated result or terminal status
+    Worker->>Evidence: Persist run status and artifact

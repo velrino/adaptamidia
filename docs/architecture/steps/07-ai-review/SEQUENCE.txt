@@ -1,0 +1,52 @@
+---
+title: 07 - Review evidence and approve next actions (proposed)
+config:
+  theme: base
+  look: classic
+  fontFamily: Arial, sans-serif
+  themeCSS: |
+    rect.actor[name="Admin"], line.actor-line[name="Admin"] { fill: #2454A6 !important; stroke: #2454A6 !important; }
+    rect.actor[name="API"], line.actor-line[name="API"] { fill: #2454A6 !important; stroke: #2454A6 !important; }
+    rect.actor[name="DB"], line.actor-line[name="DB"] { fill: #3F6D36 !important; stroke: #3F6D36 !important; }
+    text.actor, text.actor tspan { fill: #FFFFFF !important; }
+    text.actor { font-weight: 700 !important; }
+    text.messageText { paint-order: stroke; stroke: #FFFFFF !important; stroke-width: 4px; stroke-linejoin: round; }
+  themeVariables:
+    background: "#FFFFFF"
+    actorBkg: "#25334E"
+    actorBorder: "#25334E"
+    actorTextColor: "#FFFFFF"
+    actorLineColor: "#ADB9CD"
+    signalColor: "#27334A"
+    signalTextColor: "#201830"
+    titleColor: "#201830"
+    noteBkgColor: "#F4F6FA"
+    noteBorderColor: "#AEBAD0"
+    noteTextColor: "#27334A"
+    labelBoxBkgColor: "#F4F6FA"
+    labelBoxBorderColor: "#AEBAD0"
+    labelTextColor: "#27334A"
+    loopTextColor: "#27334A"
+    sequenceNumberColor: "#FFFFFF"
+  sequence:
+    mirrorActors: false
+    diagramMarginX: 24
+    diagramMarginY: 24
+    actorMargin: 48
+    messageMargin: 26
+---
+sequenceDiagram
+    autonumber
+    participant Admin as Admin dashboard
+    create participant API as AI runs API
+    Admin->>API: Open or reconnect to a run
+    create participant DB as MongoDB
+    API->>DB: Read authorized status and artifacts
+    DB-->>API: Status, evidence, and last valid result
+    API-->>Admin: Progress and evidence-backed result
+    opt Proposal is ready for review
+        Admin->>API: Approve or reject the proposal
+        API->>DB: Record reviewer and decision
+        DB-->>API: Updated review state
+        API-->>Admin: Show review decision
+    end
