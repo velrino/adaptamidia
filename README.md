@@ -1,9 +1,15 @@
 # AdaptaMídia
 
+[Project presentation on Canva](https://www.canva.com/design/DAGzn4-hhkE/WapH1-uL97Op8tOBnVB4_w/edit)
+
 - `frontend/admin` contains the Next.js admin dashboard.
 - `frontend/kiosk` contains the Flutter digital signage player for Android tablets.
 - `backend/api` contains the NestJS API.
 - `backend/vision` contains the Python computer vision service.
+
+## Production architecture
+
+![AdaptaMídia production architecture](docs/architecture/architecture.png)
 
 ## Local development
 
