@@ -28,23 +28,11 @@
 
 ## Ambiente local em outro computador
 
-Instale Node.js 24, Java 21, MongoDB com `mongosh`, Redis e `uv`. O launcher usa Bash e prepara o ambiente Python 3.12 do Vision. Use o vídeo demo já incluído no Admin para testar o display sem um dispositivo físico.
+Siga a [configuração local do monorepo](../../README.md#local-development) para instalar os pré-requisitos. Na raiz, rode `npm ci` e `npm run dev`. O Turbo inicia a API, o Admin, o Vision e a infraestrutura local com logs no terminal. Use `Ctrl+C` para encerrar.
 
-Na raiz do monorepo, rode:
+Com a stack rodando, execute `npm run seed` em outro terminal para criar a conta `admin@adaptamidia.test` e o display `DEMO-DISPLAY-01` no banco `adaptamidia_local`. Abra o Admin em `http://127.0.0.1:4001/login`. A senha gerada fica em `LOCAL_ADMIN_PASSWORD` nos arquivos de ambiente.
 
-```bash
-./dev.sh --seed
-```
-
-O launcher gera os `.env` ausentes a partir dos exemplos, instala as dependências dos projetos, sobe a stack local e carrega o display `DEMO-DISPLAY-01`. Abra o Admin em `http://127.0.0.1:4001/login`. A conta `admin@adaptamidia.test` é criada para o banco local e a senha gerada fica em `LOCAL_ADMIN_PASSWORD` nos arquivos de ambiente. O formulário local já vem preenchido.
-
-Use `Ctrl+C` para encerrar os serviços iniciados no terminal. Para iniciar novamente sem atualizar a data da exibição demo, rode o launcher sem `--seed`. Com o MongoDB rodando, também dá para rodar apenas o seed de dentro de `backend/api`:
-
-```bash
-npm run seed:display
-```
-
-O seed atualiza a mesma exibição demo no banco `adaptamidia_local`. Para testar notícias, Gemini ou Google Maps, preencha as respectivas chaves em `backend/api/.env` e reinicie o launcher.
+Para testar notícias, Gemini ou Google Maps, preencha as respectivas chaves em `backend/api/.env` e reinicie o Turbo.
 
 ## Project setup
 
@@ -59,7 +47,7 @@ $ npm install
 $ npm run start
 
 # watch mode
-$ npm run start:dev
+$ npm run dev
 
 # production mode
 $ npm run start:prod

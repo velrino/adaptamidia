@@ -1,5 +1,5 @@
 {
-  "name": "xmpmedia-api",
+  "name": "api",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -11,6 +11,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "node dist/main.js",
     "dev": "nest start --watch",
+    "dev:local": "node ../../scripts/dev-infra.cjs wait && npm run dev",
     "seed:display": "node --env-file=.env -r ts-node/register -r tsconfig-paths/register src/seeds/display.ts",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
@@ -51,6 +52,7 @@
     "mongoose": "^8.9.5",
     "newsapi": "^2.4.1",
     "otpauth": "^9.3.6",
+    "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2",

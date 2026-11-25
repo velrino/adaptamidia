@@ -1,0 +1,22 @@
+{
+  "name": "adaptamidia",
+  "private": true,
+  "packageManager": "npm@11.13.0",
+  "engines": {
+    "node": "24.x"
+  },
+  "workspaces": [
+    "backend/api",
+    "backend/vision",
+    "frontend/admin"
+  ],
+  "scripts": {
+    "dev": "node scripts/run-local.cjs dev",
+    "dev:setup": "node scripts/dev-setup.cjs",
+    "dev:infra": "node scripts/dev-infra.cjs start",
+    "seed": "node scripts/run-local.cjs seed"
+  },
+  "devDependencies": {
+    "turbo": "2.11.13"
+  }
+}

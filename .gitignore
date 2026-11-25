@@ -1,4 +1,6 @@
 /.dev-local/
+/.turbo/
+/node_modules/
 /backend/vision/.venv/
 
 # Credentials are supplied locally.

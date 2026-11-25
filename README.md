@@ -24,13 +24,26 @@ Follow the web display from playback and camera capture through private storage,
 
 ## Local development
 
-Install Node.js 24, Java 21 for the Firebase emulator, MongoDB with `mongosh`, Redis, and `uv`. Run the launcher from the repository root.
+Install Node.js 24, Java 21 for the Firebase Realtime Database emulator, MongoDB with `mongosh`, Redis, and `uv` for Python 3.12. If you use nvm, run `nvm install` and `nvm use` in the repository root. The development and seed commands can also pick an installed Node.js 24 from nvm when your shell uses another version.
+
+Run from the repository root.
 
 ```bash
-./dev.sh --seed
+npm ci
+npm run dev
 ```
 
-The launcher creates missing local environment files and starts the admin dashboard at `http://127.0.0.1:4001/login`, the API on port `4002`, and the Vision service on port `8000`. The `--seed` option creates a demo account and display. Press `Ctrl+C` to stop the services started by the launcher.
+Turborepo runs the NestJS API in watch mode, Next.js with Fast Refresh, and Uvicorn with reload. It streams logs to the terminal. Press `Ctrl+C` to stop the processes started by Turbo.
+
+| Service | Local URL |
+| --- | --- |
+| Admin | http://127.0.0.1:4001/login |
+| API | http://127.0.0.1:4002/ |
+| Vision | http://127.0.0.1:8000/docs |
+
+The setup task creates missing local environment files and prepares the Vision virtual environment on macOS. The infrastructure task starts Redis and the Firebase Realtime Database emulator. It uses MongoDB on port `27017` if available and starts a local instance under `.dev-local/mongo` otherwise.
+
+To create the demo account and display, open another terminal after startup and run `npm run seed` from the repository root. The generated demo password is stored in `LOCAL_ADMIN_PASSWORD` in your local API environment file.
 
 The kiosk runs separately on an Android device or emulator. Put the Android Firebase configuration in `frontend/kiosk/android/app/google-services.json` before building. Follow the [kiosk setup instructions](frontend/kiosk/README.md) for the remaining steps.
 
