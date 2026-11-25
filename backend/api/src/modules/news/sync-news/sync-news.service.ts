@@ -15,27 +15,46 @@ import { InjectModel } from '@nestjs/mongoose';
 import { DateTime } from 'luxon';
 import { RESULT } from 'src/shared/result.enum';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { FirebaseDatabaseService } from 'src/shared/firebase/firebase-database.service';
-import { LockKeyName } from 'src/shared/general';
+import { Environments, GetEnvironment, LockKeyName } from 'src/shared/general';
 
 export const ExcludeDomains = ['GlobeNewswire'];
 
+const hourMs = 60 * 60 * 1000;
+const dailyIntervalMs = 24 * hourMs;
+
+interface NewsSyncState {
+  _id: string;
+  nextRunAt: Date;
+}
+
+function isQuotaError(error: unknown) {
+  return (
+    error instanceof Error &&
+    ['NewsAPIError: rateLimited', 'NewsAPIError: apiKeyExhausted'].includes(
+      error.name,
+    )
+  );
+}
+
 @Injectable()
 export class SyncNewsService {
-  private readonly apiTokens = (process.env.NEWS_API_KEYS ?? '')
-    .split(',')
-    .map((token) => token.trim())
-    .filter(Boolean);
+  private readonly apiTokens = [
+    ...new Set(
+      (process.env.NEWS_API_KEYS ?? '')
+        .split(',')
+        .map((token) => token.trim())
+        .filter(Boolean),
+    ),
+  ];
   private currentTokenIndex = 0;
 
   constructor(
     @InjectModel(News.name)
     readonly model: Model<NewsDocument>,
-    private readonly firebaseDb: FirebaseDatabaseService,
   ) {}
 
-  async onApplicationBootstrap() {
-    await this.execute();
+  onApplicationBootstrap() {
+    void this.execute();
   }
 
   private getNextApiToken(): string {
@@ -45,56 +64,71 @@ export class SyncNewsService {
     return token;
   }
 
-  @Cron(CronExpression.EVERY_3_HOURS)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   async handleCron() {
-    if (!this.apiTokens.length) return;
-
-    const lockName = LockKeyName(`sync-news`);
-    const leaseMs = 30 * 60 * 1000; // 30 minutos (ajuste conforme duração esperada)
-    const acquired = await this.firebaseDb.acquireLock(lockName, leaseMs);
-
-    if (!acquired) {
-      Log(
-        LogType.INFO,
-        SyncNewsService.name,
-        this.handleCron.name,
-        LogAction.SKIP,
-        { about: 'LOCK_NOT_ACQUIRED', lockName },
-      );
-      // return;
-    }
-
-    try {
-      await this.execute();
-    } finally {
-      await this.firebaseDb.releaseLock(lockName);
-    }
+    await this.execute();
   }
 
   async getNewsEverythingAbout(
     token: string,
     q: string,
   ): Promise<INewsApiResponse> {
-    try {
-      const newsapi: NewsAPI = new NewsAPI(token);
+    const newsapi: NewsAPI = new NewsAPI(token);
+    return newsapi.v2.everything({
+      language: 'pt',
+      sortBy: 'popularity',
+      excludeDomains: ExcludeDomains.join(','),
+      pageSize: 100,
+      q,
+    });
+  }
 
-      return await newsapi.v2.everything({
-        language: 'pt', // Português
-        // country: 'br', // Brasil
-        sortBy: 'popularity',
-        excludeDomains: ExcludeDomains.join(','),
-        pageSize: 100, // Limita a 10 notícias
-        q,
-      });
+  private async reserveSync(now: Date, nextRunAt: Date) {
+    try {
+      const result = await this.syncState.updateOne(
+        { _id: LockKeyName('sync-news') },
+        [
+          {
+            $set: {
+              nextRunAt: {
+                $cond: [
+                  { $lte: [{ $ifNull: ['$nextRunAt', now] }, now] },
+                  nextRunAt,
+                  '$nextRunAt',
+                ],
+              },
+            },
+          },
+        ],
+        { upsert: true },
+      );
+      return result.modifiedCount === 1 || result.upsertedCount === 1;
     } catch (error) {
-      throw new Error(error);
+      // Concurrent processes can race to create the first checkpoint.
+      if (error?.code === 11000) return false;
+      throw error;
     }
+  }
+
+  private get syncState() {
+    return this.model.db.collection<NewsSyncState>('news_sync_state');
   }
 
   async execute() {
     try {
       if (!this.apiTokens.length) return;
 
+      const production = Object.values(Environments).some(
+        (environment) => environment === GetEnvironment(),
+      );
+      const now = new Date();
+      const nextRunAt = new Date(
+        now.getTime() + (production ? 3 * hourMs : dailyIntervalMs),
+      );
+      // Reserve before calling the provider so a restart cannot replay the batch.
+      if (!(await this.reserveSync(now, nextRunAt))) return;
+
+      const limitedTokens = new Set<string>();
       const timeAgo = DateTime.utc().minus({ hour: 1 }).toJSDate();
       const provider = NewsProviderEnum.NEWS_API;
       const keywords = Object.values(NewsKeywordEnum);
@@ -124,52 +158,39 @@ export class SyncNewsService {
         let attemptsMade = 0;
         const maxAttempts = this.apiTokens.length;
 
-        while (attemptsMade < maxAttempts && articles.length === 0) {
+        while (attemptsMade < maxAttempts) {
           attemptsMade++;
           const apiToken = this.getNextApiToken();
+          if (limitedTokens.has(apiToken)) continue;
 
           try {
-            articles = await this.getNewsEverythingAbout(
+            const response = await this.getNewsEverythingAbout(
               apiToken,
               keyword,
-            ).then((res) =>
-              res.articles.filter(
-                ({ author, urlToImage, title, url, source }) =>
-                  author && urlToImage && title && url && source?.name,
-              ),
             );
-
-            if (articles.length > 0) {
-              break; // Sucesso, sair do loop
-            }
+            articles = response.articles.filter(
+              ({ author, urlToImage, title, url, source }) =>
+                author && urlToImage && title && url && source?.name,
+            );
+            break;
           } catch (error) {
-            if (attemptsMade < maxAttempts) {
-              Log(
-                LogType.ERROR,
-                SyncNewsService.name,
-                this.getNewsEverythingAbout.name,
-                LogAction.FAILED,
-                {
-                  about: RESULT.NEWS_LIMIT_REACHED,
-                  keyword,
-                  tokenIndex: this.currentTokenIndex - 1,
-                  attemptNumber: attemptsMade,
-                },
+            if (!isQuotaError(error)) throw error;
+
+            limitedTokens.add(apiToken);
+            if (limitedTokens.size === maxAttempts) {
+              const retryAt = new Date(Date.now() + dailyIntervalMs);
+              await this.syncState.updateOne(
+                { _id: LockKeyName('sync-news'), nextRunAt },
+                { $max: { nextRunAt: retryAt } },
               );
-            } else {
-              // Todos os tokens falharam
               Log(
-                LogType.ERROR,
+                LogType.INFO,
                 SyncNewsService.name,
-                this.getNewsEverythingAbout.name,
-                LogAction.FAILED,
-                {
-                  about: 'ALL_TOKENS_EXHAUSTED',
-                  keyword,
-                  totalAttempts: attemptsMade,
-                },
+                this.execute.name,
+                LogAction.SKIP,
+                { about: RESULT.NEWS_LIMIT_REACHED, retryAt },
               );
-              throw error; // Re-lançar o erro se todos os tokens falharam
+              return;
             }
           }
         }
