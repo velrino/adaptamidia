@@ -9,7 +9,9 @@
 
 ## Production architecture
 
-![AdaptaMídia production architecture](docs/architecture/architecture.png)
+![AdaptaMídia production architecture](docs/architecture/architecture.svg)
+
+[Editable Excalidraw scene](docs/architecture/architecture.excalidraw) · [Original PNG](docs/architecture/architecture.png)
 
 ## Display capture to audience insights
 
