@@ -16,17 +16,16 @@ import { DateTime } from 'luxon';
 import { RESULT } from 'src/shared/result.enum';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { FirebaseDatabaseService } from 'src/shared/firebase/firebase-database.service';
-import { Environments, GetEnvironment, LockKeyName } from 'src/shared/general';
+import { LockKeyName } from 'src/shared/general';
 
 export const ExcludeDomains = ['GlobeNewswire'];
 
 @Injectable()
 export class SyncNewsService {
-  private apiTokens = [
-    'REDACTED', //  velrino
-    'REDACTED', //  adaptamidia
-    'REDACTED', //  seemidia
-  ];
+  private readonly apiTokens = (process.env.NEWS_API_KEYS ?? '')
+    .split(',')
+    .map((token) => token.trim())
+    .filter(Boolean);
   private currentTokenIndex = 0;
 
   constructor(
@@ -48,6 +47,8 @@ export class SyncNewsService {
 
   @Cron(CronExpression.EVERY_3_HOURS)
   async handleCron() {
+    if (!this.apiTokens.length) return;
+
     const lockName = LockKeyName(`sync-news`);
     const leaseMs = 30 * 60 * 1000; // 30 minutos (ajuste conforme duração esperada)
     const acquired = await this.firebaseDb.acquireLock(lockName, leaseMs);
@@ -92,22 +93,7 @@ export class SyncNewsService {
 
   async execute() {
     try {
-      const env = GetEnvironment();
-
-      const currentEnvirement = Object.values(Environments).includes(
-        env as Environments,
-      );
-
-      if (!currentEnvirement) {
-        Log(
-          LogType.INFO,
-          SyncNewsService.name,
-          this.handleCron.name,
-          LogAction.SKIP,
-          { about: 'NOT_ENVIRONMENT', currentEnvirement },
-        );
-        return;
-      }
+      if (!this.apiTokens.length) return;
 
       const timeAgo = DateTime.utc().minus({ hour: 1 }).toJSDate();
       const provider = NewsProviderEnum.NEWS_API;
@@ -139,6 +125,7 @@ export class SyncNewsService {
         const maxAttempts = this.apiTokens.length;
 
         while (attemptsMade < maxAttempts && articles.length === 0) {
+          attemptsMade++;
           const apiToken = this.getNextApiToken();
 
           try {
@@ -156,8 +143,6 @@ export class SyncNewsService {
               break; // Sucesso, sair do loop
             }
           } catch (error) {
-            attemptsMade++;
-
             if (attemptsMade < maxAttempts) {
               Log(
                 LogType.ERROR,
