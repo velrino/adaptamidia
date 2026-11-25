@@ -1,0 +1,27 @@
+{
+  "buildFiles": [
+    "/Users/velrino/projects/xmp-media/app/third_party/ultralytics_yolo/android/src/main/cpp/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/velrino/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/velrino/projects/xmp-media/app/third_party/ultralytics_yolo/android/.cxx/Debug/1is715j1/x86_64",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/velrino/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/velrino/projects/xmp-media/app/third_party/ultralytics_yolo/android/.cxx/Debug/1is715j1/x86_64",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "ultralytics::@6890427a1f51a3e7e1df": {
+      "artifactName": "ultralytics",
+      "abi": "x86_64",
+      "output": "/Users/velrino/projects/xmp-media/app/build/ultralytics_yolo/intermediates/cxx/Debug/1is715j1/obj/x86_64/libultralytics.so",
+      "runtimeFiles": []
+    }
+  }
+}

@@ -1,0 +1,3 @@
+/Users/velrino/projects/xmp-media/app/third_party/ultralytics_yolo/android/.cxx/Debug/1is715j1/armeabi-v7a/CMakeFiles/ultralytics.dir
+/Users/velrino/projects/xmp-media/app/third_party/ultralytics_yolo/android/.cxx/Debug/1is715j1/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/velrino/projects/xmp-media/app/third_party/ultralytics_yolo/android/.cxx/Debug/1is715j1/armeabi-v7a/CMakeFiles/rebuild_cache.dir

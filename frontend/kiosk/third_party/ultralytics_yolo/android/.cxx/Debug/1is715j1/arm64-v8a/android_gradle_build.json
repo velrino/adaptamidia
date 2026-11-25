@@ -1,0 +1,38 @@
+{
+  "buildFiles": [
+    "/Users/velrino/projects/xmp-media/app/third_party/ultralytics_yolo/android/src/main/cpp/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/velrino/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/velrino/projects/xmp-media/app/third_party/ultralytics_yolo/android/.cxx/Debug/1is715j1/arm64-v8a",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/velrino/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/velrino/projects/xmp-media/app/third_party/ultralytics_yolo/android/.cxx/Debug/1is715j1/arm64-v8a",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "ultralytics::@6890427a1f51a3e7e1df": {
+      "toolchain": "toolchain",
+      "abi": "arm64-v8a",
+      "artifactName": "ultralytics",
+      "output": "/Users/velrino/projects/xmp-media/app/build/ultralytics_yolo/intermediates/cxx/Debug/1is715j1/obj/arm64-v8a/libultralytics.so",
+      "runtimeFiles": []
+    }
+  },
+  "toolchains": {
+    "toolchain": {
+      "cCompilerExecutable": "/Users/velrino/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang.lld",
+      "cppCompilerExecutable": "/Users/velrino/Library/Android/sdk/ndk/27.0.12077973/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++.lld"
+    }
+  },
+  "cFileExtensions": [],
+  "cppFileExtensions": [
+    "cpp"
+  ]
+}
