@@ -1,10 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, MessageEvent } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { GoogleGenAiProvider } from 'src/shared/google/llm/llm.service';
-import {
-  AiStreamChunk,
-  GoogleGenAiModelsEnum,
-} from 'src/shared/google/llm/llm.interface';
+import { GoogleGenAiModelsEnum as Models } from 'src/shared/google/llm/llm.interface';
 import {
   IDisplayLogInsightExecute,
   InsightGenerateDisplayLogQueryDto,
@@ -18,7 +15,7 @@ import { Job } from 'bullmq';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { QueueService } from 'src/modules/queue/queue.service';
 import { Types } from 'mongoose';
-import { GenerateContentResponse } from '@google/genai';
+import { ApiError } from '@google/genai';
 
 @Processor(QueuesEnum.DISPLAY_LOG_INSIGHT)
 @Injectable()
@@ -40,54 +37,113 @@ export class InsightDisplayLogService {
 
     const prompt = ShortOohPrompt(record);
 
-    const getModel = parameters.model
-      ? GoogleGenAiModelsEnum[parameters.model]
-      : GoogleGenAiModelsEnum.GEMINI_2_0_FLASH_001;
-
-    let currentModel: GoogleGenAiModelsEnum =
-      getModel || GoogleGenAiModelsEnum.GEMINI_2_0_FLASH_001;
-
-    let stream: AsyncGenerator<AiStreamChunk>;
-
-    try {
-      stream = this.aiProvider.generateContentStream(prompt, currentModel);
-    } catch (error) {
-      console.error(
-        'Error with primary model, falling back to secondary:',
-        error,
-      );
-      currentModel = GoogleGenAiModelsEnum.DEEPSEEK_R1_0528_MAAS;
-      stream = this.aiProvider.generateContentStream(prompt, currentModel);
-    }
-
     return new Observable((subscriber) => {
+      const abort = new AbortController();
       void (async () => {
-        let fullText = '';
         try {
-          for await (const chunk of stream) {
-            fullText += chunk.text;
-            subscriber.next({ data: chunk.text } as MessageEvent);
-          }
+          const { text, model } = await this.generateInsight(
+            prompt,
+            String(record._id),
+            parameters.model ?? Models.DEFAULT,
+            (chunk) => subscriber.next({ data: chunk }),
+            abort.signal,
+          );
+          if (abort.signal.aborted) return;
 
           await this.getDisplayLogService.displayLogModel.updateOne(
+            { _id: record._id },
             {
-              _id: record._id,
-            },
-            {
-              llm_insight: fullText,
-              llm_insight_model: currentModel,
+              llm_insight: text,
+              llm_insight_model: model,
               llm_insight_at: new Date(),
             },
           );
 
-          subscriber.next({ data: '[DONE]' } as MessageEvent);
+          subscriber.next({ type: 'insight-model', data: model });
+          subscriber.next({ data: '[DONE]' });
           subscriber.complete();
         } catch (error) {
-          console.error('Erro no stream de IA:', error);
-          subscriber.error(error);
+          if (!abort.signal.aborted) {
+            this.logGenerationFailure(String(record._id), error);
+            subscriber.next({
+              type: 'insight-error',
+              data: 'Não foi possível gerar o insight. Tente novamente.',
+            });
+            subscriber.complete();
+          }
         }
       })();
+      return () => abort.abort();
     });
+  }
+
+  private async generateInsight(
+    prompt: string,
+    recordId: string,
+    selection: Models,
+    onChunk?: (text: string) => void,
+    signal?: AbortSignal,
+  ) {
+    const useDefault =
+      selection === Models.DEFAULT || selection === Models.GEMINI_2_0_FLASH_001;
+    const models = useDefault
+      ? [selection, Models.GEMINI_3_5_FLASH, Models.GEMINI_3_8_FLASH]
+      : [selection];
+    const seen = new Set<string>();
+    let lastError: unknown;
+
+    for (const candidate of models) {
+      const model = this.aiProvider.resolveModel(candidate);
+      if (seen.has(model)) continue;
+      seen.add(model);
+
+      let text = '';
+      try {
+        for await (const chunk of this.aiProvider.generateContent(
+          prompt,
+          candidate,
+          { recordId, stream: Boolean(onChunk), signal },
+        )) {
+          text += chunk;
+          onChunk?.(chunk);
+        }
+        if (!text.trim())
+          throw new Error('The model returned no insight text.');
+        return { text, model };
+      } catch (error) {
+        const retryable =
+          error instanceof ApiError &&
+          [404, 429, 502, 503, 504].includes(error.status);
+        if (!useDefault || text || signal?.aborted || !retryable) throw error;
+        lastError = error;
+        Log(
+          LogType.INFO,
+          InsightDisplayLogService.name,
+          'model',
+          LogAction.SKIP,
+          {
+            recordId,
+            model,
+            status: error.status,
+          },
+        );
+      }
+    }
+    throw lastError ?? new Error('No insight model is configured.');
+  }
+
+  private logGenerationFailure(recordId: string, error: unknown) {
+    Log(
+      LogType.ERROR,
+      InsightDisplayLogService.name,
+      'generate',
+      LogAction.FAILED,
+      {
+        recordId,
+        status: error instanceof ApiError ? error.status : undefined,
+        errorType: error instanceof Error ? error.name : undefined,
+      },
+    );
   }
 
   @Process({ concurrency: 5 })
@@ -173,31 +229,11 @@ export class InsightDisplayLogService {
     try {
       const record = await this.getDisplayLogService.get({ _id: recordId });
 
-      const prompt = ShortOohPrompt(record);
-      let response: GenerateContentResponse | null = null;
-
-      let currentModel: GoogleGenAiModelsEnum | null = null;
-      const fallbackModels: GoogleGenAiModelsEnum[] = [
-        GoogleGenAiModelsEnum.GEMINI_2_0_FLASH_001,
-        GoogleGenAiModelsEnum.DEEPSEEK_R1_0528_MAAS,
-        GoogleGenAiModelsEnum.META_LLAMA_4_MAVERICK_17B_128E_INSTRUCT_MAAS,
-        GoogleGenAiModelsEnum.GEMINI_2_5_PRO,
-      ];
-
-      for (const model of fallbackModels) {
-        try {
-          response = await this.aiProvider.generateContent(prompt, model);
-          currentModel = model;
-          break; // sucesso, sai do loop
-        } catch (error) {
-          // opcional: logar para debug
-          console.warn(`Model ${model} falhou:`, error);
-        }
-      }
-
-      if (!response || !currentModel) {
-        throw new Error('Nenhum modelo conseguiu gerar resposta.');
-      }
+      const { text, model } = await this.generateInsight(
+        ShortOohPrompt(record),
+        String(recordId),
+        Models.DEFAULT,
+      );
 
       await this.getDisplayLogService.displayLogModel.updateOne(
         {
@@ -205,8 +241,8 @@ export class InsightDisplayLogService {
         },
         {
           $set: {
-            llm_insight: response.text,
-            llm_insight_model: currentModel,
+            llm_insight: text,
+            llm_insight_model: model,
             llm_insight_at: new Date(),
           },
           $unset: { processing_lock: 1, processing_instance: 1 },
@@ -221,13 +257,7 @@ export class InsightDisplayLogService {
           $unset: { processing_lock: 1, processing_instance: 1 },
         },
       );
-      Log(
-        LogType.ERROR,
-        InsightDisplayLogService.name,
-        this.execute.name,
-        LogAction.FAILED,
-        { error },
-      );
+      this.logGenerationFailure(String(recordId), error);
     }
   }
 }

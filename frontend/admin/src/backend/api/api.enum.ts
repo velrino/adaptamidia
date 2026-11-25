@@ -87,30 +87,35 @@ export enum EnumApiCompanyUnitType {
 }
 
 export enum LLMModelsEnum {
-  DEEPSEEK_R1_0528_MAAS = "DEEPSEEK_R1_0528_MAAS",
-  // GEMINI
-  GEMINI_2_0_FLASH_001 = "GEMINI_2_0_FLASH_001",
-  GEMINI_2_5_PRO = "GEMINI_2_5_PRO",
-
-  // META
-  META_LLAMA_4_MAVERICK_17B_128E_INSTRUCT_MAAS = "META_LLAMA_4_MAVERICK_17B_128E_INSTRUCT_MAAS",
+  DEFAULT = "DEFAULT",
+  GEMINI_3_5_FLASH_LITE = "gemini-3.5-flash-lite",
+  GEMINI_3_5_FLASH = "gemini-3.5-flash",
+  GEMINI_3_8_FLASH = "gemini-3.8-flash",
+  GEMINI_3_1_FLASH_LITE = "gemini-3.1-flash-lite",
+  GEMINI_3_1_PRO_PREVIEW = "gemini-3.1-pro-preview",
+  GEMINI_3_6_FLASH = "gemini-3.6-flash",
+  GEMINI_3_7_FLASH = "gemini-3.7-flash",
+  GEMINI_4_HYDROGEN = "gemini-4-hydrogen",
+  GEMINI_4_ARGON = "gemini-4-argon",
+  GEMINI_4_CARBON = "gemini-4-carbon",
+  GEMINI_4_NEON = "gemini-4-neon",
+  GEMMA_4_26B = "gemma-4-26b-a4b-it",
+  GEMMA_4_31B = "gemma-4-31b-it",
 }
 
 export const LLMModelsAsOptions = [
-  {
-    value: LLMModelsEnum.GEMINI_2_0_FLASH_001,
-    label: process.env.NEXT_PUBLIC_DEFAULT_LLM_MODEL || "gemini-2.0-flash-001",
-  },
-  {
-    value: LLMModelsEnum.GEMINI_2_5_PRO,
-    label: "gemini-2.5-pro",
-  },
-  {
-    value: LLMModelsEnum.DEEPSEEK_R1_0528_MAAS,
-    label: "deepseek-ai/deepseek-r1-0528-maas",
-  },
-  {
-    value: LLMModelsEnum.META_LLAMA_4_MAVERICK_17B_128E_INSTRUCT_MAAS,
-    label: "meta/llama-4-maverick-17b-128e-instruct-maas",
-  },
+  { value: LLMModelsEnum.DEFAULT, label: "Padrão da API" },
+  { value: LLMModelsEnum.GEMINI_3_5_FLASH_LITE, label: "Gemini 3.5 Flash-Lite" },
+  { value: LLMModelsEnum.GEMINI_3_5_FLASH, label: "Gemini 3.5 Flash" },
+  { value: LLMModelsEnum.GEMINI_3_8_FLASH, label: "Gemini 3.8 Flash" },
+  { value: LLMModelsEnum.GEMINI_3_1_FLASH_LITE, label: "Gemini 3.1 Flash-Lite" },
+  { value: LLMModelsEnum.GEMINI_3_1_PRO_PREVIEW, label: "Gemini 3.1 Pro (Preview)" },
+  { value: LLMModelsEnum.GEMINI_3_6_FLASH, label: "Gemini 3.6 Flash" },
+  { value: LLMModelsEnum.GEMINI_3_7_FLASH, label: "Gemini 3.7 Flash" },
+  { value: LLMModelsEnum.GEMINI_4_HYDROGEN, label: "Gemini 4 Hydrogen" },
+  { value: LLMModelsEnum.GEMINI_4_ARGON, label: "Gemini 4 Argon" },
+  { value: LLMModelsEnum.GEMINI_4_CARBON, label: "Gemini 4 Carbon" },
+  { value: LLMModelsEnum.GEMINI_4_NEON, label: "Gemini 4 Neon" },
+  { value: LLMModelsEnum.GEMMA_4_26B, label: "Gemma 4 26B" },
+  { value: LLMModelsEnum.GEMMA_4_31B, label: "Gemma 4 31B" },
 ];

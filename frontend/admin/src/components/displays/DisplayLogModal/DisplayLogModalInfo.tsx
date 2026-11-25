@@ -814,7 +814,7 @@ export default function DisplayLogModalInfo({
                   </div>
                 </div> */}
                 {record?._id && (
-                  <DisplayLogLLMStreamComponent record={record} />
+                  <DisplayLogLLMStreamComponent key={record._id} record={record} />
                 )}
                 {/* Placeholder for future insights */}
                 {/* <div className="mt-8 p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl">

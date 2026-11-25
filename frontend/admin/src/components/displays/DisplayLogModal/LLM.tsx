@@ -1,6 +1,6 @@
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Sparkles } from "lucide-react";
-import React, { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import MarkdownPreview from "@uiw/react-markdown-preview";
 import { IApiDisplayLogItem } from "@/backend/api/api.interface";
 import Select from "@/components/form/Select";
@@ -13,106 +13,82 @@ export const DisplayLogLLMStreamComponent = ({
   record: IApiDisplayLogItem;
 }) => {
   const { data: session } = useSession();
-  const [generatedText, setGeneratedText] = useState<string>(
-    record?.llm_insight || String()
+  const [generatedText, setGeneratedText] = useState(record.llm_insight ?? "");
+  const [llmModelUsed, setLlmModelUsed] = useState(record.llm_insight_model ?? "");
+  const [llmSelected, setLLMSelected] = useState(
+    LLMModelsAsOptions.find(({ value }) => value === record.llm_insight_model)
+      ?.value ?? LLMModelsEnum.DEFAULT
   );
-
-  const [llmModelUsed, setLlmModelUsed] = useState<string>(
-    record?.llm_insight_model || String()
-  );
-
-  const [llmSelected, setLLMSelected] = useState<LLMModelsEnum | string>(
-    record?.llm_insight_model || LLMModelsEnum.GEMINI_2_0_FLASH_001
-  );
-  const [isStreaming, setIsStreaming] = useState<boolean>(false);
+  const [streamedText, setStreamedText] = useState<string | null>(null);
+  const [error, setError] = useState("");
   const eventSourceRef = useRef<EventSource | null>(null);
-  const [loadingLLM, setLoadingLLM] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const displayedText = streamedText ?? generatedText;
 
-  // Cleanup do EventSource quando o componente for desmontado
-  useEffect(() => {
-    return () => {
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-    };
-  }, []);
+  useEffect(() => () => eventSourceRef.current?.close(), []);
 
-  // Auto-scroll quando generatedText é atualizado
   useEffect(() => {
-    if (scrollRef.current && generatedText) {
+    if (scrollRef.current && streamedText) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [generatedText]);
+  }, [streamedText]);
 
-  const handleSubmit = async () => {
-    setLoadingLLM(true);
+  const handleSubmit = () => {
+    if (eventSourceRef.current) return;
 
-    if (isStreaming) return;
+    const token = session?.api_session?.access_token;
+    if (!token) {
+      setError("Entre novamente para gerar insights.");
+      return;
+    }
 
-    // Limpa o texto anterior e define o estado de carregamento
-    setGeneratedText("");
-    setIsStreaming(true);
+    let text = "";
+    let model = "";
+    setError("");
+    setStreamedText("");
 
-    // Usa EventSource para conectar ao endpoint SSE do NestJS
-    await handleStreamWithEventSource();
-  };
-
-  // Função que usa EventSource para lidar com o stream SSE
-  const handleStreamWithEventSource = async () => {
-    // const encodedPrompt = encodeURIComponent(prompt);
-    const url = `${process.env.NEXT_PUBLIC_BASE_API_URL}/display/generate-insights?id=${record._id}&model=${llmSelected}`;
-
-    try {
-      // Fecha EventSource anterior se existir
-      if (!session?.api_session?.access_token) {
+    const finish = (message?: string) => {
+      eventSourceRef.current?.close();
+      eventSourceRef.current = null;
+      setStreamedText(null);
+      if (message) {
+        setError(message);
         return;
       }
+      setGeneratedText(text);
+      setLlmModelUsed(
+        model || (llmSelected === LLMModelsEnum.DEFAULT ? "" : llmSelected)
+      );
+    };
 
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-      }
-
-      // Para usar Bearer token, você precisa enviar via query param ou usar fetch polyfill
-      const token = session?.api_session?.access_token;
-      const urlWithToken = `${url}&token=${encodeURIComponent(token)}`;
-
-      const eventSource = new EventSource(urlWithToken);
+    try {
+      const query = new URLSearchParams({
+        id: record._id,
+        model: llmSelected,
+        token,
+      });
+      const eventSource = new EventSource(
+        `${process.env.NEXT_PUBLIC_BASE_API_URL}/display/generate-insights?${query}`
+      );
       eventSourceRef.current = eventSource;
-
+      eventSource.addEventListener("insight-model", (event) => {
+        model = event.data;
+      });
+      eventSource.addEventListener("insight-error", (event) =>
+        finish(event.data)
+      );
       eventSource.onmessage = (event) => {
-        const data = event.data;
-
-        if (data === "[DONE]") {
-          setIsStreaming(false);
-          eventSource.close();
-          eventSourceRef.current = null;
-          setLoadingLLM(false);
-          setLlmModelUsed(llmSelected);
+        if (event.data === "[DONE]") {
+          finish();
           return;
         }
-
-        // Adiciona o texto recebido
-        if (data) {
-          setGeneratedText((prev) => prev + data);
-        }
+        text += event.data;
+        setStreamedText(text);
       };
-
-      eventSource.onerror = (error) => {
-        console.error("Erro no EventSource:", error);
-        setIsStreaming(false);
-        setGeneratedText("Erro ao conectar com o servidor. Tente novamente.");
-        eventSource.close();
-        eventSourceRef.current = null;
-      };
-
-      eventSource.onopen = () => {
-        console.log("Conexão SSE estabelecida");
-      };
-    } catch (error) {
-      console.error("Erro ao criar EventSource:", error);
-      setIsStreaming(false);
-      setGeneratedText("Erro ao conectar com o servidor. Tente novamente.");
+      eventSource.onerror = () =>
+        finish("Erro ao conectar com o servidor. Tente novamente.");
+    } catch {
+      finish("Erro ao conectar com o servidor. Tente novamente.");
     }
   };
 
@@ -120,21 +96,18 @@ export const DisplayLogLLMStreamComponent = ({
     <div className="w-full">
       <div className="flex justify-center items-center gap-4 w-full my-5">
         <div className="min-w-[200px]">
-          {/* <Label>Modelo</Label> */}
           <Select
             options={LLMModelsAsOptions}
             defaultValue={llmSelected}
             placeholder="Modelo LLM"
-            onChange={(value: string) => {
-              setLLMSelected(value as LLMModelsEnum);
-            }}
+            onChange={(value) => setLLMSelected(value as LLMModelsEnum)}
             className="dark:bg-dark-900 w-full"
           />
         </div>
 
         <LoadingButton
           onClick={handleSubmit}
-          loading={loadingLLM}
+          loading={streamedText !== null}
           icon={Sparkles}
           variant="primary"
           className="h-[40px] mt-auto"
@@ -143,9 +116,15 @@ export const DisplayLogLLMStreamComponent = ({
         </LoadingButton>
       </div>
 
-      {!loadingLLM && llmModelUsed && (
+      {error && (
+        <p role="alert" className="text-center text-sm text-red-600 mb-4">
+          {error}
+        </p>
+      )}
+
+      {streamedText === null && llmModelUsed && (
         <div className="text-center text-sm text-gray-500 mb-4 gap-1 flex justify-center">
-          <div>Powered by</div>
+          <div>Modelo usado</div>
           <div className="font-mono text-purple-600 dark:text-purple-400">
             {LLMModelsAsOptions.find(({ value }) => value === llmModelUsed)
               ?.label || llmModelUsed}
@@ -155,7 +134,7 @@ export const DisplayLogLLMStreamComponent = ({
 
       <div ref={scrollRef} className="overflow-y-auto">
         <MarkdownPreview
-          source={generatedText}
+          source={displayedText}
           style={{ padding: 16, background: "transparent", textAlign: "left" }}
           className="[&_*]:text-black [&_*]:dark:text-white"
         />

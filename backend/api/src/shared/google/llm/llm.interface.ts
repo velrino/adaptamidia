@@ -1,43 +1,20 @@
-export interface AiStreamChunk {
-  text: string;
-}
-
 export enum GoogleGenAiModelsEnum {
+  DEFAULT = 'DEFAULT',
+  GEMINI_3_5_FLASH_LITE = 'gemini-3.5-flash-lite',
+  GEMINI_3_5_FLASH = 'gemini-3.5-flash',
+  GEMINI_3_8_FLASH = 'gemini-3.8-flash',
+  GEMINI_3_1_FLASH_LITE = 'gemini-3.1-flash-lite',
+  GEMINI_3_1_PRO_PREVIEW = 'gemini-3.1-pro-preview',
+  GEMINI_3_6_FLASH = 'gemini-3.6-flash',
+  GEMINI_3_7_FLASH = 'gemini-3.7-flash',
+  GEMINI_4_HYDROGEN = 'gemini-4-hydrogen',
+  GEMINI_4_ARGON = 'gemini-4-argon',
+  GEMINI_4_CARBON = 'gemini-4-carbon',
+  GEMINI_4_NEON = 'gemini-4-neon',
+  GEMMA_4_26B = 'gemma-4-26b-a4b-it',
+  GEMMA_4_31B = 'gemma-4-31b-it',
   GEMINI_2_0_FLASH_001 = 'GEMINI_2_0_FLASH_001',
   GEMINI_2_5_PRO = 'GEMINI_2_5_PRO',
   DEEPSEEK_R1_0528_MAAS = 'DEEPSEEK_R1_0528_MAAS',
   META_LLAMA_4_MAVERICK_17B_128E_INSTRUCT_MAAS = 'META_LLAMA_4_MAVERICK_17B_128E_INSTRUCT_MAAS',
 }
-
-export interface IGoogleGenAiModelConfig {
-  model: string;
-  vertexai: boolean;
-  location?: string;
-  project?: string;
-}
-
-export const GoogleGenAiModels: Record<
-  GoogleGenAiModelsEnum,
-  IGoogleGenAiModelConfig
-> = {
-  [GoogleGenAiModelsEnum.GEMINI_2_0_FLASH_001]: {
-    model: 'gemini-2.0-flash-001',
-    vertexai: false,
-  },
-  [GoogleGenAiModelsEnum.GEMINI_2_5_PRO]: {
-    model: 'gemini-2.5-pro',
-    vertexai: false,
-  },
-  [GoogleGenAiModelsEnum.DEEPSEEK_R1_0528_MAAS]: {
-    model: 'deepseek-ai/deepseek-r1-0528-maas',
-    location: 'us-central1',
-    project: 'rare-tape-466414-f4',
-    vertexai: true,
-  },
-  [GoogleGenAiModelsEnum.META_LLAMA_4_MAVERICK_17B_128E_INSTRUCT_MAAS]: {
-    model: 'meta/llama-4-maverick-17b-128e-instruct-maas',
-    location: 'us-east5',
-    project: 'rare-tape-466414-f4',
-    vertexai: true,
-  },
-};
