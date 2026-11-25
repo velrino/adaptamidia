@@ -310,7 +310,7 @@ export interface IApiUnitItemResponse {
     smart_tv: number;
   };
   prices: IApiUnitPriceItemResponse[];
-  popular_time: IApiUnitPopularTimeRecordResponse;
+  popular_time?: IApiUnitPopularTimeRecordResponse | null;
   max_capacity: number;
   location: {
     type: string;

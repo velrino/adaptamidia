@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback } from "react";
 import Input from "@/components/form/input/InputField";
 import { IDay, TranslateDay } from "@/interfaces/general";
 
@@ -17,9 +17,11 @@ export const CompanyUnitModalPopularTimes = ({
   data,
   onUpdate,
 }: ICompanyUnitModalCommonProps) => {
-  const memorizedData = useMemo(() => {
-    return data.popular_time;
-  }, [data.popular_time]);
+  const popularTime = data.popular_time;
+  const days = Object.values(IDay).flatMap((day) => {
+    const times = popularTime?.days?.[day];
+    return times?.length ? [{ day, times }] : [];
+  });
 
   const handleInputAverageVisitors = (
     value: string,
@@ -43,8 +45,8 @@ export const CompanyUnitModalPopularTimes = ({
       indexDay: IDay;
       index: number;
     }) => {
-      const { popular_time } = data;
-      const dayArray = popular_time.days[parameters.indexDay];
+      const dayArray = popularTime?.days?.[parameters.indexDay];
+      if (!popularTime || !dayArray) return;
 
       if (parameters.index in dayArray) {
         const currentItem = dayArray[parameters.index];
@@ -53,10 +55,10 @@ export const CompanyUnitModalPopularTimes = ({
         if (currentItem[parameters.column] !== parameters.value) {
           onUpdate({
             popular_time: {
-              _id: popular_time._id,
-              company_unit: popular_time.company_unit,
+              _id: popularTime._id,
+              company_unit: popularTime.company_unit,
               days: {
-                ...popular_time.days,
+                ...popularTime.days,
                 [parameters.indexDay]: Object.assign([...dayArray], {
                   [parameters.index]: {
                     ...currentItem,
@@ -69,23 +71,25 @@ export const CompanyUnitModalPopularTimes = ({
         }
       }
     },
-    [data, onUpdate]
+    [popularTime, onUpdate]
   );
+
+  if (!days.length) {
+    return (
+      <p className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+        Nenhum horário de movimento cadastrado para esta unidade.
+      </p>
+    );
+  }
 
   return (
     <div className="overflow-y-auto min-h-[75vh] max-h-[75vh] px-6">
       <Tabs
-        defaultTabId={IDay.MONDAY}
         styles={{
           nav: "p-0",
           navMenu: "mx-auto",
         }}
-        tabs={(
-          Object.entries(memorizedData.days) as [
-            IDay,
-            IApiUnitPopularTimeItem[]
-          ][]
-        ).map(([currentDay, currentTimes]) => ({
+        tabs={days.map(({ day: currentDay, times: currentTimes }) => ({
           id: currentDay,
           label: TranslateDay(currentDay),
           content: (
