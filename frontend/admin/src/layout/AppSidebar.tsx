@@ -28,6 +28,7 @@ import { Environment } from "@/utils/generic";
 import { UserPermission } from "@/interfaces/permissions";
 
 type NavItem = {
+  id: string;
   name: string;
   icon: React.ReactNode;
   path?: string;
@@ -37,12 +38,14 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
+    id: "home",
     icon: <GridIcon />,
     name: "Dashboard",
     path: "/home",
     permissions: Object.values(UserPermission),
   },
   {
+    id: "advertising",
     icon: <BsWindowStack size={25} />,
     name: "Publicidade",
     permissions: [UserPermission.ADVERTISER, UserPermission.SUDO],
@@ -53,6 +56,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    id: "news",
     icon: <PiNewspaper size={25} />,
     name: "Notícias",
     permissions: [UserPermission.NEWS],
@@ -63,6 +67,7 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    id: "customers",
     icon: <PiBuildingOfficeLight size={25} />,
     name: "Clientes",
     permissions: [UserPermission.LOCAL],
@@ -75,6 +80,7 @@ const navItems: NavItem[] = [
   ...(!Environment.isProduction
     ? [
         {
+          id: "demo-dashboards",
           icon: <GridIcon />,
           name: "Dashboard",
           subItems: [
@@ -86,16 +92,19 @@ const navItems: NavItem[] = [
           ],
         },
         {
+          id: "calendar",
           icon: <CalenderIcon />,
           name: "Calendar",
           path: "/calendar",
         },
         {
+          id: "profile",
           icon: <UserCircleIcon />,
           name: "User Profile",
           path: "/profile",
         },
         {
+          id: "tasks",
           name: "Task",
           icon: <TaskIcon />,
           subItems: [
@@ -104,6 +113,7 @@ const navItems: NavItem[] = [
           ],
         },
         {
+          id: "forms",
           name: "Forms",
           icon: <ListIcon />,
           subItems: [
@@ -112,6 +122,7 @@ const navItems: NavItem[] = [
           ],
         },
         {
+          id: "tables",
           name: "Tables",
           icon: <TableIcon />,
           subItems: [
@@ -120,6 +131,7 @@ const navItems: NavItem[] = [
           ],
         },
         {
+          id: "pages",
           name: "Pages",
           icon: <PageIcon />,
           subItems: [
@@ -141,6 +153,7 @@ const navItems: NavItem[] = [
 
 const othersItems: NavItem[] = [
   {
+    id: "charts",
     icon: <PieChartIcon />,
     name: "Charts",
     subItems: [
@@ -150,6 +163,7 @@ const othersItems: NavItem[] = [
     ],
   },
   {
+    id: "ui-elements",
     icon: <BoxCubeIcon />,
     name: "UI Elements",
     subItems: [
@@ -178,6 +192,7 @@ const othersItems: NavItem[] = [
     ],
   },
   {
+    id: "authentication",
     icon: <PlugInIcon />,
     name: "Authentication",
     subItems: [
@@ -195,11 +210,13 @@ const othersItems: NavItem[] = [
 
 const supportItems: NavItem[] = [
   {
+    id: "chat",
     icon: <ChatIcon />,
     name: "Chat",
     path: "/chat",
   },
   {
+    id: "email",
     icon: <MailIcon />,
     name: "Email",
     subItems: [
@@ -208,6 +225,7 @@ const supportItems: NavItem[] = [
     ],
   },
   {
+    id: "invoice",
     icon: <DocsIcon />,
     name: "Invoice",
     path: "/invoice",
@@ -227,7 +245,7 @@ const AppSidebar: React.FC = () => {
       {navItems
         .filter((nav) => hasAnyPermission(nav.permissions || []))
         .map((nav, index) => (
-          <li key={nav.name}>
+          <li key={nav.id}>
             {nav.subItems ? (
               <button
                 onClick={() => handleSubmenuToggle(index, menuType)}
@@ -306,7 +324,7 @@ const AppSidebar: React.FC = () => {
               >
                 <ul className="mt-2 space-y-1 ml-9">
                   {nav.subItems.map((subItem) => (
-                    <li key={subItem.name}>
+                    <li key={subItem.path}>
                       <Link
                         href={subItem.path}
                         className={`menu-dropdown-item ${
