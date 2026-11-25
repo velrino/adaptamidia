@@ -17,15 +17,14 @@ interface ILoginForm {
   password: string;
 }
 
-export default function SignInForm() {
+export default function SignInForm({
+  initialValues = { email: "", password: "" },
+}: { initialValues?: ILoginForm }) {
   const [showPassword, setShowPassword] = useState(false);
   // const [isChecked, setIsChecked] = useState(false);
   // const router = useRouter();
   const { showToast } = useToast();
-  const { formData, handleChange } = useDynamicForm<ILoginForm>({
-    email: "",
-    password: "",
-  });
+  const { formData, handleChange } = useDynamicForm(initialValues);
 
   const [loadingSubmit, setLoadingSubmit] = useState(false);
   function updateForm(column: keyof ILoginForm, value: string) {
@@ -52,9 +51,6 @@ export default function SignInForm() {
       isValid = false;
     } else if (password.length < 6) {
       showToast("A senha deve ter pelo menos 6 caracteres", IToastType.ERROR);
-      isValid = false;
-    } else if (password.length > 20) {
-      showToast("A senha não pode ter mais de 20 caracteres", IToastType.ERROR);
       isValid = false;
     }
 

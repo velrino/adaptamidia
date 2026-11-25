@@ -21,20 +21,24 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit(): Promise<void> {
     try {
-      const keyFilename = GetGoogleCloudCredential(
-        GoogleCloudCredential[
-          'see-midia-firebase-adminsdk-fbsvc-5f17c7af46.json'
-        ],
-      );
-
-      const serviceAccount = require(keyFilename);
-
-      // Verifica se o app já foi inicializado para evitar erros em testes/recargas
       if (!admin.apps.length) {
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
-          databaseURL: 'https://see-midia-default-rtdb.firebaseio.com/',
-        });
+        if (process.env.FIREBASE_DATABASE_EMULATOR_HOST) {
+          const projectId = 'demo-adaptamidia';
+          admin.initializeApp({
+            projectId,
+            databaseURL: `https://${projectId}.firebaseio.com`,
+          });
+        } else {
+          const keyFilename = GetGoogleCloudCredential(
+            GoogleCloudCredential[
+              'see-midia-firebase-adminsdk-fbsvc-5f17c7af46.json'
+            ],
+          );
+          admin.initializeApp({
+            credential: admin.credential.cert(require(keyFilename)),
+            databaseURL: 'https://see-midia-default-rtdb.firebaseio.com/',
+          });
+        }
       }
 
       this.database = admin.database();

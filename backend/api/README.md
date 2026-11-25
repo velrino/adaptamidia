@@ -26,6 +26,26 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+## Ambiente local em outro computador
+
+Instale Node.js 24, Java 21, MongoDB com `mongosh`, Redis e `uv`. O launcher usa Bash e prepara o ambiente Python 3.12 do Vision. Use o vídeo demo já incluído no Admin para testar o display sem um dispositivo físico.
+
+Na raiz do monorepo, rode:
+
+```bash
+./dev.sh --seed
+```
+
+O launcher gera os `.env` ausentes a partir dos exemplos, instala as dependências dos projetos, sobe a stack local e carrega o display `DEMO-DISPLAY-01`. Abra o Admin em `http://127.0.0.1:4001/login`. A conta `admin@adaptamidia.test` é criada para o banco local e a senha gerada fica em `LOCAL_ADMIN_PASSWORD` nos arquivos de ambiente. O formulário local já vem preenchido.
+
+Use `Ctrl+C` para encerrar os serviços iniciados no terminal. Para iniciar novamente sem atualizar a data da exibição demo, rode o launcher sem `--seed`. Com o MongoDB rodando, também dá para rodar apenas o seed de dentro de `backend/api`:
+
+```bash
+npm run seed:display
+```
+
+O seed atualiza a mesma exibição demo no banco `adaptamidia_local`. Para testar notícias, Gemini ou Google Maps, preencha as respectivas chaves em `backend/api/.env` e reinicie o launcher.
+
 ## Project setup
 
 ```bash
