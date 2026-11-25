@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "../../ui/table";
-import Image from "next/image";
+import { NewsThumbnail } from "@/components/news/NewsThumbnail";
 import {
   IApiNewsRequest,
   IApiNewsResponse,
@@ -301,16 +301,7 @@ export default function NewsTable() {
                                 loop
                               />
                             ) : (
-                              <Image
-                                width={100}
-                                height={100}
-                                src={
-                                  item?.image || "/images/company/default.webp"
-                                }
-                                alt="title"
-                                className="w-full h-full object-cover"
-                                style={{ objectPosition: "center" }}
-                              />
+                              <NewsThumbnail image={item.image} />
                             )}
                           </div>
 
