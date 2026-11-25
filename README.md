@@ -1,6 +1,6 @@
 # AdaptaMídia
 
-- `frontend` contains the Next.js admin dashboard.
+- `frontend/admin` contains the Next.js admin dashboard. Additional frontend apps can live alongside it under `frontend`.
 - `backend/api` contains the NestJS API.
 - `backend/vision` contains the Python computer vision service.
 

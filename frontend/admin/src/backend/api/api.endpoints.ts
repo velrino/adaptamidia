@@ -1,0 +1,308 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { GetExtensionFromMimeType } from "@/utils/generic";
+import {
+  IApiAuthLogin,
+  IApiCreateAdvertisementRequest,
+  IApiCreateCompanyUnitRequest,
+  IApiCreateDisplayLogRequest,
+  IApiCreateNews,
+  IApiDashboardDisplayLogRequest,
+  IApiDashboardResumeRequest,
+  IApiDetectionDisplayLogDto,
+  IApiDisplayRequest,
+  IApiDisplayUnitInfoRequest,
+  IApiGroupCompanyUnitsRequest,
+  IApiPaginateAdvertisement,
+  IApiPaginateAdvertisementPreview,
+  IApiPaginateCompanies,
+  IApiPaginateCompanyUnits,
+  IApiRequestMethod,
+  IApiUpdateAdvertisementRequest,
+  IApiUpdateCompanyRequest,
+  IApiUpdateCompanyUnitRequest,
+  IApiUploadFileRequest,
+  IApiUplodadCameraFileRequest,
+} from "./api.interface";
+import { ApiResources } from "./api.service";
+
+export const API = {
+  auth: {
+    async login(data: IApiAuthLogin) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/auth/login",
+        data,
+      });
+    },
+  },
+  user: {
+    async me(access_token: string) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: "/user/me",
+        access_token,
+      });
+    },
+  },
+  advertisement: {
+    async paginate(access_token: string, data: IApiPaginateAdvertisement) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: "/advertisement",
+        data,
+        access_token,
+      });
+    },
+    async create(access_token: string, data: IApiCreateAdvertisementRequest) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/advertisement",
+        data,
+        access_token,
+      });
+    },
+    async update(
+      access_token: string,
+      id: string,
+      data: IApiUpdateAdvertisementRequest
+    ) {
+      return ApiResources.request({
+        method: IApiRequestMethod.PUT,
+        path: `/advertisement/${id}`,
+        data,
+        access_token,
+      });
+    },
+    async preview(data: IApiPaginateAdvertisementPreview) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: "/advertisement/preview",
+        data,
+      });
+    },
+  },
+  companies: {
+    async paginate(access_token: string, data: IApiPaginateCompanies) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: "/company",
+        data,
+        access_token,
+      });
+    },
+    async create(access_token: string, data: IApiUpdateCompanyRequest) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/company",
+        data,
+        access_token,
+      });
+    },
+    async update(
+      access_token: string,
+      id: string,
+      data: IApiUpdateCompanyRequest
+    ) {
+      return ApiResources.request({
+        method: IApiRequestMethod.PUT,
+        path: `/company/${id}`,
+        data,
+        access_token,
+      });
+    },
+  },
+  company_units: {
+    async paginate(access_token: string, data: IApiPaginateCompanyUnits) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: "/company/unit",
+        data,
+        access_token,
+      });
+    },
+    async paginatePost(access_token: string, data: IApiPaginateCompanyUnits) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/company/unit/list",
+        data,
+        access_token,
+      });
+    },
+    async create(access_token: string, data: IApiCreateCompanyUnitRequest) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/company/unit",
+        data,
+        access_token,
+      });
+    },
+    async update(
+      access_token: string,
+      id: string,
+      data: IApiUpdateCompanyUnitRequest
+    ) {
+      return ApiResources.request({
+        method: IApiRequestMethod.PUT,
+        path: `/company/unit/${id}`,
+        data,
+        access_token,
+      });
+    },
+    async group(access_token: string, data: IApiGroupCompanyUnitsRequest) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: "/company/unit/group",
+        data,
+        access_token,
+      });
+    },
+  },
+  dashboard: {
+    async displayLogs(
+      access_token: string,
+      data: IApiDashboardDisplayLogRequest
+    ) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/dashboard/display",
+        data,
+        access_token,
+      });
+    },
+    async generalResume(
+      access_token: string,
+      data: IApiDashboardResumeRequest
+    ) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/dashboard/general",
+        data,
+        access_token,
+      });
+    },
+  },
+  display: {
+    async byUnit(id: string, data: IApiDisplayRequest) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: `/display/unit/${id}`,
+        data,
+      });
+    },
+    async unitInfo(id: string, data: IApiDisplayUnitInfoRequest) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: `/display/unit/${id}/info`,
+        data,
+      });
+    },
+    async paginate(access_token: string, data: IApiPaginateCompanyUnits) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/display/logs/paginate",
+        data,
+        access_token,
+      });
+    },
+  },
+  display_logs: {
+    async create(data: IApiCreateDisplayLogRequest) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/display/log",
+        data,
+        // access_token,
+      });
+    },
+    async detect(access_token: string, data: IApiDetectionDisplayLogDto) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/display/log/detect",
+        data,
+        access_token,
+      });
+    },
+    async dashboard(access_token: string, data: any) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/dashboard/display-logs",
+        data,
+        access_token,
+      });
+    },
+  },
+  files: {
+    async upload(access_token: string, data: IApiUploadFileRequest) {
+      const formData = new FormData();
+      const mimeType = data.file.type;
+      const fileExtension = GetExtensionFromMimeType(mimeType);
+      const filename = `file.${fileExtension}`;
+
+      formData.append("file", data.file, filename);
+      if (data.company_id) {
+        formData.append("company_id", data.company_id);
+      }
+      formData.append("foldername", data.foldername);
+      formData.append("bucket", data.bucket);
+
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/files",
+        data: formData,
+        access_token,
+      });
+    },
+    async uploadCamera(data: IApiUplodadCameraFileRequest) {
+      const formData = new FormData();
+      const mimeType = data.file.type;
+      const fileExtension = GetExtensionFromMimeType(mimeType);
+      const filename = `file.${fileExtension}`;
+
+      formData.append("file", data.file, filename);
+      formData.append("record", data.record);
+      formData.append("type", data.type);
+      formData.append("unit", data.unit);
+      formData.append("timestamp", data.timestamp);
+
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/files/camera",
+        data: formData,
+      });
+    },
+  },
+  news: {
+    async paginate(access_token: string, data: IApiPaginateCompanyUnits) {
+      return ApiResources.request({
+        method: IApiRequestMethod.GET,
+        path: "/news",
+        data,
+        access_token,
+      });
+    },
+    async create(access_token: string, data: IApiCreateNews) {
+      return ApiResources.request({
+        method: IApiRequestMethod.POST,
+        path: "/news",
+        data,
+        access_token,
+      });
+    },
+    async update(access_token: string, id: string, data: IApiCreateNews) {
+      return ApiResources.request({
+        method: IApiRequestMethod.PUT,
+        path: `/news/${id}`,
+        data,
+        access_token,
+      });
+    },
+    async delete(access_token: string, id: string) {
+      return ApiResources.request({
+        method: IApiRequestMethod.DELETE,
+        path: `/news/${id}`,
+        access_token,
+      });
+    },
+  },
+};

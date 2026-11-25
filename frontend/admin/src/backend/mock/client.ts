@@ -1,0 +1,101 @@
+import {
+  ICompanyDocumentType,
+  ICompanyStatus,
+  ICompanyType,
+} from "@/interfaces/company";
+import {
+  IApiCompaniesResponse,
+  IApiCompanyResponse,
+} from "../api/api.interface";
+
+export const CompanyRecordDefault: IApiCompanyResponse = {
+  _id: String(),
+  document: String(),
+  name: String(),
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  type: ICompanyType.LOCAL,
+  document_type: ICompanyDocumentType.CNPJ,
+  status: ICompanyStatus.IN_REVIEW,
+};
+
+export const CompaniesMockData: IApiCompanyResponse[] = [
+  {
+    _id: "67d226d9b502526b43e5d1ed",
+    document: "55661931000122",
+    name: "Velrino",
+    created_at: "2025-03-13T00:29:13.659Z",
+    updated_at: "2025-03-13T00:29:13.659Z",
+    type: ICompanyType.ADVERTISER,
+    document_type: ICompanyDocumentType.CNPJ,
+    status: ICompanyStatus.IN_REVIEW,
+  },
+  {
+    _id: "67d228068e13c91d607fb6ed",
+    document: "21206201000110",
+    name: "Quinta do Conde",
+    created_at: "2025-03-13T00:34:15.002Z",
+    updated_at: "2025-03-13T00:34:15.002Z",
+    type: ICompanyType.LOCAL,
+    document_type: ICompanyDocumentType.CNPJ,
+    status: ICompanyStatus.IN_REVIEW,
+  },
+  {
+    _id: "67dadd899321569f2c93e8c6",
+    document: "60701190000104",
+    name: "Quinta do Conde",
+    type: ICompanyType.LOCAL,
+    document_type: ICompanyDocumentType.CNPJ,
+    status: ICompanyStatus.IN_REVIEW,
+    created_at: "2025-03-19T15:06:49.458Z",
+    updated_at: "2025-03-19T15:06:49.458Z",
+  },
+  {
+    _id: "67d22be98e13c91d607fb704",
+    document: "26193150000152",
+    name: "Oliveira Restaurante e Emporio LTDA",
+    type: ICompanyType.LOCAL,
+    created_at: "2025-03-13T00:50:49.357Z",
+    updated_at: "2025-03-13T00:50:49.357Z",
+    document_type: ICompanyDocumentType.CNPJ,
+    status: ICompanyStatus.IN_REVIEW,
+  },
+  {
+    _id: "67d22695b502526b43e5d1e9",
+    document: "53735288000109",
+    name: "Le Ville Paes e Doces LTDA",
+    created_at: "2025-03-13T00:28:05.129Z",
+    updated_at: "2025-03-13T00:28:05.129Z",
+    type: ICompanyType.LOCAL,
+    document_type: ICompanyDocumentType.CNPJ,
+    status: ICompanyStatus.IN_REVIEW,
+  },
+  {
+    _id: "67d22b588e13c91d607fb6fb",
+    document: "20992958000113",
+    name: "LANCHONETE E RESTAURANTE PORTO CAIRES LTDA",
+    created_at: "2025-03-13T00:48:24.263Z",
+    updated_at: "2025-03-13T00:48:24.263Z",
+    type: ICompanyType.LOCAL,
+    document_type: ICompanyDocumentType.CNPJ,
+    status: ICompanyStatus.IN_REVIEW,
+  },
+  {
+    _id: "67d22c748e13c91d607fb70d",
+    document: "32291672000190",
+    name: "EMBAIXADA MINEIRA BAR E RESTAURANTE LTDA",
+    created_at: "2025-03-13T00:53:08.713Z",
+    updated_at: "2025-03-13T00:53:08.713Z",
+    type: ICompanyType.LOCAL,
+    document_type: ICompanyDocumentType.CNPJ,
+    status: ICompanyStatus.IN_REVIEW,
+  },
+];
+
+export const CompaniesResponseMock: IApiCompaniesResponse = {
+  pages: 1,
+  total: 6,
+  data: CompaniesMockData,
+  limit: 20,
+  page: 0,
+};
