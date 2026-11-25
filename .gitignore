@@ -1,2 +1,8 @@
 /.dev-local/
 /backend/vision/.venv/
+
+# Credentials are supplied locally.
+**/*firebase-adminsdk*.json
+**/service-account*.json
+**/github-actions-key*.json
+**/android/app/google-services.json

@@ -7,7 +7,6 @@ import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { RESULT } from 'src/shared/result.enum';
 import { readFile } from 'fs/promises';
 import { Readable } from 'stream';
-import { GetGoogleCloudCredential, GoogleCloudCredential } from '../resouces';
 // import { FindFileInDirs } from 'src/shared/general';
 
 @Injectable()
@@ -17,13 +16,9 @@ export class GoogleCloudStorageService {
   private readonly captureStorage?: Storage;
 
   constructor() {
-    const keyFilename = GetGoogleCloudCredential(
-      GoogleCloudCredential['rare-tape-466414-f4-a4a31231b9e1.json'],
-    );
-
-    this.storage = new Storage(
-      keyFilename ? { keyFilename } : { projectId: 'rare-tape-466414-f4' },
-    );
+    this.storage = new Storage({
+      projectId: process.env.GOOGLE_CLOUD_PROJECT || 'rare-tape-466414-f4',
+    });
 
     const captureKey = process.env.DISPLAY_CAPTURE_CREDENTIALS_FILE?.trim();
     if (this.captureBucket && captureKey) {

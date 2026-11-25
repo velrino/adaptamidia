@@ -5,10 +5,7 @@ import {
   FirebasePathsEnum,
   IFirebaseListenForNewRecords,
 } from './firebase.enum';
-import {
-  GetGoogleCloudCredential,
-  GoogleCloudCredential,
-} from '../google/resouces';
+import { resolve } from 'node:path';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
 import { Environments, GetEnvironment } from '../general';
 
@@ -29,14 +26,14 @@ export class FirebaseDatabaseService implements OnModuleInit, OnModuleDestroy {
             databaseURL: `https://${projectId}.firebaseio.com`,
           });
         } else {
-          const keyFilename = GetGoogleCloudCredential(
-            GoogleCloudCredential[
-              'see-midia-firebase-adminsdk-fbsvc-5f17c7af46.json'
-            ],
-          );
+          const keyFile = process.env.FIREBASE_RTDB_CREDENTIALS_FILE?.trim();
           admin.initializeApp({
-            credential: admin.credential.cert(require(keyFilename)),
-            databaseURL: 'https://see-midia-default-rtdb.firebaseio.com/',
+            credential: keyFile
+              ? admin.credential.cert(resolve(keyFile))
+              : admin.credential.applicationDefault(),
+            databaseURL:
+              process.env.FIREBASE_DATABASE_URL ||
+              'https://see-midia-default-rtdb.firebaseio.com/',
           });
         }
       }

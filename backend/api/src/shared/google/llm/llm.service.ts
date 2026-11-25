@@ -7,7 +7,6 @@ import {
 } from './llm.interface';
 import { join } from 'path';
 import { Log, LogAction, LogType } from 'src/modules/logs/log.helper';
-import { GetGoogleCloudCredential, GoogleCloudCredential } from '../resouces';
 
 export interface GenAiConfig {
   useVertexAI?: boolean;
@@ -24,10 +23,6 @@ export class GoogleGenAiProvider {
     this.genAI = new GoogleGenAI({
       apiKey: process.env.GOOGLE_GENAI_API_KEY,
     });
-
-    process.env.GOOGLE_APPLICATION_CREDENTIALS = GetGoogleCloudCredential(
-      GoogleCloudCredential['rare-tape-466414-f4-a4a31231b9e1.json'],
-    );
   }
 
   async *generateContentStream(
@@ -51,7 +46,10 @@ export class GoogleGenAiProvider {
       contents: prompt,
     };
 
-    if (!modelChosed.vertexai && process.env.GOOGLE_GENAI_STREAMING === 'false') {
+    if (
+      !modelChosed.vertexai &&
+      process.env.GOOGLE_GENAI_STREAMING === 'false'
+    ) {
       const response = await client.models.generateContent({
         ...request,
         config: { maxOutputTokens: 1200 },

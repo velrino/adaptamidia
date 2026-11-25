@@ -9,7 +9,9 @@ import * as crypto from 'crypto';
 @Injectable()
 export class HmacMiddleware implements NestMiddleware {
   use(req: any, res: Response, next: NextFunction) {
-    const secret = 'REDACTED';
+    const secret = process.env.HMAC_SECRET;
+    if (!secret)
+      throw new UnauthorizedException('HMAC authentication is unavailable');
     const signature: any = req.headers['x-hub-signature'];
 
     if (!signature) {
