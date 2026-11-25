@@ -9,9 +9,7 @@
 
 ## Production architecture
 
-![AdaptaMídia production architecture](docs/architecture/architecture.svg)
-
-[Editable Excalidraw scene](docs/architecture/architecture.excalidraw) · [Original PNG](docs/architecture/architecture.png)
+![AdaptaMídia production architecture](docs/architecture/architecture.png)
 
 ## Display capture to audience insights
 
@@ -28,7 +26,9 @@ Follow the web display from playback and camera capture through private storage,
 
 A proposal for a dedicated NestJS AI module with a workflow orchestrator, bounded specialist agents, provider adapters, and durable runs. It uses derived audience metrics and approved context. Private camera captures stay with the Vision pipeline. The proposal covers campaign digests, measurement triage, and experiment drafts alongside the current per-display insight.
 
-[Read the architecture proposal](docs/architecture/ai/README.md) · [Proposed workflow guides](docs/architecture/steps/README.md#proposed-ai-workflow)
+![Production architecture and proposed AI workflow](docs/architecture/architecture.svg)
+
+[Edit the proposed architecture in Excalidraw](docs/architecture/architecture.excalidraw) · [Read the architecture proposal](docs/architecture/ai/README.md) · [Proposed workflow guides](docs/architecture/steps/README.md#proposed-ai-workflow)
 
 | Step | Starts with | Flow | Diagram |
 | --- | --- | --- | --- |
