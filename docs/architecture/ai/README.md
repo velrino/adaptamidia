@@ -2,6 +2,14 @@
 
 **Status** Proposed for discussion on `feature/ai`. The current display pipeline and AI runtime remain in use. This document describes a possible migration.
 
+## Agentic system design
+
+![Agentic system design proposal](system-design.svg)
+
+[Editable system design in Excalidraw](system-design.excalidraw)
+
+For the pilot, pause individual workflows at admission and before model invocation. Show the snapshot cutoff in Admin. When a kiosk syncs late playback, flag newer evidence for the same period and let the operator request a revised digest. Evaluation fixtures should cover a measured zero, skipped inference, an offline device reporting late, and a pause after enqueue.
+
 ## What changes
 
 Today a display insight is generated from one playback record. The API handles both the Admin request and the automatic queue path, builds a text prompt, calls a model, and saves the resulting Markdown, model, and timestamp. The same display workflow already separates private image storage from Vision processing. [Current display steps](../steps/README.md)
