@@ -4,7 +4,9 @@
 
 [All steps](../README.md#proposed-ai-workflow) · [AI architecture proposal](../../ai/README.md) · [Mermaid source](SEQUENCE.txt) · [Full-size diagram](diagram.png)
 
-Build an evidence snapshot, select a specialist where useful, and validate the result.
+Check measurement coverage and the workflow pause before invoking a specialist.
+
+A kiosk completion can carry a zero when camera inference was skipped. Until the event records an explicit analysis outcome, classify an ambiguous zero as unknown. Recheck the workflow pause before a provider call and record a paused run so operators can distinguish it from insufficient evidence.
 
 ![Delegate and validate the result sequence diagram](diagram.png)
 

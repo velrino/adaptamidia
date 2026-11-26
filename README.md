@@ -33,6 +33,10 @@ Elevator kiosks can lose signal between floors. A running Android player keeps p
 
 ## Proposed AI architecture
 
+![Agentic system design proposal](docs/architecture/ai/system-design.svg)
+
+[Editable system design in Excalidraw](docs/architecture/ai/system-design.excalidraw)
+
 A proposal for a dedicated NestJS AI module with a workflow orchestrator, bounded specialist agents, provider adapters, and durable runs. It uses derived audience metrics and approved context. Private camera captures stay with the Vision pipeline. The proposal covers campaign digests, measurement triage, and experiment drafts alongside the current per-display insight.
 
 ![Production architecture and proposed AI workflow](docs/architecture/architecture.svg)
@@ -41,9 +45,9 @@ A proposal for a dedicated NestJS AI module with a workflow orchestrator, bounde
 
 | Step | Starts with | Flow | Diagram |
 | --- | --- | --- | --- |
-| **05** | Admin or scheduler | **Register a scoped AI run**<br>Authorize the scope, reserve a run in MongoDB, and dispatch its ID.<br>[Guide](docs/architecture/steps/05-ai-run-intake/README.md) · [Mermaid source](docs/architecture/steps/05-ai-run-intake/SEQUENCE.txt) | <a href="docs/architecture/steps/05-ai-run-intake/diagram.png"><img src="docs/architecture/steps/05-ai-run-intake/diagram.png" alt="Register a scoped AI run proposed sequence diagram" width="480" /></a> |
-| **06** | AI queue | **Delegate and validate the result**<br>Build an evidence snapshot, select a specialist where useful, and validate the result.<br>[Guide](docs/architecture/steps/06-ai-orchestration/README.md) · [Mermaid source](docs/architecture/steps/06-ai-orchestration/SEQUENCE.txt) | <a href="docs/architecture/steps/06-ai-orchestration/diagram.png"><img src="docs/architecture/steps/06-ai-orchestration/diagram.png" alt="Delegate and validate the result proposed sequence diagram" width="480" /></a> |
-| **07** | Admin | **Review evidence and approve next actions**<br>Show run status and evidence, then record a human decision on a proposed action.<br>[Guide](docs/architecture/steps/07-ai-review/README.md) · [Mermaid source](docs/architecture/steps/07-ai-review/SEQUENCE.txt) | <a href="docs/architecture/steps/07-ai-review/diagram.png"><img src="docs/architecture/steps/07-ai-review/diagram.png" alt="Review evidence and approve next actions proposed sequence diagram" width="480" /></a> |
+| **05** | Admin or scheduler | **Register a scoped AI run**<br>Check scope and workflow pause status before reserving a run for an evidence cutoff.<br>[Guide](docs/architecture/steps/05-ai-run-intake/README.md) · [Mermaid source](docs/architecture/steps/05-ai-run-intake/SEQUENCE.txt) | <a href="docs/architecture/steps/05-ai-run-intake/diagram.png"><img src="docs/architecture/steps/05-ai-run-intake/diagram.png" alt="Register a scoped AI run proposed sequence diagram" width="480" /></a> |
+| **06** | AI queue | **Delegate and validate the result**<br>Check measurement coverage and the workflow pause before invoking a specialist.<br>[Guide](docs/architecture/steps/06-ai-orchestration/README.md) · [Mermaid source](docs/architecture/steps/06-ai-orchestration/SEQUENCE.txt) | <a href="docs/architecture/steps/06-ai-orchestration/diagram.png"><img src="docs/architecture/steps/06-ai-orchestration/diagram.png" alt="Delegate and validate the result proposed sequence diagram" width="480" /></a> |
+| **07** | Admin | **Review evidence and approve next actions**<br>Show the evidence cutoff, offer a revision for late events, and record review decisions.<br>[Guide](docs/architecture/steps/07-ai-review/README.md) · [Mermaid source](docs/architecture/steps/07-ai-review/SEQUENCE.txt) | <a href="docs/architecture/steps/07-ai-review/diagram.png"><img src="docs/architecture/steps/07-ai-review/diagram.png" alt="Review evidence and approve next actions proposed sequence diagram" width="480" /></a> |
 
 ## Local development
 

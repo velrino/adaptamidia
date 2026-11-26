@@ -4,7 +4,9 @@
 
 [All steps](../README.md#proposed-ai-workflow) · [AI architecture proposal](../../ai/README.md) · [Mermaid source](SEQUENCE.txt) · [Full-size diagram](diagram.png)
 
-Show run status and evidence, then record a human decision on a proposed action.
+Show the evidence cutoff, offer a revision for late events, and record review decisions.
+
+When an elevator reconnects, use playback time to place newly ingested records in the reporting period. Mark an earlier digest as having newer evidence and offer a manual refresh. Submit the new evidence revision through step 05 and keep the previous artifact and its review history. Recheck campaign proposals against the revision being approved.
 
 ![Review evidence and approve next actions sequence diagram](diagram.png)
 

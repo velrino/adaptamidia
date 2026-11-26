@@ -47,8 +47,10 @@ sequenceDiagram
     Worker->>Orchestrator: Execute the claimed run
     create participant Evidence as Evidence store
     Orchestrator->>Evidence: Load scoped aggregate facts
-    Evidence-->>Orchestrator: Snapshot and coverage
-    alt Evidence supports the workflow
+    Evidence-->>Orchestrator: Cutoff, coverage and analysis status
+    alt Workflow paused before model call
+        Note over Orchestrator: Record paused status
+    else Evidence supports the workflow
         create participant Agent as Specialist agent
         Orchestrator->>Agent: Delegate one bounded task
         create participant Provider as Model adapter
@@ -56,7 +58,7 @@ sequenceDiagram
         Provider-->>Agent: Structured output and usage
         Agent-->>Orchestrator: Candidate artifact
         Note over Orchestrator: Verify schema, evidence, and budget
-    else Evidence is missing or pending
+    else Coverage insufficient or zero ambiguous
         Note over Orchestrator: Return insufficient evidence
     end
     Orchestrator-->>Worker: Validated result or terminal status

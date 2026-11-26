@@ -4,7 +4,9 @@
 
 [All steps](../README.md#proposed-ai-workflow) · [AI architecture proposal](../../ai/README.md) · [Mermaid source](SEQUENCE.txt) · [Full-size diagram](diagram.png)
 
-Authorize the scope, reserve a run in MongoDB, and dispatch its ID.
+Check scope and workflow pause status before reserving a run for an evidence cutoff.
+
+A paused workflow returns its status before reserving or dispatching new work. On admission, record the cutoff for ingested evidence separately from the playback period. This lets an operator see which late events a digest could have included.
 
 ![Register a scoped AI run sequence diagram](diagram.png)
 

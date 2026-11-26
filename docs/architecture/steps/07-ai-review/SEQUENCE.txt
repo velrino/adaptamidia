@@ -42,8 +42,12 @@ sequenceDiagram
     Admin->>API: Open or reconnect to a run
     create participant DB as MongoDB
     API->>DB: Read authorized status and artifacts
-    DB-->>API: Status, evidence, and last valid result
+    DB-->>API: Artifact, cutoff and latest evidence revision
     API-->>Admin: Progress and evidence-backed result
+    opt Late playback changes the reporting period
+        API-->>Admin: New evidence available
+        Admin->>API: Request refresh with new revision (step 05)
+    end
     opt Proposal is ready for review
         Admin->>API: Approve or reject the proposal
         API->>DB: Record reviewer and decision

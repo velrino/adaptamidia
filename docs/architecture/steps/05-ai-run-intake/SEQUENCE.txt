@@ -42,17 +42,21 @@ sequenceDiagram
     participant Caller as Admin or scheduler
     create participant API as AI intake
     Caller->>API: Request a workflow and scope
-    Note over API: Check scope, evidence revision, and budget
-    create participant DB as MongoDB
-    API->>DB: Get or create run and enqueue intent
-    DB-->>API: Existing or new run ID
-    API-->>Caller: Run ID and status
-    opt Run has an unpublished intent
-        create participant Dispatcher as Run dispatcher
-        API-->>Dispatcher: Signal pending work
-        Dispatcher->>DB: Claim an enqueue intent
-        DB-->>Dispatcher: Claimable run ID
-        create participant Queue as AI queue
-        Dispatcher->>Queue: Enqueue run ID
-        Dispatcher->>DB: Record dispatch
+    alt Workflow paused
+        API-->>Caller: Workflow paused
+    else Authorized and enabled
+        Note over API: Fix evidence cutoff and budget
+        create participant DB as MongoDB
+        API->>DB: Get or create run and enqueue intent
+        DB-->>API: Existing or new run ID
+        API-->>Caller: Run ID and status
+        opt Run has an unpublished intent
+            create participant Dispatcher as Run dispatcher
+            API-->>Dispatcher: Signal pending work
+            Dispatcher->>DB: Claim an enqueue intent
+            DB-->>Dispatcher: Claimable run ID
+            create participant Queue as AI queue
+            Dispatcher->>Queue: Enqueue run ID
+            Dispatcher->>DB: Record dispatch
+        end
     end
