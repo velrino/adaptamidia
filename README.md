@@ -22,6 +22,15 @@ Follow the web display from playback and camera capture through private storage,
 | **03** | Detection queue | **Count people and save the annotated capture**<br>Vision analyzes the stored image. The worker saves the count and the image with bounding boxes.<br>[Guide](docs/architecture/steps/03-people-detection/README.md) · [Mermaid source](docs/architecture/steps/03-people-detection/SEQUENCE.txt) | <a href="docs/architecture/steps/03-people-detection/diagram.png"><img src="docs/architecture/steps/03-people-detection/diagram.png" alt="Count people and save the annotated capture sequence diagram" width="480" /></a> |
 | **04** | Admin or insights queue | **Generate and show audience insights**<br>The API sends playback context and audience metrics as text to the LLM, then saves the generated insight.<br>[Guide](docs/architecture/steps/04-llm-insights/README.md) · [Mermaid source](docs/architecture/steps/04-llm-insights/SEQUENCE.txt) | <a href="docs/architecture/steps/04-llm-insights/diagram.png"><img src="docs/architecture/steps/04-llm-insights/diagram.png" alt="Generate and show audience insights sequence diagram" width="480" /></a> |
 
+## Android kiosk playback and offline sync
+
+Elevator kiosks can lose signal between floors. A running Android player keeps playing previously cached media. The Firebase Realtime Database SDK holds pending playback logs on the tablet and sends them when connectivity returns. Opening the display screen from scratch requires an online playlist load. [Kiosk workflow guide](docs/architecture/steps/kiosk/README.md)
+
+| Step | Guide and source | Diagram |
+| --- | --- | --- |
+| 01 | [Prepare and play cached media](docs/architecture/steps/kiosk/01-offline-playback/README.md) · [Mermaid source](docs/architecture/steps/kiosk/01-offline-playback/SEQUENCE.txt) | <a href="docs/architecture/steps/kiosk/01-offline-playback/diagram.png"><img src="docs/architecture/steps/kiosk/01-offline-playback/diagram.png" alt="Prepare and play cached media" width="480" /></a> |
+| 02 | [Queue playback logs and sync on reconnect](docs/architecture/steps/kiosk/02-log-sync/README.md) · [Mermaid source](docs/architecture/steps/kiosk/02-log-sync/SEQUENCE.txt) | <a href="docs/architecture/steps/kiosk/02-log-sync/diagram.png"><img src="docs/architecture/steps/kiosk/02-log-sync/diagram.png" alt="Queue playback logs and sync on reconnect" width="480" /></a> |
+
 ## Local development
 
 Install Node.js 24, Java 21 for the Firebase Realtime Database emulator, MongoDB with `mongosh`, Redis, and `uv` for Python 3.12. If you use nvm, run `nvm install` and `nvm use` in the repository root. The development and seed commands can also pick an installed Node.js 24 from nvm when your shell uses another version.
